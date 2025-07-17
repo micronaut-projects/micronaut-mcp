@@ -10,7 +10,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest(startApplication = false)
-class SuccessfulResponseTest {
+class SuccessfulResponseSerializationTest {
 
     @Test
     void successfulResponseSerialization(JsonMapper jsonMapper) throws IOException {
