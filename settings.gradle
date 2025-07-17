@@ -9,13 +9,19 @@ plugins {
     id 'io.micronaut.build.shared.settings' version '7.5.0'
 }
 
-rootProject.name = 'project-template-parent'
+rootProject.name = 'micronaut-mcp-parent'
 
+include 'micronaut-json-rpc'
 include 'micronaut-mcp'
 include 'micronaut-mcp-bom'
+include 'test-suite-json-rpc-tck'
+include 'test-suite-json-rpc-tck-serde'
+include 'test-suite-json-rpc-tck-jackson'
 
 enableFeaturePreview 'TYPESAFE_PROJECT_ACCESSORS'
 
 micronautBuild {
+    useStandardizedProjectNames.set(true)
     importMicronautCatalog()
+    importMicronautCatalog("micronaut-serde")
 }
