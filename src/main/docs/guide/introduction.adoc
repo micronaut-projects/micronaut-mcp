@@ -1,1 +1,1 @@
-TODO
+Integration with https://modelcontextprotocol.io[MCP (Model Context Protocol)]
