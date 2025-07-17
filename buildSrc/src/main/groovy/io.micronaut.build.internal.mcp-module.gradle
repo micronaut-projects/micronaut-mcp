@@ -12,6 +12,8 @@ ossIndexAudit {
         password = ossIndexPassword
     }
 }
+
 micronautBuild {
     binaryCompatibility.enabledAfter("1.0.0")
 }
+
