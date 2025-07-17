@@ -11,8 +11,8 @@ plugins {
 
 rootProject.name = 'project-template-parent'
 
-include 'project-template'
-include 'project-template-bom'
+include 'micronaut-mcp'
+include 'micronaut-mcp-bom'
 
 enableFeaturePreview 'TYPESAFE_PROJECT_ACCESSORS'
 
