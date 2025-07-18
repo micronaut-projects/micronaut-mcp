@@ -40,7 +40,7 @@ class McpController {
     @Post
     HttpResponse<?> mcpPost(@NonNull McpHttpRequest mcpHttpRequest,
                             @NonNull @Body @Valid Request<?, ?> jsonRpcRequest) {
-        if (jsonRpcRequest.method().equals(MCP_METHOD_PING)) {
+        if (jsonRpcRequest.method().equals(MCP_METHOD_PING)) { // //will implement a dispatcher API in future PRs
             return HttpResponse.ok(new SuccessfulResponse<>(Collections.emptyMap(), jsonRpcRequest.id()));
         }
         return HttpResponse.unprocessableEntity();
@@ -49,5 +49,6 @@ class McpController {
     @Get
     @Status(HttpStatus.OK)
     void mcpGet(@NonNull McpHttpRequest mcpHttpRequest) {
+        //TODO will implement in future PRs
     }
 }
