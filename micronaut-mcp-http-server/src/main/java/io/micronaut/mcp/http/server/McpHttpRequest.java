@@ -15,8 +15,11 @@
  */
 package io.micronaut.mcp.http.server;
 
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.annotation.Header;
+import io.micronaut.http.annotation.RequestBean;
 
 /**
  * @see <a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#protocol-version-header">Protocol Version Header</a>
@@ -24,9 +27,10 @@ import io.micronaut.core.annotation.Nullable;
  * @param sessionId Session ID
  * @param lastEventId Last Event ID
  */
-public record McpHttpRequest(@NonNull String protocolVersion,
-                             @Nullable String sessionId,
-                             @Nullable String lastEventId) {
+@Introspected
+public record McpHttpRequest(@Header(name = HTTP_HEADER_MCP_PROTOCOL_VERSION, defaultValue = DEFAULT_PROTOCOL_VERSION) @NonNull String protocolVersion,
+                             @Header(HTTP_HEADER_MCP_SESSION_ID) @Nullable String sessionId,
+                             @Header(HTTP_HEADER_DEFAULT_LAST_EVENT_ID) @Nullable String lastEventId) {
     public static final String HTTP_HEADER_MCP_PROTOCOL_VERSION = "MCP-Protocol-Version";
     public static final String DEFAULT_PROTOCOL_VERSION = "2025-03-26";
     public static final String HTTP_HEADER_MCP_SESSION_ID = "Mcp-Session-Id";

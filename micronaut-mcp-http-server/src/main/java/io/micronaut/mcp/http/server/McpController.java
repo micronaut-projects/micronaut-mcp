@@ -25,6 +25,7 @@ import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.RequestBean;
 import io.micronaut.http.annotation.Status;
 import io.micronaut.mcp.jsonrpc.Request;
 import io.micronaut.mcp.jsonrpc.SuccessfulResponse;
@@ -38,7 +39,7 @@ class McpController {
     private static final String MCP_METHOD_PING = "ping";
 
     @Post
-    HttpResponse<?> mcpPost(@NonNull McpHttpRequest mcpHttpRequest,
+    HttpResponse<?> mcpPost(@NonNull @RequestBean McpHttpRequest mcpHttpRequest,
                             @NonNull @Body @Valid Request<?, ?> jsonRpcRequest) {
         if (jsonRpcRequest.method().equals(MCP_METHOD_PING)) { // //will implement a dispatcher API in future PRs
             return HttpResponse.ok(new SuccessfulResponse<>(Collections.emptyMap(), jsonRpcRequest.id()));
@@ -48,7 +49,7 @@ class McpController {
 
     @Get
     @Status(HttpStatus.OK)
-    void mcpGet(@NonNull McpHttpRequest mcpHttpRequest) {
+    void mcpGet(@NonNull @RequestBean McpHttpRequest mcpHttpRequest) {
         //TODO will implement in future PRs
     }
 }

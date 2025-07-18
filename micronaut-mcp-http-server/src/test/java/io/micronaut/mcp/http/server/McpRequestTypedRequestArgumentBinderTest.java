@@ -6,6 +6,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.RequestBean;
 import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
@@ -63,7 +64,7 @@ class McpRequestTypedRequestArgumentBinderTest {
     @Requires(property = "spec.name", value = "McpRequestTypedRequestArgumentBinderTest")
     static class McpRequestEchoController {
         @Get
-        Map<String, String> echo(McpHttpRequest mcpHttpRequest) {
+        Map<String, String> echo(@RequestBean McpHttpRequest mcpHttpRequest) {
             Map<String, String> result = new HashMap<>();
             if (StringUtils.isNotBlank(mcpHttpRequest.protocolVersion())) {
                 result.put("protocol-version", mcpHttpRequest.protocolVersion());
