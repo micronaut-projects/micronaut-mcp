@@ -15,6 +15,7 @@
  */
 package io.micronaut.mcp.jsonrpc;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
@@ -29,6 +30,7 @@ import io.micronaut.serde.annotation.Serdeable;
  * @param <R>     The type of the result field.
  * @param <I>     The type of the id field (String, Number, or null).
  */
+@JsonInclude(JsonInclude.Include.ALWAYS)
 @Serdeable
 public record SuccessfulResponse<R, I>(
     @NonNull String jsonrpc,
