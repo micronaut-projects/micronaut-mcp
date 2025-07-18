@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"io.micronaut.mcp.jsonrpc"}];updateSearchResults();
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"io.micronaut.mcp.http.server"},{"l":"io.micronaut.mcp.jsonrpc"}];updateSearchResults();

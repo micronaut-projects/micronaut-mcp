@@ -31,6 +31,7 @@ loadScripts(document, 'script');</script>
 <div class="top-nav" id="navbar-top">
 <div class="skip-nav"><a href="#skip-navbar-top" title="Skip navigation links">Skip navigation links</a></div>
 <ul id="navbar-top-firstrow" class="nav-list" title="Navigation">
+<li><a href="../../../../index.html">Overview</a></li>
 <li><a href="package-summary.html">Package</a></li>
 <li class="nav-bar-cell1-rev">Class</li>
 <li><a href="package-tree.html">Tree</a></li>
@@ -86,7 +87,7 @@ loadScripts(document, 'script');</script>
 <dd><code><span id="param-id">id</span></code> - An identifier established by the Client that MUST contain a String, Number, or NULL value if included. If it is not included it is assumed to be a notification. The value SHOULD normally not be Null and Numbers SHOULD NOT contain fractional parts.</dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public record </span><span class="element-name type-name-label">Request&lt;P,<wbr>I&gt;</span>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;jsonrpc, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;method, <a href="Request.html" title="type parameter in Request">P</a>&nbsp;params, <a href="Request.html" title="type parameter in Request">I</a>&nbsp;id)
+<div class="type-signature"><span class="modifiers">public record </span><span class="element-name type-name-label">Request&lt;P,<wbr>I&gt;</span>(@Pattern(regexp="2\\.0") @NotBlank @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;jsonrpc, @NotBlank @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;method, <a href="Request.html" title="type parameter in Request">P</a>&nbsp;params, <a href="Request.html" title="type parameter in Request">I</a>&nbsp;id)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
 <div class="block">JSON-RPC Request.</div>
 <dl class="notes">
@@ -123,17 +124,20 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,P,I)" class="member-name-link">Request</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;jsonrpc,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;method,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,P,I)" class="member-name-link">Request</a><wbr>(@Pattern(regexp="2\\.0") @NotBlank @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;jsonrpc,
+ @NotBlank @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;method,
  <a href="Request.html" title="type parameter in Request">P</a>&nbsp;params,
  <a href="Request.html" title="type parameter in Request">I</a>&nbsp;id)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Creates an instance of a <code>Request</code> record class.</div>
 </div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.String,P,I)" class="member-name-link">Request</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;method,
- <a href="Request.html" title="type parameter in Request">P</a>&nbsp;params,
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.String,I)" class="member-name-link">Request</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;method,
  <a href="Request.html" title="type parameter in Request">I</a>&nbsp;id)</code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,P,I)" class="member-name-link">Request</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;method,
+ <a href="Request.html" title="type parameter in Request">P</a>&nbsp;params,
+ <a href="Request.html" title="type parameter in Request">I</a>&nbsp;id)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -163,12 +167,12 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-id"><code>id</code></a> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Pattern(regexp="2\\.0") @NotBlank @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#jsonrpc()" class="member-name-link">jsonrpc</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-jsonrpc"><code>jsonrpc</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NotBlank @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#method()" class="member-name-link">method</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-method"><code>method</code></a> record component.</div>
@@ -223,6 +227,13 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
+<section class="detail" id="&lt;init&gt;(java.lang.String,I)">
+<h3 id="&lt;init&gt;(java.lang.String,java.lang.Object)">Request</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">Request</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;method,
+ <a href="Request.html" title="type parameter in Request">I</a>&nbsp;id)</span></div>
+</section>
+</li>
+<li>
 <section class="detail" id="&lt;init&gt;(java.lang.String,P,I)">
 <h3 id="&lt;init&gt;(java.lang.String,java.lang.Object,java.lang.Object)">Request</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">Request</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;method,
@@ -233,8 +244,10 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="&lt;init&gt;(java.lang.String,java.lang.String,P,I)">
 <h3 id="&lt;init&gt;(java.lang.String,java.lang.String,java.lang.Object,java.lang.Object)">Request</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">Request</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;jsonrpc,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;method,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">Request</span><wbr><span class="parameters">(@Pattern(regexp="2\\.0") @NotBlank @NonNull
+ @Pattern(regexp="2\\.0") @NotBlank @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;jsonrpc,
+ @NotBlank @NonNull
+ @NotBlank @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;method,
  @Nullable
  <a href="Request.html" title="type parameter in Request">P</a>&nbsp;params,
  @Nullable
@@ -301,7 +314,10 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="jsonrpc()">
 <h3>jsonrpc</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">jsonrpc</span>()</div>
+<div class="member-signature"><span class="annotations">@Pattern(regexp="2\\.0")
+@NotBlank
+@NonNull
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Pattern(regexp="2\\.0") @NotBlank @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">jsonrpc</span>()</div>
 <div class="block">Returns the value of the <a href="#param-jsonrpc"><code>jsonrpc</code></a> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -312,7 +328,9 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="method()">
 <h3>method</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">method</span>()</div>
+<div class="member-signature"><span class="annotations">@NotBlank
+@NonNull
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NotBlank @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">method</span>()</div>
 <div class="block">Returns the value of the <a href="#param-method"><code>method</code></a> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
