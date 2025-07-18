@@ -15,8 +15,11 @@
  */
 package io.micronaut.mcp.jsonrpc;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * JSON-RPC Request.
@@ -31,13 +34,16 @@ import io.micronaut.serde.annotation.Serdeable;
  */
 @Serdeable
 public record Request<P, I>(
-    String jsonrpc,
-    String method,
+    @Pattern(regexp = "2\\.0") @NotBlank @NonNull String jsonrpc,
+    @NotBlank @NonNull String method,
     @Nullable P params,
     @Nullable I id
 ) {
     public static final String VERSION_2_0 = "2.0";
 
+    public Request(String method, I id) {
+        this(VERSION_2_0, method, null, id);
+    }
     public Request(String method, P params, I id) {
         this(VERSION_2_0, method, params, id);
     }
