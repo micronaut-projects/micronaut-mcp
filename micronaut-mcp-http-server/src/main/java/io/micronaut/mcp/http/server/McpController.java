@@ -39,7 +39,6 @@ import jakarta.validation.Valid;
 @Controller("${" + McpControllerConfiguration.PROPERTY_PATH + ":" + McpControllerConfiguration.DEFAULT_PATH + "}")
 @Internal
 class McpController {
-    private static final String MCP_METHOD_PING = "ping";
     private final McpRequestHandler mcpRequestHandler;
 
     McpController(McpRequestHandler mcpRequestHandler) {
