@@ -44,4 +44,8 @@ public record ErrorResponse<I, T>(
     public ErrorResponse(Error<T> error) {
         this(Request.VERSION_2_0, error, null);
     }
+
+    public ErrorResponse(ErrorCode errorCode) {
+        this(Request.VERSION_2_0, new Error<>(errorCode), null);
+    }
 }

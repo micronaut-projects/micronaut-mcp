@@ -4,7 +4,7 @@ plugins {
 }
 dependencies {
     api(mn.micronaut.http)
-    api(projects.micronautJsonRpc)
+    api(projects.micronautMcp)
     annotationProcessor(mnValidation.micronaut.validation.processor)
     api(mnValidation.micronaut.validation)
     testAnnotationProcessor(mn.micronaut.inject.java)

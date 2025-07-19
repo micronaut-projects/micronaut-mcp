@@ -17,5 +17,10 @@ class ErrorResponseTest {
         assertNull(response.id());
         assertEquals(new Error<>(ErrorCode.METHOD_NOT_FOUND), response.error());
         assertEquals("2.0", response.jsonrpc());
+
+        response = new ErrorResponse<>(ErrorCode.METHOD_NOT_FOUND);
+        assertNull(response.id());
+        assertEquals(new Error<>(ErrorCode.METHOD_NOT_FOUND), response.error());
+        assertEquals("2.0", response.jsonrpc());
     }
 }
