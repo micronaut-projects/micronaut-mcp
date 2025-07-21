@@ -21,7 +21,7 @@ import io.micronaut.core.annotation.Internal;
 import java.util.List;
 
 @Internal
-@Requires(property = StdioMcpTransportConfigurationProperties.PREFIX + ".commands")
+@Requires(property = StdioMcpTransportConfiguration.PROPERTY_COMMANDS)
 @ConfigurationProperties(StdioMcpTransportConfiguration.PREFIX)
 class StdioMcpTransportConfigurationProperties implements StdioMcpTransportConfiguration {
     private List<String> commands;

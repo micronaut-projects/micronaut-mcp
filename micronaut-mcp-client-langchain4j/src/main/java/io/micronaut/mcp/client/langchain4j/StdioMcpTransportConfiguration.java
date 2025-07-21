@@ -19,6 +19,6 @@ import java.util.List;
 
 public interface StdioMcpTransportConfiguration {
     String PREFIX = "langchain4j.mcp.client.transport.stdio";
-    String COMMANDS = PREFIX + ".commands";
+    String PROPERTY_COMMANDS = PREFIX + ".commands";
     List<String> getCommands();
 }
