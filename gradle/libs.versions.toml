@@ -20,6 +20,7 @@ micronaut = "4.9.7"
 micronaut-docs = "2.0.0"
 micronaut-serde = "2.15.0"
 micronaut-logging = "1.7.0"
+micronaut-langchain4j = "1.1.0"
 micronaut-validation = "4.9.0"
 micronaut-test = "4.7.0"
 groovy = "4.0.27"
@@ -28,10 +29,12 @@ sonatype-scan = "3.1.1"
 
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
+micronaut-langchain4j = { module = 'io.micronaut.langchain4j:micronaut-langchain4j-bom', version.ref = 'micronaut-langchain4j' }
 micronaut-serde = { module = 'io.micronaut.serde:micronaut-serde-bom', version.ref = 'micronaut-serde' }
 micronaut-logging = { module = 'io.micronaut.logging:micronaut-logging-bom', version.ref = 'micronaut-logging' }
 micronaut-validation = { module = "io.micronaut.validation:micronaut-validation-bom", version.ref = "micronaut-validation" }
 junit-platform-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
+langchain4j-mcp = { module = "dev.langchain4j:langchain4j-mcp" }
 
 # Plugins
 sonatype-scan = { module = "org.sonatype.gradle.plugins:scan-gradle-plugin", version.ref = "sonatype-scan" }
