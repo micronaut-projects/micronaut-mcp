@@ -20,17 +20,22 @@ import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import jakarta.inject.Singleton;
 
 @Internal
 @Factory
 class McpClientFactory {
+    @Prototype
+    DefaultMcpClient.Builder crateMcpClientBuilder(McpTransport transport) {
+        return new DefaultMcpClient.Builder()
+            .transport(transport);
+    }
+    
     @Bean(preDestroy = "close")
     @Singleton
-    McpClient createMcpClient(McpTransport transport) {
-        return new DefaultMcpClient.Builder()
-                .transport(transport)
-                .build();
+    McpClient createMcpClient(DefaultMcpClient.Builder builder) {
+        return builder.build();
     }
 }
