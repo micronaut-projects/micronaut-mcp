@@ -25,6 +25,7 @@ micronaut-test = "4.7.0"
 groovy = "4.0.27"
 spock = "2.3-groovy-4.0"
 sonatype-scan = "3.1.1"
+managed-mcp-java-sdk = "0.10.0"
 
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
@@ -32,6 +33,8 @@ micronaut-serde = { module = 'io.micronaut.serde:micronaut-serde-bom', version.r
 micronaut-logging = { module = 'io.micronaut.logging:micronaut-logging-bom', version.ref = 'micronaut-logging' }
 micronaut-validation = { module = "io.micronaut.validation:micronaut-validation-bom", version.ref = "micronaut-validation" }
 junit-platform-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
+
+managed-mcp-java-sdk = { module = "io.modelcontextprotocol.sdk:mcp", version.ref = "managed-mcp-java-sdk" }
 
 # Plugins
 sonatype-scan = { module = "org.sonatype.gradle.plugins:scan-gradle-plugin", version.ref = "sonatype-scan" }
