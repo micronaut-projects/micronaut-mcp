@@ -1,0 +1,3 @@
+To use an https://docs.langchain4j.dev/tutorials/mcp#mcp-client[MCP Client powered by LangChain4j], use the following dependency:
+
+dependency:micronaut-mcp-client-langchain4j[groupId=io.micronaut.mcp]

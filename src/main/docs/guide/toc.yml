@@ -3,5 +3,10 @@ introduction:
 releaseHistory: Release History
 quickStart:
   title: Quick Start
+mcp:
+  title: MCP
+  client:
+    title: MCP Client
+    clientLangchain4j: Langchain4j MCP Client
 repository: Repository
 
