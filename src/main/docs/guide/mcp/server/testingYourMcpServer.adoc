@@ -1,0 +1,4 @@
+To test the MCP Server, implementation you can use the https://github.com/modelcontextprotocol/inspector[MCP Inspector]
+____
+The MCP inspector is a developer tool for testing and debugging MCP servers.
+____

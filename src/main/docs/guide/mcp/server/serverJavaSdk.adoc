@@ -1,0 +1,21 @@
+To expose an MCP Server based on the https://github.com/modelcontextprotocol/java-sdk[MCP Java SDK], use the following dependency:
+
+dependency:micronaut-mcp-server[groupId=io.micronaut.mcp]
+
+WARNING: The MCP Java SDK is coupled to Jackson Databind.
+Thus, you will need to use https://docs.micronaut.io/latest/guide/#serializationUsingJacksonDatabind[Micronaut Jackson Databind] instead of https://micronaut-projects.github.io/micronaut-serialization/latest/guide/[Micronaut Serialization].
+
+[source, java]
+----
+include::test-suite-cli-stdio/src/main/java/example/micronaut/McpServerCommand.java[]
+----
+
+WARNING: If you use https://modelcontextprotocol.io/docs/concepts/transports#standard-input%2Foutput-stdio[Standard Input/Output (stdio) protocol],
+make sure Logback is not logging to the standard output.
+
+For example, you can configure Logback to log to a file:
+
+[source, xmo]
+----
+include::test-suite-cli-stdio/src/main/resources/logback.xml[]
+----

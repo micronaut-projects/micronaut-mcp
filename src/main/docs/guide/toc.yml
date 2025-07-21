@@ -5,6 +5,10 @@ quickStart:
   title: Quick Start
 mcp:
   title: MCP
+  server:
+    title: MCP Server
+    serverJavaSDK: MCP Server Java SDK
+    testingYourMcpServer: Testing your MCP Server
   client:
     title: MCP Client
     clientLangchain4j: Langchain4j MCP Client
