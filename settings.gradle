@@ -27,4 +27,5 @@ micronautBuild {
     importMicronautCatalog()
     importMicronautCatalog("micronaut-serde")
     importMicronautCatalog("micronaut-validation")
+    importMicronautCatalog("micronaut-langchain4j")
 }
