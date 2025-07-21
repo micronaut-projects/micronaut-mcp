@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.server.sdk.conf;
+package io.micronaut.mcp.client.langchain4j;
 
-/**
- * MCP Server Configuration.
- */
-public interface McpServerConfiguration {
-    String PREFIX = "micronaut.mcp.server";
-    String PROPERTY_ASYNC = PREFIX + ".async";
-    boolean DEFAULT_ASYNC = false;
+import java.util.List;
 
-    default boolean isAsync() {
-        return DEFAULT_ASYNC;
-    }
+public interface StdioMcpTransportConfiguration {
+    String PREFIX = "langchain4j.mcp.client.transport.stdio";
+    String PROPERTY_COMMANDS = PREFIX + ".commands";
+    List<String> getCommands();
 }
