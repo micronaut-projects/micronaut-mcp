@@ -1,2 +1,3 @@
+io.micronaut.mcp.client.langchain4j
 io.micronaut.mcp.http.server
 io.micronaut.mcp.jsonrpc
