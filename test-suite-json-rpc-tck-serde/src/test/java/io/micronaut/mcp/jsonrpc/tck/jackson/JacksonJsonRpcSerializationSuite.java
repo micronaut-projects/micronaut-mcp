@@ -8,9 +8,5 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @Suite
 @SelectPackages("io.micronaut.mcp.jsonrpc.tck")
 @SuiteDisplayName("JSON RPC Serialization TCK Serde")
-@ExcludeClassNamePatterns({
-    "io.micronaut.mcp.jsonrpc.tck.ErrorResponseIdNullTest",
-    "io.micronaut.mcp.jsonrpc.tck.PingResponseSerializationTest"
-})
 public class JacksonJsonRpcSerializationSuite {
 }
