@@ -3,6 +3,7 @@ plugins {
     id("io.micronaut.build.internal.mcp-module")
 }
 dependencies {
+    annotationProcessor(mnSerde.micronaut.serde.processor)
     annotationProcessor(mnValidation.micronaut.validation.processor)
     api(mnValidation.micronaut.validation)
 
