@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @MicronautTest(startApplication = false)
-class McpServerTest {
+class McpSyncServerTest {
     @Inject
     BeanContext beanContext;
 

@@ -37,7 +37,8 @@ class McpServerAsyncFactory {
     McpSchema.ServerCapabilities.Builder createServerCapabilitiesBuilder(List<McpServerFeatures.AsyncToolSpecification> asyncToolSpecifications,
                                                                          List<McpServerFeatures.AsyncCompletionSpecification> asyncCompletionsSpecifications,
                                                                          List<McpServerFeatures.AsyncPromptSpecification> asyncPromptSpecifications,
-                                                                         List<McpSchema.ResourceTemplate> resourceTemplates) {
+                                                                         List<McpSchema.ResourceTemplate> resourceTemplates,
+                                                                         List<McpSchema.Resource> resources) {
         McpSchema.ServerCapabilities.Builder builder = McpSchema.ServerCapabilities.builder();
         if (CollectionUtils.isNotEmpty(asyncToolSpecifications)) {
             builder.tools(true); // should listChanged be set to true?
@@ -48,7 +49,7 @@ class McpServerAsyncFactory {
         if (CollectionUtils.isNotEmpty(asyncPromptSpecifications)) {
             builder.prompts(true); // should listChanged be set to true?
         }
-        if (CollectionUtils.isNotEmpty(resourceTemplates)) {
+        if (CollectionUtils.isNotEmpty(resourceTemplates) || CollectionUtils.isNotEmpty(resources)) {
             builder.resources(true, true); // should subscribe and listChanged be set to true?
         }
         builder.logging();
@@ -68,7 +69,8 @@ class McpServerAsyncFactory {
                                                                  List<McpServerFeatures.AsyncToolSpecification> asyncToolSpecifications,
                                                                  List<McpServerFeatures.AsyncCompletionSpecification> asyncCompletionsSpecifications,
                                                                  List<McpServerFeatures.AsyncPromptSpecification> asyncPromptSpecifications,
-                                                                 List<McpSchema.ResourceTemplate> resourceTemplates) {
+                                                                 List<McpSchema.ResourceTemplate> resourceTemplates,
+                                                                  List<McpSchema.Resource> resources) {
         McpServer.AsyncSpecification spec = McpServer.async(mcpServerTransportProvider)
             .capabilities(mcpServerCapabilities);
         if (mcpServerInfoConfiguration != null) {
@@ -85,6 +87,9 @@ class McpServerAsyncFactory {
         }
         if (CollectionUtils.isNotEmpty(resourceTemplates)) {
             spec.resourceTemplates(resourceTemplates);
+        }
+        if (CollectionUtils.isNotEmpty(resources)) {
+            spec.resources(resources);
         }
         return spec;
     }
