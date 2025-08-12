@@ -5,6 +5,7 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.tool.ToolProvider;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Property;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -46,6 +47,7 @@ class ToolsTest {
         ApplicationContext applicationContext = ApplicationContext.run(
             Map.of(
                     "micronaut.server.port", "-1",
+                    "micronaut.mcp.server.type", "SYNC",
                     "micronaut.mcp.server.info.name", "javaone-mcp-server",
                     "micronaut.mcp.server.info.version", "0.0.1",
                     "langchain4j.open-ai.chat-model.model-name", "gpt-4.1",

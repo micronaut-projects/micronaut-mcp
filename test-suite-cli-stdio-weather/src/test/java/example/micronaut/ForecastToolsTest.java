@@ -1,9 +1,6 @@
 package example.micronaut;
 
-import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
-import dev.langchain4j.mcp.client.logging.McpLogMessage;
-import dev.langchain4j.mcp.client.logging.McpLogMessageHandler;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.service.AiServices;
@@ -72,6 +69,7 @@ class ForecastToolsTest {
             Map.of(
                 "spec.name",  "ForecastToolsTest",
                     "micronaut.server.port", "-1",
+                   "micronaut.mcp.server.type", "SYNC",
                     "micronaut.mcp.server.info.name", "weather-mcp-server",
                     "micronaut.mcp.server.info.version", "0.0.1",
                     "langchain4j.open-ai.chat-model.model-name", "gpt-4.1",

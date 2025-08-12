@@ -1,6 +1,7 @@
 package example.micronaut;
 
 import io.micronaut.context.BeanContext;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServer;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Property(name = "micronaut.mcp.server.type", value = "SYNC")
 @MicronautTest(startApplication = false)
 class ToolSpecificationTest {
 
