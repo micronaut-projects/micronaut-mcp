@@ -15,6 +15,7 @@
  */
 package io.micronaut.mcp.server.sdk.async;
 
+import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
@@ -26,43 +27,12 @@ import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
-import jakarta.inject.Singleton;
-
 import java.util.List;
 
 @Factory
 @Internal
 class McpServerAsyncFactory {
     @Prototype
-    McpSchema.ServerCapabilities.Builder createServerCapabilitiesBuilder(List<McpServerFeatures.AsyncToolSpecification> asyncToolSpecifications,
-                                                                         List<McpServerFeatures.AsyncCompletionSpecification> asyncCompletionsSpecifications,
-                                                                         List<McpServerFeatures.AsyncPromptSpecification> asyncPromptSpecifications,
-                                                                         List<McpSchema.ResourceTemplate> resourceTemplates,
-                                                                         List<McpSchema.Resource> resources) {
-        McpSchema.ServerCapabilities.Builder builder = McpSchema.ServerCapabilities.builder();
-        if (CollectionUtils.isNotEmpty(asyncToolSpecifications)) {
-            builder.tools(true); // should listChanged be set to true?
-        }
-        if (CollectionUtils.isNotEmpty(asyncCompletionsSpecifications)) {
-            builder.completions();
-        }
-        if (CollectionUtils.isNotEmpty(asyncPromptSpecifications)) {
-            builder.prompts(true); // should listChanged be set to true?
-        }
-        if (CollectionUtils.isNotEmpty(resourceTemplates) || CollectionUtils.isNotEmpty(resources)) {
-            builder.resources(true, true); // should subscribe and listChanged be set to true?
-        }
-        builder.logging();
-        return builder;
-    }
-
-    @Singleton
-    McpSchema.ServerCapabilities createServerCapabilities(McpSchema.ServerCapabilities.Builder builder) {
-        return builder.build();
-    }
-
-    @Prototype
-    @Singleton
     McpServer.AsyncSpecification createMcpServerSyncSpecification(McpServerTransportProvider mcpServerTransportProvider,
                                                                  @Nullable McpServerInfoConfiguration mcpServerInfoConfiguration,
                                                                  McpSchema.ServerCapabilities mcpServerCapabilities,
@@ -94,7 +64,7 @@ class McpServerAsyncFactory {
         return spec;
     }
 
-    @Singleton
+    @Context
     McpAsyncServer createMcpSyncServer(McpServer.AsyncSpecification asyncSpecification) {
         return asyncSpecification.build();
     }

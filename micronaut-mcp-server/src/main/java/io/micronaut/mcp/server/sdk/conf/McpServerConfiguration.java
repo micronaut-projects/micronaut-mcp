@@ -20,10 +20,24 @@ package io.micronaut.mcp.server.sdk.conf;
  */
 public interface McpServerConfiguration {
     String PREFIX = "micronaut.mcp.server";
-    String PROPERTY_ASYNC = PREFIX + ".async";
-    boolean DEFAULT_ASYNC = false;
+    String PROPERTY_TYPE = PREFIX + ".type";
+    String TYPE_SYNC = "SYNC";
+    String TYPE_ASYNC = "ASYNC";
+    String TYPE_STATELESS_SYNC = "STATELESS_SYNC";
+    String TYPE_STATELESS_ASYNC = "STATELESS_ASYNC";
+    ServerType DEFAULT_TYPE = ServerType.STATELESS_SYNC;
+    String DEFAULT_ENDPOINT = "/mcp";
+    String PROPERTY_ENDPOINT = PREFIX + ".endpoint";
 
-    default boolean isAsync() {
-        return DEFAULT_ASYNC;
+    default String getEndpoint() {
+        return DEFAULT_ENDPOINT;
+    }
+
+    /**
+     *
+     * @return The MCP Server Type
+     */
+    default ServerType getType() {
+        return DEFAULT_TYPE;
     }
 }

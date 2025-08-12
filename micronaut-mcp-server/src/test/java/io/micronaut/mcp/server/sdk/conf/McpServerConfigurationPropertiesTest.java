@@ -7,9 +7,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class McpServerConfigurationPropertiesTest {
 
     @Test
-    void canSetAsyncViaSetter() {
+    void canSetTypeViaSetter() {
         McpServerConfigurationProperties properties = new McpServerConfigurationProperties();
-        properties.setAsync(true);
-        assertTrue(properties.isAsync());
+        properties.setType(ServerType.SYNC);
+        assertEquals(ServerType.SYNC, properties.getType());
     }
 }

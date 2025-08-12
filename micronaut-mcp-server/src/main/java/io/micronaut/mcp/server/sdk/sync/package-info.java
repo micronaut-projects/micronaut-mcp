@@ -16,12 +16,10 @@
 /**
  * Classes related to {@link io.modelcontextprotocol.server.McpSyncServer}.
  */
-@Requires(property = PROPERTY_ASYNC, value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
+@Requires(property = McpServerConfiguration.PROPERTY_TYPE, value = McpServerConfiguration.TYPE_SYNC)
 @Configuration
 package io.micronaut.mcp.server.sdk.sync;
 
 import io.micronaut.context.annotation.Configuration;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.core.util.StringUtils;
-
-import static io.micronaut.mcp.server.sdk.conf.McpServerConfiguration.PROPERTY_ASYNC;
+import io.micronaut.mcp.server.sdk.conf.McpServerConfiguration;

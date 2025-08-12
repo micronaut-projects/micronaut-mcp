@@ -15,6 +15,7 @@
  */
 package io.micronaut.mcp.server.sdk.sync;
 
+import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
@@ -33,34 +34,6 @@ import java.util.List;
 @Internal
 @Factory
 class McpServerSyncFactory {
-    @Prototype
-    McpSchema.ServerCapabilities.Builder createServerCapabilitiesBuilder(List<McpServerFeatures.SyncToolSpecification> syncToolSpecifications,
-                                                                         List<McpServerFeatures.SyncCompletionSpecification> syncCompletionsSpecifications,
-                                                                         List<McpServerFeatures.SyncPromptSpecification> syncPromptSpecifications,
-                                                                         List<McpSchema.ResourceTemplate> resourceTemplates,
-                                                                         List<McpSchema.Resource> resources) {
-        McpSchema.ServerCapabilities.Builder builder = McpSchema.ServerCapabilities.builder();
-        if (CollectionUtils.isNotEmpty(syncToolSpecifications)) {
-            builder.tools(true); // should listChanged be set to true?
-        }
-        if (CollectionUtils.isNotEmpty(syncCompletionsSpecifications)) {
-            builder.completions();
-        }
-        if (CollectionUtils.isNotEmpty(syncPromptSpecifications)) {
-            builder.prompts(true); // should listChanged be set to true?
-        }
-        if (CollectionUtils.isNotEmpty(resourceTemplates) || CollectionUtils.isNotEmpty(resources)) {
-            builder.resources(true, true); // should subscribe and listChanged be set to true?
-        }
-        builder.logging();
-        return builder;
-    }
-
-    @Singleton
-    McpSchema.ServerCapabilities createServerCapabilities(McpSchema.ServerCapabilities.Builder builder) {
-        return builder.build();
-    }
-
     @Prototype
     @Singleton
     McpServer.SyncSpecification createMcpServerSyncSpecification(McpServerTransportProvider mcpServerTransportProvider,
@@ -94,7 +67,7 @@ class McpServerSyncFactory {
         return spec;
     }
 
-    @Singleton
+    @Context
     McpSyncServer createMcpSyncServer(McpServer.SyncSpecification syncSpecification) {
         return syncSpecification.build();
     }

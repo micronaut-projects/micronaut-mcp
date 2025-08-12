@@ -19,14 +19,28 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 
 @ConfigurationProperties(McpServerConfiguration.PREFIX)
 class McpServerConfigurationProperties implements McpServerConfiguration {
-    private boolean async = DEFAULT_ASYNC;
+    private ServerType type = DEFAULT_TYPE;
+    private String endpoint = DEFAULT_ENDPOINT;
 
     @Override
-    public boolean isAsync() {
-        return async;
+    public String getEndpoint() {
+        return endpoint;
     }
 
-    public void setAsync(boolean async) {
-        this.async = async;
+    public void setEndpoint(String endpoint) {
+        this.endpoint = endpoint;
+    }
+
+    @Override
+    public ServerType getType() {
+        return type;
+    }
+
+    /**
+     *
+     * @param type the server type
+     */
+    public void setType(ServerType type) {
+        this.type = type;
     }
 }

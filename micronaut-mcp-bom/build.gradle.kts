@@ -3,5 +3,5 @@ plugins {
     id("io.micronaut.build.internal.bom")
 }
 micronautBuild {
-    binaryCompatibility.enabledAfter("1.0.0")
+    binaryCompatibility.enabled = false
 }

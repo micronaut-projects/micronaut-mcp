@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class McpServerConfigurationTest {
 
     @Test
-    void defaultToAysnc(McpServerConfiguration configuration) {
-        assertFalse(configuration.isAsync());
+    void defaultToStatelessAsync(McpServerConfiguration configuration) {
+        assertEquals(ServerType.STATELESS_SYNC, configuration.getType());
     }
 }

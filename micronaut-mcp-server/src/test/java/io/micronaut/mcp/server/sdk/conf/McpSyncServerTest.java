@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Property(name = "micronaut.mcp.server.type", value = "SYNC")
 @Property(name = "micronaut.mcp.server.info.name", value = "javaone-mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value = "1.0.0")
 @MicronautTest(startApplication = false)
