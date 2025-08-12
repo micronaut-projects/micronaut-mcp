@@ -67,43 +67,46 @@ class McpController {
         }
 
         McpTransportContext transportContext = contextExtractor.extract(request, new DefaultMcpTransportContext());
-
-		try {
+        try {
             McpSchema.JSONRPCMessage message = McpSchema.deserializeJsonRpcMessage(objectMapper, body);
             if (message instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
-				try {
-					McpSchema.JSONRPCResponse jsonrpcResponse = this.mcpHandler
-						.handleRequest(transportContext, jsonrpcRequest)
-						.contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
-						.block();
-					return HttpResponse.ok().contentType(MediaType.APPLICATION_JSON).body(jsonrpcResponse);
-				} catch (Exception e) {
-					LOG.error("Failed to handle request: {}", e.getMessage());
-					return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-						.body(new McpError("Failed to handle request: " + e.getMessage()));
-				}
-			} else if (message instanceof McpSchema.JSONRPCNotification jsonrpcNotification) {
-				try {
-					this.mcpHandler.handleNotification(transportContext, jsonrpcNotification)
-						.contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
-						.block();
-					return HttpResponse.accepted();
-				} catch (Exception e) {
-					LOG.error("Failed to handle notification: {}", e.getMessage());
-					return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-						.body(new McpError("Failed to handle notification: " + e.getMessage()));
-				}
-			} else {
-				return HttpResponse.badRequest()
-					.body(new McpError("The server accepts either requests or notifications"));
-			}
-		} catch (IllegalArgumentException | IOException e) {
-			LOG.error("Failed to deserialize message: {}", e.getMessage());
-			return HttpResponse.badRequest().body(new McpError("Invalid message format"));
-		} catch (Exception e) {
-			LOG.error("Unexpected error handling message: {}", e.getMessage());
-			return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(new McpError("Unexpected error: " + e.getMessage()));
-		}
+                try {
+                    McpSchema.JSONRPCResponse jsonrpcResponse = this.mcpHandler
+                        .handleRequest(transportContext, jsonrpcRequest)
+                        .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
+                        .block();
+                    return HttpResponse.ok().contentType(MediaType.APPLICATION_JSON).body(jsonrpcResponse);
+                } catch (Exception e) {
+                    if (LOG.isErrorEnabled()) {
+                        LOG.error("Failed to handle request: {}", e.getMessage());
+                    }
+                    return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new McpError("Failed to handle request: " + e.getMessage()));
+                }
+            } else if (message instanceof McpSchema.JSONRPCNotification jsonrpcNotification) {
+                try {
+                    this.mcpHandler.handleNotification(transportContext, jsonrpcNotification)
+                        .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
+                        .block();
+                    return HttpResponse.accepted();
+                } catch (Exception e) {
+                    LOG.error("Failed to handle notification: {}", e.getMessage());
+                    return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new McpError("Failed to handle notification: " + e.getMessage()));
+                }
+            } else {
+                return HttpResponse.badRequest()
+                    .body(new McpError("The server accepts either requests or notifications"));
+            }
+        } catch (IllegalArgumentException | IOException e) {
+            if (LOG.isErrorEnabled()) {
+                LOG.error("Failed to deserialize message: {}", e.getMessage());
+            }
+            return HttpResponse.badRequest().body(new McpError("Invalid message format"));
+        } catch (Exception e) {
+            LOG.error("Unexpected error handling message: {}", e.getMessage());
+            return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new McpError("Unexpected error: " + e.getMessage()));
+        }
     }
 }

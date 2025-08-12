@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * Classes related to {@link io.modelcontextprotocol.server.McpAsyncServer}.
- */
-@Requires(property = McpServerConfiguration.PROPERTY_TYPE, value = McpServerConfiguration.TYPE_ASYNC)
-@Configuration
-package io.micronaut.mcp.server.sdk.async;
+package io.micronaut.mcp.server.sdk.stdio;
 
-import io.micronaut.context.annotation.Configuration;
-import io.micronaut.context.annotation.Requires;
-import io.micronaut.mcp.server.sdk.conf.McpServerConfiguration;
+import io.micronaut.context.condition.Condition;
+import io.micronaut.context.condition.ConditionContext;
+import io.micronaut.core.annotation.Internal;
+import io.micronaut.mcp.server.sdk.conf.ServerType;
 
+@Internal
+class StdioTypeCondition implements Condition {
+    @Override
+    public boolean matches(ConditionContext context) {
+        ServerType type = context.getProperty("micronaut.mcp.server.type", ServerType.class, ServerType.STATELESS_SYNC);
+        return type.equals(ServerType.ASYNC) || type.equals(ServerType.SYNC) ;
+    }
+}

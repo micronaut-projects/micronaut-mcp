@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 /**
- * Classes related to {@link io.modelcontextprotocol.server.McpSyncServer}.
+ * Classes related to {@link io.modelcontextprotocol.server.McpAsyncServer}.
  */
-@Requires(property = McpServerConfiguration.PROPERTY_TYPE, value = McpServerConfiguration.TYPE_SYNC)
+@Requires(property = McpServerConfiguration.PROPERTY_TYPE, value = McpServerConfiguration.TYPE_ASYNC)
 @Configuration
-package io.micronaut.mcp.server.sdk.sync;
+package io.micronaut.mcp.server.sdk.stdio.async;
 
 import io.micronaut.context.annotation.Configuration;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.server.sdk.conf.McpServerConfiguration;
+

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.server.sdk.async;
+package io.micronaut.mcp.server.sdk.stdio.async;
 
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Factory;

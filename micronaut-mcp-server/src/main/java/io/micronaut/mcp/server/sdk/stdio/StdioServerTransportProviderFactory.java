@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.server.sdk;
+package io.micronaut.mcp.server.sdk.stdio;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.context.annotation.Factory;
@@ -25,7 +25,7 @@ import jakarta.inject.Singleton;
 
 @Internal
 @Factory
-class TransportProviderFactory {
+class StdioServerTransportProviderFactory {
     @Named("stdio")
     @Singleton
     McpServerTransportProvider createStdioServerTransportProvider(ObjectMapper objectMapper) {
