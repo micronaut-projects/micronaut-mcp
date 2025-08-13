@@ -4,7 +4,6 @@ plugins {
     id("io.micronaut.build.internal.mcp-module")
 }
 dependencies {
-    api(projects.micronautJsonRpc)
     testRuntimeOnly(mnLogging.logback.classic)
 }
 micronautBuild {
