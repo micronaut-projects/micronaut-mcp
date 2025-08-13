@@ -21,6 +21,9 @@ import io.modelcontextprotocol.server.McpTransportContext;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
 import jakarta.inject.Singleton;
 
+/**
+ * Default implementation of {@link McpTransportContextExtractor}.
+ */
 @Internal
 @Singleton
 class DefaultMcpTransportContextExtractor implements McpTransportContextExtractor<HttpRequest<?>> {
