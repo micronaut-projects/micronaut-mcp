@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 
 /**
  * MCP Server Info Configuration.
+ * @since 1.0.0
  */
 public interface McpServerInfoConfiguration {
     /**
@@ -32,7 +33,7 @@ public interface McpServerInfoConfiguration {
     String PROPERTY_NAME = PREFIX + ".name";
 
     /**
-     * configuration property name for MCP Server version.
+     * configuration property name for an MCP Server version.
      */
     String PROPERTY_VERSION = PREFIX + ".version";
 
