@@ -11,14 +11,9 @@ plugins {
 
 rootProject.name = 'micronaut-mcp-parent'
 
-include 'micronaut-json-rpc'
 include 'micronaut-mcp'
 include 'micronaut-mcp-client-langchain4j'
-include 'micronaut-mcp-http-server'
 include 'micronaut-mcp-bom'
-include 'test-suite-json-rpc-tck'
-include 'test-suite-json-rpc-tck-serde'
-include 'test-suite-json-rpc-tck-jackson'
 
 enableFeaturePreview 'TYPESAFE_PROJECT_ACCESSORS'
 
