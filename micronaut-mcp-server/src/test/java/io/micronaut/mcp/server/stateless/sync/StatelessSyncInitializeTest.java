@@ -12,6 +12,8 @@ import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_INITIALIZATION;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZE;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -27,24 +29,10 @@ class StatelessSyncInitializeTest {
     @Test
     void initializeSerialization(@Client("/") HttpClient httpClient) throws JSONException {
         BlockingHttpClient client = httpClient.toBlocking();
-        String json = """
-             {"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"sampling":{},"elicitation":{},"roots":{"listChanged":true}},"clientInfo":{"name":"mcp-inspector","version":"0.16.3"}}}""";
-        HttpRequest<?> req = HttpRequest.POST("/mcp", json);
+        HttpRequest<?> req = HttpRequest.POST("/mcp", INITIALIZE);
         HttpResponse<String> response = assertDoesNotThrow(() -> client.exchange(req, String.class));
         assertEquals(HttpStatus.OK, response.getStatus());
         String responseJson = response.body();
-        JSONAssert.assertEquals("""
-            {
-              "jsonrpc":"2.0",
-              "id":0,
-              "result": {
-                "protocolVersion":"2025-03-26",
-                 "capabilities": {},
-                 "serverInfo": {
-                   "name": "mcp-server",
-                   "version": "0.0.1"
-                 }
-               }
-            }""", responseJson, true);
+        JSONAssert.assertEquals(EXPECTED_INITIALIZATION, responseJson, true);
     }
 }

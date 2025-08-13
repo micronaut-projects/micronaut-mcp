@@ -19,6 +19,9 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import java.io.IOException;
 import java.util.List;
 
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_INITIALIZATION;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_INITIALIZATION_2024;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZE;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
@@ -36,25 +39,11 @@ class AsyncInitializeTest {
 
     @Test
     void asyncInitialize() throws JSONException, IOException {
-        String json = """
-             {"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"sampling":{},"elicitation":{},"roots":{"listChanged":true}},"clientInfo":{"name":"mcp-inspector","version":"0.16.3"}}}""";
-        factory.stdio.sendRequest(json);
+        factory.stdio.sendRequest(INITIALIZE);
         List<String> responses = factory.stdio.readResponses();
         String responseJson = responses.get(0);
         assertNotNull(responseJson);
-        JSONAssert.assertEquals("""
-            {
-              "jsonrpc":"2.0",
-              "id":0,
-              "result": {
-                "protocolVersion":"2024-11-05",
-                 "capabilities": {},
-                 "serverInfo": {
-                   "name": "mcp-server",
-                   "version": "0.0.1"
-                 }
-               }
-            }""", responseJson, true);
+        JSONAssert.assertEquals(EXPECTED_INITIALIZATION_2024, responseJson, true);
     }
 
     @Requires(property = "spec.name", value = "AsyncInitializeTest")

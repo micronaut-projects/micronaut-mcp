@@ -14,6 +14,11 @@ import jakarta.inject.Singleton;
 import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
+
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_TOOLS_CALL;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_TOOLS_LIST;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.TOOLS_CALL;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.TOOLS_LIST;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @Property(name = "micronaut.mcp.server.type", value = "STATELESS_SYNC")
@@ -24,40 +29,17 @@ class StatelessSyncToolsTest {
     @Test
     void toolsList(@Client("/") HttpClient httpClient) throws JSONException {
         BlockingHttpClient client = httpClient.toBlocking();
-        String input = """
-            {"jsonrpc":"2.0","id":3,"method":"tools/list","params":{"_meta":{"progressToken":3}}}
-            """;
-        HttpRequest<?> req = HttpRequest.POST("/mcp", input);
+        HttpRequest<?> req = HttpRequest.POST("/mcp", TOOLS_LIST);
         String result = assertDoesNotThrow(() -> client.retrieve(req));
-        String expected = """
-    {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"fen":{"type":"string"}}}}]}}
-    """;
-        JSONAssert.assertEquals(expected, result, true);
+        JSONAssert.assertEquals(EXPECTED_TOOLS_LIST, result, true);
     }
 
     @Test
     void toolsCall(@Client("/") HttpClient httpClient) throws JSONException {
         BlockingHttpClient client = httpClient.toBlocking();
-        String input = """
-            {"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"_meta":{"progressToken":4},"name":"fenEvaluation","arguments":{"fen":"\\n        String expected = \\"\\"\\"\\n    {\\"jsonrpc\\":\\"2.0\\",\\"id\\":2,\\"result\\":{\\"tools\\":[{\\"name\\":\\"fenEvaluation\\",\\"description\\":\\"Evaluate a chess position using a FEN string.\\",\\"inputSchema\\":{\\"type\\":\\"object\\",\\"properties\\":{\\"fen\\":{\\"type\\":\\"string\\"}}}}]}}\\n    \\"\\"\\";"}}}
-            """;
-        HttpRequest<?> req = HttpRequest.POST("/mcp", input);
+        HttpRequest<?> req = HttpRequest.POST("/mcp", TOOLS_CALL);
         String result = assertDoesNotThrow(() -> client.retrieve(req));
-        String expected = """
-{
-  "jsonrpc": "2.0",
-  "id": 4,
-  "result": {
-    "content": [
-      {
-        "type": "text",
-        "text": "+0.27"
-      }
-    ],
-    "isError": false
-  }
-}""";
-        JSONAssert.assertEquals(expected, result, true);
+        JSONAssert.assertEquals(EXPECTED_TOOLS_CALL, result, true);
     }
 
     @Requires(property = "spec.name", value = "ToolsTest")

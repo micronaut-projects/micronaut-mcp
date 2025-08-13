@@ -12,6 +12,8 @@ import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.PING;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.PONG;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -25,13 +27,10 @@ class StatelessAsyncPingTest {
     @Test
     void pingSerialization(@Client("/") HttpClient httpClient) throws JSONException {
         BlockingHttpClient client = httpClient.toBlocking();
-        String json = """
-            {"jsonrpc":"2.0","method":"ping","id":"123"}""";
-        HttpRequest<?> req = HttpRequest.POST("/mcp", json);
+        HttpRequest<?> req = HttpRequest.POST("/mcp", PING);
         HttpResponse<String> response = assertDoesNotThrow(() -> client.exchange(req, String.class));
         assertEquals(HttpStatus.OK, response.getStatus());
         String responseJson = response.body();
-        JSONAssert.assertEquals("""
-            {"jsonrpc":"2.0","result":{},"id":"123"}""", responseJson, true);
+        JSONAssert.assertEquals(PONG, responseJson, true);
     }
 }

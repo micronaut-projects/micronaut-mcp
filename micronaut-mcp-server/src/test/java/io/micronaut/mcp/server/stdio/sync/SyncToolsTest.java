@@ -25,6 +25,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_TOOLS_CALL;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_TOOLS_LIST;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZE;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZED;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.TOOLS_CALL;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.TOOLS_LIST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -32,48 +38,25 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Property(name = "micronaut.mcp.server.type", value = "SYNC")
 @MicronautTest(startApplication = false)
 class SyncToolsTest {
-
     @Inject
     SyncInitializeTestFactory factory;
 
     @Test
     void syncTools() throws JSONException, IOException, ExecutionException, InterruptedException, TimeoutException {
-        String initialize = """
-             {"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"sampling":{},"elicitation":{},"roots":{"listChanged":true}},"clientInfo":{"name":"mcp-inspector","version":"0.16.3"}}}""";
-        factory.stdio.sendRequest(initialize);
+        factory.stdio.sendRequest(INITIALIZE);
         Thread.sleep(TimeUnit.SECONDS.toMillis(1));
-        factory.stdio.sendRequest("""
-            {"jsonrpc": "2.0", "method": "notifications/initialized"}""");
-        factory.stdio.sendRequest("""
-            {"jsonrpc":"2.0","id":3,"method":"tools/list","params":{"_meta":{"progressToken":3}}}""");
+        factory.stdio.sendRequest(INITIALIZED);
+        factory.stdio.sendRequest(TOOLS_LIST);
         Thread.sleep(TimeUnit.SECONDS.toMillis(1));
-        factory.stdio.sendRequest("""
-            {"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"_meta":{"progressToken":4},"name":"fenEvaluation","arguments":{"fen":"\\n        String expected = \\"\\"\\"\\n    {\\"jsonrpc\\":\\"2.0\\",\\"id\\":2,\\"result\\":{\\"tools\\":[{\\"name\\":\\"fenEvaluation\\",\\"description\\":\\"Evaluate a chess position using a FEN string.\\",\\"inputSchema\\":{\\"type\\":\\"object\\",\\"properties\\":{\\"fen\\":{\\"type\\":\\"string\\"}}}}]}}\\n    \\"\\"\\";"}}}""");
+        factory.stdio.sendRequest(TOOLS_CALL);
         Thread.sleep(TimeUnit.SECONDS.toMillis(1));
         List<String> responses = factory.stdio.readResponses();
         assertEquals(3, responses.size());
         String responseJson = responses.get(1);
         assertNotNull(responseJson);
-        String expected = """
-    {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"fen":{"type":"string"}}}}]}}
-    """;
-        JSONAssert.assertEquals(expected, responseJson, true);
+        JSONAssert.assertEquals(EXPECTED_TOOLS_LIST, responseJson, true);
         String toolCallResponse = responses.get(2);
-        String toolCallExpected = """
-{
-  "jsonrpc": "2.0",
-  "id": 4,
-  "result": {
-    "content": [
-      {
-        "type": "text",
-        "text": "+0.27"
-      }
-    ],
-    "isError": false
-  }
-}""";
-        JSONAssert.assertEquals(toolCallExpected, toolCallResponse, true);
+        JSONAssert.assertEquals(EXPECTED_TOOLS_CALL, toolCallResponse, true);
     }
 
     @Requires(property = "spec.name", value = "SyncToolsTest")

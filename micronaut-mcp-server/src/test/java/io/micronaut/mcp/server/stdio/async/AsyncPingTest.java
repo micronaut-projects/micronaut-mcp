@@ -20,6 +20,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZE;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.PING;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.PONG;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -36,21 +39,17 @@ class AsyncPingTest {
 
     @Test
     void asyncPing() throws JSONException, IOException, InterruptedException {
-        String initialize = """
-             {"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"sampling":{},"elicitation":{},"roots":{"listChanged":true}},"clientInfo":{"name":"mcp-inspector","version":"0.16.3"}}}""";
-        factory.stdio.sendRequest(initialize);
+        factory.stdio.sendRequest(INITIALIZE);
         Thread.sleep(TimeUnit.SECONDS.toMillis(1));
         factory.stdio.sendRequest("""
             {"jsonrpc": "2.0", "method": "notifications/initialized"}""");
-        factory.stdio.sendRequest("""
-            {"jsonrpc":"2.0","method":"ping","id":"123"}""");
+        factory.stdio.sendRequest(PING);
         Thread.sleep(TimeUnit.SECONDS.toMillis(1));
         List<String> responses = factory.stdio.readResponses();
         assertEquals(2, responses.size());
         String responseJson = responses.get(1);
         assertNotNull(responseJson);
-        JSONAssert.assertEquals("""
-            {"jsonrpc":"2.0","result":{},"id":"123"}""", responseJson, true);
+        JSONAssert.assertEquals(PONG, responseJson, true);
     }
 
     @Requires(property = "spec.name", value = "AsyncPingTest")
