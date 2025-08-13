@@ -41,9 +41,8 @@ public interface McpServerConfiguration {
     }
 
     /**
-     * It defaults to {@value #TYPE_STATELESS_SYNC}.
-     * It should be either {@value TYPE_SYNC} or {@value TYPE_ASYNC} for stdio transport.
-     * It should be either {@value TYPE_STATELESS_ASYNC} or {@value TYPE_STATELESS_SYNC} for HTTP transport.
+     * For stdio transport use either {@value TYPE_SYNC} or {@value TYPE_ASYNC}.
+     * For HTTP transport use either {@value TYPE_STATELESS_ASYNC} or {@value TYPE_STATELESS_SYNC}..
      * @return The MCP Server Type.
      */
     @NonNull
