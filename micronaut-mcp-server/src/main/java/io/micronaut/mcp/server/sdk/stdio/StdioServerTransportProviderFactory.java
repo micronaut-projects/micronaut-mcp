@@ -17,15 +17,15 @@ package io.micronaut.mcp.server.sdk.stdio;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
-import jakarta.inject.Singleton;
 
 @Internal
 @Factory
 class StdioServerTransportProviderFactory {
-    @Singleton
+    @Prototype
     McpServerTransportProvider createStdioServerTransportProvider(ObjectMapper objectMapper) {
         return new StdioServerTransportProvider(objectMapper);
     }
