@@ -50,6 +50,7 @@ loadScripts(document, 'script');</script>
 <h1 class="title">Hierarchy For All Packages</h1>
 <span class="package-hierarchy-label">Package Hierarchies:</span>
 <ul class="horizontal">
+<li><a href="io/micronaut/mcp/package-tree.html">io.micronaut.mcp</a>, </li>
 <li><a href="io/micronaut/mcp/client/langchain4j/package-tree.html">io.micronaut.mcp.client.langchain4j</a>, </li>
 <li><a href="io/micronaut/mcp/http/server/package-tree.html">io.micronaut.mcp.http.server</a>, </li>
 <li><a href="io/micronaut/mcp/jsonrpc/package-tree.html">io.micronaut.mcp.jsonrpc</a></li>
@@ -60,12 +61,16 @@ loadScripts(document, 'script');</script>
 <ul>
 <li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" class="type-name-link external-link" title="class or interface in java.lang">Object</a>
 <ul>
+<li class="circle">io.micronaut.mcp.<a href="io/micronaut/mcp/PingMcpRequestHandler.html" class="type-name-link" title="class in io.micronaut.mcp">PingMcpRequestHandler</a> (implements io.micronaut.mcp.<a href="io/micronaut/mcp/McpRequestHandler.html" title="interface in io.micronaut.mcp">McpRequestHandler</a>)</li>
 <li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html" class="type-name-link external-link" title="class or interface in java.lang">Record</a>
 <ul>
 <li class="circle">io.micronaut.mcp.jsonrpc.<a href="io/micronaut/mcp/jsonrpc/Error.html" class="type-name-link" title="class in io.micronaut.mcp.jsonrpc">Error</a>&lt;T&gt;</li>
+<li class="circle">io.micronaut.mcp.<a href="io/micronaut/mcp/ErrorMcpResponse.html" class="type-name-link" title="class in io.micronaut.mcp">ErrorMcpResponse</a> (implements io.micronaut.mcp.<a href="io/micronaut/mcp/McpResponse.html" title="interface in io.micronaut.mcp">McpResponse</a>)</li>
 <li class="circle">io.micronaut.mcp.jsonrpc.<a href="io/micronaut/mcp/jsonrpc/ErrorResponse.html" class="type-name-link" title="class in io.micronaut.mcp.jsonrpc">ErrorResponse</a>&lt;I,<wbr>T&gt;</li>
 <li class="circle">io.micronaut.mcp.http.server.<a href="io/micronaut/mcp/http/server/McpHttpRequest.html" class="type-name-link" title="class in io.micronaut.mcp.http.server">McpHttpRequest</a></li>
+<li class="circle">io.micronaut.mcp.<a href="io/micronaut/mcp/McpRequest.html" class="type-name-link" title="class in io.micronaut.mcp">McpRequest</a></li>
 <li class="circle">io.micronaut.mcp.jsonrpc.<a href="io/micronaut/mcp/jsonrpc/Request.html" class="type-name-link" title="class in io.micronaut.mcp.jsonrpc">Request</a>&lt;P,<wbr>I&gt;</li>
+<li class="circle">io.micronaut.mcp.<a href="io/micronaut/mcp/SuccessfulMcpResponse.html" class="type-name-link" title="class in io.micronaut.mcp">SuccessfulMcpResponse</a> (implements io.micronaut.mcp.<a href="io/micronaut/mcp/McpResponse.html" title="interface in io.micronaut.mcp">McpResponse</a>)</li>
 <li class="circle">io.micronaut.mcp.jsonrpc.<a href="io/micronaut/mcp/jsonrpc/SuccessfulResponse.html" class="type-name-link" title="class in io.micronaut.mcp.jsonrpc">SuccessfulResponse</a>&lt;R,<wbr>I&gt;</li>
 </ul>
 </li>
@@ -76,6 +81,17 @@ loadScripts(document, 'script');</script>
 <section class="hierarchy">
 <h2 title="Interface Hierarchy">Interface Hierarchy</h2>
 <ul>
+<li class="circle">io.micronaut.mcp.<a href="io/micronaut/mcp/McpResponse.html" class="type-name-link" title="interface in io.micronaut.mcp">McpResponse</a></li>
+<li class="circle">io.micronaut.core.naming.Named
+<ul>
+<li class="circle">io.micronaut.mcp.<a href="io/micronaut/mcp/McpRequestHandler.html" class="type-name-link" title="interface in io.micronaut.mcp">McpRequestHandler</a> (also extends io.micronaut.core.order.Ordered)</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.core.order.Ordered
+<ul>
+<li class="circle">io.micronaut.mcp.<a href="io/micronaut/mcp/McpRequestHandler.html" class="type-name-link" title="interface in io.micronaut.mcp">McpRequestHandler</a> (also extends io.micronaut.core.naming.Named)</li>
+</ul>
+</li>
 <li class="circle">io.micronaut.mcp.client.langchain4j.<a href="io/micronaut/mcp/client/langchain4j/StdioMcpTransportConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.client.langchain4j">StdioMcpTransportConfiguration</a></li>
 <li class="circle">io.micronaut.core.util.Toggleable
 <ul>
