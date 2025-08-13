@@ -22,6 +22,9 @@ import io.modelcontextprotocol.spec.McpStatelessServerTransport;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Mono;
 
+/**
+ * Implementation of {@link McpStatelessServerTransport} which registers a singleton of type {@link McpStatelessServerHandler} when the method {@link McpStatelessServerTransport#setMcpHandler(McpStatelessServerHandler)} is invoked.
+ */
 @Internal
 @Singleton
 class MicronautMcpStatelessServerTransport implements McpStatelessServerTransport {
