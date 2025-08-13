@@ -20,13 +20,11 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.Internal;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 @Internal
 @Factory
 class StdioServerTransportProviderFactory {
-    @Named("stdio")
     @Singleton
     McpServerTransportProvider createStdioServerTransportProvider(ObjectMapper objectMapper) {
         return new StdioServerTransportProvider(objectMapper);
