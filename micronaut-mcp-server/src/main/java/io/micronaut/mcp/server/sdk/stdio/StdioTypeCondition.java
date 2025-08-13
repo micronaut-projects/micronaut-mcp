@@ -25,7 +25,8 @@ import io.micronaut.mcp.server.sdk.conf.ServerType;
 class StdioTypeCondition implements Condition {
     @Override
     public boolean matches(ConditionContext context) {
-        ServerType type = context.getProperty(McpServerConfiguration.PROPERTY_TYPE, ServerType.class, ServerType.STATELESS_SYNC);
-        return type.equals(ServerType.ASYNC) || type.equals(ServerType.SYNC) ;
+        return context.getProperty(McpServerConfiguration.PROPERTY_TYPE, ServerType.class)
+                .map(type -> type.equals(ServerType.ASYNC) || type.equals(ServerType.SYNC))
+                .orElse(false);
     }
 }

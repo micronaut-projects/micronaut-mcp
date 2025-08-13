@@ -21,6 +21,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
+@Property(name = "micronaut.mcp.server.type", value = "STATELESS_SYNC")
 @Property(name = "spec.name", value = "ToolsTest")
 @MicronautTest
 class StatelessSyncToolsTest {
@@ -63,8 +64,6 @@ class StatelessSyncToolsTest {
 }""";
         JSONAssert.assertEquals(expected, result, true);
     }
-
-
 
     @Requires(property = "spec.name", value = "ToolsTest")
     @Factory

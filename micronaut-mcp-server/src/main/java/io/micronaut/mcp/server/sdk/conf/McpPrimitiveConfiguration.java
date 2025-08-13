@@ -20,6 +20,7 @@ package io.micronaut.mcp.server.sdk.conf;
  */
 public interface McpPrimitiveConfiguration {
     boolean DEFAULT_LIST_CHANGED = false;
+
     /**
      *
      * @return whether the server will emit notifications when the list of available primitive changes.

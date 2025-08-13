@@ -16,12 +16,14 @@
 package io.micronaut.mcp.server.sdk.conf;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 
+@Requires(property = McpServerConfiguration.PROPERTY_TYPE)
 @ConfigurationProperties(McpServerConfiguration.PREFIX)
 @Internal
 class McpServerConfigurationProperties implements McpServerConfiguration {
-    private ServerType type = DEFAULT_TYPE;
+    private ServerType type;
     private String endpoint = DEFAULT_ENDPOINT;
 
     @Override

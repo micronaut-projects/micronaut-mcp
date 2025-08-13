@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * @see <a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle#initialization">Initialization</a>
  */
+@Property(name = "micronaut.mcp.server.type", value = "STATELESS_SYNC")
 @Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
 @MicronautTest

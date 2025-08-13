@@ -1,5 +1,6 @@
 package io.micronaut.mcp.server.sdk.stateless.sync;
 
+import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -17,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * @see <a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/utilities/ping">Ping</a>
  */
+@Property(name = "micronaut.mcp.server.type", value = "STATELESS_SYNC")
 @MicronautTest
 class StatelessSyncPingTest {
 

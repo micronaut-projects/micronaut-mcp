@@ -15,6 +15,8 @@
  */
 package io.micronaut.mcp.server.sdk.conf;
 
+import io.micronaut.core.annotation.NonNull;
+
 /**
  * MCP Server Configuration.
  * @since 1.0.0
@@ -26,7 +28,6 @@ public interface McpServerConfiguration {
     String TYPE_ASYNC = "ASYNC";
     String TYPE_STATELESS_SYNC = "STATELESS_SYNC";
     String TYPE_STATELESS_ASYNC = "STATELESS_ASYNC";
-    ServerType DEFAULT_TYPE = ServerType.STATELESS_SYNC;
     String DEFAULT_ENDPOINT = "/mcp";
     String PROPERTY_ENDPOINT = PREFIX + ".endpoint";
 
@@ -34,6 +35,7 @@ public interface McpServerConfiguration {
      *
      * @return MCP Server endpoint. It applies to MCP Servers using HTTP transport. It defaults to {@value #DEFAULT_ENDPOINT}.
      */
+    @NonNull
     default String getEndpoint() {
         return DEFAULT_ENDPOINT;
     }
@@ -44,7 +46,6 @@ public interface McpServerConfiguration {
      * It should be either {@value TYPE_STATELESS_ASYNC} or {@value TYPE_STATELESS_SYNC} for HTTP transport.
      * @return The MCP Server Type.
      */
-    default ServerType getType() {
-        return DEFAULT_TYPE;
-    }
+    @NonNull
+    ServerType getType();
 }

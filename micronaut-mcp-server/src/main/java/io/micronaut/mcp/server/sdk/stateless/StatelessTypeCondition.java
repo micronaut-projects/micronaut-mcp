@@ -25,7 +25,8 @@ import io.micronaut.mcp.server.sdk.conf.ServerType;
 class StatelessTypeCondition implements Condition {
     @Override
     public boolean matches(ConditionContext context) {
-        ServerType type = context.getProperty(McpServerConfiguration.PROPERTY_TYPE, ServerType.class, ServerType.STATELESS_SYNC);
-        return type.equals(ServerType.STATELESS_ASYNC) || type.equals(ServerType.STATELESS_SYNC) ;
+        return context.getProperty(McpServerConfiguration.PROPERTY_TYPE, ServerType.class)
+            .map(type -> type.equals(ServerType.STATELESS_ASYNC) || type.equals(ServerType.STATELESS_SYNC))
+            .orElse(false);
     }
 }

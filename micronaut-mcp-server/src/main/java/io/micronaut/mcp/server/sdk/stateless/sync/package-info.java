@@ -16,7 +16,7 @@
 /**
  * Classes related to {@link io.modelcontextprotocol.server.McpSyncServer}.
  */
-@Requires(property = McpServerConfiguration.PROPERTY_TYPE, value = McpServerConfiguration.TYPE_STATELESS_SYNC, defaultValue = McpServerConfiguration.TYPE_STATELESS_SYNC)
+@Requires(property = McpServerConfiguration.PROPERTY_TYPE, value = McpServerConfiguration.TYPE_STATELESS_SYNC)
 @Configuration
 package io.micronaut.mcp.server.sdk.stateless.sync;
 
