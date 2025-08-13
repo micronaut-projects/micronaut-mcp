@@ -44,6 +44,7 @@ public record Request<P, I>(
     public Request(String method, I id) {
         this(VERSION_2_0, method, null, id);
     }
+
     public Request(String method, P params, I id) {
         this(VERSION_2_0, method, params, id);
     }

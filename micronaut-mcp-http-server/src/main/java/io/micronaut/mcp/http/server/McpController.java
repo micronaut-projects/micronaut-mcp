@@ -27,22 +27,34 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.RequestBean;
 import io.micronaut.http.annotation.Status;
+import io.micronaut.mcp.ErrorMcpResponse;
+import io.micronaut.mcp.McpRequest;
+import io.micronaut.mcp.McpRequestHandler;
+import io.micronaut.mcp.McpResponse;
+import io.micronaut.mcp.SuccessfulMcpResponse;
 import io.micronaut.mcp.jsonrpc.Request;
-import io.micronaut.mcp.jsonrpc.SuccessfulResponse;
 import jakarta.validation.Valid;
-import java.util.Collections;
 
 @Requires(property = McpControllerConfiguration.PROPERTY_ENABLED, notEquals = StringUtils.FALSE, defaultValue = StringUtils.TRUE)
 @Controller("${" + McpControllerConfiguration.PROPERTY_PATH + ":" + McpControllerConfiguration.DEFAULT_PATH + "}")
 @Internal
 class McpController {
-    private static final String MCP_METHOD_PING = "ping";
+    private final McpRequestHandler mcpRequestHandler;
+
+    McpController(McpRequestHandler mcpRequestHandler) {
+        this.mcpRequestHandler = mcpRequestHandler;
+    }
 
     @Post
     HttpResponse<?> mcpPost(@NonNull @RequestBean McpHttpRequest mcpHttpRequest,
                             @NonNull @Body @Valid Request<?, ?> jsonRpcRequest) {
-        if (jsonRpcRequest.method().equals(MCP_METHOD_PING)) { // //will implement a dispatcher API in future PRs
-            return HttpResponse.ok(new SuccessfulResponse<>(Collections.emptyMap(), jsonRpcRequest.id()));
+        McpRequest mcpRequest = new McpRequest(mcpHttpRequest.protocolVersion(), mcpHttpRequest.sessionId(), mcpHttpRequest.lastEventId(), jsonRpcRequest);
+        McpResponse mcpResponse = mcpRequestHandler.handle(mcpRequest);
+        if (mcpResponse instanceof SuccessfulMcpResponse rsp) {
+            return HttpResponse.ok(rsp.response());
+        }
+        if (mcpResponse instanceof ErrorMcpResponse rsp) {
+            return HttpResponse.unprocessableEntity().body(rsp.response());
         }
         return HttpResponse.unprocessableEntity();
     }
