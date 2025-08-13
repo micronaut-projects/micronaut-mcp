@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 /**
- * MCP Server implementation built with Micronaut using the MCP Java SDK.
+ * Micronaut MCP Server implementation built with Micronaut using the MCP Java SDK.
+ * <a href="https://github.com/modelcontextprotocol/java-sdk">MCP Java SDK</a>
  */
 package io.micronaut.mcp.server.sdk;
