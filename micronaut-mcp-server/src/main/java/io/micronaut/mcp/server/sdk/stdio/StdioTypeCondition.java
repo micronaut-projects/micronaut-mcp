@@ -18,13 +18,14 @@ package io.micronaut.mcp.server.sdk.stdio;
 import io.micronaut.context.condition.Condition;
 import io.micronaut.context.condition.ConditionContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.mcp.server.sdk.conf.McpServerConfiguration;
 import io.micronaut.mcp.server.sdk.conf.ServerType;
 
 @Internal
 class StdioTypeCondition implements Condition {
     @Override
     public boolean matches(ConditionContext context) {
-        ServerType type = context.getProperty("micronaut.mcp.server.type", ServerType.class, ServerType.STATELESS_SYNC);
+        ServerType type = context.getProperty(McpServerConfiguration.PROPERTY_TYPE, ServerType.class, ServerType.STATELESS_SYNC);
         return type.equals(ServerType.ASYNC) || type.equals(ServerType.SYNC) ;
     }
 }

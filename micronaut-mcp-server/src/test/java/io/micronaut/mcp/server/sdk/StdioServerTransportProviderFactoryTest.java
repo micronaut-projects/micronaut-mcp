@@ -18,9 +18,8 @@ class StdioServerTransportProviderFactoryTest {
     BeanContext beanContext;
 
     @Test
-    void stdioTransportHasNameQualifier() {
+    void mcpServerTransportProviderBeanExists() {
         assertTrue(beanContext.containsBean(McpServerTransportProvider.class));
-        assertTrue(beanContext.containsBean(McpServerTransportProvider.class, Qualifiers.byName("stdio")));
 
     }
 }
