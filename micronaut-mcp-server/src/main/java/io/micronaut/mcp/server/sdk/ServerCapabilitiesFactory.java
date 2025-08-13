@@ -19,6 +19,9 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.mcp.server.sdk.conf.PromptsConfiguration;
+import io.micronaut.mcp.server.sdk.conf.ResourcesConfiguration;
+import io.micronaut.mcp.server.sdk.conf.ToolsConfiguration;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -26,6 +29,10 @@ import io.modelcontextprotocol.spec.McpSchema;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Creates prototype instance of {@link McpSchema.ServerCapabilities.Builder} and {@link McpSchema.ServerCapabilities}.
+ * @since 1.0.0
+ */
 @Internal
 @Factory
 class ServerCapabilitiesFactory {
@@ -36,28 +43,31 @@ class ServerCapabilitiesFactory {
         List<McpServerFeatures.AsyncCompletionSpecification> asyncCompletions,
         List<McpStatelessServerFeatures.AsyncCompletionSpecification> statelessAsyncCompletions,
         List<McpStatelessServerFeatures.SyncCompletionSpecification> statelessSyncCompletions,
+        ResourcesConfiguration resourcesConfiguration,
         List<McpSchema.ResourceTemplate> resourceTemplates,
         List<McpSchema.Resource> resources,
         List<McpServerFeatures.SyncResourceSpecification> syncResources,
         List<McpStatelessServerFeatures.AsyncResourceSpecification> statelessAsyncResources,
         List<McpStatelessServerFeatures.SyncResourceSpecification> statelessSyncResources,
+        ToolsConfiguration toolsConfiguration,
         List<McpServerFeatures.SyncToolSpecification> syncTools,
         List<McpServerFeatures.AsyncToolSpecification> asyncTools,
         List<McpStatelessServerFeatures.AsyncToolSpecification> statelessAsyncTools,
         List<McpStatelessServerFeatures.SyncToolSpecification> statelessSyncTools,
+        PromptsConfiguration promptsConfiguration,
         List<McpServerFeatures.SyncPromptSpecification> syncPrompts,
         List<McpServerFeatures.AsyncPromptSpecification> asyncPrompts,
         List<McpStatelessServerFeatures.SyncPromptSpecification> statelessSyncPrompts,
         List<McpStatelessServerFeatures.AsyncPromptSpecification> statelessAsyncPrompts) {
         McpSchema.ServerCapabilities.Builder builder = McpSchema.ServerCapabilities.builder();
         if (CollectionUtils.isNotEmpty(syncTools) || CollectionUtils.isNotEmpty(asyncTools) || CollectionUtils.isNotEmpty(statelessAsyncTools) || CollectionUtils.isNotEmpty(statelessSyncTools)) {
-            builder.tools(true); // should listChanged be set to true?
+            builder.tools(toolsConfiguration.isListChanged());
         }
         if (CollectionUtils.isNotEmpty(syncPrompts) || CollectionUtils.isNotEmpty(asyncPrompts) || CollectionUtils.isNotEmpty(statelessSyncPrompts) || CollectionUtils.isNotEmpty(statelessAsyncPrompts)) {
-            builder.prompts(true); // should listChanged be set to true?
+            builder.prompts(promptsConfiguration.isListChanged());
         }
         if (CollectionUtils.isNotEmpty(resourceTemplates) || CollectionUtils.isNotEmpty(resources) || CollectionUtils.isNotEmpty(syncResources) || CollectionUtils.isNotEmpty(statelessAsyncResources) || CollectionUtils.isNotEmpty(statelessSyncResources)) {
-            builder.resources(true, true); // should subscribe and listChanged be set to true?
+            builder.resources(resourcesConfiguration.isSubscribe(), resourcesConfiguration.isListChanged());
         }
         if (CollectionUtils.isNotEmpty(syncCompletions) || CollectionUtils.isNotEmpty(asyncCompletions) || CollectionUtils.isNotEmpty(statelessAsyncCompletions) || CollectionUtils.isNotEmpty(statelessSyncCompletions)) {
             builder.completions();
