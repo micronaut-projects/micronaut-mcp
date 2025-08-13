@@ -19,6 +19,8 @@
  * @since 1.0.0
  */
 @Requires(condition = StatelessTypeCondition.class)
+@Configuration
 package io.micronaut.mcp.server.sdk.stateless;
 
+import io.micronaut.context.annotation.Configuration;
 import io.micronaut.context.annotation.Requires;
