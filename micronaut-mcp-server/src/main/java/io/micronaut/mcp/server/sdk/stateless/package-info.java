@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 /**
- * Classes related to MCP Servers using HTTP Transport.
+ * Classes related to MCP Servers using {@link io.modelcontextprotocol.server.McpStatelessSyncServer} and
+ * {@link io.modelcontextprotocol.server.McpStatelessAsyncServer}.
+ * @since 1.0.0
  */
 @Requires(condition = StatelessTypeCondition.class)
 package io.micronaut.mcp.server.sdk.stateless;
