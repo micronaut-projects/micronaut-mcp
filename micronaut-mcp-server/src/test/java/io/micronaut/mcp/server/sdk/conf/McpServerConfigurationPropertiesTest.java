@@ -12,4 +12,11 @@ class McpServerConfigurationPropertiesTest {
         properties.setType(ServerType.SYNC);
         assertEquals(ServerType.SYNC, properties.getType());
     }
+
+    @Test
+    void canSetEndpointViaSetter() {
+        McpServerConfigurationProperties properties = new McpServerConfigurationProperties();
+        properties.setEndpoint("/modelcontextprotocol");
+        assertEquals("/modelcontextprotocol", properties.getEndpoint());
+    }
 }
