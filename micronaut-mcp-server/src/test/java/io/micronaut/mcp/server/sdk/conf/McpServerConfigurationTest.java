@@ -12,4 +12,9 @@ class McpServerConfigurationTest {
     void defaultToStatelessAsync(McpServerConfiguration configuration) {
         assertEquals(ServerType.STATELESS_SYNC, configuration.getType());
     }
+
+    @Test
+    void defaultEndpoint(McpServerConfiguration configuration) {
+        assertEquals("/mcp", configuration.getEndpoint());
+    }
 }

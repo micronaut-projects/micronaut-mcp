@@ -17,6 +17,7 @@ package io.micronaut.mcp.server.sdk.conf;
 
 /**
  * MCP Server Configuration.
+ * @since 1.0.0
  */
 public interface McpServerConfiguration {
     String PREFIX = "micronaut.mcp.server";
@@ -29,13 +30,19 @@ public interface McpServerConfiguration {
     String DEFAULT_ENDPOINT = "/mcp";
     String PROPERTY_ENDPOINT = PREFIX + ".endpoint";
 
+    /**
+     *
+     * @return MCP Server endpoint. It applies to MCP Servers using HTTP transport. It defaults to {@value #DEFAULT_ENDPOINT}.
+     */
     default String getEndpoint() {
         return DEFAULT_ENDPOINT;
     }
 
     /**
-     *
-     * @return The MCP Server Type
+     * It defaults to {@value #TYPE_STATELESS_SYNC}.
+     * It should be either {@value TYPE_SYNC} or {@value TYPE_ASYNC} for stdio transport.
+     * It should be either {@value TYPE_STATELESS_ASYNC} or {@value TYPE_STATELESS_SYNC} for HTTP transport.
+     * @return The MCP Server Type.
      */
     default ServerType getType() {
         return DEFAULT_TYPE;
