@@ -14,6 +14,10 @@ import jakarta.inject.Singleton;
 import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Map;
 
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_TOOLS_CALL;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_TOOLS_LIST;
@@ -45,28 +49,18 @@ class StatelessSyncToolsTest {
     @Requires(property = "spec.name", value = "ToolsTest")
     @Factory
     static class FenEvaluationTool {
-        public static final String FEN_EVALUATION_SCHEMA = """
-            {
-              "type" : "object",
-              "id" : "urn:jsonschema:Operation",
-              "properties" : {
-                "fen" : {
-                  "type" : "string"
-                }
-              }
-            }
-            """;
-
         @Singleton
         McpStatelessServerFeatures.SyncToolSpecification getAlertsTools() {
-            McpSchema.Tool tool = new McpSchema.Tool("fenEvaluation",
-                "Evaluate a chess position using a FEN string.", FEN_EVALUATION_SCHEMA);
-            return new McpStatelessServerFeatures.SyncToolSpecification(tool,
-                (exchange, arguments) -> {
-                    return new McpSchema.CallToolResult("+0.27", false);
-                }
-            );
+            McpSchema.JsonSchema fenSchema = new McpSchema.JsonSchema("string", null,null, null, null, null);
+            McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema("object", Map.of("fen", fenSchema), List.of("fen"), null, null, null);
+            return McpStatelessServerFeatures.SyncToolSpecification.builder()
+                .tool(McpSchema.Tool.builder()
+                .name("fenEvaluation")
+                .description("Evaluate a chess position using a FEN string.")
+                .inputSchema(inputSchema)
+                .build())
+                .callHandler((exchange, arguments) -> new McpSchema.CallToolResult("+0.27", false))
+                .build();
         }
     }
-
 }

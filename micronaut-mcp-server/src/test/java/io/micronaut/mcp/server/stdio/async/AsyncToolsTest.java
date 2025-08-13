@@ -9,6 +9,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.server.utils.Stdio;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
@@ -22,6 +23,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_TOOLS_CALL;
@@ -80,25 +82,18 @@ class AsyncToolsTest {
     @Requires(property = "spec.name", value = "AsyncToolsTest")
     @Factory
     static class FenEvaluationTool {
-        public static final String FEN_EVALUATION_SCHEMA = """
-            {
-              "type" : "object",
-              "id" : "urn:jsonschema:Operation",
-              "properties" : {
-                "fen" : {
-                  "type" : "string"
-                }
-              }
-            }
-            """;
-
         @Singleton
         McpServerFeatures.AsyncToolSpecification getAlertsTools() {
-            McpSchema.Tool tool = new McpSchema.Tool("fenEvaluation",
-                "Evaluate a chess position using a FEN string.", FEN_EVALUATION_SCHEMA);
-            return new McpServerFeatures.AsyncToolSpecification(tool,
-                (exchange, arguments) -> Mono.just(new McpSchema.CallToolResult("+0.27", false))
-            );
+            McpSchema.JsonSchema fenSchema = new McpSchema.JsonSchema("string", null,null, null, null, null);
+            McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema("object", Map.of("fen", fenSchema), List.of("fen"), null, null, null);
+            return McpServerFeatures.AsyncToolSpecification.builder()
+                .tool(McpSchema.Tool.builder()
+                .name("fenEvaluation")
+                .description("Evaluate a chess position using a FEN string.")
+                .inputSchema(inputSchema)
+                .build())
+                .callHandler((exchange, arguments) -> Mono.just(new McpSchema.CallToolResult("+0.27", false)))
+                .build();
         }
     }
 

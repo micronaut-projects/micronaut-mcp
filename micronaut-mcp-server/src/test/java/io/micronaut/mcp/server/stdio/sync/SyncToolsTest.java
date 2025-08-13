@@ -18,9 +18,11 @@ import jakarta.inject.Singleton;
 import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -80,25 +82,18 @@ class SyncToolsTest {
     @Requires(property = "spec.name", value = "SyncToolsTest")
     @Factory
     static class FenEvaluationTool {
-        public static final String FEN_EVALUATION_SCHEMA = """
-            {
-              "type" : "object",
-              "id" : "urn:jsonschema:Operation",
-              "properties" : {
-                "fen" : {
-                  "type" : "string"
-                }
-              }
-            }
-            """;
-
         @Singleton
         McpServerFeatures.SyncToolSpecification getAlertsTools() {
-            McpSchema.Tool tool = new McpSchema.Tool("fenEvaluation",
-                "Evaluate a chess position using a FEN string.", FEN_EVALUATION_SCHEMA);
-            return new McpServerFeatures.SyncToolSpecification(tool,
-                (exchange, arguments) -> new McpSchema.CallToolResult("+0.27", false)
-            );
+            McpSchema.JsonSchema fenSchema = new McpSchema.JsonSchema("string", null,null, null, null, null);
+            McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema("object", Map.of("fen", fenSchema), List.of("fen"), null, null, null);
+            return McpServerFeatures.SyncToolSpecification.builder()
+                .tool(McpSchema.Tool.builder()
+                .name("fenEvaluation")
+                .description("Evaluate a chess position using a FEN string.")
+                .inputSchema(inputSchema)
+                .build())
+                .callHandler((exchange, arguments) -> new McpSchema.CallToolResult("+0.27", false))
+                .build();
         }
     }
 

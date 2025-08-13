@@ -18,7 +18,9 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_TOOLS_CALL;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_TOOLS_LIST;
@@ -51,27 +53,18 @@ class StatelessAsyncToolsTest {
     @Requires(property = "spec.name", value = "StatelessAsyncToolsTest")
     @Factory
     static class FenEvaluationTool {
-        public static final String FEN_EVALUATION_SCHEMA = """
-            {
-              "type" : "object",
-              "id" : "urn:jsonschema:Operation",
-              "properties" : {
-                "fen" : {
-                  "type" : "string"
-                }
-              }
-            }
-            """;;
-
         @Singleton
         McpStatelessServerFeatures.AsyncToolSpecification getAlertsTools() {
-            McpSchema.Tool tool = new McpSchema.Tool("fenEvaluation",
-                "Evaluate a chess position using a FEN string.", FEN_EVALUATION_SCHEMA);
-            return new McpStatelessServerFeatures.AsyncToolSpecification(tool,
-                (exchange, arguments) -> {
-                    return Mono.just(new McpSchema.CallToolResult("+0.27", false));
-                }
-            );
+            McpSchema.JsonSchema fenSchema = new McpSchema.JsonSchema("string", null,null, null, null, null);
+            McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema("object", Map.of("fen", fenSchema), List.of("fen"), null, null, null);
+            return McpStatelessServerFeatures.AsyncToolSpecification.builder()
+                .tool(McpSchema.Tool.builder()
+                .name("fenEvaluation")
+                .description("Evaluate a chess position using a FEN string.")
+                .inputSchema(inputSchema)
+                .build())
+                .callHandler((exchange, arguments) -> Mono.just(new McpSchema.CallToolResult("+0.27", false)))
+                .build();
         }
     }
 

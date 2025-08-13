@@ -4,6 +4,12 @@ public final class JsonRpcMessages {
     private JsonRpcMessages() {
     }
 
+    public static final String PROMPTS_LIST = """
+             {"jsonrpc":"2.0","id":0,"method":"prompts/list","params":{}}""";
+
+    public static final String EXPECTED_PROMPTS = """
+        {"jsonrpc":"2.0","id":0,"result":{"prompts":[{"name":"chess-statistics","description":"Displays statistics for chess games","arguments":[{"name":"name","description":"Player Name","required":true}]}]}}""";
+
     public static final String INITIALIZE = """
              {"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"sampling":{},"elicitation":{},"roots":{"listChanged":true}},"clientInfo":{"name":"mcp-inspector","version":"0.16.3"}}}""";
 
@@ -90,9 +96,9 @@ public final class JsonRpcMessages {
 
     public static final String TOOLS_CALL = """
         {"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"_meta":{"progressToken":4},"name":"fenEvaluation","arguments":{"fen":"\\n        String expected = \\"\\"\\"\\n    {\\"jsonrpc\\":\\"2.0\\",\\"id\\":2,\\"result\\":{\\"tools\\":[{\\"name\\":\\"fenEvaluation\\",\\"description\\":\\"Evaluate a chess position using a FEN string.\\",\\"inputSchema\\":{\\"type\\":\\"object\\",\\"properties\\":{\\"fen\\":{\\"type\\":\\"string\\"}}}}]}}\\n    \\"\\"\\";"}}}""";
-    
+
     public static final String EXPECTED_TOOLS_LIST = """
-        {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"fen":{"type":"string"}}}}]}}""";
+        {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"fen":{"type":"string"}},"required":["fen"]}}]}}""";
 
     public static final String TOOLS_LIST = """
         {"jsonrpc":"2.0","id":3,"method":"tools/list","params":{"_meta":{"progressToken":3}}}""";
