@@ -13,7 +13,6 @@ rootProject.name = 'micronaut-mcp-parent'
 include 'micronaut-mcp-server'
 include 'micronaut-mcp-client-langchain4j'
 include 'micronaut-mcp-bom'
-include 'test-suite-cli-stdio'
 
 enableFeaturePreview 'TYPESAFE_PROJECT_ACCESSORS'
 
