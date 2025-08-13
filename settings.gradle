@@ -13,9 +13,7 @@ rootProject.name = 'micronaut-mcp-parent'
 include 'micronaut-mcp-server'
 include 'micronaut-mcp-client-langchain4j'
 include 'micronaut-mcp-bom'
-include 'test-suite-stateless-resources'
 include 'test-suite-cli-stdio'
-include 'test-suite-cli-stdio-weather'
 
 enableFeaturePreview 'TYPESAFE_PROJECT_ACCESSORS'
 
