@@ -27,8 +27,20 @@ import jakarta.inject.Singleton;
 @Internal
 @Singleton
 class DefaultMcpTransportContextExtractor implements McpTransportContextExtractor<HttpRequest<?>> {
+    public static final String HTTP_HEADER_MCP_PROTOCOL_VERSION = "MCP-Protocol-Version";
+    public static final String DEFAULT_PROTOCOL_VERSION = "2025-03-26";
+    public static final String HTTP_HEADER_MCP_SESSION_ID = "Mcp-Session-Id";
+    public static final String HTTP_HEADER_DEFAULT_LAST_EVENT_ID = "Last-Event-ID";
+
     @Override
     public McpTransportContext extract(HttpRequest<?> request, McpTransportContext transportContext) {
+        transportContext.put(HTTP_HEADER_MCP_PROTOCOL_VERSION,
+            request.getHeaders().get(HTTP_HEADER_MCP_PROTOCOL_VERSION, String.class)
+                .orElse(DEFAULT_PROTOCOL_VERSION));
+        request.getHeaders().get(HTTP_HEADER_MCP_SESSION_ID, String.class)
+            .ifPresent(v -> transportContext.put(HTTP_HEADER_MCP_SESSION_ID, v));
+        request.getHeaders().get(HTTP_HEADER_DEFAULT_LAST_EVENT_ID, String.class)
+            .ifPresent(v -> transportContext.put(HTTP_HEADER_DEFAULT_LAST_EVENT_ID, v));
         return transportContext;
     }
 }
