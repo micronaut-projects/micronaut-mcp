@@ -32,6 +32,7 @@ import java.util.List;
 @Factory
 @Internal
 class McpServerAsyncFactory {
+    @SuppressWarnings({"java:S107", "java:S3740"})
     @Prototype
     McpServer.AsyncSpecification createMcpServerSyncSpecification(McpServerTransportProvider mcpServerTransportProvider,
                                                                  @Nullable McpServerInfoConfiguration mcpServerInfoConfiguration,
@@ -65,7 +66,7 @@ class McpServerAsyncFactory {
     }
 
     @Context
-    McpAsyncServer createMcpSyncServer(McpServer.AsyncSpecification asyncSpecification) {
+    McpAsyncServer createMcpSyncServer(@SuppressWarnings("java:S3740")McpServer.AsyncSpecification asyncSpecification) {
         return asyncSpecification.build();
     }
 }

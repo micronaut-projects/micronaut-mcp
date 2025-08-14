@@ -44,7 +44,7 @@ import java.io.IOException;
 @Controller("${" + McpServerConfiguration.PROPERTY_ENDPOINT + ":" + McpServerConfiguration.DEFAULT_ENDPOINT + "}")
 @Internal
 class McpController {
-    private final Logger LOG = LoggerFactory.getLogger(McpController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(McpController.class);
 
     private final ObjectMapper objectMapper;
     private final McpStatelessServerHandler mcpHandler;
@@ -58,10 +58,11 @@ class McpController {
         this.contextExtractor = contextExtractor;
     }
 
+    @SuppressWarnings("java:S3740")
     @ExecuteOn(TaskExecutors.IO)
     @Produces({MediaType.APPLICATION_JSON,  MediaType.TEXT_EVENT_STREAM})
     @Post
-    public Mono<MutableHttpResponse<?>> handlePost(HttpRequest<?> request, @Body String body) {
+    public Mono<MutableHttpResponse> handlePost(HttpRequest<?> request, @Body String body) {
         McpTransportContext transportContext = contextExtractor.extract(request, new DefaultMcpTransportContext());
         try {
             McpSchema.JSONRPCMessage message = McpSchema.deserializeJsonRpcMessage(objectMapper, body);
@@ -70,22 +71,23 @@ class McpController {
             } else if (message instanceof McpSchema.JSONRPCNotification jsonrpcNotification) {
                 return handleJsonRpcNotification(jsonrpcNotification, transportContext);
             } else {
-                return Mono.just(HttpResponse.badRequest(new McpError("The server accepts either requests or notifications")));
+                return Mono.just(HttpResponse.badRequest(mcpError(McpSchema.ErrorCodes.INVALID_REQUEST, "The server accepts either requests or notifications")));
             }
         } catch (IllegalArgumentException | IOException e) {
             if (LOG.isErrorEnabled()) {
                 LOG.error("Failed to deserialize message: {}", e.getMessage());
             }
-            return Mono.just(HttpResponse.badRequest(new McpError("Invalid message format")));
+            return Mono.just(HttpResponse.badRequest(mcpError(McpSchema.ErrorCodes.PARSE_ERROR, "Invalid message format")));
         } catch (Exception e) {
             if (LOG.isErrorEnabled()) {
                 LOG.error("Unexpected error handling message: {}", e.getMessage());
             }
-            return Mono.just(HttpResponse.serverError(new McpError("Unexpected error: " + e.getMessage())));
+            return Mono.just(HttpResponse.serverError(mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Unexpected error: " + e.getMessage())));
         }
     }
 
-    private Mono<MutableHttpResponse<?>> handleJsonRpcNotification(McpSchema.JSONRPCNotification jsonrpcNotification, McpTransportContext transportContext) {
+    @SuppressWarnings("java:S3740")
+    private Mono<MutableHttpResponse> handleJsonRpcNotification(McpSchema.JSONRPCNotification jsonrpcNotification, McpTransportContext transportContext) {
         try {
             return mcpHandler.handleNotification(transportContext, jsonrpcNotification)
                 .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
@@ -95,11 +97,12 @@ class McpController {
                 LOG.error("Failed to handle notification: {}", e.getMessage());
             }
             return Mono.just(HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new McpError("Failed to handle notification: " + e.getMessage())));
+                .body(mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Failed to handle notification: " + e.getMessage())));
         }
     }
 
-    private Mono<MutableHttpResponse<?>> handleJsonRpcRequest(McpSchema.JSONRPCRequest jsonrpcRequest, McpTransportContext transportContext) {
+    @SuppressWarnings("java:S3740")
+    private Mono<MutableHttpResponse> handleJsonRpcRequest(McpSchema.JSONRPCRequest jsonrpcRequest, McpTransportContext transportContext) {
         try {
             Mono<McpSchema.JSONRPCResponse> jsonrpcResponse = mcpHandler.handleRequest(transportContext, jsonrpcRequest)
                 .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext));
@@ -109,7 +112,13 @@ class McpController {
                 LOG.error("Failed to handle request: {}", e.getMessage());
             }
             return Mono.just(HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new McpError("Failed to handle request: " + e.getMessage())));
+                .body(mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Failed to handle request: " + e.getMessage())));
         }
+    }
+
+    private static McpError mcpError(int error, String message) {
+        return McpError.builder(error)
+            .message(message)
+            .build();
     }
 }

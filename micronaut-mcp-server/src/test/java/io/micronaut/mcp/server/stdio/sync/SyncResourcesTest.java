@@ -9,7 +9,6 @@ import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.io.ResourceLoader;
 import io.micronaut.mcp.server.utils.PgnLoader;
 import io.micronaut.mcp.server.utils.Stdio;
@@ -21,17 +20,12 @@ import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +50,7 @@ class SyncResourcesTest {
     @Inject
     SyncResourcesFactory factory;
 
+    @SuppressWarnings("java:S2925")
     @Test
     void syncResources() throws IOException, InterruptedException, JSONException {
         factory.stdio.sendRequest(INITIALIZE);

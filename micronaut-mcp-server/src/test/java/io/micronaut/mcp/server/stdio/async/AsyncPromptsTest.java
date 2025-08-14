@@ -9,7 +9,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.server.utils.Stdio;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.server.McpServerFeatures;
-import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
@@ -26,15 +25,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_PROMPTS;
-import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_RESOURCES_LIST;
-import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_RESOURCES_LIST_TEMPLATES;
-import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_RESOURCES_READ;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZE;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZED;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.PROMPTS_LIST;
-import static io.micronaut.mcp.server.utils.JsonRpcMessages.RESOURCES_LIST;
-import static io.micronaut.mcp.server.utils.JsonRpcMessages.RESOURCES_READ;
-import static io.micronaut.mcp.server.utils.JsonRpcMessages.RESOURCES_TEMPLATES_LIST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Property(name = "micronaut.mcp.server.info.name", value="world-chess-championship-2024-pgn")
@@ -46,6 +39,7 @@ class AsyncPromptsTest {
     @Inject
     ReplacementMcpServerTransportProviderFactory factory;
 
+    @SuppressWarnings("java:S2925")
     @Test
     void asyncPrompts() throws IOException, InterruptedException, JSONException {
         factory.stdio.sendRequest(INITIALIZE);

@@ -9,7 +9,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.server.utils.Stdio;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.server.McpServerFeatures;
-import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
@@ -43,6 +42,7 @@ class AsyncToolsTest {
     @Inject
     SyncInitializeTestFactory factory;
 
+    @SuppressWarnings("java:S2925")
     @Test
     void asyncTools() throws JSONException, IOException, InterruptedException {
         factory.stdio.sendRequest(INITIALIZE);

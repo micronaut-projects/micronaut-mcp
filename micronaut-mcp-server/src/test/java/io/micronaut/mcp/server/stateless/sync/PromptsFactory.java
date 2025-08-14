@@ -1,4 +1,5 @@
 package io.micronaut.mcp.server.stateless.sync;
+
 /*
 //tag::fakepackage[]
 package example.micronaut;
@@ -6,18 +7,13 @@ package example.micronaut;
 //end::fakepackage[]
  */
 //tag::imports[]
-import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.mcp.server.utils.PgnLoader;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import static io.micronaut.mcp.server.stateless.sync.ResourcesFactory.PGN_MIME_TYPE;
 
 //end::imports[]
 

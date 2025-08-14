@@ -2,7 +2,6 @@ package io.micronaut.mcp.server;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Property;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import jakarta.inject.Inject;

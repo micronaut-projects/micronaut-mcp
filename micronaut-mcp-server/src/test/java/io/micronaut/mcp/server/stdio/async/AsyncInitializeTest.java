@@ -19,7 +19,6 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import java.io.IOException;
 import java.util.List;
 
-import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_INITIALIZATION;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_INITIALIZATION_2024;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZE;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

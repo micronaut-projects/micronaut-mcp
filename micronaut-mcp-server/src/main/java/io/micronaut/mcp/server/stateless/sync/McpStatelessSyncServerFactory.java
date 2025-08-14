@@ -33,6 +33,7 @@ import java.util.List;
 @Factory
 @Internal
 class McpStatelessSyncServerFactory {
+    @SuppressWarnings({"java:S107"})
     @Prototype
     McpServer.StatelessSyncSpecification createMcpServerSyncSpecification(McpStatelessServerTransport mcpStatelessServerTransport,
                                                                           @Nullable McpServerInfoConfiguration mcpServerInfoConfiguration,

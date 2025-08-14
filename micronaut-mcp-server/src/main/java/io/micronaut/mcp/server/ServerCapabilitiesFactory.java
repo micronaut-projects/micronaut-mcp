@@ -36,7 +36,7 @@ import java.util.Map;
 @Internal
 @Factory
 class ServerCapabilitiesFactory {
-    @SuppressWarnings("ParameterNumber")
+    @SuppressWarnings("java:S107")
     @Prototype
     McpSchema.ServerCapabilities.Builder createServerCapabilitiesBuilder(
         List<McpServerFeatures.SyncCompletionSpecification> syncCompletions,

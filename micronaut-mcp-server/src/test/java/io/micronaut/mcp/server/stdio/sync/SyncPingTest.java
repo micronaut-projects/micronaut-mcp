@@ -18,9 +18,7 @@ import org.skyscreamer.jsonassert.JSONAssert;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZE;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZED;
@@ -39,8 +37,9 @@ class SyncPingTest {
     @Inject
     SyncInitializeTestFactory factory;
 
+    @SuppressWarnings("java:S2925")
     @Test
-    void syncPing() throws JSONException, IOException, ExecutionException, InterruptedException, TimeoutException {
+    void syncPing() throws JSONException, IOException, InterruptedException {
         factory.stdio.sendRequest(INITIALIZE);
         Thread.sleep(TimeUnit.SECONDS.toMillis(1));
         factory.stdio.sendRequest(INITIALIZED);

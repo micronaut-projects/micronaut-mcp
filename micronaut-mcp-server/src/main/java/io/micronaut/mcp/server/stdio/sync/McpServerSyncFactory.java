@@ -27,15 +27,14 @@ import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
-import jakarta.inject.Singleton;
 
 import java.util.List;
 
 @Internal
 @Factory
 class McpServerSyncFactory {
+    @SuppressWarnings({"java:S107", "java:S3740"})
     @Prototype
-    @Singleton
     McpServer.SyncSpecification createMcpServerSyncSpecification(McpServerTransportProvider mcpServerTransportProvider,
                                                                  @Nullable McpServerInfoConfiguration mcpServerInfoConfiguration,
                                                                  McpSchema.ServerCapabilities mcpServerCapabilities,
@@ -67,6 +66,7 @@ class McpServerSyncFactory {
         return spec;
     }
 
+    @SuppressWarnings("java:S3740")
     @Context
     McpSyncServer createMcpSyncServer(McpServer.SyncSpecification syncSpecification) {
         return syncSpecification.build();

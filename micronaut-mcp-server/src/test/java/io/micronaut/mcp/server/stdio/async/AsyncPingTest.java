@@ -37,6 +37,7 @@ class AsyncPingTest {
     @Inject
     AsyncInitializeTestFactory factory;
 
+    @SuppressWarnings("java:S2925")
     @Test
     void asyncPing() throws JSONException, IOException, InterruptedException {
         factory.stdio.sendRequest(INITIALIZE);

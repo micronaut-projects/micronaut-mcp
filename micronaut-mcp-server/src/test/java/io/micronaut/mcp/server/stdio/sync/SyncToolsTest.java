@@ -18,14 +18,10 @@ import jakarta.inject.Singleton;
 import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
-import reactor.core.publisher.Mono;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_TOOLS_CALL;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_TOOLS_LIST;
@@ -43,8 +39,9 @@ class SyncToolsTest {
     @Inject
     SyncInitializeTestFactory factory;
 
+    @SuppressWarnings("java:S2925")
     @Test
-    void syncTools() throws JSONException, IOException, ExecutionException, InterruptedException, TimeoutException {
+    void syncTools() throws JSONException, IOException, InterruptedException {
         factory.stdio.sendRequest(INITIALIZE);
         Thread.sleep(TimeUnit.SECONDS.toMillis(1));
         factory.stdio.sendRequest(INITIALIZED);

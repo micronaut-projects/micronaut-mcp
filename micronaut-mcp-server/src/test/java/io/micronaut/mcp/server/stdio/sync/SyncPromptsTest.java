@@ -18,7 +18,6 @@ import jakarta.inject.Singleton;
 import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
-import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.List;
@@ -39,6 +38,7 @@ class SyncPromptsTest {
     @Inject
     ReplacementMcpServerTransportProviderFactory factory;
 
+    @SuppressWarnings("java:S2925")
     @Test
     void syncPrompts() throws IOException, InterruptedException, JSONException {
         factory.stdio.sendRequest(INITIALIZE);
