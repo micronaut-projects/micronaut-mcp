@@ -1,5 +1,8 @@
 package io.micronaut.mcp.server.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -8,20 +11,13 @@ import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class Stdio implements AutoCloseable {
+    private static final Logger LOG = LoggerFactory.getLogger(Stdio.class);
     public final PipedOutputStream clientToServer;
     public final PipedInputStream serverToClient;   // read responses
     public final PipedInputStream  serverStdin;
     public final PipedOutputStream serverStdout;
-    private final ExecutorService serverExecutor = Executors.newSingleThreadExecutor();
     private static final byte NEWLINE = (byte) '\n';
 
     public Stdio() {
@@ -61,23 +57,17 @@ public class Stdio implements AutoCloseable {
 
     @Override
     public void close() {
-        try { clientToServer.flush(); } catch (IOException ignored) {}
-        try { clientToServer.close(); } catch (IOException ignored) {}
-        try { serverStdout.flush(); } catch (IOException ignored) {}
-        try { serverStdout.close(); } catch (IOException ignored) {}
-
-        serverExecutor.shutdown();
         try {
-            serverExecutor.awaitTermination(1, java.util.concurrent.TimeUnit.SECONDS);
-        } catch (InterruptedException ignored) {
-            Thread.currentThread().interrupt();
-        } finally {
-            if (!serverExecutor.isTerminated()) {
-                serverExecutor.shutdownNow();
-            }
-        }
+            clientToServer.flush();
+            clientToServer.close();
 
-        try { serverStdin.close(); } catch (IOException ignored) {}
-        try { serverToClient.close(); } catch (IOException ignored) {}
+            serverStdout.flush();
+            serverStdout.close();
+
+            serverStdin.close();
+            serverToClient.close();
+        } catch (IOException e) {
+            LOG.warn(e.getMessage(), e);
+        }
     }
 }
