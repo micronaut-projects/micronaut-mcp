@@ -6,15 +6,9 @@ package example.micronaut;
 //end::fakepackage[]
  */
 //tag::imports[]
-import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.annotations.Tool;
-import io.modelcontextprotocol.server.McpStatelessServerFeatures;
-import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
-
-import java.util.List;
-import java.util.Map;
 //end::imports[]
 
 @Requires(property = "spec.name", value = "StatelessSyncToolAnnotationTest")
