@@ -1,0 +1,21 @@
+WARNING: If you use https://modelcontextprotocol.io/docs/concepts/transports#standard-input%2Foutput-stdio[Standard Input/Output (stdio) protocol], your server MUST NOT write anything to its `stdout`.
+
+Disable the https://docs.micronaut.io/4.9.9/guide/#banner[Micronaut banner] and configure Logback not to log to `stdout`.
+
+For example, you can configure https://logback.qos.ch[Logback] to log to a file or to `stderr` (see `<target>System.err</target>` in the configuration file below):
+
+[source, xml]
+----
+<configuration>
+    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDERR" />
+    </root>
+</configuration>
+----

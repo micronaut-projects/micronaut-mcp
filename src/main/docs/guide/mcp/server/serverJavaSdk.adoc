@@ -1,21 +1,87 @@
-To expose an MCP Server based on the https://github.com/modelcontextprotocol/java-sdk[MCP Java SDK], use the following dependency:
+Micronaut MCP Server support is based on the https://github.com/modelcontextprotocol/java-sdk[MCP Java SDK].
+
+You need to use the following dependency:
 
 dependency:micronaut-mcp-server[groupId=io.micronaut.mcp]
 
-WARNING: The MCP Java SDK is coupled to Jackson Databind.
-Thus, you will need to use https://docs.micronaut.io/latest/guide/#serializationUsingJacksonDatabind[Micronaut Jackson Databind] instead of https://micronaut-projects.github.io/micronaut-serialization/latest/guide/[Micronaut Serialization].
+WARNING: The MCP Java SDK is coupled to Jackson Databind. Thus, you will need to use https://docs.micronaut.io/latest/guide/#serializationUsingJacksonDatabind[Micronaut Jackson Databind] instead of https://micronaut-projects.github.io/micronaut-serialization/latest/guide/[Micronaut Serialization].
 
-[source, java]
+== Server Type
+
+To create a server, you will need to define the property `micronaut.mcp.server.type`
+with one of the values `SYNC`, `ASYNC`, `STATELESS_SYNC`, `STATELESS_ASYNC`.
+
+The async types allow you to define primitives (tools, prompts or resources) with call handlers wrapped in a Project Reactor `Mono`.
+
+For https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#stdio[stdio transport], choose either `SYNC` or `ASYNC`.
+
+For https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#streamable-http[HTTP transport], choose either `STATELESS_SYNC` or `STATELESS_ASYNC`.
+
+Then, to create primitives (tools, prompts or resources), you will create beans of a particular type (typically in a https://docs.micronaut.io/latest/guide/#factories[bean factory]).
+The bean type depends on the server type selected:
+
+|===
+| `micronaut.mcp.server.type` | Transport | Prompt Bean Type | Tool Bean Type | Resource Bean Type | Resource Template Bean Type
+
+|SYNC
+|stdio
+|`McpServerFeatures.SyncPromptSpecification`
+|`McpServerFeatures.SyncToolSpecification`
+|`McpServerFeatures.SyncResourceSpecification`
+|`McpSchema.ResourceTemplate`
+
+|ASYNC
+|stdio
+|`McpServerFeatures.AsyncPromptSpecification`
+|`McpServerFeatures.AsyncToolSpecification`
+|`McpServerFeatures.AsyncResourceSpecification`
+|`McpSchema.ResourceTemplate`
+
+|STATELESS_SYNC
+|http
+|`McpStatelessServerFeatures.SyncPromptSpecification`
+|`McpStatelessServerFeatures.SyncToolSpecification`
+|`McpServerFeatures.SyncResourceSpecification`
+|`McpSchema.ResourceTemplate`
+
+|STATELESS_ASYNC
+|http
+|`McpStatelessServerFeatures.AsyncPromptSpecification`
+|`McpStatelessServerFeatures.AsyncToolSpecification`
+|`McpStatelessServerFeatures.AsyncResourceSpecification`
+|`McpSchema.ResourceTemplate`
+|===
+
+== STDIO Transport Sample configuration
+For stdio transport, your configuration may look like
+
+[configuration]
 ----
-include::test-suite-cli-stdio/src/main/java/example/micronaut/McpServerCommand.java[]
+micronaut:
+  mcp:
+    server:
+      type: SYNC
+      info:
+        name: 'pgn-resources'
+        version: '1.0.0'
 ----
 
-WARNING: If you use https://modelcontextprotocol.io/docs/concepts/transports#standard-input%2Foutput-stdio[Standard Input/Output (stdio) protocol],
-make sure Logback is not logging to the standard output.
+== HTTP Transport Sample configuration
 
-For example, you can configure Logback to log to a file:
+[configuration]
+----
+micronaut:
+  mcp:
+    server:
+      type: STATELESS_SYNC
+      info:
+        name: 'pgn-resources'
+        version: '1.0.0'
+----
 
-[source, xmo]
-----
-include::test-suite-cli-stdio/src/main/resources/logback.xml[]
-----
+
+
+
+In addition, you can create beans of type https://docs.micronaut.io/latest/guide/#events[`BeanCreatedEventListener`] to listener to builders:
+
+- `McpSchema.ServerCapabilities.Builder`

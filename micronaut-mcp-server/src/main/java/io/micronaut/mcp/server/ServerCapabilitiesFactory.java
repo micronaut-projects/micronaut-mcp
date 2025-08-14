@@ -47,6 +47,7 @@ class ServerCapabilitiesFactory {
         List<McpSchema.ResourceTemplate> resourceTemplates,
         List<McpSchema.Resource> resources,
         List<McpServerFeatures.SyncResourceSpecification> syncResources,
+        List<McpServerFeatures.AsyncResourceSpecification> asyncResources,
         List<McpStatelessServerFeatures.AsyncResourceSpecification> statelessAsyncResources,
         List<McpStatelessServerFeatures.SyncResourceSpecification> statelessSyncResources,
         ToolsConfiguration toolsConfiguration,
@@ -66,7 +67,7 @@ class ServerCapabilitiesFactory {
         if (CollectionUtils.isNotEmpty(syncPrompts) || CollectionUtils.isNotEmpty(asyncPrompts) || CollectionUtils.isNotEmpty(statelessSyncPrompts) || CollectionUtils.isNotEmpty(statelessAsyncPrompts)) {
             builder.prompts(promptsConfiguration.isListChanged());
         }
-        if (CollectionUtils.isNotEmpty(resourceTemplates) || CollectionUtils.isNotEmpty(resources) || CollectionUtils.isNotEmpty(syncResources) || CollectionUtils.isNotEmpty(statelessAsyncResources) || CollectionUtils.isNotEmpty(statelessSyncResources)) {
+        if (CollectionUtils.isNotEmpty(resourceTemplates) || CollectionUtils.isNotEmpty(resources) || CollectionUtils.isNotEmpty(syncResources) || CollectionUtils.isNotEmpty(asyncResources) || CollectionUtils.isNotEmpty(statelessAsyncResources) || CollectionUtils.isNotEmpty(statelessSyncResources)) {
             builder.resources(resourcesConfiguration.isSubscribe(), resourcesConfiguration.isListChanged());
         }
         if (CollectionUtils.isNotEmpty(syncCompletions) || CollectionUtils.isNotEmpty(asyncCompletions) || CollectionUtils.isNotEmpty(statelessAsyncCompletions) || CollectionUtils.isNotEmpty(statelessSyncCompletions)) {

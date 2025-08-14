@@ -1,3 +1,0 @@
-In addition, you can create beans of type [`BeanCreatedEventListener`](https://docs.micronaut.io/latest/guide/#events) to listener to builders:
-
-- `McpSchema.ServerCapabilities.Builder`

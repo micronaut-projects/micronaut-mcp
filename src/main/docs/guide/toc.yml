@@ -8,6 +8,7 @@ mcp:
   server:
     title: MCP Server
     serverJavaSDK: MCP Server Java SDK
+    stdio: STDIO Transport
     testingYourMcpServer: Testing your MCP Server
   client:
     title: MCP Client
