@@ -15,7 +15,6 @@
  */
 package io.micronaut.mcp.server.stdio.sync;
 
-import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
@@ -27,6 +26,7 @@ import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
+import jakarta.inject.Singleton;
 
 import java.util.List;
 
@@ -67,7 +67,7 @@ class McpServerSyncFactory {
     }
 
     @SuppressWarnings("java:S3740")
-    @Context
+    @Singleton
     McpSyncServer createMcpSyncServer(McpServer.SyncSpecification syncSpecification) {
         return syncSpecification.build();
     }

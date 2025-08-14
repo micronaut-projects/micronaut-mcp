@@ -10,6 +10,8 @@ plugins {
 }
 
 rootProject.name = 'micronaut-mcp-parent'
+include 'micronaut-mcp'
+include 'micronaut-mcp-annotations'
 include 'micronaut-mcp-server'
 include 'micronaut-mcp-client-langchain4j'
 include 'micronaut-mcp-bom'

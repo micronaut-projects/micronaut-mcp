@@ -15,7 +15,6 @@
  */
 package io.micronaut.mcp.server.stateless.async;
 
-import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
@@ -27,6 +26,7 @@ import io.modelcontextprotocol.server.McpStatelessAsyncServer;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpStatelessServerTransport;
+import jakarta.inject.Singleton;
 
 import java.util.List;
 
@@ -69,7 +69,7 @@ class McpStatelessAsyncServerFactory {
         return spec;
     }
 
-    @Context
+    @Singleton
     McpStatelessAsyncServer createMcpStatelessSyncServer(McpServer.StatelessAsyncSpecification specification) {
         return specification.build();
     }

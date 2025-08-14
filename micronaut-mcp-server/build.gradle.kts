@@ -5,6 +5,7 @@ plugins {
 dependencies {
     api(mn.micronaut.jackson.databind)
     api(libs.managed.mcp.java.sdk)
+    api(projects.micronautMcpAnnotations)
     compileOnly(mn.micronaut.http.server)
     testAnnotationProcessor(mn.micronaut.inject.java)
     testAnnotationProcessor(mnValidation.micronaut.validation.processor)
