@@ -28,6 +28,10 @@ class PromptsConfigurationProperties implements PromptsConfiguration {
         return listChanged;
     }
 
+    /**
+     *
+     * @param listChanged whether the server will emit notifications when the list of available prompts changes. Default value `false`.
+     */
     public void setListChanged(boolean listChanged) {
         this.listChanged = listChanged;
     }

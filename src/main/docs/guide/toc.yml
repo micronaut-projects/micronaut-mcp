@@ -16,10 +16,15 @@ server:
     serverCapabilities: Server Capabilities
   primitives:
     title: Primitives
-    tools: Tools
-    prompts: Prompts
+    tools:
+      title: Tools
+      toolsConfiguration: Tools Configuration
+    prompts:
+      title: Prompts
+      promptsConfiguration: Tools Configuration
     resources:
       title: Resources
+      resourcesConfiguration: Resources Configuration
       resourcesTemplates: Resources Templates
   stdio: STDIO Transport
   testingYourMcpServer: Testing your MCP Server

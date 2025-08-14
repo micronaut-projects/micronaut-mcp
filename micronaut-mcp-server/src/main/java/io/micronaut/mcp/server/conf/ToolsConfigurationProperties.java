@@ -28,6 +28,10 @@ class ToolsConfigurationProperties implements ToolsConfiguration {
         return listChanged;
     }
 
+    /**
+     *
+     * @param listChanged whether the server will emit notifications when the list of available tools changes. Default value `false`.
+     */
     public void setListChanged(boolean listChanged) {
         this.listChanged = listChanged;
     }

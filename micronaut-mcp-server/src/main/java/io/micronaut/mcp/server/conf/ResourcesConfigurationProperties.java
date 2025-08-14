@@ -29,6 +29,10 @@ class ResourcesConfigurationProperties implements ResourcesConfiguration {
         return subscribe;
     }
 
+    /**
+     *
+     * @param subscribe whether the client can subscribe to be notified of changes to individual resources. Default value `false`.
+     */
     public void setSubscribe(boolean subscribe) {
         this.subscribe = subscribe;
     }
@@ -38,6 +42,10 @@ class ResourcesConfigurationProperties implements ResourcesConfiguration {
         return listChanged;
     }
 
+    /**
+     *
+     * @param listChanged whether the server will emit notifications when the list of available resources changes. Default value `false`.
+     */
     public void setListChanged(boolean listChanged) {
         this.listChanged = listChanged;
     }

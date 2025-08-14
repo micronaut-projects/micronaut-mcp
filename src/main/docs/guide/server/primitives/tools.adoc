@@ -10,4 +10,3 @@ NOTE: The following example assumes you set `SYNC` as your server type. Because 
 ----
 include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/ToolsFactory.java[tags="fakepackage,imports,clazz",indent=0]
 ----
-
