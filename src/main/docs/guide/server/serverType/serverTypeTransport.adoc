@@ -1,0 +1,8 @@
+____
+The protocol currently defines two standard transport mechanisms for client-server communication:
+**stdio** (communication over standard in and standard out) and **Streamable HTTP**
+____
+
+For https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#stdio[stdio transport], choose either `SYNC` or `ASYNC`.
+
+For https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#streamable-http[HTTP transport], choose either `STATELESS_SYNC` or `STATELESS_ASYNC`.

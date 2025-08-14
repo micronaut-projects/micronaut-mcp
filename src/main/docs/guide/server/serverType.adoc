@@ -1,0 +1,7 @@
+To create a server, you will need to define the property `micronaut.mcp.server.type`
+with one of the values `SYNC`, `ASYNC`, `STATELESS_SYNC`, `STATELESS_ASYNC`.
+
+The async types allow you to define primitives (tools, prompts or resources) with call handlers wrapped in a Project Reactor `Mono`.
+
+include::{includedir}configurationProperties/io.micronaut.mcp.server.conf.McpServerConfigurationProperties.adoc[]
+

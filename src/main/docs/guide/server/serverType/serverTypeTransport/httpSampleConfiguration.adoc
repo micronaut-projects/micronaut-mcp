@@ -1,0 +1,12 @@
+For HTTP transport, your configuration may look like
+
+[configuration]
+----
+micronaut:
+  mcp:
+    server:
+      type: STATELESS_SYNC
+      info:
+        name: 'pgn-resources'
+        version: '1.0.0'
+----

@@ -1,1 +1,0 @@
-To create an MCP server with Micronaut you have to define

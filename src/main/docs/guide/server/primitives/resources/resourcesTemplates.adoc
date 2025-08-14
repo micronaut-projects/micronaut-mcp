@@ -1,0 +1,10 @@
+____
+Resource templates allow servers to expose parameterized resources using URI templates
+____
+
+You define resources registering beans of type `McpSchema.ResourceTemplate` (typically in a https://docs.micronaut.io/latest/guide/#factories[bean factory]).
+
+[source, Java]
+----
+include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/ResourcesTemplatesFactory.java[tags="fakepackage,imports,clazz",indent=0]
+----

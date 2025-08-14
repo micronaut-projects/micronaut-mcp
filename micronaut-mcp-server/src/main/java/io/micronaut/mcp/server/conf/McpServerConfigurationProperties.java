@@ -31,6 +31,10 @@ class McpServerConfigurationProperties implements McpServerConfiguration {
         return endpoint;
     }
 
+    /**
+     *
+     * @param endpoint The MCP Server endpoint. It applies to MCP Servers using HTTP transport. It defaults to `/mcp`.
+     */
     public void setEndpoint(String endpoint) {
         this.endpoint = endpoint;
     }
@@ -42,7 +46,7 @@ class McpServerConfigurationProperties implements McpServerConfiguration {
 
     /**
      *
-     * @param type the server type
+     * @param type The type of MCP Server you want to instantiate.
      */
     public void setType(ServerType type) {
         this.type = type;

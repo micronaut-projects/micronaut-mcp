@@ -1,0 +1,23 @@
+Based on the server type, an MCP Java SDK Server class instance is created with https://docs.micronaut.io/latest/api/io/micronaut/context/annotation/Context.html[`@Context` scope].
+|===
+| `micronaut.mcp.server.type` | Server | Server Specification
+
+|SYNC
+|`McpSyncServer`
+|`McpServer.SyncSpecification`
+
+|ASYNC
+|`McpAsyncServer`
+|`McpServer.AsyncSpecification`
+
+|STATELESS_SYNC
+|`McpStatelessAsyncServer`
+|`McpServer.StatelessAsyncSpecification`
+
+|STATELESS_ASYNC
+|`McpStatelessSyncServer`
+|`McpServer.StatelessSyncSpecification`
+|===
+
+`McpServer.SyncSpecification`, `McpServer.AsyncSpecification`, `McpServer.StatelessAsyncSpecification`, `McpServer.StatelessSyncSpecification` are builder classes. Thus, you can create beans of type https://docs.micronaut.io/latest/guide/#events[`BeanCreatedEventListener`] to customize the server specification and creation further.
+

@@ -1,0 +1,4 @@
+Via configuration, you should define your mcp server name and version:
+
+include::{includedir}configurationProperties/io.micronaut.mcp.server.conf.McpServerInfoConfigurationProperties.adoc[]
+

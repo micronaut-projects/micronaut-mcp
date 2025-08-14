@@ -12,6 +12,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.mcp.server.utils.PgnLoader;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -120,34 +121,6 @@ class StatelessAsyncResourceListTest {
                     contents.add(new McpSchema.TextResourceContents(uri, PGN_MIME_TYPE, text)));
                 return Mono.just(new McpSchema.ReadResourceResult(contents));
             });
-        }
-    }
-
-    @Requires(property = "spec.name", value = "StatelessAsyncResourceListTest")
-    @Singleton
-    static class PgnLoader {
-        private static final Logger LOG = LoggerFactory.getLogger(PgnLoader.class);
-        private final ResourceLoader resourceLoader;
-
-        PgnLoader(ResourceLoader resourceLoader) {
-            this.resourceLoader = resourceLoader;
-        }
-
-        @NonNull
-        public Optional<String> loadPgn(@NonNull @NotNull @Positive Integer round) {
-            Optional<InputStream> roundPgnInputStreamOptional = resourceLoader.getResourceAsStream("classpath:fidewwc2024/round_" + round + ".pgn");
-            if (roundPgnInputStreamOptional.isEmpty()) {
-                return Optional.empty();
-            }
-            InputStream inputStream = roundPgnInputStreamOptional.get();
-            try {
-                return Optional.of(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
-            } catch (IOException e) {
-                if (LOG.isErrorEnabled()) {
-                    LOG.error(e.getMessage(), e);
-                }
-                return Optional.empty();
-            }
         }
     }
 }

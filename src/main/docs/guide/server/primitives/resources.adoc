@@ -1,0 +1,12 @@
+____
+Resources: Structured data or content that provides additional context to the model
+____
+
+You define resources registering beans (typically in a https://docs.micronaut.io/latest/guide/#factories[bean factory]).
+
+NOTE: The following example assumes you set `SYNC` as your server type. Because of that, the following example creates defining resources with the class `McpStatelessServerFeatures.SyncResourceSpecification`. <<primitivesClassesPerServerType, If you used a different server type, you should use a different class>>.
+
+[source, Java]
+----
+include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/ResourcesFactory.java[tags="fakepackage,imports,clazz",indent=0]
+----
