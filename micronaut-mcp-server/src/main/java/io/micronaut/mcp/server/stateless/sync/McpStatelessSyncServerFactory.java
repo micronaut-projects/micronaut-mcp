@@ -27,7 +27,6 @@ import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessSyncServer;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpStatelessServerTransport;
-import jakarta.inject.Singleton;
 
 import java.util.List;
 
@@ -35,7 +34,6 @@ import java.util.List;
 @Internal
 class McpStatelessSyncServerFactory {
     @Prototype
-    @Singleton
     McpServer.StatelessSyncSpecification createMcpServerSyncSpecification(McpStatelessServerTransport mcpStatelessServerTransport,
                                                                           @Nullable McpServerInfoConfiguration mcpServerInfoConfiguration,
                                                                           McpSchema.ServerCapabilities mcpServerCapabilities,
