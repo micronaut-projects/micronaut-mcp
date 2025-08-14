@@ -22,14 +22,19 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.Executable;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.json.JsonMapper;
+import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.conf.McpServerConfiguration;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +44,7 @@ import java.util.Optional;
 @Singleton
 @Internal
 class ToolRegistry implements ExecutableMethodProcessor<Tool> {
+    private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
     /**
      * @see <a href="https://json-schema.org/understanding-json-schema/reference/type">JSON Schema Type</a>
      */
@@ -50,11 +56,17 @@ class ToolRegistry implements ExecutableMethodProcessor<Tool> {
     private static final String TYPE_NULL = "null";
     private static final String MEMBER_DESCRIPTION = "description";
 
+    private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;
+    private final JsonMapper jsonMapper;
     private final BeanContext beanContext;
     private final McpServerConfiguration mcpServerConfiguration;
 
-    ToolRegistry(BeanContext beanContext,
+    ToolRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
+                 JsonMapper jsonMapper,
+                 BeanContext beanContext,
                  McpServerConfiguration mcpServerConfiguration) {
+        this.jsonSchemaClassPathResourceLoader = jsonSchemaClassPathResourceLoader;
+        this.jsonMapper = jsonMapper;
         this.beanContext = beanContext;
         this.mcpServerConfiguration = mcpServerConfiguration;
     }
@@ -98,9 +110,9 @@ class ToolRegistry implements ExecutableMethodProcessor<Tool> {
 
     private McpStatelessServerFeatures.AsyncToolSpecification statelessAsyncToolSpecification(BeanDefinition beanDefinition, ExecutableMethod<?, ?> method) {
         McpSchema.Tool tool = toolArgument(method);
-        Class<Object> returnClass = (Class<Object>) method.getReturnType().getType();
         McpStatelessServerFeatures.AsyncToolSpecification.Builder builder = McpStatelessServerFeatures.AsyncToolSpecification.builder()
             .tool(tool);
+        Class<Object> returnClass = (Class<Object>) method.getReturnType().getType();
         if (returnClass.isAssignableFrom(String.class)) {
             builder.callHandler((mcpTransportContext, callToolRequest)
                 -> reactiveCallToolToResult(beanDefinition, method, mcpTransportContext, callToolRequest));
@@ -142,13 +154,29 @@ class ToolRegistry implements ExecutableMethodProcessor<Tool> {
             args[i] = callToolRequest.arguments().get(names.get(i));
         }
         Object result = ((Executable<Object, ?>) method).invoke(bean, args);
+        String text = "";
         if (returnClass.isAssignableFrom(String.class)) {
-            return new McpSchema.CallToolResult(result.toString(), false);
+            text = result.toString();
+        } else {
+            try {
+                text = jsonMapper.writeValueAsString(result);
+            } catch (IOException e) {
+                if (LOG.isErrorEnabled()) {
+                    LOG.error(e.getMessage(), e);
+                }
+                return new McpSchema.CallToolResult(text, true);
+            }
         }
-        return null; //TODO
+        if (toolOutputSchema(method).isPresent()) {
+            return McpSchema.CallToolResult.builder()
+                .structuredContent(text)
+                .isError(false)
+                .build();
+        }
+        return new McpSchema.CallToolResult(text, false);
     }
 
-    private static McpSchema.Tool toolArgument(ExecutableMethod<?, ?> method) {
+    private McpSchema.Tool toolArgument(ExecutableMethod<?, ?> method) {
         McpSchema.Tool.Builder toolBuilder = McpSchema.Tool.builder()
             .name(toolName(method));
         toolArgumentDescription(method).ifPresent(toolBuilder::description);
@@ -163,7 +191,13 @@ class ToolRegistry implements ExecutableMethodProcessor<Tool> {
         }
         McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema(TYPE_OBJECT, properties, requiredProperties, null, null, null);
         toolBuilder.inputSchema(inputSchema);
+        toolOutputSchema(method).ifPresent(toolBuilder::outputSchema);
         return toolBuilder.build();
+    }
+
+    private Optional<String> toolOutputSchema(ExecutableMethod<?, ?> method) {
+        Class<Object> returnClass = (Class<Object>) method.getReturnType().getType();
+        return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(returnClass);
     }
 
     private static McpSchema.JsonSchema toolArgumentJsonSchema(Argument argument) {

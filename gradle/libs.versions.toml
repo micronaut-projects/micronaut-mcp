@@ -20,6 +20,7 @@ micronaut = "4.9.9"
 micronaut-platform = "4.9.2"
 micronaut-docs = "2.0.0"
 micronaut-serde = "2.15.1"
+micronaut-json-schema = "1.7.0"
 micronaut-logging = "1.7.0"
 micronaut-langchain4j = "1.1.0"
 micronaut-validation = "4.10.0"
@@ -32,6 +33,8 @@ jsonassert = "1.5.3"
 
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
+
+micronaut-json-schema = { module = 'io.micronaut.jsonschema:micronaut-json-schema-bom', version.ref = 'micronaut-json-schema' }
 micronaut-langchain4j = { module = 'io.micronaut.langchain4j:micronaut-langchain4j-bom', version.ref = 'micronaut-langchain4j' }
 micronaut-serde = { module = 'io.micronaut.serde:micronaut-serde-bom', version.ref = 'micronaut-serde' }
 micronaut-logging = { module = 'io.micronaut.logging:micronaut-logging-bom', version.ref = 'micronaut-logging' }

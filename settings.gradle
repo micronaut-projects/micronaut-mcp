@@ -22,6 +22,7 @@ micronautBuild {
     useStandardizedProjectNames.set(true)
     importMicronautCatalog()
     importMicronautCatalog("micronaut-serde")
+    importMicronautCatalog("micronaut-json-schema")
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-langchain4j")
 }
