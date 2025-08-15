@@ -2,11 +2,18 @@ ____
 Prompts: Pre-defined templates or instructions that guide language model interactions
 ____
 
-You define prompts registering beans (typically in a https://docs.micronaut.io/latest/guide/#factories[bean factory]).
+You can define prompts by defining methods annotated with api:mcp.annotations.Prompt[] in a `@Singleton` bean.
+
+[source, Java]
+----
+include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/prompts/Prompts.java[tags="imports,clazz",indent=0]
+----
+
+Alternatively, you define prompts registering beans (typically in a https://docs.micronaut.io/latest/guide/#factories[bean factory]).
 
 NOTE: The following example assumes you set `SYNC` as your server type. Because of that, the following example creates defining Prompts with the class `McpStatelessServerFeatures.SyncPromptSpecification`. <<primitivesClassesPerServerType, If you used a different server type, you should use a different class>>.
 
 [source, Java]
 ----
-include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/PromptsFactory.java[tags="fakepackage,imports,clazz",indent=0]
+include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/prompts/PromptsFactory.java[tags="fakepackage,imports,clazz",indent=0]
 ----

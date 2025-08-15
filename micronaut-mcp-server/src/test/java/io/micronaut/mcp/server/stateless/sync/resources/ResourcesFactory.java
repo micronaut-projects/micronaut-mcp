@@ -1,4 +1,4 @@
-package io.micronaut.mcp.server.stateless.sync;
+package io.micronaut.mcp.server.stateless.sync.resources;
 
 /*
 //tag::fakepackage[]

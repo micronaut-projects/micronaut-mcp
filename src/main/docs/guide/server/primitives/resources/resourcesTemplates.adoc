@@ -6,5 +6,5 @@ You define resources registering beans of type `McpSchema.ResourceTemplate` (typ
 
 [source, Java]
 ----
-include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/ResourcesTemplatesFactory.java[tags="fakepackage,imports,clazz",indent=0]
+include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/resources/ResourcesTemplatesFactory.java[tags="fakepackage,imports,clazz",indent=0]
 ----

@@ -1,4 +1,4 @@
-package io.micronaut.mcp.server.stateless.sync;
+package io.micronaut.mcp.server.stateless.sync.tools;
 /*
 //tag::fakepackage[]
 package example.micronaut;
@@ -8,6 +8,7 @@ package example.micronaut;
 //tag::imports[]
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.annotations.Tool;
+import io.micronaut.mcp.server.stateless.sync.EvaluationResult;
 import jakarta.inject.Singleton;
 //end::imports[]
 

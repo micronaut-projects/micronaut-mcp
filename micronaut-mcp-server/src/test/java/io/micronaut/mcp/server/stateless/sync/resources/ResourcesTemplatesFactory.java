@@ -1,4 +1,4 @@
-package io.micronaut.mcp.server.stateless.sync;
+package io.micronaut.mcp.server.stateless.sync.resources;
 
 /*
 //tag::fakepackage[]
@@ -11,7 +11,7 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
-import static io.micronaut.mcp.server.stateless.sync.ResourcesFactory.PGN_MIME_TYPE;
+import static io.micronaut.mcp.server.stateless.sync.resources.ResourcesFactory.PGN_MIME_TYPE;
 
 //end::imports[]
 @Requires(property = "spec.name", value = "StatelessSyncResourceListTest")

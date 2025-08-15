@@ -8,5 +8,5 @@ NOTE: The following example assumes you set `SYNC` as your server type. Because 
 
 [source, Java]
 ----
-include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/ResourcesFactory.java[tags="fakepackage,imports,clazz",indent=0]
+include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/resources/ResourcesFactory.java[tags="fakepackage,imports,clazz",indent=0]
 ----

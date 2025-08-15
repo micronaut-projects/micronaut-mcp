@@ -1,4 +1,4 @@
-package io.micronaut.mcp.server.stateless.sync;
+package io.micronaut.mcp.server.stateless.sync.prompts;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpRequest;

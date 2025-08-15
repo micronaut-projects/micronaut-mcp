@@ -3,6 +3,8 @@ package io.micronaut.mcp.server.utils;
 public final class JsonRpcMessages {
     private JsonRpcMessages() {
     }
+    public static final String PROMPTS_GET = """
+        {"jsonrpc":"2.0","id":0,"method": "prompts/get","params":{"name":"chess-statistics","arguments":{"name": "sergio"}}}""";
 
     public static final String PROMPTS_LIST = """
              {"jsonrpc":"2.0","id":0,"method":"prompts/list","params":{}}""";
@@ -95,9 +97,9 @@ public final class JsonRpcMessages {
         }""";
 
     public static final String TOOLS_CALL = """
-        {"jsonrpc":"2.0","id":4,"method": "tools/call","params": {"name": "fenEvaluation","arguments": {"fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"},"_meta": {"progressToken": 0}}}""";
+        {"jsonrpc":"2.0","id":4,"method": "tools/call","params": {"name": "fenEvaluation","arguments": {"fen": "r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8"},"_meta": {"progressToken": 0}}}""";
 
-    public static final String EXPECTED_TOOLS_CALL_OBJECT_RETURN = "{\"jsonrpc\":\"2.0\",\"id\":4,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"evaluation\\\":\\\"+0.27\\\",\\\"fen\\\":\\\"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1\\\"}\"}],\"isError\":false,\"structuredContent\":{\"evaluation\":\"+0.27\",\"fen\":\"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1\"}}}";
+    public static final String EXPECTED_TOOLS_CALL_OBJECT_RETURN = "{\"jsonrpc\":\"2.0\",\"id\":4,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"evaluation\\\":\\\"+0.27\\\",\\\"fen\\\":\\\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\\\"}\"}],\"isError\":false,\"structuredContent\":{\"evaluation\":\"+0.27\",\"fen\":\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\"}}}";
 
     public static final String EXPECTED_TOOLS_LIST = """
         {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"fen":{"type":"string"}},"required":["fen"]}}]}}""";

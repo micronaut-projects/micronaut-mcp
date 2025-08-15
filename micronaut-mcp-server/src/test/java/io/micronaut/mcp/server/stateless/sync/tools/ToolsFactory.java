@@ -1,4 +1,4 @@
-package io.micronaut.mcp.server.stateless.sync;
+package io.micronaut.mcp.server.stateless.sync.tools;
 /*
 //tag::fakepackage[]
 package example.micronaut;
@@ -30,9 +30,12 @@ class ToolsFactory {
                 .description("Evaluate a chess position using a FEN string.")
                 .inputSchema(inputSchema)
                 .build())
-            .callHandler((exchange, arguments) -> {
-                //TODO in real life, do this with Stockfish
-                return new McpSchema.CallToolResult("+0.27", false);
+            .callHandler((exchange, req) -> {
+                String evaluation = "+0.0";
+                if (req.arguments().get("fen").equals("r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8")) {
+                    evaluation = "+0.27";
+                }
+                return new McpSchema.CallToolResult(evaluation, false);
             })
             .build();
     }

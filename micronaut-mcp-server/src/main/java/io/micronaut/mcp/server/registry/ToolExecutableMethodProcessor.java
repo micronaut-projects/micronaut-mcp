@@ -41,27 +41,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_OBJECT;
+import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_STRING;
+
 @Singleton
 @Internal
-class ToolRegistry implements ExecutableMethodProcessor<Tool> {
-    private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
-    /**
-     * @see <a href="https://json-schema.org/understanding-json-schema/reference/type">JSON Schema Type</a>
-     */
-    private static final String TYPE_STRING = "string";
-    private static final String TYPE_NUMBER = "number";
-    private static final String TYPE_OBJECT = "object";
-    private static final String TYPE_ARRAY = "array";
-    private static final String TYPE_BOOL = "bool";
-    private static final String TYPE_NULL = "null";
+class ToolExecutableMethodProcessor implements ExecutableMethodProcessor<Tool> {
+    private static final Logger LOG = LoggerFactory.getLogger(ToolExecutableMethodProcessor.class);
     private static final String MEMBER_DESCRIPTION = "description";
-
     private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;
     private final JsonMapper jsonMapper;
     private final BeanContext beanContext;
     private final McpServerConfiguration mcpServerConfiguration;
 
-    ToolRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
+    ToolExecutableMethodProcessor(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
                  JsonMapper jsonMapper,
                  BeanContext beanContext,
                  McpServerConfiguration mcpServerConfiguration) {
