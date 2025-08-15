@@ -20,7 +20,7 @@ import io.micronaut.core.annotation.Internal;
 
 @ConfigurationProperties(ToolsConfiguration.PREFIX)
 @Internal
-class ToolsConfigurationProperties implements ToolsConfiguration {
+final class ToolsConfigurationProperties implements ToolsConfiguration {
     private boolean listChanged;
 
     @Override

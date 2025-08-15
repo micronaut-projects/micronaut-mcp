@@ -16,11 +16,11 @@
 package io.micronaut.mcp.server.stateless.sync;
 
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.mcp.server.conf.McpServerInfoConfiguration;
+import io.micronaut.mcp.server.registry.ToolRegistry;
+import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessSyncServer;
@@ -32,37 +32,37 @@ import java.util.List;
 
 @Factory
 @Internal
-class McpStatelessSyncServerFactory {
+final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpServer.StatelessSyncSpecification, McpStatelessServerTransport,
+    McpStatelessServerFeatures.SyncToolSpecification,
+    McpStatelessServerFeatures.SyncCompletionSpecification,
+    McpStatelessServerFeatures.SyncPromptSpecification,
+    McpStatelessServerFeatures.SyncResourceSpecification> {
     @SuppressWarnings({"java:S107"})
-    @Prototype
-    McpServer.StatelessSyncSpecification createMcpServerSyncSpecification(McpStatelessServerTransport mcpStatelessServerTransport,
-                                                                          @Nullable McpServerInfoConfiguration mcpServerInfoConfiguration,
-                                                                          McpSchema.ServerCapabilities mcpServerCapabilities,
-                                                                          List<McpStatelessServerFeatures.SyncToolSpecification> tools,
-                                                                          List<McpStatelessServerFeatures.SyncCompletionSpecification> completions,
-                                                                          List<McpStatelessServerFeatures.SyncPromptSpecification> prompts,
-                                                                          List<McpSchema.ResourceTemplate> resourceTemplates,
-                                                                          List<McpStatelessServerFeatures.SyncResourceSpecification> resources) {
-        McpServer.StatelessSyncSpecification spec = McpServer.sync(mcpStatelessServerTransport)
-            .capabilities(mcpServerCapabilities);
-        if (mcpServerInfoConfiguration != null) {
-            spec.serverInfo(mcpServerInfoConfiguration.getName(), mcpServerInfoConfiguration.getVersion());
+
+    @Override
+    protected List<McpStatelessServerFeatures.SyncToolSpecification> getRegistryTools(ToolRegistry toolRegistry) {
+        return toolRegistry.getStatelessSyncToolSpecs();
+    }
+
+    @Override
+    protected McpServer.StatelessSyncSpecification createMcpServerSpec(McpStatelessServerTransport transport,
+                                                                       @Nullable McpServerInfoConfiguration configuration,
+                                                                       McpSchema.ServerCapabilities capabilities,
+                                                                       List<McpStatelessServerFeatures.SyncToolSpecification> tools,
+                                                                       List<McpStatelessServerFeatures.SyncCompletionSpecification> completions,
+                                                                       List<McpStatelessServerFeatures.SyncPromptSpecification> prompts,
+                                                                       List<McpSchema.ResourceTemplate> resourceTemplates,
+                                                                       List<McpStatelessServerFeatures.SyncResourceSpecification> resources) {
+        McpServer.StatelessSyncSpecification spec = McpServer.sync(transport);
+        if (configuration != null) {
+            spec.serverInfo(configuration.getName(), configuration.getVersion());
         }
-        if (CollectionUtils.isNotEmpty(tools)) {
-            spec.tools(tools);
-        }
-        if (CollectionUtils.isNotEmpty(completions)) {
-            spec.completions(completions);
-        }
-        if (CollectionUtils.isNotEmpty(prompts)) {
-            spec.prompts(prompts);
-        }
-        if (CollectionUtils.isNotEmpty(resourceTemplates)) {
-            spec.resourceTemplates(resourceTemplates);
-        }
-        if (CollectionUtils.isNotEmpty(resources)) {
-            spec.resources(resources);
-        }
+        spec.tools(tools);
+        spec.completions(completions);
+        spec.prompts(prompts);
+        spec.resourceTemplates(resourceTemplates);
+        spec.resources(resources);
+        spec.capabilities(capabilities);
         return spec;
     }
 
@@ -70,4 +70,5 @@ class McpStatelessSyncServerFactory {
     McpStatelessSyncServer createMcpStatelessSyncServer(McpServer.StatelessSyncSpecification specification) {
         return specification.build();
     }
+
 }

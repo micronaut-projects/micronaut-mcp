@@ -19,13 +19,12 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.type.Executable;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.annotations.Tool;
-import io.micronaut.mcp.server.conf.McpServerConfiguration;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -36,98 +35,105 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
-import static io.micronaut.mcp.server.processor.JsonSchemaUtils.TYPE_OBJECT;
-import static io.micronaut.mcp.server.processor.JsonSchemaUtils.TYPE_STRING;
-
+/**
+ * The registry of {@link Tool}s.
+ */
 @Singleton
 @Internal
-class ToolExecutableMethodProcessor implements ExecutableMethodProcessor<Tool> {
-    private static final Logger LOG = LoggerFactory.getLogger(ToolExecutableMethodProcessor.class);
+public final class ToolRegistry implements ExecutableMethodProcessor<Tool> {
+    private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
+    /**
+     * @see <a href="https://json-schema.org/understanding-json-schema/reference/type">JSON Schema Type</a>
+     */
+    private static final String TYPE_STRING = "string";
+    private static final String TYPE_NUMBER = "number";
+    private static final String TYPE_OBJECT = "object";
+    private static final String TYPE_ARRAY = "array";
+    private static final String TYPE_BOOL = "bool";
+    private static final String TYPE_NULL = "null";
     private static final String MEMBER_DESCRIPTION = "description";
+
     private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;
     private final JsonMapper jsonMapper;
     private final BeanContext beanContext;
-    private final McpServerConfiguration mcpServerConfiguration;
 
-    ToolExecutableMethodProcessor(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
+    private final List<ToolMethod<Object>> toolMethods = new ArrayList<>();
+
+    ToolRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
                  JsonMapper jsonMapper,
-                 BeanContext beanContext,
-                 McpServerConfiguration mcpServerConfiguration) {
+                 BeanContext beanContext) {
         this.jsonSchemaClassPathResourceLoader = jsonSchemaClassPathResourceLoader;
         this.jsonMapper = jsonMapper;
         this.beanContext = beanContext;
-        this.mcpServerConfiguration = mcpServerConfiguration;
     }
 
     @Override
     public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
         if (method.hasDeclaredAnnotation(Tool.class)) {
-            Object bean = switch (mcpServerConfiguration.getType()) {
-                case SYNC -> syncToolSpecification(beanDefinition, method);
-                case ASYNC -> asyncToolSpecification(beanDefinition, method);
-                case STATELESS_ASYNC -> statelessAsyncToolSpecification(beanDefinition, method);
-                case STATELESS_SYNC -> statelessSyncToolSpecification(beanDefinition, method);
-            };
-            beanContext.registerSingleton(bean);
+            toolMethods.add(new ToolMethod(beanDefinition, method));
         }
     }
 
-    private McpServerFeatures.SyncToolSpecification syncToolSpecification(BeanDefinition beanDefinition, ExecutableMethod<?, ?> method) {
-        McpSchema.Tool tool = toolArgument(method);
-        Class<Object> returnClass = (Class<Object>) method.getReturnType().getType();
-        McpServerFeatures.SyncToolSpecification.Builder builder = McpServerFeatures.SyncToolSpecification.builder()
-            .tool(tool);
-        if (returnClass.isAssignableFrom(String.class)) {
-            builder.callHandler((mcpTransportContext, callToolRequest)
-                -> callToolToResult(beanDefinition, method, mcpTransportContext, callToolRequest));
-        }
-        return builder.build();
+    private Stream<ToolMethod<Object>> drainToolMethods() {
+        return toolMethods.stream().onClose(toolMethods::clear);
     }
 
-    private McpServerFeatures.AsyncToolSpecification asyncToolSpecification(BeanDefinition beanDefinition, ExecutableMethod<?, ?> method) {
-        McpSchema.Tool tool = toolArgument(method);
-        Class<Object> returnClass = (Class<Object>) method.getReturnType().getType();
-        McpServerFeatures.AsyncToolSpecification.Builder builder = McpServerFeatures.AsyncToolSpecification.builder()
-            .tool(tool);
-        if (returnClass.isAssignableFrom(String.class)) {
-            builder.callHandler((mcpTransportContext, callToolRequest) ->
-                reactiveCallToolToResult(beanDefinition, method, mcpTransportContext, callToolRequest));
-        }
-        return builder.build();
+    public List<McpServerFeatures.SyncToolSpecification> getSyncToolSpecs() {
+        return drainToolMethods()
+            .map(toolMethod -> McpServerFeatures.SyncToolSpecification.builder()
+                .tool(toolArgument(toolMethod.method()))
+                .callHandler(provideSyncCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
+                .build())
+            .toList();
     }
 
-    private McpStatelessServerFeatures.AsyncToolSpecification statelessAsyncToolSpecification(BeanDefinition beanDefinition, ExecutableMethod<?, ?> method) {
-        McpSchema.Tool tool = toolArgument(method);
-        McpStatelessServerFeatures.AsyncToolSpecification.Builder builder = McpStatelessServerFeatures.AsyncToolSpecification.builder()
-            .tool(tool);
-        Class<Object> returnClass = (Class<Object>) method.getReturnType().getType();
-        if (returnClass.isAssignableFrom(String.class)) {
-            builder.callHandler((mcpTransportContext, callToolRequest)
-                -> reactiveCallToolToResult(beanDefinition, method, mcpTransportContext, callToolRequest));
-        }
-        return builder.build();
+    public List<McpServerFeatures.AsyncToolSpecification> getAsyncToolSpecs() {
+        return drainToolMethods()
+            .map(toolMethod -> McpServerFeatures.AsyncToolSpecification.builder()
+                .tool(toolArgument(toolMethod.method()))
+                .callHandler(provideReactiveCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
+                .build())
+            .toList();
     }
 
-    private McpStatelessServerFeatures.SyncToolSpecification statelessSyncToolSpecification(BeanDefinition beanDefinition, ExecutableMethod<?, ?> method) {
-        McpSchema.Tool tool = toolArgument(method);
-        McpStatelessServerFeatures.SyncToolSpecification.Builder builder = McpStatelessServerFeatures.SyncToolSpecification.builder()
-            .tool(tool);
-
-        builder.callHandler((mcpTransportContext, callToolRequest)
-                -> callToolToResult(beanDefinition, method, mcpTransportContext, callToolRequest));
-
-        return builder.build();
+    public List<McpStatelessServerFeatures.SyncToolSpecification> getStatelessSyncToolSpecs() {
+        return drainToolMethods()
+            .map(toolMethod -> McpStatelessServerFeatures.SyncToolSpecification.builder()
+                .tool(toolArgument(toolMethod.method()))
+                .callHandler(provideSyncCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
+                .build())
+            .toList();
     }
 
-    private Mono<McpSchema.CallToolResult> reactiveCallToolToResult(BeanDefinition<?> beanDefinition,
-                                                           ExecutableMethod<?, ?> method,
-                                                           Object mcpTransportContext,
-                                                           McpSchema.CallToolRequest callToolRequest) {
+    public List<McpStatelessServerFeatures.AsyncToolSpecification> getStatelessAsyncToolSpecs() {
+        return drainToolMethods()
+            .map(toolMethod -> McpStatelessServerFeatures.AsyncToolSpecification.builder()
+                .tool(toolArgument(toolMethod.method()))
+                .callHandler(provideReactiveCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
+                .build())
+            .toList();
+    }
+
+    private <B, C> BiFunction<C, McpSchema.CallToolRequest, McpSchema.CallToolResult> provideSyncCallHandler(BeanDefinition<B> beanDefinition, ExecutableMethod<B, Object> method) {
+        return (mcpTransportContext, callToolRequest)
+            -> callToolToResult(beanDefinition, method, mcpTransportContext, callToolRequest);
+    }
+
+    private <B, C> BiFunction<C, McpSchema.CallToolRequest, Mono<McpSchema.CallToolResult>> provideReactiveCallHandler(BeanDefinition<B> beanDefinition, ExecutableMethod<B, Object> method) {
+        return (mcpTransportContext, callToolRequest)
+            -> reactiveCallToolToResult(beanDefinition, method, mcpTransportContext, callToolRequest);
+    }
+
+    private <B> Mono<McpSchema.CallToolResult> reactiveCallToolToResult(BeanDefinition<B> beanDefinition,
+                                                                        ExecutableMethod<B, Object> method,
+                                                                        Object mcpTransportContext,
+                                                                        McpSchema.CallToolRequest callToolRequest) {
         McpSchema.CallToolResult result = callToolToResult(beanDefinition, method, mcpTransportContext, callToolRequest);
         if (result == null) {
             return Mono.empty();
@@ -135,18 +141,18 @@ class ToolExecutableMethodProcessor implements ExecutableMethodProcessor<Tool> {
         return Mono.just(result);
     }
 
-    private McpSchema.CallToolResult callToolToResult(BeanDefinition<?> beanDefinition,
-                                                      ExecutableMethod<?, ?> method,
-                                                      Object mcpTransportContext,
-                                                      McpSchema.CallToolRequest callToolRequest) {
-        Class<Object> returnClass = (Class<Object>) method.getReturnType().getType();
-        Object bean = beanContext.getBean(beanDefinition);
+    private <B> McpSchema.CallToolResult callToolToResult(BeanDefinition<B> beanDefinition,
+                                                          ExecutableMethod<B, Object> method,
+                                                          Object mcpTransportContext,
+                                                          McpSchema.CallToolRequest callToolRequest) {
+        Class<?> returnClass = method.getReturnType().getType();
+        B bean = beanContext.getBean(beanDefinition);
         List<String> names = toolArgumentsNames(method);
         Object[] args = new Object[names.size()];
         for (int i = 0; i < names.size(); i++) {
             args[i] = callToolRequest.arguments().get(names.get(i));
         }
-        Object result = ((Executable<Object, ?>) method).invoke(bean, args);
+        Object result = method.invoke(bean, args);
         String text = "";
         if (returnClass.isAssignableFrom(String.class)) {
             text = result.toString();
@@ -169,13 +175,14 @@ class ToolExecutableMethodProcessor implements ExecutableMethodProcessor<Tool> {
         return new McpSchema.CallToolResult(text, false);
     }
 
-    private McpSchema.Tool toolArgument(ExecutableMethod<?, ?> method) {
+    private <B> McpSchema.Tool toolArgument(ExecutableMethod<B, Object> method) {
         McpSchema.Tool.Builder toolBuilder = McpSchema.Tool.builder()
             .name(toolName(method));
         toolArgumentDescription(method).ifPresent(toolBuilder::description);
-        Map<String, Object> properties = new HashMap<>();
-        List<String> requiredProperties = new ArrayList<>();
-        for (Argument argument : method.getArguments()) {
+        Argument<?>[] arguments = method.getArguments();
+        Map<String, Object> properties = CollectionUtils.newHashMap(arguments.length);
+        List<String> requiredProperties = new ArrayList<>(arguments.length);
+        for (Argument<?> argument : arguments) {
             String propertyName = toolArgumentName(argument);
             properties.put(propertyName, toolArgumentJsonSchema(argument));
             if (isToolArgumentRequired(argument)) {
@@ -189,25 +196,25 @@ class ToolExecutableMethodProcessor implements ExecutableMethodProcessor<Tool> {
     }
 
     private Optional<String> toolOutputSchema(ExecutableMethod<?, ?> method) {
-        Class<Object> returnClass = (Class<Object>) method.getReturnType().getType();
+        Class<?> returnClass = method.getReturnType().getType();
         return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(returnClass);
     }
 
-    private static McpSchema.JsonSchema toolArgumentJsonSchema(Argument argument) {
+    private static McpSchema.JsonSchema toolArgumentJsonSchema(Argument<?> argument) {
         return new McpSchema.JsonSchema(toolArgumentType(argument), null, null, null, null, null);
     }
 
-    private static boolean isToolArgumentRequired(Argument argument) {
+    private static boolean isToolArgumentRequired(Argument<?> argument) {
         return !argument.isNullable();
     }
 
-    private static String toolArgumentName(Argument argument) {
+    private static String toolArgumentName(Argument<?> argument) {
         return argument.getName();
     }
 
     private static List<String> toolArgumentsNames(ExecutableMethod<?, ?> method) {
         List<String> names = new ArrayList<>();
-        for (Argument argument : method.getArguments()) {
+        for (Argument<?> argument : method.getArguments()) {
             names.add(toolArgumentName(argument));
         }
         return names;
@@ -217,8 +224,8 @@ class ToolExecutableMethodProcessor implements ExecutableMethodProcessor<Tool> {
         return method.stringValue(Tool.class, MEMBER_DESCRIPTION);
     }
 
-    private static String toolArgumentType(Argument argument) {
-        if (argument.getType().isAssignableFrom(String.class)) {
+    private static String toolArgumentType(Argument<?> argument) {
+        if (argument.isAssignableFrom(String.class)) {
             return TYPE_STRING;
         }
         return TYPE_OBJECT;
@@ -230,5 +237,9 @@ class ToolExecutableMethodProcessor implements ExecutableMethodProcessor<Tool> {
             return method.getName();
         }
         return name;
+    }
+
+    private record ToolMethod<B>(BeanDefinition<B> beanDefinition,
+                                 ExecutableMethod<B, Object> method) {
     }
 }

@@ -22,7 +22,7 @@ import io.micronaut.mcp.server.conf.McpServerConfiguration;
 import io.micronaut.mcp.server.conf.ServerType;
 
 @Internal
-class StatelessTypeCondition implements Condition {
+final class StatelessTypeCondition implements Condition {
     @Override
     public boolean matches(ConditionContext context) {
         return context.getProperty(McpServerConfiguration.PROPERTY_TYPE, ServerType.class)

@@ -20,7 +20,7 @@ import io.micronaut.core.annotation.Internal;
 
 @ConfigurationProperties(PromptsConfiguration.PREFIX)
 @Internal
-class PromptsConfigurationProperties implements PromptsConfiguration {
+final class PromptsConfigurationProperties implements PromptsConfiguration {
     private boolean listChanged;
 
     @Override

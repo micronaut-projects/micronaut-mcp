@@ -16,11 +16,11 @@
 package io.micronaut.mcp.server.stdio.async;
 
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.server.conf.McpServerInfoConfiguration;
+import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -32,42 +32,42 @@ import java.util.List;
 
 @Factory
 @Internal
-class McpServerAsyncFactory {
-    @SuppressWarnings({"java:S107", "java:S3740"})
-    @Prototype
-    McpServer.AsyncSpecification createMcpServerSyncSpecification(McpServerTransportProvider mcpServerTransportProvider,
-                                                                 @Nullable McpServerInfoConfiguration mcpServerInfoConfiguration,
-                                                                 McpSchema.ServerCapabilities mcpServerCapabilities,
-                                                                 List<McpServerFeatures.AsyncToolSpecification> asyncToolSpecifications,
-                                                                 List<McpServerFeatures.AsyncCompletionSpecification> asyncCompletionsSpecifications,
-                                                                 List<McpServerFeatures.AsyncPromptSpecification> asyncPromptSpecifications,
-                                                                 List<McpSchema.ResourceTemplate> resourceTemplates,
-                                                                  List<McpServerFeatures.AsyncResourceSpecification> resources) {
-        McpServer.AsyncSpecification spec = McpServer.async(mcpServerTransportProvider)
-            .capabilities(mcpServerCapabilities);
-        if (mcpServerInfoConfiguration != null) {
-            spec.serverInfo(mcpServerInfoConfiguration.getName(), mcpServerInfoConfiguration.getVersion());
-        }
-        if (CollectionUtils.isNotEmpty(asyncToolSpecifications)) {
-            spec.tools(asyncToolSpecifications);
-        }
-        if (CollectionUtils.isNotEmpty(asyncCompletionsSpecifications)) {
-            spec.completions(asyncCompletionsSpecifications);
-        }
-        if (CollectionUtils.isNotEmpty(asyncPromptSpecifications)) {
-            spec.prompts(asyncPromptSpecifications);
-        }
-        if (CollectionUtils.isNotEmpty(resourceTemplates)) {
-            spec.resourceTemplates(resourceTemplates);
-        }
-        if (CollectionUtils.isNotEmpty(resources)) {
-            spec.resources(resources);
-        }
-        return spec;
-    }
+final class McpServerAsyncFactory extends AbstractMcpServerFactory<McpServer.AsyncSpecification<?>,
+    McpServerTransportProvider,
+    McpServerFeatures.AsyncToolSpecification,
+    McpServerFeatures.AsyncCompletionSpecification,
+    McpServerFeatures.AsyncPromptSpecification,
+    McpServerFeatures.AsyncResourceSpecification> {
 
     @Singleton
-    McpAsyncServer createMcpSyncServer(@SuppressWarnings("java:S3740")McpServer.AsyncSpecification asyncSpecification) {
+    McpAsyncServer createMcpSyncServer(@SuppressWarnings("java:S3740") McpServer.AsyncSpecification<?> asyncSpecification) {
         return asyncSpecification.build();
+    }
+
+    @Override
+    protected List<McpServerFeatures.AsyncToolSpecification> getRegistryTools(ToolRegistry toolRegistry) {
+        return toolRegistry.getAsyncToolSpecs();
+    }
+
+    @Override
+    protected McpServer.AsyncSpecification<?> createMcpServerSpec(McpServerTransportProvider transport,
+                                                                  @Nullable McpServerInfoConfiguration configuration,
+                                                                  McpSchema.ServerCapabilities capabilities,
+                                                                  List<McpServerFeatures.AsyncToolSpecification> tools,
+                                                                  List<McpServerFeatures.AsyncCompletionSpecification> completions,
+                                                                  List<McpServerFeatures.AsyncPromptSpecification> prompts,
+                                                                  List<McpSchema.ResourceTemplate> resourceTemplates,
+                                                                  List<McpServerFeatures.AsyncResourceSpecification> resources) {
+        McpServer.AsyncSpecification<?> spec = McpServer.async(transport)
+            .capabilities(capabilities);
+        if (configuration != null) {
+            spec.serverInfo(configuration.getName(), configuration.getVersion());
+        }
+        spec.tools(tools);
+        spec.completions(completions);
+        spec.prompts(prompts);
+        spec.resourceTemplates(resourceTemplates);
+        spec.resources(resources);
+        return spec;
     }
 }
