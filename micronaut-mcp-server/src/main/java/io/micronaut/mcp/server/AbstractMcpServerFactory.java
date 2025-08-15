@@ -23,7 +23,7 @@ import io.micronaut.mcp.server.conf.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.conf.PromptsConfiguration;
 import io.micronaut.mcp.server.conf.ResourcesConfiguration;
 import io.micronaut.mcp.server.conf.ToolsConfiguration;
-import io.micronaut.mcp.server.registry.ToolRegistry;
+import io.micronaut.mcp.server.processor.ToolRegistry;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Provider;
 

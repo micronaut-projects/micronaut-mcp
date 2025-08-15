@@ -41,6 +41,10 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
+
+import static io.micronaut.mcp.server.processor.JsonSchemaUtils.TYPE_OBJECT;
+import static io.micronaut.mcp.server.processor.JsonSchemaUtils.TYPE_STRING;
+
 /**
  * The registry of {@link Tool}s.
  */
@@ -51,12 +55,6 @@ public final class ToolRegistry implements ExecutableMethodProcessor<Tool> {
     /**
      * @see <a href="https://json-schema.org/understanding-json-schema/reference/type">JSON Schema Type</a>
      */
-    private static final String TYPE_STRING = "string";
-    private static final String TYPE_NUMBER = "number";
-    private static final String TYPE_OBJECT = "object";
-    private static final String TYPE_ARRAY = "array";
-    private static final String TYPE_BOOL = "bool";
-    private static final String TYPE_NULL = "null";
     private static final String MEMBER_DESCRIPTION = "description";
 
     private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;

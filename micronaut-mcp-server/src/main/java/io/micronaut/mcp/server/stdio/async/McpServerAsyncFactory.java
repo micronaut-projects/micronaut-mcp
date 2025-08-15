@@ -20,7 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.server.conf.McpServerInfoConfiguration;
-import io.micronaut.mcp.server.registry.ToolRegistry;
+import io.micronaut.mcp.server.processor.ToolRegistry;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
