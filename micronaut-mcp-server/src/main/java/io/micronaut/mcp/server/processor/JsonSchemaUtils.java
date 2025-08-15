@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.server.registry;
+package io.micronaut.mcp.server.processor;
 
 import io.micronaut.core.annotation.Internal;
 

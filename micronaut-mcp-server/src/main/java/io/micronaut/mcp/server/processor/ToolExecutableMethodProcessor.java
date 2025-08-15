@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.server.registry;
+package io.micronaut.mcp.server.processor;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
@@ -41,8 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_OBJECT;
-import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_STRING;
+import static io.micronaut.mcp.server.processor.JsonSchemaUtils.TYPE_OBJECT;
+import static io.micronaut.mcp.server.processor.JsonSchemaUtils.TYPE_STRING;
 
 @Singleton
 @Internal
