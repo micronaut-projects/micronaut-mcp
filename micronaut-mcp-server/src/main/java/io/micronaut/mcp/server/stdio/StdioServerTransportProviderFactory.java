@@ -24,7 +24,7 @@ import io.modelcontextprotocol.spec.McpServerTransportProvider;
 
 @Internal
 @Factory
-class StdioServerTransportProviderFactory {
+final class StdioServerTransportProviderFactory {
     @Prototype
     McpServerTransportProvider createStdioServerTransportProvider(ObjectMapper objectMapper) {
         return new StdioServerTransportProvider(objectMapper);

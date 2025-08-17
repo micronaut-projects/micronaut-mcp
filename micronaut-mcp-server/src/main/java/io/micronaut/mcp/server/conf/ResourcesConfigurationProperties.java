@@ -20,7 +20,7 @@ import io.micronaut.core.annotation.Internal;
 
 @ConfigurationProperties(ResourcesConfiguration.PREFIX)
 @Internal
-class ResourcesConfigurationProperties implements ResourcesConfiguration {
+final class ResourcesConfigurationProperties implements ResourcesConfiguration {
     private boolean listChanged = DEFAULT_LIST_CHANGED;
     private boolean subscribe = DEFAULT_SUBSCRIBE;
 

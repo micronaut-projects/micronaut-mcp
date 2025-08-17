@@ -23,7 +23,7 @@ import io.micronaut.core.annotation.Internal;
 @Requires(property = McpServerInfoConfiguration.PROPERTY_VERSION)
 @ConfigurationProperties(McpServerInfoConfiguration.PREFIX)
 @Internal
-class McpServerInfoConfigurationProperties implements McpServerInfoConfiguration {
+final class McpServerInfoConfigurationProperties implements McpServerInfoConfiguration {
 
     private String name;
     private String version;

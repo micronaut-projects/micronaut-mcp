@@ -33,7 +33,7 @@ import java.io.Closeable;
 @Requires(beans = McpServerConfiguration.class)
 @Internal
 @Singleton
-class McpServerBootstrap implements ApplicationEventListener<StartupEvent>, AutoCloseable {
+final class McpServerBootstrap implements ApplicationEventListener<StartupEvent>, AutoCloseable {
     private final BeanContext beanContext;
     private final McpServerConfiguration mcpServerConfiguration;
 

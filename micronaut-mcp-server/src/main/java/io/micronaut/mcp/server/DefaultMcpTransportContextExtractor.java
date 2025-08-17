@@ -26,7 +26,7 @@ import jakarta.inject.Singleton;
  */
 @Internal
 @Singleton
-class DefaultMcpTransportContextExtractor implements McpTransportContextExtractor<HttpRequest<?>> {
+final class DefaultMcpTransportContextExtractor implements McpTransportContextExtractor<HttpRequest<?>> {
     public static final String HTTP_HEADER_MCP_PROTOCOL_VERSION = "MCP-Protocol-Version";
     public static final String DEFAULT_PROTOCOL_VERSION = "2025-03-26";
     public static final String HTTP_HEADER_MCP_SESSION_ID = "Mcp-Session-Id";
