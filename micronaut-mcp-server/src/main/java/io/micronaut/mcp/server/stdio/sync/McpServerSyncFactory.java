@@ -20,7 +20,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.server.conf.McpServerInfoConfiguration;
-import io.micronaut.mcp.server.processor.ToolRegistry;
+import io.micronaut.mcp.server.registry.PromptRegistry;
+import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServer;
@@ -36,7 +37,8 @@ final class McpServerSyncFactory extends AbstractMcpServerFactory<McpServer.Sync
     McpServerTransportProvider,
     McpServerFeatures.SyncToolSpecification,
     McpServerFeatures.SyncCompletionSpecification,
-    McpServerFeatures.SyncPromptSpecification, McpServerFeatures.SyncResourceSpecification> {
+    McpServerFeatures.SyncPromptSpecification,
+    McpServerFeatures.SyncResourceSpecification> {
 
     @Singleton
     McpSyncServer createMcpSyncServer(McpServer.SyncSpecification<?> syncSpecification) {
@@ -44,8 +46,13 @@ final class McpServerSyncFactory extends AbstractMcpServerFactory<McpServer.Sync
     }
 
     @Override
-    protected List<McpServerFeatures.SyncToolSpecification> getRegistryTools(ToolRegistry toolRegistry) {
-        return toolRegistry.getSyncToolSpecs();
+    protected List<McpServerFeatures.SyncToolSpecification> getTools(ToolRegistry toolRegistry) {
+        return toolRegistry.getSyncSpecs();
+    }
+
+    @Override
+    protected List<McpServerFeatures.SyncPromptSpecification> getPrompts(PromptRegistry promptRegistry) {
+        return promptRegistry.getSyncSpecs();
     }
 
     @Override

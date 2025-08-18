@@ -23,7 +23,8 @@ import io.micronaut.mcp.server.conf.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.conf.PromptsConfiguration;
 import io.micronaut.mcp.server.conf.ResourcesConfiguration;
 import io.micronaut.mcp.server.conf.ToolsConfiguration;
-import io.micronaut.mcp.server.processor.ToolRegistry;
+import io.micronaut.mcp.server.registry.PromptRegistry;
+import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Provider;
 
@@ -49,7 +50,10 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
      * @param toolRegistry the registry of tools from which to retrieve the tools
      * @return a list of tools retrieved from the provided tool registry
      */
-    protected abstract List<T> getRegistryTools(ToolRegistry toolRegistry);
+    protected abstract List<T> getTools(ToolRegistry toolRegistry);
+
+    protected abstract List<P> getPrompts(PromptRegistry promptRegistry);
+
 
     /**
      * Creates an MCP server specification based on the provided parameters.
@@ -83,16 +87,18 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
                                   McpSchema.ServerCapabilities.Builder capabilitiesBuilder,
                                   Provider<McpSchema.ServerCapabilities> capabilitiesProvider,
                                   ToolRegistry toolRegistry,
+                                  PromptRegistry promptRegistry,
                                   List<T> tools,
                                   List<C> completions,
                                   List<P> prompts,
                                   List<McpSchema.ResourceTemplate> resourceTemplates,
                                   List<R> resources) {
-        List<T> allTools = CollectionUtils.concat(tools, getRegistryTools(toolRegistry));
+        List<T> allTools = CollectionUtils.concat(tools, getTools(toolRegistry));
         if (!allTools.isEmpty()) {
             capabilitiesBuilder.tools(toolsConfiguration.isListChanged());
         }
-        if (!prompts.isEmpty()) {
+        List<P> allPrompts = CollectionUtils.concat(prompts, getPrompts(promptRegistry));
+        if (!allPrompts.isEmpty()) {
             capabilitiesBuilder.prompts(promptsConfiguration.isListChanged());
         }
         if (!resourceTemplates.isEmpty() || !resources.isEmpty()) {
@@ -101,7 +107,7 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
         if (!completions.isEmpty()) {
             capabilitiesBuilder.completions();
         }
-        return createMcpServerSpec(transport, configuration, capabilitiesProvider.get(), allTools, completions, prompts, resourceTemplates, resources);
+        return createMcpServerSpec(transport, configuration, capabilitiesProvider.get(), allTools, completions, allPrompts, resourceTemplates, resources);
     }
 
 }

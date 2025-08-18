@@ -16,4 +16,4 @@
 /**
  * Classes related to process the {@link io.micronaut.mcp.annotations.Tool} and {@link io.micronaut.mcp.annotations.Prompt} annotations.
  */
-package io.micronaut.mcp.server.processor;
+package io.micronaut.mcp.server.registry;

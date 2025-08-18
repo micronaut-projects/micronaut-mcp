@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.server.processor;
+package io.micronaut.mcp.server.registry;
 
 import io.micronaut.context.BeanContext;
-import io.micronaut.context.processor.ExecutableMethodProcessor;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
@@ -39,18 +38,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.stream.Stream;
 
-
-import static io.micronaut.mcp.server.processor.JsonSchemaUtils.TYPE_OBJECT;
-import static io.micronaut.mcp.server.processor.JsonSchemaUtils.TYPE_STRING;
+import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_OBJECT;
+import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_STRING;
 
 /**
  * The registry of {@link Tool}s.
  */
 @Singleton
 @Internal
-public final class ToolRegistry implements ExecutableMethodProcessor<Tool> {
+public final class ToolRegistry extends AbstractMcpRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
     /**
      * @see <a href="https://json-schema.org/understanding-json-schema/reference/type">JSON Schema Type</a>
@@ -61,8 +58,6 @@ public final class ToolRegistry implements ExecutableMethodProcessor<Tool> {
     private final JsonMapper jsonMapper;
     private final BeanContext beanContext;
 
-    private final List<ToolMethod<Object>> toolMethods = new ArrayList<>();
-
     ToolRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
                  JsonMapper jsonMapper,
                  BeanContext beanContext) {
@@ -71,19 +66,8 @@ public final class ToolRegistry implements ExecutableMethodProcessor<Tool> {
         this.beanContext = beanContext;
     }
 
-    @Override
-    public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
-        if (method.hasDeclaredAnnotation(Tool.class)) {
-            toolMethods.add(new ToolMethod(beanDefinition, method));
-        }
-    }
-
-    private Stream<ToolMethod<Object>> drainToolMethods() {
-        return toolMethods.stream().onClose(toolMethods::clear);
-    }
-
-    public List<McpServerFeatures.SyncToolSpecification> getSyncToolSpecs() {
-        return drainToolMethods()
+    public List<McpServerFeatures.SyncToolSpecification> getSyncSpecs() {
+        return drainMethods()
             .map(toolMethod -> McpServerFeatures.SyncToolSpecification.builder()
                 .tool(toolArgument(toolMethod.method()))
                 .callHandler(provideSyncCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
@@ -91,8 +75,8 @@ public final class ToolRegistry implements ExecutableMethodProcessor<Tool> {
             .toList();
     }
 
-    public List<McpServerFeatures.AsyncToolSpecification> getAsyncToolSpecs() {
-        return drainToolMethods()
+    public List<McpServerFeatures.AsyncToolSpecification> getAsyncSpecs() {
+        return drainMethods()
             .map(toolMethod -> McpServerFeatures.AsyncToolSpecification.builder()
                 .tool(toolArgument(toolMethod.method()))
                 .callHandler(provideReactiveCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
@@ -100,8 +84,8 @@ public final class ToolRegistry implements ExecutableMethodProcessor<Tool> {
             .toList();
     }
 
-    public List<McpStatelessServerFeatures.SyncToolSpecification> getStatelessSyncToolSpecs() {
-        return drainToolMethods()
+    public List<McpStatelessServerFeatures.SyncToolSpecification> getStatelessSyncSpecs() {
+        return drainMethods()
             .map(toolMethod -> McpStatelessServerFeatures.SyncToolSpecification.builder()
                 .tool(toolArgument(toolMethod.method()))
                 .callHandler(provideSyncCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
@@ -109,8 +93,8 @@ public final class ToolRegistry implements ExecutableMethodProcessor<Tool> {
             .toList();
     }
 
-    public List<McpStatelessServerFeatures.AsyncToolSpecification> getStatelessAsyncToolSpecs() {
-        return drainToolMethods()
+    public List<McpStatelessServerFeatures.AsyncToolSpecification> getStatelessAsyncSpecs() {
+        return drainMethods()
             .map(toolMethod -> McpStatelessServerFeatures.AsyncToolSpecification.builder()
                 .tool(toolArgument(toolMethod.method()))
                 .callHandler(provideReactiveCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
@@ -235,9 +219,5 @@ public final class ToolRegistry implements ExecutableMethodProcessor<Tool> {
             return method.getName();
         }
         return name;
-    }
-
-    private record ToolMethod<B>(BeanDefinition<B> beanDefinition,
-                                 ExecutableMethod<B, Object> method) {
     }
 }

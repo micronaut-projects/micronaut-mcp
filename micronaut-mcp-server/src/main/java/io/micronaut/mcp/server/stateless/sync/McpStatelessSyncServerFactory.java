@@ -18,9 +18,10 @@ package io.micronaut.mcp.server.stateless.sync;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.mcp.server.conf.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.AbstractMcpServerFactory;
-import io.micronaut.mcp.server.processor.ToolRegistry;
+import io.micronaut.mcp.server.conf.McpServerInfoConfiguration;
+import io.micronaut.mcp.server.registry.PromptRegistry;
+import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessSyncServer;
@@ -40,8 +41,13 @@ final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpSe
     @SuppressWarnings({"java:S107"})
 
     @Override
-    protected List<McpStatelessServerFeatures.SyncToolSpecification> getRegistryTools(ToolRegistry toolRegistry) {
-        return toolRegistry.getStatelessSyncToolSpecs();
+    protected List<McpStatelessServerFeatures.SyncToolSpecification> getTools(ToolRegistry toolRegistry) {
+        return toolRegistry.getStatelessSyncSpecs();
+    }
+
+    @Override
+    protected List<McpStatelessServerFeatures.SyncPromptSpecification> getPrompts(PromptRegistry promptRegistry) {
+        return promptRegistry.getStatelessSyncToolSpecs();
     }
 
     @Override
