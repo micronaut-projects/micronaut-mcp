@@ -16,11 +16,12 @@
 package io.micronaut.mcp.server.stdio.sync;
 
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.server.conf.McpServerInfoConfiguration;
+import io.micronaut.mcp.server.registry.PromptRegistry;
+import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServer;
@@ -32,43 +33,47 @@ import java.util.List;
 
 @Internal
 @Factory
-class McpServerSyncFactory {
-    @SuppressWarnings({"java:S107", "java:S3740"})
-    @Prototype
-    McpServer.SyncSpecification createMcpServerSyncSpecification(McpServerTransportProvider mcpServerTransportProvider,
-                                                                 @Nullable McpServerInfoConfiguration mcpServerInfoConfiguration,
-                                                                 McpSchema.ServerCapabilities mcpServerCapabilities,
-                                                                 List<McpServerFeatures.SyncToolSpecification> syncToolSpecifications,
-                                                                 List<McpServerFeatures.SyncCompletionSpecification> syncCompletionsSpecifications,
-                                                                 List<McpServerFeatures.SyncPromptSpecification> syncPromptSpecifications,
-                                                                 List<McpSchema.ResourceTemplate> resourceTemplates,
-                                                                 List<McpServerFeatures.SyncResourceSpecification> resources) {
-        McpServer.SyncSpecification spec = McpServer.sync(mcpServerTransportProvider)
-                .capabilities(mcpServerCapabilities);
-        if (mcpServerInfoConfiguration != null) {
-            spec.serverInfo(mcpServerInfoConfiguration.getName(), mcpServerInfoConfiguration.getVersion());
-        }
-        if (CollectionUtils.isNotEmpty(syncToolSpecifications)) {
-            spec.tools(syncToolSpecifications);
-        }
-        if (CollectionUtils.isNotEmpty(syncCompletionsSpecifications)) {
-            spec.completions(syncCompletionsSpecifications);
-        }
-        if (CollectionUtils.isNotEmpty(syncPromptSpecifications)) {
-            spec.prompts(syncPromptSpecifications);
-        }
-        if (CollectionUtils.isNotEmpty(resourceTemplates)) {
-            spec.resourceTemplates(resourceTemplates);
-        }
-        if (CollectionUtils.isNotEmpty(resources)) {
-            spec.resources(resources);
-        }
-        return spec;
+final class McpServerSyncFactory extends AbstractMcpServerFactory<McpServer.SyncSpecification<?>,
+    McpServerTransportProvider,
+    McpServerFeatures.SyncToolSpecification,
+    McpServerFeatures.SyncCompletionSpecification,
+    McpServerFeatures.SyncPromptSpecification,
+    McpServerFeatures.SyncResourceSpecification> {
+
+    @Singleton
+    McpSyncServer createMcpSyncServer(McpServer.SyncSpecification<?> syncSpecification) {
+        return syncSpecification.build();
     }
 
-    @SuppressWarnings("java:S3740")
-    @Singleton
-    McpSyncServer createMcpSyncServer(McpServer.SyncSpecification syncSpecification) {
-        return syncSpecification.build();
+    @Override
+    protected List<McpServerFeatures.SyncToolSpecification> getTools(ToolRegistry toolRegistry) {
+        return toolRegistry.getSyncSpecs();
+    }
+
+    @Override
+    protected List<McpServerFeatures.SyncPromptSpecification> getPrompts(PromptRegistry promptRegistry) {
+        return promptRegistry.getSyncSpecs();
+    }
+
+    @Override
+    protected McpServer.SyncSpecification<?> createMcpServerSpec(McpServerTransportProvider transport,
+                                                                 @Nullable McpServerInfoConfiguration configuration,
+                                                                 McpSchema.ServerCapabilities capabilities,
+                                                                 List<McpServerFeatures.SyncToolSpecification> tools,
+                                                                 List<McpServerFeatures.SyncCompletionSpecification> completions,
+                                                                 List<McpServerFeatures.SyncPromptSpecification> prompts,
+                                                                 List<McpSchema.ResourceTemplate> resourceTemplates,
+                                                                 List<McpServerFeatures.SyncResourceSpecification> resources) {
+        McpServer.SyncSpecification<?> spec = McpServer.sync(transport)
+            .capabilities(capabilities);
+        if (configuration != null) {
+            spec.serverInfo(configuration.getName(), configuration.getVersion());
+        }
+        spec.tools(tools);
+        spec.completions(completions);
+        spec.prompts(prompts);
+        spec.resourceTemplates(resourceTemplates);
+        spec.resources(resources);
+        return spec;
     }
 }

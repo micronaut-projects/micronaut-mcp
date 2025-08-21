@@ -18,61 +18,22 @@ package io.micronaut.mcp.server;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.mcp.server.conf.PromptsConfiguration;
-import io.micronaut.mcp.server.conf.ResourcesConfiguration;
-import io.micronaut.mcp.server.conf.ToolsConfiguration;
-import io.modelcontextprotocol.server.McpServerFeatures;
-import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.inject.Singleton;
 
-import java.util.List;
 import java.util.Map;
 
 /**
  * Creates prototype instance of {@link McpSchema.ServerCapabilities.Builder} and {@link McpSchema.ServerCapabilities}.
+ *
  * @since 1.0.0
  */
 @Internal
 @Factory
-class ServerCapabilitiesFactory {
-    @SuppressWarnings("java:S107")
-    @Prototype
-    McpSchema.ServerCapabilities.Builder createServerCapabilitiesBuilder(
-        List<McpServerFeatures.SyncCompletionSpecification> syncCompletions,
-        List<McpServerFeatures.AsyncCompletionSpecification> asyncCompletions,
-        List<McpStatelessServerFeatures.AsyncCompletionSpecification> statelessAsyncCompletions,
-        List<McpStatelessServerFeatures.SyncCompletionSpecification> statelessSyncCompletions,
-        ResourcesConfiguration resourcesConfiguration,
-        List<McpSchema.ResourceTemplate> resourceTemplates,
-        List<McpSchema.Resource> resources,
-        List<McpServerFeatures.SyncResourceSpecification> syncResources,
-        List<McpServerFeatures.AsyncResourceSpecification> asyncResources,
-        List<McpStatelessServerFeatures.AsyncResourceSpecification> statelessAsyncResources,
-        List<McpStatelessServerFeatures.SyncResourceSpecification> statelessSyncResources,
-        ToolsConfiguration toolsConfiguration,
-        List<McpServerFeatures.SyncToolSpecification> syncTools,
-        List<McpServerFeatures.AsyncToolSpecification> asyncTools,
-        List<McpStatelessServerFeatures.AsyncToolSpecification> statelessAsyncTools,
-        List<McpStatelessServerFeatures.SyncToolSpecification> statelessSyncTools,
-        PromptsConfiguration promptsConfiguration,
-        List<McpServerFeatures.SyncPromptSpecification> syncPrompts,
-        List<McpServerFeatures.AsyncPromptSpecification> asyncPrompts,
-        List<McpStatelessServerFeatures.SyncPromptSpecification> statelessSyncPrompts,
-        List<McpStatelessServerFeatures.AsyncPromptSpecification> statelessAsyncPrompts) {
+final class ServerCapabilitiesFactory {
+    @Singleton
+    McpSchema.ServerCapabilities.Builder createServerCapabilitiesBuilder() {
         McpSchema.ServerCapabilities.Builder builder = McpSchema.ServerCapabilities.builder();
-        if (CollectionUtils.isNotEmpty(syncTools) || CollectionUtils.isNotEmpty(asyncTools) || CollectionUtils.isNotEmpty(statelessAsyncTools) || CollectionUtils.isNotEmpty(statelessSyncTools)) {
-            builder.tools(toolsConfiguration.isListChanged());
-        }
-        if (CollectionUtils.isNotEmpty(syncPrompts) || CollectionUtils.isNotEmpty(asyncPrompts) || CollectionUtils.isNotEmpty(statelessSyncPrompts) || CollectionUtils.isNotEmpty(statelessAsyncPrompts)) {
-            builder.prompts(promptsConfiguration.isListChanged());
-        }
-        if (CollectionUtils.isNotEmpty(resourceTemplates) || CollectionUtils.isNotEmpty(resources) || CollectionUtils.isNotEmpty(syncResources) || CollectionUtils.isNotEmpty(asyncResources) || CollectionUtils.isNotEmpty(statelessAsyncResources) || CollectionUtils.isNotEmpty(statelessSyncResources)) {
-            builder.resources(resourcesConfiguration.isSubscribe(), resourcesConfiguration.isListChanged());
-        }
-        if (CollectionUtils.isNotEmpty(syncCompletions) || CollectionUtils.isNotEmpty(asyncCompletions) || CollectionUtils.isNotEmpty(statelessAsyncCompletions) || CollectionUtils.isNotEmpty(statelessSyncCompletions)) {
-            builder.completions();
-        }
         //TODO builder.logging();
         return builder;
     }
@@ -88,8 +49,8 @@ class ServerCapabilitiesFactory {
         McpSchema.ServerCapabilities.PromptCapabilities prompts = serverCapabilities.prompts();
         McpSchema.ServerCapabilities.ResourceCapabilities resources = serverCapabilities.resources();
         McpSchema.ServerCapabilities.ToolCapabilities tools = serverCapabilities.tools();
-        return new McpSchema.ServerCapabilities(completions, experimental, logging, prompts, resources, tools);
 
-        //return serverCapabilities;
+        return new McpSchema.ServerCapabilities(completions, experimental, logging, prompts, resources, tools);
     }
+
 }

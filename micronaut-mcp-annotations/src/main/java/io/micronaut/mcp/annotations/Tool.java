@@ -34,7 +34,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Retention(RUNTIME)
 @Target(METHOD)
-@Executable(processOnStartup = true)
+@McpPrimitive
 public @interface Tool {
     /**
      * Constant value for {@link #name()} indicating that the annotated element's name should be used as-is.

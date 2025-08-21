@@ -16,11 +16,12 @@
 package io.micronaut.mcp.server.stateless.async;
 
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.mcp.server.conf.McpServerInfoConfiguration;
+import io.micronaut.mcp.server.AbstractMcpServerFactory;
+import io.micronaut.mcp.server.registry.PromptRegistry;
+import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpStatelessAsyncServer;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
@@ -35,37 +36,42 @@ import java.util.List;
  */
 @Factory
 @Internal
-class McpStatelessAsyncServerFactory {
-    @SuppressWarnings({"java:S107"})
-    @Prototype
-    McpServer.StatelessAsyncSpecification createMcpServerSyncSpecification(McpStatelessServerTransport mcpStatelessServerTransport,
-                                                                          @Nullable McpServerInfoConfiguration mcpServerInfoConfiguration,
-                                                                          McpSchema.ServerCapabilities mcpServerCapabilities,
-                                                                          List<McpStatelessServerFeatures.AsyncToolSpecification> tools,
-                                                                          List<McpStatelessServerFeatures.AsyncCompletionSpecification> completions,
-                                                                          List<McpStatelessServerFeatures.AsyncPromptSpecification> prompts,
-                                                                          List<McpSchema.ResourceTemplate> resourceTemplates,
-                                                                          List<McpStatelessServerFeatures.AsyncResourceSpecification> resources) {
-        McpServer.StatelessAsyncSpecification spec = McpServer.async(mcpStatelessServerTransport)
-            .capabilities(mcpServerCapabilities);
-        if (mcpServerInfoConfiguration != null) {
-            spec.serverInfo(mcpServerInfoConfiguration.getName(), mcpServerInfoConfiguration.getVersion());
+final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpServer.StatelessAsyncSpecification,
+    McpStatelessServerTransport,
+    McpStatelessServerFeatures.AsyncToolSpecification,
+    McpStatelessServerFeatures.AsyncCompletionSpecification,
+    McpStatelessServerFeatures.AsyncPromptSpecification,
+    McpStatelessServerFeatures.AsyncResourceSpecification> {
+
+    @Override
+    protected List<McpStatelessServerFeatures.AsyncToolSpecification> getTools(ToolRegistry toolRegistry) {
+        return toolRegistry.getStatelessAsyncSpecs();
+    }
+
+    @Override
+    protected List<McpStatelessServerFeatures.AsyncPromptSpecification> getPrompts(PromptRegistry promptRegistry) {
+        return promptRegistry.getStatelessAsyncToolSpecs();
+    }
+
+    @Override
+    protected McpServer.StatelessAsyncSpecification createMcpServerSpec(McpStatelessServerTransport transport,
+                                                                        @Nullable McpServerInfoConfiguration configuration,
+                                                                        McpSchema.ServerCapabilities capabilities,
+                                                                        List<McpStatelessServerFeatures.AsyncToolSpecification> tools,
+                                                                        List<McpStatelessServerFeatures.AsyncCompletionSpecification> completions,
+                                                                        List<McpStatelessServerFeatures.AsyncPromptSpecification> prompts,
+                                                                        List<McpSchema.ResourceTemplate> resourceTemplates,
+                                                                        List<McpStatelessServerFeatures.AsyncResourceSpecification> resources) {
+        McpServer.StatelessAsyncSpecification spec = McpServer.async(transport)
+            .capabilities(capabilities);
+        if (configuration != null) {
+            spec.serverInfo(configuration.getName(), configuration.getVersion());
         }
-        if (CollectionUtils.isNotEmpty(tools)) {
-            spec.tools(tools);
-        }
-        if (CollectionUtils.isNotEmpty(completions)) {
-            spec.completions(completions);
-        }
-        if (CollectionUtils.isNotEmpty(prompts)) {
-            spec.prompts(prompts);
-        }
-        if (CollectionUtils.isNotEmpty(resourceTemplates)) {
-            spec.resourceTemplates(resourceTemplates);
-        }
-        if (CollectionUtils.isNotEmpty(resources)) {
-            spec.resources(resources);
-        }
+        spec.tools(tools);
+        spec.completions(completions);
+        spec.prompts(prompts);
+        spec.resourceTemplates(resourceTemplates);
+        spec.resources(resources);
         return spec;
     }
 
@@ -73,4 +79,5 @@ class McpStatelessAsyncServerFactory {
     McpStatelessAsyncServer createMcpStatelessSyncServer(McpServer.StatelessAsyncSpecification specification) {
         return specification.build();
     }
+
 }

@@ -14,6 +14,6 @@ class MicronautMcpStatelessServerTransportTest {
 
     @Test
     void beanOfTypeMicronautMcpStatelessServerTransportExists() {
-        assertTrue(beanContext.containsBean(MicronautMcpStatelessServerTransport.class));
+        assertTrue(beanContext.containsBean(McpStatelessServerFactory.class));
     }
 }
