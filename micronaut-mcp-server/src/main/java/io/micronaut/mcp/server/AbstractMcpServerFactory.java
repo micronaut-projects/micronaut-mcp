@@ -52,6 +52,12 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
      */
     protected abstract List<T> getTools(ToolRegistry toolRegistry);
 
+    /**
+     * Retrieves a list of prompts from the provided {@code PromptRegistry}.
+     *
+     * @param promptRegistry the registry of prompts from which to retrieve the prompts
+     * @return a list of prompts retrieved from the provided prompt registry
+     */
     protected abstract List<P> getPrompts(PromptRegistry promptRegistry);
 
 

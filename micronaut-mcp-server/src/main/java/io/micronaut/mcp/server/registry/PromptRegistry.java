@@ -44,7 +44,7 @@ import java.util.function.BiFunction;
 @Named
 @Internal
 @Singleton
-public final class PromptRegistry extends AbstractMcpRegistry {
+public final class PromptRegistry extends AbstractMcpMethodRegistry {
     public static final String MEMBER_NAME = "name";
     public static final String MEMBER_DESCRIPTION = "description";
     private final BeanContext beanContext;

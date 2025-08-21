@@ -47,7 +47,7 @@ import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_STRING;
  */
 @Singleton
 @Internal
-public final class ToolRegistry extends AbstractMcpRegistry {
+public final class ToolRegistry extends AbstractMcpMethodRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
     /**
      * @see <a href="https://json-schema.org/understanding-json-schema/reference/type">JSON Schema Type</a>
@@ -127,7 +127,7 @@ public final class ToolRegistry extends AbstractMcpRegistry {
                                                           ExecutableMethod<B, Object> method,
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
-        Class<?> returnClass = method.getReturnType().getType();
+        Argument<?> returnClass = method.getReturnType().asArgument();
         B bean = beanContext.getBean(beanDefinition);
         List<String> names = toolArgumentsNames(method);
         Object[] args = new Object[names.size()];

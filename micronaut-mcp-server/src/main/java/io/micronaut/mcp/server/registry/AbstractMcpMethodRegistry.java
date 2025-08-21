@@ -29,18 +29,39 @@ import java.util.stream.Stream;
  */
 @Singleton
 @Internal
-abstract class AbstractMcpRegistry {
+abstract sealed class AbstractMcpMethodRegistry permits PromptRegistry, ToolRegistry {
 
     protected final List<Method<Object>> methods = new ArrayList<>();
 
-    public final boolean addMethod(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
-        return methods.add(new Method(beanDefinition, method));
+    /**
+     * Adds a new method to the registry by associating it with a given bean definition.
+     *
+     * @param beanDefinition the bean definition that declares or provides the method
+     * @param method         the executable method to be added to the registry
+     */
+    public final void addMethod(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
+        methods.add(new Method(beanDefinition, method));
     }
 
+    /**
+     * Returns a stream of the methods currently stored in the registry.
+     * After the stream is consumed or closed, the underlying list of methods will be cleared.
+     *
+     * @return a stream of methods from the registry
+     */
     protected final Stream<Method<Object>> drainMethods() {
         return methods.stream().onClose(methods::clear);
     }
 
+    /**
+     * A record representing a method associated with a bean definition.
+     * This is used within the method registry to encapsulate the information of
+     * a specific method and its corresponding bean definition.
+     *
+     * @param beanDefinition The bean definition that declares or provides the method.
+     * @param method         The executable method being encapsulated.
+     * @param <B>            The type of the bean.
+     */
     protected record Method<B>(BeanDefinition<B> beanDefinition,
                                ExecutableMethod<B, Object> method) {
     }
