@@ -19,7 +19,6 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.modelcontextprotocol.spec.McpSchema;
-import jakarta.inject.Singleton;
 
 import java.util.Map;
 
@@ -31,26 +30,13 @@ import java.util.Map;
 @Internal
 @Factory
 final class ServerCapabilitiesFactory {
-    @Singleton
+    @Prototype
     McpSchema.ServerCapabilities.Builder createServerCapabilitiesBuilder() {
-        McpSchema.ServerCapabilities.Builder builder = McpSchema.ServerCapabilities.builder();
-        //TODO builder.logging();
-        return builder;
+        return McpSchema.ServerCapabilities.builder();
     }
 
     @Prototype
     McpSchema.ServerCapabilities createServerCapabilities(McpSchema.ServerCapabilities.Builder builder) {
-        McpSchema.ServerCapabilities serverCapabilities = builder.build();
-
-        // Workaround for https://github.com/modelcontextprotocol/java-sdk/pull/480
-        McpSchema.ServerCapabilities.CompletionCapabilities completions = serverCapabilities.completions();
-        Map<String, Object> experimental = serverCapabilities.experimental();
-        McpSchema.ServerCapabilities.LoggingCapabilities logging = null;
-        McpSchema.ServerCapabilities.PromptCapabilities prompts = serverCapabilities.prompts();
-        McpSchema.ServerCapabilities.ResourceCapabilities resources = serverCapabilities.resources();
-        McpSchema.ServerCapabilities.ToolCapabilities tools = serverCapabilities.tools();
-
-        return new McpSchema.ServerCapabilities(completions, experimental, logging, prompts, resources, tools);
+        return builder.build();
     }
-
 }
