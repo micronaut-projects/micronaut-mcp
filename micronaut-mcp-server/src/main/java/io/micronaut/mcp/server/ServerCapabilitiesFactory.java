@@ -18,21 +18,82 @@ package io.micronaut.mcp.server;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.mcp.server.conf.PromptsConfiguration;
+import io.micronaut.mcp.server.conf.ResourcesConfiguration;
+import io.micronaut.mcp.server.conf.ToolsConfiguration;
+import io.micronaut.mcp.server.registry.PromptRegistry;
+import io.micronaut.mcp.server.registry.ToolRegistry;
+import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * Creates prototype instance of {@link McpSchema.ServerCapabilities.Builder} and {@link McpSchema.ServerCapabilities}.
- *
  * @since 1.0.0
  */
 @Internal
 @Factory
-final class ServerCapabilitiesFactory {
+class ServerCapabilitiesFactory {
+    @SuppressWarnings("java:S107")
     @Prototype
-    McpSchema.ServerCapabilities.Builder createServerCapabilitiesBuilder() {
-        return McpSchema.ServerCapabilities.builder();
+    McpSchema.ServerCapabilities.Builder createServerCapabilitiesBuilder(
+        List<McpServerFeatures.SyncCompletionSpecification> syncCompletions,
+        List<McpServerFeatures.AsyncCompletionSpecification> asyncCompletions,
+        List<McpStatelessServerFeatures.AsyncCompletionSpecification> statelessAsyncCompletions,
+        List<McpStatelessServerFeatures.SyncCompletionSpecification> statelessSyncCompletions,
+        ResourcesConfiguration resourcesConfiguration,
+        List<McpSchema.ResourceTemplate> resourceTemplates,
+        List<McpSchema.Resource> resources,
+        List<McpServerFeatures.SyncResourceSpecification> syncResources,
+        List<McpServerFeatures.AsyncResourceSpecification> asyncResources,
+        List<McpStatelessServerFeatures.AsyncResourceSpecification> statelessAsyncResources,
+        List<McpStatelessServerFeatures.SyncResourceSpecification> statelessSyncResources,
+        ToolsConfiguration toolsConfiguration,
+        ToolRegistry toolRegistry,
+        List<McpServerFeatures.SyncToolSpecification> syncTools,
+        List<McpServerFeatures.AsyncToolSpecification> asyncTools,
+        List<McpStatelessServerFeatures.AsyncToolSpecification> statelessAsyncTools,
+        List<McpStatelessServerFeatures.SyncToolSpecification> statelessSyncTools,
+        PromptsConfiguration promptsConfiguration,
+        PromptRegistry promptRegistry,
+        List<McpServerFeatures.SyncPromptSpecification> syncPrompts,
+        List<McpServerFeatures.AsyncPromptSpecification> asyncPrompts,
+        List<McpStatelessServerFeatures.SyncPromptSpecification> statelessSyncPrompts,
+        List<McpStatelessServerFeatures.AsyncPromptSpecification> statelessAsyncPrompts) {
+        McpSchema.ServerCapabilities.Builder builder = McpSchema.ServerCapabilities.builder();
+        if (CollectionUtils.isNotEmpty(syncTools) ||
+            CollectionUtils.isNotEmpty(asyncTools) ||
+            CollectionUtils.isNotEmpty(statelessAsyncTools) ||
+            CollectionUtils.isNotEmpty(statelessSyncTools) ||
+            toolRegistry.isNotEmpty()
+        ) {
+            builder.tools(toolsConfiguration.isListChanged());
+        }
+        if (CollectionUtils.isNotEmpty(syncPrompts) ||
+            CollectionUtils.isNotEmpty(asyncPrompts) ||
+            CollectionUtils.isNotEmpty(statelessSyncPrompts) ||
+            CollectionUtils.isNotEmpty(statelessAsyncPrompts) ||
+            promptRegistry.isNotEmpty()) {
+            builder.prompts(promptsConfiguration.isListChanged());
+        }
+        if (CollectionUtils.isNotEmpty(resourceTemplates) ||
+            CollectionUtils.isNotEmpty(resources) ||
+            CollectionUtils.isNotEmpty(syncResources) ||
+            CollectionUtils.isNotEmpty(asyncResources) ||
+            CollectionUtils.isNotEmpty(statelessAsyncResources) ||
+            CollectionUtils.isNotEmpty(statelessSyncResources)) {
+            builder.resources(resourcesConfiguration.isSubscribe(), resourcesConfiguration.isListChanged());
+        }
+        if (CollectionUtils.isNotEmpty(syncCompletions) ||
+            CollectionUtils.isNotEmpty(asyncCompletions) ||
+            CollectionUtils.isNotEmpty(statelessAsyncCompletions) ||
+            CollectionUtils.isNotEmpty(statelessSyncCompletions)) {
+            builder.completions();
+        }
+        return builder;
     }
 
     @Prototype
