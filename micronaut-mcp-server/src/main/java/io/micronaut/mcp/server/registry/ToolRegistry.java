@@ -220,4 +220,11 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry {
         }
         return name;
     }
+
+    public boolean isNotEmpty() {
+        return CollectionUtils.isNotEmpty(getAsyncSpecs()) ||
+            CollectionUtils.isNotEmpty(getSyncSpecs()) ||
+            CollectionUtils.isNotEmpty(getStatelessAsyncSpecs()) ||
+            CollectionUtils.isNotEmpty(getStatelessSyncSpecs());
+    }
 }

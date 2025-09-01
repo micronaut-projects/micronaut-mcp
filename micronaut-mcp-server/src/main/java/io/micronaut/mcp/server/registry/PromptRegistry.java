@@ -19,6 +19,7 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.annotations.Prompt;
@@ -190,5 +191,12 @@ public final class PromptRegistry extends AbstractMcpMethodRegistry {
             return method.getName();
         }
         return name;
+    }
+
+    public boolean isNotEmpty() {
+        return CollectionUtils.isNotEmpty(getAsyncSpecs()) ||
+            CollectionUtils.isNotEmpty(getSyncSpecs()) ||
+            CollectionUtils.isNotEmpty(getStatelessAsyncSpecs()) ||
+            CollectionUtils.isNotEmpty(getStatelessSyncSpecs());
     }
 }
