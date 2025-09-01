@@ -67,6 +67,19 @@ public final class JsonRpcMessages {
     public static final String PONG = """
         {"jsonrpc":"2.0","result":{},"id":"123"}""";
 
+    public static final String EXPECTED_INITIALIZATION_2024_WITH_LOGGING = """
+            {
+              "jsonrpc":"2.0",
+              "id":0,
+              "result": {
+                "protocolVersion":"2024-11-05",
+                 "capabilities": {"logging":{}},
+                 "serverInfo": {
+                   "name": "mcp-server",
+                   "version": "0.0.1"
+                 }
+               }
+            }""";
     public static final String EXPECTED_INITIALIZATION_2024 = """
             {
               "jsonrpc":"2.0",

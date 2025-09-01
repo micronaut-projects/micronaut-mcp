@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_INITIALIZATION_2024;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_INITIALIZATION_2024_WITH_LOGGING;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZE;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -42,7 +43,7 @@ class AsyncInitializeTest {
         List<String> responses = factory.stdio.readResponses();
         String responseJson = responses.get(0);
         assertNotNull(responseJson);
-        JSONAssert.assertEquals(EXPECTED_INITIALIZATION_2024, responseJson, true);
+        JSONAssert.assertEquals(EXPECTED_INITIALIZATION_2024_WITH_LOGGING, responseJson, true);
     }
 
     @Requires(property = "spec.name", value = "AsyncInitializeTest")
