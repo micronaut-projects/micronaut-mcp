@@ -47,7 +47,7 @@ final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpSe
 
     @Override
     protected List<McpStatelessServerFeatures.SyncPromptSpecification> getPrompts(PromptRegistry promptRegistry) {
-        return promptRegistry.getStatelessSyncToolSpecs();
+        return promptRegistry.getStatelessSyncSpecs();
     }
 
     @Override

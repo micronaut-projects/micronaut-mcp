@@ -50,7 +50,7 @@ final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpS
 
     @Override
     protected List<McpStatelessServerFeatures.AsyncPromptSpecification> getPrompts(PromptRegistry promptRegistry) {
-        return promptRegistry.getStatelessAsyncToolSpecs();
+        return promptRegistry.getStatelessAsyncSpecs();
     }
 
     @Override

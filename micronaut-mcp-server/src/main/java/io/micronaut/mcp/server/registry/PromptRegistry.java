@@ -71,7 +71,7 @@ public final class PromptRegistry extends AbstractMcpMethodRegistry {
             .toList();
     }
 
-    public List<McpStatelessServerFeatures.SyncPromptSpecification> getStatelessSyncToolSpecs() {
+    public List<McpStatelessServerFeatures.SyncPromptSpecification> getStatelessSyncSpecs() {
         return drainMethods()
             .map(method -> new McpStatelessServerFeatures.SyncPromptSpecification(
                 prompt(method.beanDefinition(), method.method()),
@@ -80,7 +80,7 @@ public final class PromptRegistry extends AbstractMcpMethodRegistry {
             .toList();
     }
 
-    public List<McpStatelessServerFeatures.AsyncPromptSpecification> getStatelessAsyncToolSpecs() {
+    public List<McpStatelessServerFeatures.AsyncPromptSpecification> getStatelessAsyncSpecs() {
         return drainMethods()
             .map(method -> new McpStatelessServerFeatures.AsyncPromptSpecification(
                 prompt(method.beanDefinition(), method.method()),
