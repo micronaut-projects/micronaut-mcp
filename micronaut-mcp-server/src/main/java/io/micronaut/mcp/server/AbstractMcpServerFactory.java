@@ -60,7 +60,6 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
      */
     protected abstract List<P> getPrompts(PromptRegistry promptRegistry);
 
-
     /**
      * Creates an MCP server specification based on the provided parameters.
      *
