@@ -29,7 +29,6 @@ import java.util.Objects;
 /**
  * A factory for {@link McpStatelessServerHandler} and {@link McpStatelessServerTransport}.
  */
-@Singleton
 @Factory
 final class McpStatelessServerFactory {
 
