@@ -47,7 +47,7 @@ import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_STRING;
  */
 @Singleton
 @Internal
-public final class ToolRegistry extends AbstractMcpMethodRegistry {
+public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatures.SyncToolSpecification, McpServerFeatures.AsyncToolSpecification, McpStatelessServerFeatures.SyncToolSpecification, McpStatelessServerFeatures.AsyncToolSpecification> {
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
     /**
      * @see <a href="https://json-schema.org/understanding-json-schema/reference/type">JSON Schema Type</a>
@@ -66,6 +66,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry {
         this.beanContext = beanContext;
     }
 
+    @Override
     public List<McpServerFeatures.SyncToolSpecification> getSyncSpecs() {
         return drainMethods()
             .map(toolMethod -> McpServerFeatures.SyncToolSpecification.builder()
@@ -75,6 +76,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry {
             .toList();
     }
 
+    @Override
     public List<McpServerFeatures.AsyncToolSpecification> getAsyncSpecs() {
         return drainMethods()
             .map(toolMethod -> McpServerFeatures.AsyncToolSpecification.builder()
@@ -84,6 +86,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry {
             .toList();
     }
 
+    @Override
     public List<McpStatelessServerFeatures.SyncToolSpecification> getStatelessSyncSpecs() {
         return drainMethods()
             .map(toolMethod -> McpStatelessServerFeatures.SyncToolSpecification.builder()
@@ -93,6 +96,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry {
             .toList();
     }
 
+    @Override
     public List<McpStatelessServerFeatures.AsyncToolSpecification> getStatelessAsyncSpecs() {
         return drainMethods()
             .map(toolMethod -> McpStatelessServerFeatures.AsyncToolSpecification.builder()

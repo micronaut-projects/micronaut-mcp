@@ -26,10 +26,14 @@ import java.util.stream.Stream;
 
 /**
  * The abstract registry.
+ * @param <S> Sync Specification
+ * @param <A> Async Specification
+ * @param <SS> Stateless Sync Specification
+ * @param <SA> Stateless Async Specification
  */
 @Singleton
 @Internal
-abstract sealed class AbstractMcpMethodRegistry permits PromptRegistry, ToolRegistry {
+abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> permits PromptRegistry, ToolRegistry {
 
     protected final List<Method<Object>> methods = new ArrayList<>();
 
@@ -65,4 +69,12 @@ abstract sealed class AbstractMcpMethodRegistry permits PromptRegistry, ToolRegi
     protected record Method<B>(BeanDefinition<B> beanDefinition,
                                ExecutableMethod<B, Object> method) {
     }
+
+    public abstract List<S> getSyncSpecs();
+
+    public abstract List<A> getAsyncSpecs();
+
+    public abstract List<SS> getStatelessSyncSpecs();
+
+    public abstract List<SA> getStatelessAsyncSpecs();
 }

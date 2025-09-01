@@ -45,7 +45,8 @@ import java.util.function.BiFunction;
 @Named
 @Internal
 @Singleton
-public final class PromptRegistry extends AbstractMcpMethodRegistry {
+public final class PromptRegistry
+    extends AbstractMcpMethodRegistry<McpServerFeatures.SyncPromptSpecification, McpServerFeatures.AsyncPromptSpecification, McpStatelessServerFeatures.SyncPromptSpecification, McpStatelessServerFeatures.AsyncPromptSpecification> {
     public static final String MEMBER_NAME = "name";
     public static final String MEMBER_DESCRIPTION = "description";
     private final BeanContext beanContext;
@@ -54,6 +55,7 @@ public final class PromptRegistry extends AbstractMcpMethodRegistry {
         this.beanContext = beanContext;
     }
 
+    @Override
     public List<McpServerFeatures.SyncPromptSpecification> getSyncSpecs() {
         return drainMethods()
             .map(method -> new McpServerFeatures.SyncPromptSpecification(
@@ -63,6 +65,7 @@ public final class PromptRegistry extends AbstractMcpMethodRegistry {
             .toList();
     }
 
+    @Override
     public List<McpServerFeatures.AsyncPromptSpecification> getAsyncSpecs() {
         return drainMethods()
             .map(method -> new McpServerFeatures.AsyncPromptSpecification(
@@ -72,6 +75,7 @@ public final class PromptRegistry extends AbstractMcpMethodRegistry {
             .toList();
     }
 
+    @Override
     public List<McpStatelessServerFeatures.SyncPromptSpecification> getStatelessSyncSpecs() {
         return drainMethods()
             .map(method -> new McpStatelessServerFeatures.SyncPromptSpecification(
@@ -81,6 +85,7 @@ public final class PromptRegistry extends AbstractMcpMethodRegistry {
             .toList();
     }
 
+    @Override
     public List<McpStatelessServerFeatures.AsyncPromptSpecification> getStatelessAsyncSpecs() {
         return drainMethods()
             .map(method -> new McpStatelessServerFeatures.AsyncPromptSpecification(
