@@ -1,13 +1,15 @@
 package io.micronaut.mcp.server.stateless;
 
 import io.micronaut.context.BeanContext;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@MicronautTest(startApplication = false)
+@Property(name = "micronaut.mcp.server.type", value = "STATELESS_SYNC")
+@MicronautTest
 class StatelessSyncMcpControllerTest {
 
     @Inject
