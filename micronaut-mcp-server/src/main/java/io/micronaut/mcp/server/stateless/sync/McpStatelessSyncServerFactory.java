@@ -59,16 +59,16 @@ final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpSe
                                                                        List<McpStatelessServerFeatures.SyncPromptSpecification> prompts,
                                                                        List<McpSchema.ResourceTemplate> resourceTemplates,
                                                                        List<McpStatelessServerFeatures.SyncResourceSpecification> resources) {
-        McpServer.StatelessSyncSpecification spec = McpServer.sync(transport);
+        McpServer.StatelessSyncSpecification spec = McpServer.sync(transport)
+            .tools(tools)
+            .completions(completions)
+            .prompts(prompts)
+            .resourceTemplates(resourceTemplates)
+            .resources(resources)
+            .capabilities(capabilities);
         if (configuration != null) {
             spec.serverInfo(configuration.getName(), configuration.getVersion());
         }
-        spec.tools(tools);
-        spec.completions(completions);
-        spec.prompts(prompts);
-        spec.resourceTemplates(resourceTemplates);
-        spec.resources(resources);
-        spec.capabilities(capabilities);
         return spec;
     }
 

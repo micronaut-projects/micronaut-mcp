@@ -65,15 +65,15 @@ final class McpServerSyncFactory extends AbstractMcpServerFactory<McpServer.Sync
                                                                  List<McpSchema.ResourceTemplate> resourceTemplates,
                                                                  List<McpServerFeatures.SyncResourceSpecification> resources) {
         McpServer.SyncSpecification<?> spec = McpServer.sync(transport)
-            .capabilities(capabilities);
+            .capabilities(capabilities)
+            .tools(tools)
+            .completions(completions)
+            .prompts(prompts)
+            .resourceTemplates(resourceTemplates)
+            .resources(resources);
         if (configuration != null) {
             spec.serverInfo(configuration.getName(), configuration.getVersion());
         }
-        spec.tools(tools);
-        spec.completions(completions);
-        spec.prompts(prompts);
-        spec.resourceTemplates(resourceTemplates);
-        spec.resources(resources);
         return spec;
     }
 }

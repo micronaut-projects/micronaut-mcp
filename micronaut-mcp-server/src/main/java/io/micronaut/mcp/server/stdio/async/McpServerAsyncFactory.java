@@ -65,15 +65,15 @@ final class McpServerAsyncFactory extends AbstractMcpServerFactory<McpServer.Asy
                                                                   List<McpSchema.ResourceTemplate> resourceTemplates,
                                                                   List<McpServerFeatures.AsyncResourceSpecification> resources) {
         McpServer.AsyncSpecification<?> spec = McpServer.async(transport)
-            .capabilities(capabilities);
+            .capabilities(capabilities)
+            .tools(tools)
+            .completions(completions)
+            .prompts(prompts)
+            .resourceTemplates(resourceTemplates)
+            .resources(resources);
         if (configuration != null) {
             spec.serverInfo(configuration.getName(), configuration.getVersion());
         }
-        spec.tools(tools);
-        spec.completions(completions);
-        spec.prompts(prompts);
-        spec.resourceTemplates(resourceTemplates);
-        spec.resources(resources);
         return spec;
     }
 }
