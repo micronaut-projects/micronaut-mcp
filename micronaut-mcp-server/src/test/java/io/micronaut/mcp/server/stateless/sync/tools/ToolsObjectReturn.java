@@ -18,7 +18,7 @@ import jakarta.inject.Singleton;
 class ToolsObjectReturn {
     @Tool(description = "Evaluate a chess position using a FEN string.")
     EvaluationResult fenEvaluation(String fen) {
-        return new EvaluationResult(fen, "+0.27");
+        return new EvaluationResult(fen, "+0.12");
     }
 }
 //end::clazz[]

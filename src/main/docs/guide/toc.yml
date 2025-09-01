@@ -18,6 +18,10 @@ server:
     title: Primitives
     tools:
       title: Tools
+      toolsAnnotations: Tools with Annotations
+      toolsInputJsonSchema: Tools Input JSON Schema
+      toolsOutputJsonSchema: Tools Output JSON Schema
+      toolsFactory: Tools with a Factory
       toolsConfiguration: Tools Configuration
     prompts:
       title: Prompts

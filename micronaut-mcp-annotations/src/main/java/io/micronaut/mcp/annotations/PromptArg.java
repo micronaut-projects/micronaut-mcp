@@ -16,12 +16,10 @@
 package io.micronaut.mcp.annotations;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-import java.util.Optional;
 
 /**
  * Annotates a parameter of a {@link Prompt} method.
@@ -40,16 +38,4 @@ public @interface PromptArg {
     String name() default ELEMENT_NAME;
 
     String description() default "";
-
-    /**
-     * An argument is required by default. However, if the annotated type is {@link Optional} and no annotation value is set
-     * explicitly then the argument is not required.
-     * @return Wether the argument is required
-     */
-    boolean required() default true;
-
-    /**
-     * @return The default value is used when an MCP client does not provide an argument value.
-     */
-    String defaultValue() default "";
 }

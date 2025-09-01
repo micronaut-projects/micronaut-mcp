@@ -17,13 +17,16 @@ package io.micronaut.mcp.server.registry;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.annotations.Tool;
+import io.micronaut.mcp.annotations.ToolArg;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -70,7 +73,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public List<McpServerFeatures.SyncToolSpecification> getSyncSpecs() {
         return drainMethods()
             .map(toolMethod -> McpServerFeatures.SyncToolSpecification.builder()
-                .tool(toolArgument(toolMethod.method()))
+                .tool(tool(toolMethod.method()))
                 .callHandler(provideSyncCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
                 .build())
             .toList();
@@ -80,7 +83,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public List<McpServerFeatures.AsyncToolSpecification> getAsyncSpecs() {
         return drainMethods()
             .map(toolMethod -> McpServerFeatures.AsyncToolSpecification.builder()
-                .tool(toolArgument(toolMethod.method()))
+                .tool(tool(toolMethod.method()))
                 .callHandler(provideReactiveCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
                 .build())
             .toList();
@@ -90,7 +93,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public List<McpStatelessServerFeatures.SyncToolSpecification> getStatelessSyncSpecs() {
         return drainMethods()
             .map(toolMethod -> McpStatelessServerFeatures.SyncToolSpecification.builder()
-                .tool(toolArgument(toolMethod.method()))
+                .tool(tool(toolMethod.method()))
                 .callHandler(provideSyncCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
                 .build())
             .toList();
@@ -100,7 +103,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public List<McpStatelessServerFeatures.AsyncToolSpecification> getStatelessAsyncSpecs() {
         return drainMethods()
             .map(toolMethod -> McpStatelessServerFeatures.AsyncToolSpecification.builder()
-                .tool(toolArgument(toolMethod.method()))
+                .tool(tool(toolMethod.method()))
                 .callHandler(provideReactiveCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
                 .build())
             .toList();
@@ -127,17 +130,43 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return Mono.just(result);
     }
 
+    private <B> Object[] methodArgs(ExecutableMethod<B, Object> method,
+                                    McpSchema.CallToolRequest callToolRequest) {
+
+
+        if (method.getArguments().length == 1 && jsonSchema(method).isPresent()) {
+            Argument<?> argument = method.getArguments()[0];
+            Class<?> classInputSchema = argument.getType();
+            BeanIntrospection<?> introspection = BeanIntrospection.getIntrospection(classInputSchema);
+            Object[] args = new Object[1];
+            Object[] arguments = new Object[callToolRequest.arguments().size()];
+            int count = 0;
+            for (String name : introspection.getPropertyNames()) {
+                if (callToolRequest.arguments().containsKey(name)) {
+                    arguments[count] = callToolRequest.arguments().get(name);
+                    count++;
+                }
+            }
+            args[0] = introspection.instantiate(arguments);
+            return args;
+        }
+
+        List<String> names = toolArgumentsNames(method);
+        Object[] args = new Object[names.size()];
+        for (int i = 0; i < names.size(); i++) {
+            args[i] = callToolRequest.arguments().get(names.get(i));
+        }
+        return args;
+    }
+
     private <B> McpSchema.CallToolResult callToolToResult(BeanDefinition<B> beanDefinition,
                                                           ExecutableMethod<B, Object> method,
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
         Argument<?> returnClass = method.getReturnType().asArgument();
         B bean = beanContext.getBean(beanDefinition);
-        List<String> names = toolArgumentsNames(method);
-        Object[] args = new Object[names.size()];
-        for (int i = 0; i < names.size(); i++) {
-            args[i] = callToolRequest.arguments().get(names.get(i));
-        }
+
+        Object[] args = methodArgs(method, callToolRequest);
         Object result = method.invoke(bean, args);
         String text = "";
         if (returnClass.isAssignableFrom(String.class)) {
@@ -161,10 +190,31 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return new McpSchema.CallToolResult(text, false);
     }
 
-    private <B> McpSchema.Tool toolArgument(ExecutableMethod<B, Object> method) {
+    private <B> McpSchema.Tool tool(ExecutableMethod<B, Object> method) {
         McpSchema.Tool.Builder toolBuilder = McpSchema.Tool.builder()
             .name(toolName(method));
-        toolArgumentDescription(method).ifPresent(toolBuilder::description);
+        toolDescription(method).ifPresent(toolBuilder::description);
+        Optional<String> jsonSchemaOptional = jsonSchema(method);
+        if (jsonSchemaOptional.isPresent()) {
+            toolBuilder.inputSchema(jsonSchemaOptional.get());
+        } else {
+            toolBuilder.inputSchema(inputSchema(method));
+        }
+        toolOutputSchema(method).ifPresent(toolBuilder::outputSchema);
+        return toolBuilder.build();
+    }
+
+    private Optional<String> jsonSchema(ExecutableMethod<?, ?> method) {
+        Argument<?>[] arguments = method.getArguments();
+        if (arguments.length != 1) {
+            return Optional.empty();
+        }
+        Argument<?> argument = arguments[0];
+        Class<?> argumentClass = argument.getType();
+        return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(argumentClass);
+    }
+
+    private <B> McpSchema.JsonSchema inputSchema(ExecutableMethod<B, Object> method) {
         Argument<?>[] arguments = method.getArguments();
         Map<String, Object> properties = CollectionUtils.newHashMap(arguments.length);
         List<String> requiredProperties = new ArrayList<>(arguments.length);
@@ -175,10 +225,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                 requiredProperties.add(propertyName);
             }
         }
-        McpSchema.JsonSchema inputSchema = new McpSchema.JsonSchema(TYPE_OBJECT, properties, requiredProperties, null, null, null);
-        toolBuilder.inputSchema(inputSchema);
-        toolOutputSchema(method).ifPresent(toolBuilder::outputSchema);
-        return toolBuilder.build();
+        return new McpSchema.JsonSchema(TYPE_OBJECT, properties, requiredProperties, null, null, null);
     }
 
     private Optional<String> toolOutputSchema(ExecutableMethod<?, ?> method) {
@@ -195,7 +242,10 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     }
 
     private static String toolArgumentName(Argument<?> argument) {
-        return argument.getName();
+        return argument.findAnnotation(ToolArg.class)
+            .flatMap(annValue -> annValue.stringValue("name"))
+            .filter(name -> !name.equals(ToolArg.ELEMENT_NAME))
+            .orElseGet(argument::getName);
     }
 
     private static List<String> toolArgumentsNames(ExecutableMethod<?, ?> method) {
@@ -206,8 +256,14 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return names;
     }
 
-    private static Optional<String> toolArgumentDescription(ExecutableMethod<?, ?> method) {
+    private static Optional<String> toolDescription(ExecutableMethod<?, ?> method) {
         return method.stringValue(Tool.class, MEMBER_DESCRIPTION);
+    }
+
+    private static Optional<String> toolArgumentDescription(Argument<?> argument) {
+        return argument.findAnnotation(ToolArg.class)
+            .flatMap(annValue -> annValue.stringValue(ToolRegistry.MEMBER_DESCRIPTION))
+            .filter(StringUtils::isNotEmpty);
     }
 
     private static String toolArgumentType(Argument<?> argument) {

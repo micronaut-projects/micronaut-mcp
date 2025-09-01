@@ -102,20 +102,45 @@ public final class JsonRpcMessages {
             "content": [
               {
                 "type": "text",
-                "text": "+0.27"
+                "text": "+0.12"
               }
             ],
             "isError": false
           }
         }""";
 
+    public static final String EXPECTED_TOOLS_CALL_OUT_SCHEMA = """
+        {
+          "jsonrpc": "2.0",
+          "id": 4,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\\"evaluation\\":\\"+0.12\\",\\"fen\\":\\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\\"}"
+              }
+            ],
+            "isError": false,
+            "structuredContent": {
+              "evaluation": "+0.12",
+              "fen": "r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8"
+            }
+          }
+        }""";
+
     public static final String TOOLS_CALL = """
         {"jsonrpc":"2.0","id":4,"method": "tools/call","params": {"name": "fenEvaluation","arguments": {"fen": "r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8"},"_meta": {"progressToken": 0}}}""";
 
-    public static final String EXPECTED_TOOLS_CALL_OBJECT_RETURN = "{\"jsonrpc\":\"2.0\",\"id\":4,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"evaluation\\\":\\\"+0.27\\\",\\\"fen\\\":\\\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\\\"}\"}],\"isError\":false,\"structuredContent\":{\"evaluation\":\"+0.27\",\"fen\":\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\"}}}";
+    public static final String EXPECTED_TOOLS_CALL_OBJECT_RETURN = "{\"jsonrpc\":\"2.0\",\"id\":4,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"evaluation\\\":\\\"+0.12\\\",\\\"fen\\\":\\\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\\\"}\"}],\"isError\":false,\"structuredContent\":{\"evaluation\":\"+0.12\",\"fen\":\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\"}}}";
 
     public static final String EXPECTED_TOOLS_LIST = """
         {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"fen":{"type":"string"}},"required":["fen"]}}]}}""";
+
+    public static final String EXPECTED_TOOLS_LIST_WITH_DESCRIPTION = """
+        {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"fen":{"description":"A Chess position in Forsyth–Edwards Notation","type":"string"}}}}]}}""";
+
+    public static final String EXPECTED_TOOLS_LIST_WITH_INPUT_AND_OUTPUT_SCHEMA = """
+        {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"fen":{"description":"A Chess position in Forsyth–Edwards Notation","type":"string"}}},"outputSchema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"FenEvaluationResponse","type":"object","properties":{"evaluation":{"type":"string","minLength":1},"fen":{"type":"string","minLength":1}},"required":["fen","evaluation"],"$id":"http://localhost:8080/schemas/fen-evaluation-response.schema.json"}}]}}""";
 
     public static final String TOOLS_LIST = """
         {"jsonrpc":"2.0","id":3,"method":"tools/list","params":{"_meta":{"progressToken":3}}}""";

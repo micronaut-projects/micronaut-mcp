@@ -15,38 +15,24 @@
  */
 package io.micronaut.mcp.annotations;
 
-import java.lang.annotation.Documented;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
 /**
- * Method annotation to define an MCP Tool.
- * <a href="https://modelcontextprotocol.io/specification/2025-06-18/server/tools">Tools</a>
- * Micronaut registers Tools singletons for beans with executable methods (e.g. methods in a class annotated with `@Singleton`) annotated with {@link Tool}.
- *
- * Forked from: https://github.com/quarkiverse/quarkus-mcp-server/blob/main/core/runtime/src/main/java/io/quarkiverse/mcp/server/Tool.java
+ * Annotates a parameter of a {@link Tool} method.
+ * Forked from: https://github.com/quarkiverse/quarkus-mcp-server/blob/main/core/runtime/src/main/java/io/quarkiverse/mcp/server/ToolArg.java
  */
-@Documented
 @Retention(RUNTIME)
-@Target(METHOD)
-@McpPrimitive
-public @interface Tool {
+@Target(ElementType.PARAMETER)
+public @interface ToolArg {
     /**
      * Constant value for {@link #name()} indicating that the annotated element's name should be used as-is.
      */
     String ELEMENT_NAME = "<<element name>>";
 
-    /**
-     * Each tool must have a unique name. By default, the name is derived from the name of the annotated method.
-     * @return {@value #ELEMENT_NAME}
-     */
     String name() default ELEMENT_NAME;
 
-    /**
-     * @return A human-readable description of the tool. A hint to the model.
-     */
-    String description() default "";
 }
