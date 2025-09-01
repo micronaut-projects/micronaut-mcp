@@ -63,15 +63,15 @@ final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpS
                                                                         List<McpSchema.ResourceTemplate> resourceTemplates,
                                                                         List<McpStatelessServerFeatures.AsyncResourceSpecification> resources) {
         McpServer.StatelessAsyncSpecification spec = McpServer.async(transport)
-            .capabilities(capabilities);
+            .capabilities(capabilities)
+            .tools(tools)
+            .completions(completions)
+            .prompts(prompts)
+            .resourceTemplates(resourceTemplates)
+            .resources(resources);
         if (configuration != null) {
             spec.serverInfo(configuration.getName(), configuration.getVersion());
         }
-        spec.tools(tools);
-        spec.completions(completions);
-        spec.prompts(prompts);
-        spec.resourceTemplates(resourceTemplates);
-        spec.resources(resources);
         return spec;
     }
 
@@ -79,5 +79,4 @@ final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpS
     McpStatelessAsyncServer createMcpStatelessSyncServer(McpServer.StatelessAsyncSpecification specification) {
         return specification.build();
     }
-
 }
