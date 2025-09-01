@@ -15,8 +15,6 @@
  */
 package io.micronaut.mcp.annotations;
 
-import io.micronaut.context.annotation.Executable;
-
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -32,10 +30,9 @@ import java.lang.annotation.Target;
  * Forked from: https://github.com/quarkiverse/quarkus-mcp-server/blob/main/core/runtime/src/main/java/io/quarkiverse/mcp/server/Prompt.java
  */
 @Documented
-@McpPrimitive
 @Retention(RUNTIME)
 @Target(METHOD)
-@Executable(processOnStartup = true)
+@McpPrimitive
 public @interface Prompt {
 
     /**
@@ -52,5 +49,4 @@ public @interface Prompt {
      * @return An optional description.
      */
     String description() default "";
-
 }
