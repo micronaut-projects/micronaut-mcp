@@ -3,7 +3,7 @@ introduction:
 releaseHistory: Release History
 server:
   title: MCP Server
-  serverJavaSDK: MCP Server Java SDK
+  serverJavaSdk: MCP Server Java SDK
   serverInformation: Server Information
   serverType:
     title: Configuration
