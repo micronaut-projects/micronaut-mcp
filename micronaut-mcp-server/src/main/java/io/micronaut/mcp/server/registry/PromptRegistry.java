@@ -148,7 +148,7 @@ public final class PromptRegistry
     }
 
     private List<McpSchema.PromptArgument> promptArguments(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
-        List<McpSchema.PromptArgument> result = new ArrayList<>();
+        List<McpSchema.PromptArgument> result = new ArrayList<>(method.getArguments().length);
         for (Argument<?> argument : method.getArguments()) {
             result.add(promptArgument(argument));
         }
@@ -160,7 +160,7 @@ public final class PromptRegistry
     }
 
     private static List<String> promptArgumentsNames(ExecutableMethod<?, ?> method) {
-        List<String> names = new ArrayList<>();
+        List<String> names = new ArrayList<>(method.getArguments().length);
         for (Argument<?> argument : method.getArguments()) {
             names.add(promptArgumentName(argument));
         }
