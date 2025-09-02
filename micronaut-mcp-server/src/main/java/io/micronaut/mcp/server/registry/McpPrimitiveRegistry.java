@@ -58,7 +58,7 @@ interface McpPrimitiveRegistry<S, A, SS, SA> {
 
     /**
      *
-     * @return Where the registry is empty.
+     * @return Whether the registry is empty.
      */
     boolean isNotEmpty();
 }
