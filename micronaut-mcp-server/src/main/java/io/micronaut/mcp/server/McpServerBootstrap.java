@@ -17,23 +17,27 @@ package io.micronaut.mcp.server;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.event.ApplicationEventListener;
+import io.micronaut.context.event.ShutdownEvent;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.mcp.server.conf.McpServerConfiguration;
+import io.micronaut.runtime.event.annotation.EventListener;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpStatelessAsyncServer;
 import io.modelcontextprotocol.server.McpStatelessSyncServer;
 import io.modelcontextprotocol.server.McpSyncServer;
-import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.IOException;
 
 @Requires(beans = McpServerConfiguration.class)
 @Internal
 @Singleton
-final class McpServerBootstrap implements ApplicationEventListener<StartupEvent>, AutoCloseable {
+final class McpServerBootstrap {
+    private static final Logger LOG = LoggerFactory.getLogger(McpServerBootstrap.class);
     private final BeanContext beanContext;
     private final McpServerConfiguration mcpServerConfiguration;
 
@@ -45,8 +49,8 @@ final class McpServerBootstrap implements ApplicationEventListener<StartupEvent>
         this.mcpServerConfiguration = mcpServerConfiguration;
     }
 
-    @Override
-    public void onApplicationEvent(StartupEvent event) {
+    @EventListener
+    public void onStartupEvent(StartupEvent startupEvent) {
         this.mcpServer = switch (mcpServerConfiguration.getType()) {
             case SYNC -> beanContext.getBean(McpSyncServer.class)::close;
             case ASYNC -> beanContext.getBean(McpAsyncServer.class)::close;
@@ -55,9 +59,14 @@ final class McpServerBootstrap implements ApplicationEventListener<StartupEvent>
         };
     }
 
-    @PreDestroy
-    @Override
-    public void close() throws Exception {
-        mcpServer.close();
+    @EventListener
+    public void onShutDownEvent(ShutdownEvent shutdownEvent) {
+        try {
+            mcpServer.close();
+        } catch (IOException e) {
+            if (LOG.isErrorEnabled()) {
+                LOG.error(e.getMessage(), e);
+            }
+        }
     }
 }
