@@ -27,8 +27,6 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.mcp.server.conf.McpServerConfiguration;
-import io.micronaut.scheduling.TaskExecutors;
-import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.modelcontextprotocol.server.DefaultMcpTransportContext;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
 import io.modelcontextprotocol.server.McpTransportContext;
@@ -59,7 +57,6 @@ final class McpController {
     }
 
     @SuppressWarnings("java:S3740")
-    @ExecuteOn(TaskExecutors.BLOCKING)
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_EVENT_STREAM})
     @Post
     public Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body Map<String, Object> body) {
