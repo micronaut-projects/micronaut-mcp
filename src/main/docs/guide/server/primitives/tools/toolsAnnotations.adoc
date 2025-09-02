@@ -1,4 +1,4 @@
-You can define tools by defining methods annotated with api:mcp.annotations.Tool[] in a `@Singleton` bean.
+The preferred way to declare a tool is using a method annotated with api:mcp.annotations.Tool[] in a `@Singleton` bean.
 
 [source, java]
 ----
