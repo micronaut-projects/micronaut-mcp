@@ -15,8 +15,9 @@
  */
 package io.micronaut.mcp.server.stateless;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -37,22 +38,22 @@ import io.modelcontextprotocol.spec.McpSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
-
-import java.io.IOException;
+import java.util.Map;
 
 @Controller("${" + McpServerConfiguration.PROPERTY_ENDPOINT + ":" + McpServerConfiguration.DEFAULT_ENDPOINT + "}")
 @Internal
 final class McpController {
     private static final Logger LOG = LoggerFactory.getLogger(McpController.class);
+    private static final String KEY_METHOD = "method";
+    private static final String KEY_ID = "id";
+    private static final String KEY_JSONRPC = "jsonrpc";
+    private static final String KEY_PARAMS = "params";
 
-    private final ObjectMapper objectMapper;
     private final McpStatelessServerHandler mcpHandler;
     private final McpTransportContextExtractor<HttpRequest<?>> contextExtractor;
 
-    McpController(ObjectMapper objectMapper,
-                  McpStatelessServerHandler mcpHandler,
+    McpController(McpStatelessServerHandler mcpHandler,
                   McpTransportContextExtractor<HttpRequest<?>> contextExtractor) {
-        this.objectMapper = objectMapper;
         this.mcpHandler = mcpHandler;
         this.contextExtractor = contextExtractor;
     }
@@ -61,18 +62,18 @@ final class McpController {
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_EVENT_STREAM})
     @Post
-    public Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body String body) {
+    public Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body Map<String, Object> body) {
         McpTransportContext transportContext = contextExtractor.extract(request, new DefaultMcpTransportContext());
+        McpSchema.JSONRPCMessage jsonRpcMessage = jsonRpcMessage(body);
         try {
-            McpSchema.JSONRPCMessage message = McpSchema.deserializeJsonRpcMessage(objectMapper, body);
-            if (message instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
+            if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
                 return handleJsonRpcRequest(jsonrpcRequest, transportContext);
-            } else if (message instanceof McpSchema.JSONRPCNotification jsonrpcNotification) {
-                return handleJsonRpcNotification(jsonrpcNotification, transportContext);
+            } else if (jsonRpcMessage instanceof McpSchema.JSONRPCNotification notification) {
+                return handleJsonRpcNotification(notification, transportContext);
             } else {
                 return Mono.just(HttpResponse.badRequest(mcpError(McpSchema.ErrorCodes.INVALID_REQUEST, "The server accepts either requests or notifications")));
             }
-        } catch (IllegalArgumentException | IOException e) {
+        } catch (IllegalArgumentException e) {
             if (LOG.isErrorEnabled()) {
                 LOG.error("Failed to deserialize message: {}", e.getMessage());
             }
@@ -85,6 +86,16 @@ final class McpController {
                 HttpResponse.serverError(mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Unexpected error: " + e.getMessage()))
             );
         }
+    }
+
+    @Nullable
+    private McpSchema.JSONRPCMessage jsonRpcMessage(@NonNull Map<String, Object> body) {
+        if (body.containsKey(KEY_METHOD) && body.containsKey(KEY_ID)) {
+            return new McpSchema.JSONRPCRequest(body.get(KEY_JSONRPC).toString(), body.get(KEY_METHOD).toString(), body.get(KEY_ID), body.get(KEY_PARAMS));
+        } else if (body.containsKey(KEY_METHOD) && !body.containsKey(KEY_ID)) {
+            return new McpSchema.JSONRPCNotification(body.get(KEY_JSONRPC).toString(), body.get(KEY_METHOD).toString(), body.get(KEY_PARAMS));
+        }
+        return null;
     }
 
     @SuppressWarnings("java:S3740")
