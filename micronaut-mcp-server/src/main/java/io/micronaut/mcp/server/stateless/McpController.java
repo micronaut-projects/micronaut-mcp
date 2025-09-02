@@ -58,7 +58,7 @@ final class McpController {
     }
 
     @SuppressWarnings("java:S3740")
-    @ExecuteOn(TaskExecutors.IO)
+    @ExecuteOn(TaskExecutors.BLOCKING)
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_EVENT_STREAM})
     @Post
     public Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body String body) {
