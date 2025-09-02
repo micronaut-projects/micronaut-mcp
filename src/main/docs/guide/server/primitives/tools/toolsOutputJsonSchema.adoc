@@ -6,12 +6,12 @@ For example, you can use a Java record to define your tool output:
 
 [source, java]
 ----
-include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/jsonschema/output/FenEvaluationResponse.java[indent=0]
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/jsonschema/output/FenEvaluationResponse.java[indent=0]
 ----
 
 Then, use the Java record as the method return type:
 
 [source, java]
 ----
-include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/jsonschema/output/Tools.java[tags="fakepackage,imports,clazz",indent=0]
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/jsonschema/output/Tools.java[tags="fakepackage,imports,clazz",indent=0]
 ----

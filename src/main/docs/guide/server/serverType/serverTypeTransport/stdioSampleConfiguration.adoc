@@ -5,7 +5,7 @@ For stdio transport, your configuration may look like
 micronaut:
   mcp:
     server:
-      type: SYNC
+      transport: STDIO
       info:
         name: 'pgn-resources'
         version: '1.0.0'

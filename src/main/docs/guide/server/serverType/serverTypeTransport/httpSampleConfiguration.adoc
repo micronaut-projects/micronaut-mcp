@@ -5,7 +5,7 @@ For HTTP transport, your configuration may look like
 micronaut:
   mcp:
     server:
-      type: STATELESS_SYNC
+      transport: HTTP
       info:
         name: 'pgn-resources'
         version: '1.0.0'

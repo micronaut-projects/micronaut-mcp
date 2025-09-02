@@ -6,12 +6,12 @@ For example, you can use a Java record to define your tool input:
 
 [source, java]
 ----
-include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/jsonschema/FenEvaluationRequest.java[indent=0]
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/jsonschema/FenEvaluationRequest.java[indent=0]
 ----
 
 Then, just use the Java record as the method parameter:
 
 [source, java]
 ----
-include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/jsonschema/Tools.java[tags="fakepackage,imports,clazz",indent=0]
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/jsonschema/Tools.java[tags="fakepackage,imports,clazz",indent=0]
 ----

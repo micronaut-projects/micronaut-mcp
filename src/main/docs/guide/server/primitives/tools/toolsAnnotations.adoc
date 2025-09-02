@@ -2,7 +2,7 @@ The preferred way to declare a tool is using a method annotated with api:mcp.ann
 
 [source, java]
 ----
-include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/Tools.java[tags="fakepackage,imports,clazz",indent=0]
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/Tools.java[tags="fakepackage,imports,clazz",indent=0]
 ----
 
 By default, the method name is used as the tool name.
@@ -12,5 +12,5 @@ The method parameter names will be automatically used as the tool argument names
 
 [source, java]
 ----
-include::micronaut-mcp-server/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/toolarg/Tools.java[tags="fakepackage,imports,clazz",indent=0]
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/toolarg/Tools.java[tags="fakepackage,imports,clazz",indent=0]
 ----

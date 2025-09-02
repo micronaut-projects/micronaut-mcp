@@ -1,20 +1,24 @@
-Based on the server type, an MCP Java SDK Server class instance is created with https://docs.micronaut.io/latest/api/io/micronaut/context/annotation/Context.html[`@Context` scope].
+Based on the transport and reactive setting, an MCP Java SDK Server class instance is created with https://docs.micronaut.io/latest/api/io/micronaut/context/annotation/Context.html[`@Context` scope].
 |===
-| `micronaut.mcp.server.type` | Server | Server Specification
+| `micronaut.mcp.server.transport` | `micronaut.mcp.server.reactive` | Server | Server Specification
 
-|SYNC
+|STDIO
+|false
 |`McpSyncServer`
 |`McpServer.SyncSpecification`
 
-|ASYNC
+|STDIO
+|true
 |`McpAsyncServer`
 |`McpServer.AsyncSpecification`
 
-|STATELESS_SYNC
+|HTTP
+|false
 |`McpStatelessAsyncServer`
 |`McpServer.StatelessAsyncSpecification`
 
-|STATELESS_ASYNC
+|HTTP
+|true
 |`McpStatelessSyncServer`
 |`McpServer.StatelessSyncSpecification`
 |===
