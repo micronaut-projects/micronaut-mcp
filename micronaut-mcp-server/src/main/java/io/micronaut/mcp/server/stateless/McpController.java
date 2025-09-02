@@ -38,6 +38,12 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import java.util.Map;
 
+/**
+ * This class exposes a POST endpoint in route {@value McpServerConfiguration#DEFAULT_ENDPOINT}.
+ * The route can be configured via the property {@value McpServerConfiguration#PROPERTY_ENDPOINT}.
+ * The endpoint expects to receive JSON RPC Messages, and it responds JSON RPC Messages.
+ * @see <a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#streamable-http">Streamble HTTP Transport</a>.
+ */
 @Controller("${" + McpServerConfiguration.PROPERTY_ENDPOINT + ":" + McpServerConfiguration.DEFAULT_ENDPOINT + "}")
 @Internal
 final class McpController {
