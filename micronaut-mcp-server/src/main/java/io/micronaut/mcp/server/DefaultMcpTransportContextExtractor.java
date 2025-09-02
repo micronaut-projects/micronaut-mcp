@@ -16,6 +16,7 @@
 package io.micronaut.mcp.server;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.modelcontextprotocol.server.McpTransportContext;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
@@ -34,12 +35,13 @@ final class DefaultMcpTransportContextExtractor implements McpTransportContextEx
 
     @Override
     public McpTransportContext extract(HttpRequest<?> request, McpTransportContext transportContext) {
+        HttpHeaders headers = request.getHeaders();
         transportContext.put(HTTP_HEADER_MCP_PROTOCOL_VERSION,
-            request.getHeaders().get(HTTP_HEADER_MCP_PROTOCOL_VERSION, String.class)
+            headers.get(HTTP_HEADER_MCP_PROTOCOL_VERSION, String.class)
                 .orElse(DEFAULT_PROTOCOL_VERSION));
-        request.getHeaders().get(HTTP_HEADER_MCP_SESSION_ID, String.class)
+        headers.get(HTTP_HEADER_MCP_SESSION_ID, String.class)
             .ifPresent(v -> transportContext.put(HTTP_HEADER_MCP_SESSION_ID, v));
-        request.getHeaders().get(HTTP_HEADER_DEFAULT_LAST_EVENT_ID, String.class)
+        headers.get(HTTP_HEADER_DEFAULT_LAST_EVENT_ID, String.class)
             .ifPresent(v -> transportContext.put(HTTP_HEADER_DEFAULT_LAST_EVENT_ID, v));
         return transportContext;
     }
