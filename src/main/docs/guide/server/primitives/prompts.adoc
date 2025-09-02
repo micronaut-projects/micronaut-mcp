@@ -2,7 +2,7 @@ ____
 Prompts: Pre-defined templates or instructions that guide language model interactions
 ____
 
-You can define prompts by defining methods annotated with api:mcp.annotations.Prompt[] in a `@Singleton` bean.
+The preferred way to define prompts is to annotate a method with api:mcp.annotations.Prompt[] in a `@Singleton` bean.
 
 [source, Java]
 ----
