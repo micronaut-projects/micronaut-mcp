@@ -281,6 +281,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return name;
     }
 
+    @Override
     public boolean isNotEmpty() {
         return CollectionUtils.isNotEmpty(getAsyncSpecs()) ||
             CollectionUtils.isNotEmpty(getSyncSpecs()) ||

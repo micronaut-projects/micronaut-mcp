@@ -198,6 +198,7 @@ public final class PromptRegistry
         return name;
     }
 
+    @Override
     public boolean isNotEmpty() {
         return CollectionUtils.isNotEmpty(getAsyncSpecs()) ||
             CollectionUtils.isNotEmpty(getSyncSpecs()) ||

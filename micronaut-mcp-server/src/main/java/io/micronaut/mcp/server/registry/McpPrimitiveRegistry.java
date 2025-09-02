@@ -55,4 +55,10 @@ interface McpPrimitiveRegistry<S, A, SS, SA> {
      */
     @NonNull
     List<SA> getStatelessAsyncSpecs();
+
+    /**
+     *
+     * @return Where the registry is empty.
+     */
+    boolean isNotEmpty();
 }
