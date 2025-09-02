@@ -15,6 +15,8 @@
  */
 package io.micronaut.mcp.server.registry;
 
+import io.micronaut.core.annotation.NonNull;
+
 import java.util.List;
 
 /**
@@ -30,23 +32,27 @@ interface McpPrimitiveRegistry<S, A, SS, SA> {
      *
      * @return Sync Specification
      */
+    @NonNull
     List<S> getSyncSpecs();
 
     /**
      *
      * @return Async Specification
      */
+    @NonNull
     List<A> getAsyncSpecs();
 
     /**
      *
      * @return Stateless Sync Specification
      */
+    @NonNull
     List<SS> getStatelessSyncSpecs();
 
     /**
      *
      * @return Stateless Async Specification
      */
+    @NonNull
     List<SA> getStatelessAsyncSpecs();
 }
