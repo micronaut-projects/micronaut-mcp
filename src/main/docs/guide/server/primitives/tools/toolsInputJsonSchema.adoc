@@ -1,0 +1,17 @@
+A https://modelcontextprotocol.io/specification/2025-06-18/server/tools#tool[tool definition] includes an input JSON Schema.
+
+You can leverage https://micronaut-projects.github.io/micronaut-json-schema/latest/guide/[Micronaut JSON Schema] to generate a JSON Schema at compilation and use it as your tool input JSON Schema.
+
+For example, you can use a Java record to define your tool input:
+
+[source, java]
+----
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/jsonschema/FenEvaluationRequest.java[indent=0]
+----
+
+Then, just use the Java record as the method parameter:
+
+[source, java]
+----
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/jsonschema/Tools.java[tags="fakepackage,imports,clazz",indent=0]
+----

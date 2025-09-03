@@ -1,12 +1,39 @@
 introduction:
   title: Introduction
 releaseHistory: Release History
-quickStart:
-  title: Quick Start
-mcp:
-  title: MCP
-  client:
-    title: MCP Client
-    clientLangchain4j: Langchain4j MCP Client
+server:
+  title: MCP Server
+  serverJavaSdk: MCP Server Java SDK
+  serverInformation: Server Information
+  serverType:
+    title: Configuration
+    serverTypeTransport:
+      title: Transport
+      stdioSampleConfiguration: Stdio Sample Configuration
+      httpSampleConfiguration: HTTP Sample Configuration
+    serverInstance: Server Instance
+    primitivesClassesPerServerType: Primitive types per Transport
+    serverCapabilities: Server Capabilities
+  primitives:
+    title: Primitives
+    tools:
+      title: Tools
+      toolsAnnotations: Tools with Annotations
+      toolsInputJsonSchema: Tools Input JSON Schema
+      toolsOutputJsonSchema: Tools Output JSON Schema
+      toolsFactory: Tools with a Factory
+      toolsConfiguration: Tools Configuration
+    prompts:
+      title: Prompts
+      promptsConfiguration: Tools Configuration
+    resources:
+      title: Resources
+      resourcesConfiguration: Resources Configuration
+      resourcesTemplates: Resources Templates
+  stdio: STDIO Transport
+  testingYourMcpServer: Testing your MCP Server
+client:
+  title: MCP Client
+  clientLangchain4j: Langchain4j MCP Client
 repository: Repository
 

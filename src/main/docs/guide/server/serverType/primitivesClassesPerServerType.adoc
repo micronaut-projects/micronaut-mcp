@@ -1,0 +1,34 @@
+To create primitives (tools, prompts or resources), you will create beans of a particular type (typically in a https://docs.micronaut.io/latest/guide/#factories[bean factory]).
+The bean type depends on the server type selected:
+
+|===
+| `micronaut.mcp.server.transport` | `micronaut.mcp.server.reactive` | Prompt Bean Type | Tool Bean Type | Resource Bean Type | Resource Template Bean Type
+
+|STDIO
+|false
+|`McpServerFeatures.SyncPromptSpecification`
+|`McpServerFeatures.SyncToolSpecification`
+|`McpServerFeatures.SyncResourceSpecification`
+|`McpSchema.ResourceTemplate`
+
+|STDIO
+|true
+|`McpServerFeatures.AsyncPromptSpecification`
+|`McpServerFeatures.AsyncToolSpecification`
+|`McpServerFeatures.AsyncResourceSpecification`
+|`McpSchema.ResourceTemplate`
+
+|HTTP
+|false
+|`McpStatelessServerFeatures.SyncPromptSpecification`
+|`McpStatelessServerFeatures.SyncToolSpecification`
+|`McpServerFeatures.SyncResourceSpecification`
+|`McpSchema.ResourceTemplate`
+
+|HTTP
+|true
+|`McpStatelessServerFeatures.AsyncPromptSpecification`
+|`McpStatelessServerFeatures.AsyncToolSpecification`
+|`McpStatelessServerFeatures.AsyncResourceSpecification`
+|`McpSchema.ResourceTemplate`
+|===

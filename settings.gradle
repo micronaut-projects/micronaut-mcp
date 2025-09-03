@@ -6,12 +6,13 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '7.5.0'
+    id 'io.micronaut.build.shared.settings' version '7.6.4'
 }
 
 rootProject.name = 'micronaut-mcp-parent'
-
 include 'micronaut-mcp'
+include 'micronaut-mcp-annotations'
+include 'micronaut-mcp-server-java-sdk'
 include 'micronaut-mcp-client-langchain4j'
 include 'micronaut-mcp-bom'
 
@@ -21,6 +22,7 @@ micronautBuild {
     useStandardizedProjectNames.set(true)
     importMicronautCatalog()
     importMicronautCatalog("micronaut-serde")
+    importMicronautCatalog("micronaut-json-schema")
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-langchain4j")
 }

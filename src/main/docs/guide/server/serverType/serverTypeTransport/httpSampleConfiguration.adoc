@@ -1,0 +1,12 @@
+For HTTP transport, your configuration may look like
+
+[configuration]
+----
+micronaut:
+  mcp:
+    server:
+      transport: HTTP
+      info:
+        name: 'pgn-resources'
+        version: '1.0.0'
+----

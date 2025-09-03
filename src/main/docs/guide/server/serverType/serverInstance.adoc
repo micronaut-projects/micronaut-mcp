@@ -1,0 +1,27 @@
+Based on the transport and reactive setting, an MCP Java SDK Server class instance is created with https://docs.micronaut.io/latest/api/io/micronaut/context/annotation/Context.html[`@Context` scope].
+|===
+| `micronaut.mcp.server.transport` | `micronaut.mcp.server.reactive` | Server | Server Specification
+
+|STDIO
+|false
+|`McpSyncServer`
+|`McpServer.SyncSpecification`
+
+|STDIO
+|true
+|`McpAsyncServer`
+|`McpServer.AsyncSpecification`
+
+|HTTP
+|false
+|`McpStatelessAsyncServer`
+|`McpServer.StatelessAsyncSpecification`
+
+|HTTP
+|true
+|`McpStatelessSyncServer`
+|`McpServer.StatelessSyncSpecification`
+|===
+
+`McpServer.SyncSpecification`, `McpServer.AsyncSpecification`, `McpServer.StatelessAsyncSpecification`, `McpServer.StatelessSyncSpecification` are builder classes. Thus, you can create beans of type https://docs.micronaut.io/latest/guide/#events[`BeanCreatedEventListener`] to customize the server specification and creation further.
+

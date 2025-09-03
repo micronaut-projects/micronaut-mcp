@@ -1,0 +1,12 @@
+For stdio transport, your configuration may look like
+
+[configuration]
+----
+micronaut:
+  mcp:
+    server:
+      transport: STDIO
+      info:
+        name: 'pgn-resources'
+        version: '1.0.0'
+----

@@ -1,0 +1,8 @@
+Micronaut MCP Server support is based on the https://github.com/modelcontextprotocol/java-sdk[MCP Java SDK].
+
+To use it, add the following dependency:
+
+dependency:micronaut-mcp-server-java-sdk[groupId=io.micronaut.mcp]
+
+WARNING: The https://github.com/modelcontextprotocol/java-sdk[MCP Java SDK] is coupled to Jackson Core. Thus, you will need to use https://docs.micronaut.io/latest/guide/#serializationUsingJacksonDatabind[Micronaut Jackson Databind] instead of https://micronaut-projects.github.io/micronaut-serialization/latest/guide/[Micronaut Serialization].
+

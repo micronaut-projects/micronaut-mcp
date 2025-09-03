@@ -1,0 +1,4 @@
+Based on the primitive beans you defined, Micronaut instantiates a bean of type `McpSchema.ServerCapabilities`.
+
+Moreover, you can create a https://docs.micronaut.io/latest/guide/#events[`BeanCreatedEventListener`] for `McpSchema.ServerCapabilities.Builder`
+to further customize the definition of the capabilities.
