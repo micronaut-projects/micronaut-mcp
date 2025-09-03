@@ -60,6 +60,46 @@ public final class JsonRpcMessages {
     public static final String RESOURCES_READ = """
         {"jsonrpc":"2.0","id":9,"method":"resources/read","params":{"_meta":{"progressToken":9},"uri":"pgn://round/2"}}""";
 
+    // Constants for @Resource annotation tests
+    public static final String RESOURCES_READ_HELLO = """
+        {"jsonrpc":"2.0","id":9,"method":"resources/read","params":{"_meta":{"progressToken":9},"uri":"example://hello"}}""";
+
+    public static final String RESOURCES_READ_ZIP = """
+        {"jsonrpc":"2.0","id":9,"method":"resources/read","params":{"_meta":{"progressToken":9},"uri":"example://zip"}}""";
+
+    public static final String EXPECTED_RESOURCES_READ_HELLO = """
+        {
+          "jsonrpc": "2.0",
+          "id": 9,
+          "result": {
+            "contents": [
+              {
+                "uri": "example://hello",
+                "mimeType": "text/plain",
+                "text":"Hello World"
+              }
+            ]
+          }
+        }
+        """;
+
+    public static final String EXPECTED_RESOURCES_LIST_ANNOTATIONS = """
+        {
+          "jsonrpc": "2.0",
+          "id": 2,
+          "result": {
+            "resources": [
+              {
+                "uri": "example://hello",
+                "name": "hello",
+                "title": "Hello",
+                "description": "Hello text",
+                "mimeType": "text/plain"
+              }
+            ]
+          }
+        }""";
+
 
     public static final String PING = """
         {"jsonrpc":"2.0","method":"ping","id":"123"}""";

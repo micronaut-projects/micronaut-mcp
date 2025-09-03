@@ -24,6 +24,7 @@ import io.micronaut.mcp.conf.PromptsConfiguration;
 import io.micronaut.mcp.conf.ResourcesConfiguration;
 import io.micronaut.mcp.conf.ToolsConfiguration;
 import io.micronaut.mcp.server.registry.PromptRegistry;
+import io.micronaut.mcp.server.registry.ResourceRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Provider;
@@ -53,12 +54,20 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
     protected abstract List<T> getTools(ToolRegistry toolRegistry);
 
     /**
-     * Retrieves a list of prompts from the provided {@code PromptRegistry}.
+     * Retrieves a list of prompts from the provided {@link PromptRegistry}.
      *
      * @param promptRegistry the registry of prompts from which to retrieve the prompts
      * @return a list of prompts retrieved from the provided prompt registry
      */
     protected abstract List<P> getPrompts(PromptRegistry promptRegistry);
+
+    /**
+     * Retrieves a list of resources from the provided {@link ResourceRegistry}.
+     *
+     * @param resourceRegistry the registry of resources from which to retrieve the resources
+     * @return a list of resources retrieved from the provided resource registry
+     */
+    protected abstract List<R> getResources(ResourceRegistry resourceRegistry);
 
     /**
      * Creates an MCP server specification based on the provided parameters.
@@ -93,6 +102,7 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
                                   Provider<McpSchema.ServerCapabilities> capabilitiesProvider,
                                   ToolRegistry toolRegistry,
                                   PromptRegistry promptRegistry,
+                                  ResourceRegistry resourceRegistry,
                                   List<T> tools,
                                   List<C> completions,
                                   List<P> prompts,
@@ -106,13 +116,14 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
         if (!allPrompts.isEmpty()) {
             capabilitiesBuilder.prompts(promptsConfiguration.isListChanged());
         }
-        if (!resourceTemplates.isEmpty() || !resources.isEmpty()) {
+        List<R> allResources = CollectionUtils.concat(resources, getResources(resourceRegistry));
+        if (!resourceTemplates.isEmpty() || !allResources.isEmpty()) {
             capabilitiesBuilder.resources(resourcesConfiguration.isSubscribe(), resourcesConfiguration.isListChanged());
         }
         if (!completions.isEmpty()) {
             capabilitiesBuilder.completions();
         }
-        return createMcpServerSpec(transport, configuration, capabilitiesProvider.get(), allTools, completions, allPrompts, resourceTemplates, resources);
+        return createMcpServerSpec(transport, configuration, capabilitiesProvider.get(), allTools, completions, allPrompts, resourceTemplates, allResources);
     }
 
 }

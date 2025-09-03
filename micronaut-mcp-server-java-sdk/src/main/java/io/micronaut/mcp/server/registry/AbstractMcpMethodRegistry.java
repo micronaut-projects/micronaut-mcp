@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 @Singleton
 @Internal
 abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrimitiveRegistry<S, A, SS, SA>
-    permits PromptRegistry, ToolRegistry {
+    permits PromptRegistry, ToolRegistry, ResourceRegistry {
     protected final List<Method<Object>> methods = new ArrayList<>();
 
     /**

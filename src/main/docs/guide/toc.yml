@@ -28,6 +28,7 @@ server:
       promptsConfiguration: Tools Configuration
     resources:
       title: Resources
+      resourcesAnnotations: Resources with Annotations
       resourcesConfiguration: Resources Configuration
       resourcesTemplates: Resources Templates
   stdio: STDIO Transport
@@ -36,4 +37,3 @@ client:
   title: MCP Client
   clientLangchain4j: Langchain4j MCP Client
 repository: Repository
-
