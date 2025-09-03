@@ -55,6 +55,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @McpPrimitive
 public @interface Resource {
 
+    String DEFAULT_MIME_TYPE = "text/plain";
+
     /**
      * Constant value for {@link #name()} indicating that the annotated element's name should be used as-is.
      */
@@ -83,5 +85,5 @@ public @interface Resource {
     /**
      * @return The MIME type of the returned content (e.g. "text/plain", "application/json").
      */
-    String mimeType() default "text/plain";
+    String mimeType() default DEFAULT_MIME_TYPE;
 }

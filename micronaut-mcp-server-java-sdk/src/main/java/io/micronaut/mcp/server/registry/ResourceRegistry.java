@@ -47,6 +47,12 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     McpStatelessServerFeatures.SyncResourceSpecification,
     McpStatelessServerFeatures.AsyncResourceSpecification> {
 
+    private static final String DESCRIPTION_PROPERTY = "description";
+    private static final String MIME_TYPE_PROPERTY = "mimeType";
+    private static final String NAME_PROPERTY = "name";
+    private static final String TITLE_PROPERTY = "title";
+    private static final String URI_PROPERTY = "uri";
+
     private final BeanContext beanContext;
 
     public ResourceRegistry(BeanContext beanContext) {
@@ -132,8 +138,8 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
         }
         if (result instanceof String s) {
             String mimeType = method.getAnnotation(Resource.class)
-                .stringValue("mimeType")
-                .orElse("text/plain");
+                .stringValue(MIME_TYPE_PROPERTY)
+                .orElse(Resource.DEFAULT_MIME_TYPE);
             McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(request.uri(), mimeType, s);
             return new McpSchema.ReadResourceResult(List.of(contents));
         }
@@ -159,14 +165,14 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     }
 
     private static <B> McpSchema.Resource toResource(ExecutableMethod<B, Object> method) {
-        String uri = method.stringValue(Resource.class, "uri").orElseThrow();
-        String name = method.stringValue(Resource.class, "name").orElse(Resource.ELEMENT_NAME);
+        String uri = method.stringValue(Resource.class, URI_PROPERTY).orElseThrow();
+        String name = method.stringValue(Resource.class, NAME_PROPERTY).orElse(Resource.ELEMENT_NAME);
         if (Resource.ELEMENT_NAME.equals(name)) {
             name = method.getName();
         }
-        String title = method.stringValue(Resource.class, "title").orElse(null);
-        String description = method.stringValue(Resource.class, "description").orElse(null);
-        String mimeType = method.stringValue(Resource.class, "mimeType").orElse("text/plain");
+        String title = method.stringValue(Resource.class, TITLE_PROPERTY).orElse(null);
+        String description = method.stringValue(Resource.class, DESCRIPTION_PROPERTY).orElse(null);
+        String mimeType = method.stringValue(Resource.class, MIME_TYPE_PROPERTY).orElse(Resource.DEFAULT_MIME_TYPE);
         // size, attributes, and other optional fields are left null for declarative resources
         return new McpSchema.Resource(uri, name, title, description, mimeType, null, null, null);
     }
