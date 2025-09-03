@@ -27,6 +27,7 @@ loadScripts(document, 'script');</script>
 <div class="top-nav" id="navbar-top">
 <div class="skip-nav"><a href="#skip-navbar-top" title="Skip navigation links">Skip navigation links</a></div>
 <ul id="navbar-top-firstrow" class="nav-list" title="Navigation">
+<li><a href="index.html">Overview</a></li>
 <li>Package</li>
 <li>Class</li>
 <li class="nav-bar-cell1-rev">Tree</li>
@@ -49,13 +50,62 @@ loadScripts(document, 'script');</script>
 <h1 class="title">Hierarchy For All Packages</h1>
 <span class="package-hierarchy-label">Package Hierarchies:</span>
 <ul class="horizontal">
-<li><a href="io/micronaut/mcp/client/langchain4j/package-tree.html">io.micronaut.mcp.client.langchain4j</a></li>
+<li><a href="io/micronaut/mcp/annotations/package-tree.html">io.micronaut.mcp.annotations</a>, </li>
+<li><a href="io/micronaut/mcp/client/langchain4j/package-tree.html">io.micronaut.mcp.client.langchain4j</a>, </li>
+<li><a href="io/micronaut/mcp/conf/package-tree.html">io.micronaut.mcp.conf</a>, </li>
+<li><a href="io/micronaut/mcp/server/package-tree.html">io.micronaut.mcp.server</a>, </li>
+<li><a href="io/micronaut/mcp/server/registry/package-tree.html">io.micronaut.mcp.server.registry</a></li>
 </ul>
 </div>
 <section class="hierarchy">
+<h2 title="Class Hierarchy">Class Hierarchy</h2>
+<ul>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" class="type-name-link external-link" title="class or interface in java.lang">Object</a>
+<ul>
+<li class="circle">io.micronaut.mcp.server.<a href="io/micronaut/mcp/server/AbstractMcpServerFactory.html" class="type-name-link" title="class in io.micronaut.mcp.server">AbstractMcpServerFactory</a>&lt;Spec,<wbr>S,<wbr>T,<wbr>C,<wbr>P,<wbr>R&gt;</li>
+<li class="circle">io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/PromptRegistry.html" class="type-name-link" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a></li>
+<li class="circle">io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" class="type-name-link" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></li>
+</ul>
+</li>
+</ul>
+</section>
+<section class="hierarchy">
 <h2 title="Interface Hierarchy">Interface Hierarchy</h2>
 <ul>
+<li class="circle">io.micronaut.mcp.conf.<a href="io/micronaut/mcp/conf/McpPrimitiveConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf">McpPrimitiveConfiguration</a>
+<ul>
+<li class="circle">io.micronaut.mcp.conf.<a href="io/micronaut/mcp/conf/PromptsConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf">PromptsConfiguration</a></li>
+<li class="circle">io.micronaut.mcp.conf.<a href="io/micronaut/mcp/conf/ResourcesConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf">ResourcesConfiguration</a></li>
+<li class="circle">io.micronaut.mcp.conf.<a href="io/micronaut/mcp/conf/ToolsConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf">ToolsConfiguration</a></li>
+</ul>
+</li>
+<li class="circle">io.micronaut.mcp.conf.<a href="io/micronaut/mcp/conf/McpServerConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf">McpServerConfiguration</a></li>
+<li class="circle">io.micronaut.mcp.conf.<a href="io/micronaut/mcp/conf/McpServerInfoConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf">McpServerInfoConfiguration</a></li>
 <li class="circle">io.micronaut.mcp.client.langchain4j.<a href="io/micronaut/mcp/client/langchain4j/StdioMcpTransportConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.client.langchain4j">StdioMcpTransportConfiguration</a></li>
+</ul>
+</section>
+<section class="hierarchy">
+<h2 title="Annotation Interface Hierarchy">Annotation Interface Hierarchy</h2>
+<ul>
+<li class="circle">io.micronaut.mcp.annotations.<a href="io/micronaut/mcp/annotations/McpPrimitive.html" class="type-name-link" title="annotation interface in io.micronaut.mcp.annotations">McpPrimitive</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
+<li class="circle">io.micronaut.mcp.annotations.<a href="io/micronaut/mcp/annotations/Prompt.html" class="type-name-link" title="annotation interface in io.micronaut.mcp.annotations">Prompt</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
+<li class="circle">io.micronaut.mcp.annotations.<a href="io/micronaut/mcp/annotations/PromptArg.html" class="type-name-link" title="annotation interface in io.micronaut.mcp.annotations">PromptArg</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
+<li class="circle">io.micronaut.mcp.annotations.<a href="io/micronaut/mcp/annotations/Tool.html" class="type-name-link" title="annotation interface in io.micronaut.mcp.annotations">Tool</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
+<li class="circle">io.micronaut.mcp.annotations.<a href="io/micronaut/mcp/annotations/ToolArg.html" class="type-name-link" title="annotation interface in io.micronaut.mcp.annotations">ToolArg</a> (implements java.lang.annotation.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>)</li>
+</ul>
+</section>
+<section class="hierarchy">
+<h2 title="Enum Class Hierarchy">Enum Class Hierarchy</h2>
+<ul>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" class="type-name-link external-link" title="class or interface in java.lang">Object</a>
+<ul>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Enum.html" class="type-name-link external-link" title="class or interface in java.lang">Enum</a>&lt;E&gt; (implements java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Comparable.html" title="class or interface in java.lang" class="external-link">Comparable</a>&lt;T&gt;, java.lang.constant.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/constant/Constable.html" title="class or interface in java.lang.constant" class="external-link">Constable</a>, java.io.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>)
+<ul>
+<li class="circle">io.micronaut.mcp.conf.<a href="io/micronaut/mcp/conf/Transport.html" class="type-name-link" title="enum class in io.micronaut.mcp.conf">Transport</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </section>
 </main>

@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"io.micronaut.mcp.client.langchain4j"}];updateSearchResults();
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"io.micronaut.mcp.annotations"},{"l":"io.micronaut.mcp.client.langchain4j"},{"l":"io.micronaut.mcp.conf"},{"l":"io.micronaut.mcp.server"},{"l":"io.micronaut.mcp.server.registry"}];updateSearchResults();
