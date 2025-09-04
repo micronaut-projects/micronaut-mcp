@@ -83,7 +83,7 @@ class McpStdioApplication implements EmbeddedApplication<McpStdioApplication>, D
             try {
                 applicationContext.start();
             } catch (Throwable e) {
-                throw new ApplicationStartupException("Error starting messaging server: " + e.getMessage(), e);
+                throw new ApplicationStartupException("Error starting MCP server: " + e.getMessage(), e);
             }
         }
         applicationContext.publishEvent(new ApplicationStartupEvent(this));
