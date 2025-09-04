@@ -1,0 +1,1516 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <title>Micronaut MCP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8" />
+    <link rel="stylesheet" href="../css/custom.css" type="text/css" media="screen, print" title="Style" charset="utf-8" />
+    <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8" />
+    <link rel="stylesheet" href="../css/highlight/agate.css">
+    <script src="../js/highlight.pack.js"></script>
+    <script src="../js/guide.js"></script>
+    <script src="../js/multi-language-sample.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <link rel="stylesheet" href="../css/multi-language-sample.css"/>
+    <script src="../js/docs.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.13/clipboard.min.js"></script>
+    <script type="text/javascript">
+        function addJsClass(el) {
+            var classes = document.body.className.split(" ");
+            classes.push("js");
+            document.body.className = classes.join(" ");
+        }
+    </script>
+
+</head>
+
+<body class="body" id="docs" onload="addJsClass();" onhashchange="highlightMenu()">
+
+<div id="table-of-content-nav-link" class="desktop">
+    <a id="theme-switcher" title="Switch to dark theme" href="javascript:switchTheme(true)"><i class="fa fa-moon-o"></i></a>
+    <a title="Collapse/Open Table of contents" title="Hide Table of Contents" href="javascript:hideTableOfContents();" class="button">[ + ]</a>
+</div>
+
+<div id="main">
+    <div id="navigation" class="no-print">
+        <div class="navTitle">
+            <span id="logo"><a href="http://micronaut.io" title="Go to Micronaut Website"><img src="../img/micronaut-logo-white.svg" alt="Micronaut"/></a></span>
+        </div>
+        <div class="navLinks">
+            <ul>
+                    <li><div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)" class="desktop">
+                            <a href="../guide/index.html" class="button">Table of contents</a>
+                            <div id="nav-summary-childs" style="display:none;">
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#introduction"><strong>1</strong><span>Introduction</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#releaseHistory"><strong>2</strong><span>Release History</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#server"><strong>3</strong><span>MCP Server</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#client"><strong>4</strong><span>MCP Client</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#repository"><strong>5</strong><span>Repository</span></a></div>
+                                
+                            </div>
+                        </div>
+                    </li>
+
+                <li id="table-of-content-nav-link-mobile" class="mobile">
+                    <a title="Scroll to Table of contents" href="javascript:scrollToTop();" class="button">Toc</a>
+                </li>
+                <li class="desktop">
+                    <a title="Go to API documentation" href="../api/index.html" class="button">API Reference</a>
+                </li>
+                <li class="mobile">
+                    <a title="Go to API documentation" href="../api/index.html" class="button">API</a>
+                </li>
+                <li class="desktop">
+                    <a title="Go to Configuration Reference documentation" href="../guide/configurationreference.html" class="button">Configuration Reference</a>
+                </li>
+                <li class="mobile">
+                    <a title="Go to Configuration Reference documentation" href="../guide/configurationreference.html" class="button">Conf</a>
+                </li>
+            </ul>
+
+        </div>
+    </div>
+    
+    <div id="table-of-content">
+        <div class="toc-content">
+
+        <h2>Table of Contents</h2>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-introduction"><a href="#introduction"><strong>1</strong><span>Introduction</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-releaseHistory"><a href="#releaseHistory"><strong>2</strong><span>Release History</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-server"><a href="#server"><strong>3</strong><span>MCP Server</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-serverJavaSdk"><a href="#serverJavaSdk"><strong>3.1</strong><span>MCP Server Java SDK</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-serverInformation"><a href="#serverInformation"><strong>3.2</strong><span>Server Information</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-serverType"><a href="#serverType"><strong>3.3</strong><span>Configuration</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-serverTypeTransport"><a href="#serverTypeTransport"><strong>3.3.1</strong><span>Transport</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-stdioSampleConfiguration"><a href="#stdioSampleConfiguration"><strong>3.3.1.1</strong><span>Stdio Sample Configuration</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-httpSampleConfiguration"><a href="#httpSampleConfiguration"><strong>3.3.1.2</strong><span>HTTP Sample Configuration</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-serverInstance"><a href="#serverInstance"><strong>3.3.2</strong><span>Server Instance</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-primitivesClassesPerServerType"><a href="#primitivesClassesPerServerType"><strong>3.3.3</strong><span>Primitive types per Transport</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-serverCapabilities"><a href="#serverCapabilities"><strong>3.3.4</strong><span>Server Capabilities</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-primitives"><a href="#primitives"><strong>3.4</strong><span>Primitives</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-tools"><a href="#tools"><strong>3.4.1</strong><span>Tools</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-toolsAnnotations"><a href="#toolsAnnotations"><strong>3.4.1.1</strong><span>Tools with Annotations</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-toolsInputJsonSchema"><a href="#toolsInputJsonSchema"><strong>3.4.1.2</strong><span>Tools Input JSON Schema</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-toolsOutputJsonSchema"><a href="#toolsOutputJsonSchema"><strong>3.4.1.3</strong><span>Tools Output JSON Schema</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-toolsFactory"><a href="#toolsFactory"><strong>3.4.1.4</strong><span>Tools with a Factory</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-toolsConfiguration"><a href="#toolsConfiguration"><strong>3.4.1.5</strong><span>Tools Configuration</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-prompts"><a href="#prompts"><strong>3.4.2</strong><span>Prompts</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-promptsConfiguration"><a href="#promptsConfiguration"><strong>3.4.2.1</strong><span>Tools Configuration</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-resources"><a href="#resources"><strong>3.4.3</strong><span>Resources</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-resourcesAnnotations"><a href="#resourcesAnnotations"><strong>3.4.3.1</strong><span>Resources with Annotations</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-resourcesConfiguration"><a href="#resourcesConfiguration"><strong>3.4.3.2</strong><span>Resources Configuration</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-resourcesTemplates"><a href="#resourcesTemplates"><strong>3.4.3.3</strong><span>Resources Templates</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-stdio"><a href="#stdio"><strong>3.5</strong><span>STDIO Transport</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-testingYourMcpServer"><a href="#testingYourMcpServer"><strong>3.6</strong><span>Testing your MCP Server</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-client"><a href="#client"><strong>4</strong><span>MCP Client</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-clientLangchain4j"><a href="#clientLangchain4j"><strong>4.1</strong><span>Langchain4j MCP Client</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>5</strong><span>Repository</span></a></div>
+        
+        </div>
+    </div>
+    
+    <div class="docs-content">
+    <div class="project">
+        <h1>Micronaut MCP</h1>
+        <p></p>
+        <p>Integration with MCP (Model Context Protocol).</p>
+        <p><strong>Version:</strong> 0.0.1 </p>
+    </div>
+    
+<h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/introduction.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Integration with <a href="https://modelcontextprotocol.io">MCP (Model Context Protocol)</a>.</p>
+</div>
+
+<h1 id="releaseHistory"><a class="anchor" href="#releaseHistory"></a>2 Release History</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/releaseHistory.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>For this project, you can find a list of releases (with release notes) here:
+<a href="https://github.com/micronaut-projects/micronaut-mcp/releases">https://github.com/micronaut-projects/micronaut-mcp/releases</a></p>
+</div>
+
+<h1 id="server"><a class="anchor" href="#server"></a>3 MCP Server</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+
+
+<h2 id="serverJavaSdk"><a class="anchor" href="#serverJavaSdk"></a>3.1 MCP Server Java SDK</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/serverJavaSdk.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut MCP Server support is based on the <a href="https://github.com/modelcontextprotocol/java-sdk">MCP Java SDK</a>.</p>
+</div>
+<div class="paragraph">
+<p>To use it, add the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.mcp:micronaut-mcp-server-java-sdk")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.mcp&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-mcp-server-java-sdk&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+The <a href="https://github.com/modelcontextprotocol/java-sdk">MCP Java SDK</a> is coupled to Jackson Core. Thus, you will need to use <a href="https://docs.micronaut.io/latest/guide/#serializationUsingJacksonDatabind">Micronaut Jackson Databind</a> instead of <a href="https://micronaut-projects.github.io/micronaut-serialization/latest/guide/">Micronaut Serialization</a>.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="serverInformation"><a class="anchor" href="#serverInformation"></a>3.2 Server Information</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/serverInformation.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Via configuration, you should define your mcp server name and version:</p>
+</div>
+<a id="io.micronaut.mcp.conf.McpServerInfoConfigurationProperties" href="#io.micronaut.mcp.conf.McpServerInfoConfigurationProperties">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/McpServerInfoConfigurationProperties.html">McpServerInfoConfigurationProperties</a></caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.info.name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.info.version</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="serverType"><a class="anchor" href="#serverType"></a>3.3 Configuration</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/serverType.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To create a server, you will need to define the property <code>micronaut.mcp.server.transport</code>
+with one of the values <code>STDIO</code>, <code>HTTP</code>.</p>
+</div>
+<div class="paragraph">
+<p>If you define the property <code>micronaut.mcp.server.reactive</code> with the value <code>true</code>, you can define primitives (tools, prompts or resources) with call handlers wrapped in a Project Reactor <code>Mono</code>.</p>
+</div>
+<a id="io.micronaut.mcp.conf.McpServerConfigurationProperties" href="#io.micronaut.mcp.conf.McpServerConfigurationProperties">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/McpServerConfigurationProperties.html">McpServerConfigurationProperties</a></caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.endpoint</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The MCP Server endpoint. It applies to MCP Servers using HTTP transport. It defaults to <code>/mcp</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.transport</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/mcp/conf/Transport.html">Transport</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set the MCP Transport. It defaults to HTTP.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.reactive</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether you want to define MCP Primitive handlers using reactive code. Default value {@value #DEFAULT_REACTIVE}</p></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="serverTypeTransport"><a class="anchor" href="#serverTypeTransport"></a>3.3.1 Transport</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/serverType/serverTypeTransport.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>The protocol currently defines two standard transport mechanisms for client-server communication:
+<strong>stdio</strong> (communication over standard in and standard out) and <strong>Streamable HTTP</strong></p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>For <a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#stdio">stdio transport</a>, define the property <code>micronaut.mcp.server.transport</code> as <code>STDIO</code>.</p>
+</div>
+<div class="paragraph">
+<p>For <a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#streamable-http">HTTP transport</a>, define the property <code>micronaut.mcp.server.transport</code> as <code>HTTP</code>.</p>
+</div>
+
+<h2 id="stdioSampleConfiguration"><a class="anchor" href="#stdioSampleConfiguration"></a>3.3.1.1 Stdio Sample Configuration</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/serverType/serverTypeTransport/stdioSampleConfiguration.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>For stdio transport, your configuration may look like</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.mcp.server.transport=STDIO
+micronaut.mcp.server.info.name=pgn-resources
+micronaut.mcp.server.info.version=1.0.0</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  mcp:
+    server:
+      transport: STDIO
+      info:
+        name: 'pgn-resources'
+        version: '1.0.0'</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut]
+  [micronaut.mcp]
+    [micronaut.mcp.server]
+      transport="STDIO"
+      [micronaut.mcp.server.info]
+        name="pgn-resources"
+        version="1.0.0"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  mcp {
+    server {
+      transport = "STDIO"
+      info {
+        name = "pgn-resources"
+        version = "1.0.0"
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    mcp {
+      server {
+        transport = "STDIO"
+        info {
+          name = "pgn-resources"
+          version = "1.0.0"
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "mcp": {
+      "server": {
+        "transport": "STDIO",
+        "info": {
+          "name": "pgn-resources",
+          "version": "1.0.0"
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+
+<h2 id="httpSampleConfiguration"><a class="anchor" href="#httpSampleConfiguration"></a>3.3.1.2 HTTP Sample Configuration</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/serverType/serverTypeTransport/httpSampleConfiguration.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>For HTTP transport, your configuration may look like</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.mcp.server.transport=HTTP
+micronaut.mcp.server.info.name=pgn-resources
+micronaut.mcp.server.info.version=1.0.0</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  mcp:
+    server:
+      transport: HTTP
+      info:
+        name: 'pgn-resources'
+        version: '1.0.0'</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut]
+  [micronaut.mcp]
+    [micronaut.mcp.server]
+      transport="HTTP"
+      [micronaut.mcp.server.info]
+        name="pgn-resources"
+        version="1.0.0"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  mcp {
+    server {
+      transport = "HTTP"
+      info {
+        name = "pgn-resources"
+        version = "1.0.0"
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    mcp {
+      server {
+        transport = "HTTP"
+        info {
+          name = "pgn-resources"
+          version = "1.0.0"
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "mcp": {
+      "server": {
+        "transport": "HTTP",
+        "info": {
+          "name": "pgn-resources",
+          "version": "1.0.0"
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+
+<h2 id="serverInstance"><a class="anchor" href="#serverInstance"></a>3.3.2 Server Instance</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/serverType/serverInstance.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Based on the transport and reactive setting, an MCP Java SDK Server class instance is created with <a href="https://docs.micronaut.io/latest/api/io/micronaut/context/annotation/Context.html"><code>@Context</code> scope</a>.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><code>micronaut.mcp.server.transport</code></th>
+<th class="tableblock halign-left valign-top"><code>micronaut.mcp.server.reactive</code></th>
+<th class="tableblock halign-left valign-top">Server</th>
+<th class="tableblock halign-left valign-top">Server Specification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">STDIO</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpSyncServer</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServer.SyncSpecification</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">STDIO</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpAsyncServer</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServer.AsyncSpecification</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">HTTP</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessAsyncServer</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServer.StatelessAsyncSpecification</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">HTTP</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessSyncServer</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServer.StatelessSyncSpecification</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><code>McpServer.SyncSpecification</code>, <code>McpServer.AsyncSpecification</code>, <code>McpServer.StatelessAsyncSpecification</code>, <code>McpServer.StatelessSyncSpecification</code> are builder classes. Thus, you can create beans of type <a href="https://docs.micronaut.io/latest/guide/#events"><code>BeanCreatedEventListener</code></a> to customize the server specification and creation further.</p>
+</div>
+
+<h2 id="primitivesClassesPerServerType"><a class="anchor" href="#primitivesClassesPerServerType"></a>3.3.3 Primitive types per Transport</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/serverType/primitivesClassesPerServerType.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To create primitives (tools, prompts or resources), you will create beans of a particular type (typically in a <a href="https://docs.micronaut.io/latest/guide/#factories">bean factory</a>).
+The bean type depends on the server type selected:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.667%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><code>micronaut.mcp.server.transport</code></th>
+<th class="tableblock halign-left valign-top"><code>micronaut.mcp.server.reactive</code></th>
+<th class="tableblock halign-left valign-top">Prompt Bean Type</th>
+<th class="tableblock halign-left valign-top">Tool Bean Type</th>
+<th class="tableblock halign-left valign-top">Resource Bean Type</th>
+<th class="tableblock halign-left valign-top">Resource Template Bean Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">STDIO</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.SyncPromptSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.SyncToolSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.SyncResourceSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpSchema.ResourceTemplate</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">STDIO</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.AsyncPromptSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.AsyncToolSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.AsyncResourceSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpSchema.ResourceTemplate</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">HTTP</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessServerFeatures.SyncPromptSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessServerFeatures.SyncToolSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.SyncResourceSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpSchema.ResourceTemplate</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">HTTP</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessServerFeatures.AsyncPromptSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessServerFeatures.AsyncToolSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessServerFeatures.AsyncResourceSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpSchema.ResourceTemplate</code></p></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="serverCapabilities"><a class="anchor" href="#serverCapabilities"></a>3.3.4 Server Capabilities</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/serverCapabilities.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Based on the primitive beans you defined, Micronaut instantiates a bean of type <code>McpSchema.ServerCapabilities</code>.</p>
+</div>
+<div class="paragraph">
+<p>Moreover, you can create a <a href="https://docs.micronaut.io/latest/guide/#events"><code>BeanCreatedEventListener</code></a> for <code>McpSchema.ServerCapabilities.Builder</code>
+to further customize the definition of the capabilities.</p>
+</div>
+
+<h2 id="primitives"><a class="anchor" href="#primitives"></a>3.4 Primitives</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+
+
+<h2 id="tools"><a class="anchor" href="#tools"></a>3.4.1 Tools</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/tools.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Tools: Executable functions that allow models to perform actions or retrieve information</p>
+</div>
+</blockquote>
+</div>
+
+<h2 id="toolsAnnotations"><a class="anchor" href="#toolsAnnotations"></a>3.4.1.1 Tools with Annotations</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/tools/toolsAnnotations.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The preferred way to declare a tool is using a method annotated with <a href="../api/io/micronaut/mcp/annotations/Tool.html">Tool</a> in a <code>@Singleton</code> bean.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example.micronaut;
+
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.mcp.annotations.Tool;
+import jakarta.inject.Singleton;
+
+@Singleton
+class Tools {
+    @Tool(description = "Evaluate a chess position using a FEN string.")
+    String fenEvaluation(String fen) {
+        if (fen.equals("r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8")) {
+            return "+0.12";
+        }
+        return "+0.0";
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>By default, the method name is used as the tool name.
+You can override this by setting the <code>name</code> attribute of the <code>@Tool</code> annotation.</p>
+</div>
+<div class="paragraph">
+<p>The method parameter names will be automatically used as the tool argument names, unless you use the <a href="../api/io/micronaut/mcp/annotations/ToolArg.html">ToolArg</a> annotation to differentiate the tool argument name from the method parameter name.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example.micronaut;
+
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.mcp.annotations.Tool;
+import io.micronaut.mcp.annotations.ToolArg;
+import jakarta.inject.Singleton;
+
+@Singleton
+class Tools {
+    @Tool(name = "fenEvaluation", description = "Evaluate a chess position using a FEN string.")
+    String forsythEdwardsNotationEvaluation(@ToolArg(name = "fen") String forsythEdwardsNotation) {
+        if (forsythEdwardsNotation.equals("r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8")) {
+            return "+0.12";
+        }
+        return "+0.0";
+    }
+}</code></pre>
+</div>
+</div>
+
+<h2 id="toolsInputJsonSchema"><a class="anchor" href="#toolsInputJsonSchema"></a>3.4.1.2 Tools Input JSON Schema</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/tools/toolsInputJsonSchema.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>A <a href="https://modelcontextprotocol.io/specification/2025-06-18/server/tools#tool">tool definition</a> includes an input JSON Schema.</p>
+</div>
+<div class="paragraph">
+<p>You can leverage <a href="https://micronaut-projects.github.io/micronaut-json-schema/latest/guide/">Micronaut JSON Schema</a> to generate a JSON Schema at compilation and use it as your tool input JSON Schema.</p>
+</div>
+<div class="paragraph">
+<p>For example, you can use a Java record to define your tool input:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package io.micronaut.mcp.server.stateless.sync.tools.jsonschema;
+
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.jsonschema.JsonSchema;
+
+/**
+ *
+ * @param fen A Chess position in Forsyth–Edwards Notation
+ */
+@JsonSchema
+@Introspected
+public record FenEvaluationRequest(String fen) {
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then, just use the Java record as the method parameter:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example.micronaut;
+
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.mcp.annotations.Tool;
+import jakarta.inject.Singleton;
+
+@Singleton
+class Tools {
+    @Tool(description = "Evaluate a chess position using a FEN string.")
+    String fenEvaluation(FenEvaluationRequest req) {
+        if (req.fen().equals("r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8")) {
+            return "+0.12";
+        }
+        return "+0.0";
+    }
+}</code></pre>
+</div>
+</div>
+
+<h2 id="toolsOutputJsonSchema"><a class="anchor" href="#toolsOutputJsonSchema"></a>3.4.1.3 Tools Output JSON Schema</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/tools/toolsOutputJsonSchema.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>A <a href="https://modelcontextprotocol.io/specification/2025-06-18/server/tools#tool">tool definition</a> includes an input JSON Schema.</p>
+</div>
+<div class="paragraph">
+<p>You can leverage <a href="https://micronaut-projects.github.io/micronaut-json-schema/latest/guide/">Micronaut JSON Schema</a> to generate a JSON Schema at compilation and use it as your tool output JSON Schema.</p>
+</div>
+<div class="paragraph">
+<p>For example, you can use a Java record to define your tool output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package io.micronaut.mcp.server.stateless.sync.tools.jsonschema.output;
+
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.jsonschema.JsonSchema;
+import jakarta.validation.constraints.NotBlank;
+
+@Introspected
+@JsonSchema
+public record FenEvaluationResponse(
+    @NonNull @NotBlank String fen,
+    @NonNull @NotBlank String evaluation
+) {
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then, use the Java record as the method return type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example.micronaut;
+
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.mcp.annotations.Tool;
+import io.micronaut.mcp.server.stateless.sync.tools.jsonschema.FenEvaluationRequest;
+import jakarta.inject.Singleton;
+
+@Singleton
+class Tools {
+    @Tool(description = "Evaluate a chess position using a FEN string.")
+    FenEvaluationResponse fenEvaluation(FenEvaluationRequest req) {
+        String fen = req.fen();
+        if (fen.equals("r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8")) {
+            return new FenEvaluationResponse(fen, "+0.12");
+        }
+        return new FenEvaluationResponse(fen, "+0.0");
+    }
+}</code></pre>
+</div>
+</div>
+
+<h2 id="toolsFactory"><a class="anchor" href="#toolsFactory"></a>3.4.1.4 Tools with a Factory</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/tools/toolsFactory.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Alternatively, you can define tools by registering beans (typically in a <a href="https://docs.micronaut.io/latest/guide/#factories">bean factory</a>).</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The following example assumes you set <code>SYNC</code> as your server type. Because of that, the following example creates defining tools with the class <code>McpStatelessServerFeatures.SyncToolSpecification</code>. <a href="#primitivesClassesPerServerType">If you used a different server type, you should use a different class</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-Java hljs" data-lang="Java">package example.micronaut;
+
+import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Requires;
+import io.modelcontextprotocol.server.McpStatelessServerFeatures;
+import io.modelcontextprotocol.server.McpTransportContext;
+import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.inject.Singleton;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
+@Factory
+class ToolsFactory {
+    @Singleton
+    McpStatelessServerFeatures.SyncToolSpecification getAlertsTools() {
+        return McpStatelessServerFeatures.SyncToolSpecification.builder()
+            .tool(tool())
+            .callHandler(callHandler())
+            .build();
+    }
+
+    private McpSchema.Tool tool() {
+        return McpSchema.Tool.builder()
+                .name("fenEvaluation")
+                .description("Evaluate a chess position using a FEN string.")
+                .inputSchema(inputSchema())
+                .build();
+    }
+
+    private McpSchema.JsonSchema inputSchema() {
+        McpSchema.JsonSchema fenSchema = new McpSchema.JsonSchema("string", null,null, null, null, null);
+        return new McpSchema.JsonSchema("object", Map.of("fen", fenSchema), List.of("fen"), null, null, null);
+    }
+
+    private BiFunction&lt;McpTransportContext, McpSchema.CallToolRequest, McpSchema.CallToolResult&gt; callHandler() {
+        return (exchange, req) -&gt; {
+            String content = evaluation(req.arguments().get("fen").toString());
+            return new McpSchema.CallToolResult(content, false);
+        };
+    }
+
+    private String evaluation(String fen) {
+        if (fen.equals("r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8")) {
+            return "+0.12";
+        }
+        return "+0.0";
+    }
+}</code></pre>
+</div>
+</div>
+
+<h2 id="toolsConfiguration"><a class="anchor" href="#toolsConfiguration"></a>3.4.1.5 Tools Configuration</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/tools/toolsConfiguration.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<a id="io.micronaut.mcp.conf.ToolsConfigurationProperties" href="#io.micronaut.mcp.conf.ToolsConfigurationProperties">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/ToolsConfigurationProperties.html">ToolsConfigurationProperties</a></caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.tools.list-changed</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">whether the server will emit notifications when the list of available tools changes. Default value <code>false</code>.</p></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="prompts"><a class="anchor" href="#prompts"></a>3.4.2 Prompts</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/prompts.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Prompts: Pre-defined templates or instructions that guide language model interactions</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>The preferred way to define prompts is to annotate a method with <a href="../api/io/micronaut/mcp/annotations/Prompt.html">Prompt</a> in a <code>@Singleton</code> bean.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-Java hljs" data-lang="Java">import io.micronaut.mcp.annotations.Prompt;
+import io.micronaut.mcp.annotations.PromptArg;
+import jakarta.inject.Singleton;
+
+@Singleton
+class Prompts {
+    /**
+     *
+     * @return Chess statistics
+     */
+    @Prompt(name = "chess-statistics", description = "Displays statistics for chess games")
+    String prompt(@PromptArg(description = "Player Name") String name) {
+        return String.format("You generate chess statistics for %s ....", name);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, you define prompts registering beans (typically in a <a href="https://docs.micronaut.io/latest/guide/#factories">bean factory</a>) using the low-level MCP SDK API.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The following example assumes you set <code>SYNC</code> as your server type. Because of that, the following example creates defining Prompts with the class <code>McpStatelessServerFeatures.SyncPromptSpecification</code>. <a href="#primitivesClassesPerServerType">If you used a different server type, you should use a different class</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-Java hljs" data-lang="Java">package example.micronaut;
+
+import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Requires;
+import io.modelcontextprotocol.server.McpStatelessServerFeatures;
+import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.inject.Singleton;
+
+import java.util.List;
+
+@Factory
+class PromptsFactory {
+    @Singleton
+    McpStatelessServerFeatures.SyncPromptSpecification prompt() {
+        return new McpStatelessServerFeatures.SyncPromptSpecification(
+            new McpSchema.Prompt("chess-statistics", "Displays statistics for chess games",
+                List.of(new McpSchema.PromptArgument("name", "Player Name", true))), (ex, req) -&gt; {
+            Object playerNameObj = req.arguments().get("name");
+            String playerName = playerNameObj != null ? playerNameObj.toString() : "";
+            McpSchema.TextContent assistantContent = new McpSchema.TextContent(String.format("""
+                                        You generate chess statistics for %s ....""", playerName));
+            McpSchema.PromptMessage assistantMessage = new McpSchema.PromptMessage(McpSchema.Role.ASSISTANT, assistantContent);
+            return new McpSchema.GetPromptResult("Chess statistics", List.of(assistantMessage), null);
+        });
+    }
+}</code></pre>
+</div>
+</div>
+
+<h2 id="promptsConfiguration"><a class="anchor" href="#promptsConfiguration"></a>3.4.2.1 Tools Configuration</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/prompts/promptsConfiguration.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<a id="io.micronaut.mcp.conf.PromptsConfigurationProperties" href="#io.micronaut.mcp.conf.PromptsConfigurationProperties">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/PromptsConfigurationProperties.html">PromptsConfigurationProperties</a></caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.prompts.list-changed</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">whether the server will emit notifications when the list of available prompts changes. Default value <code>false</code>.</p></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="resources"><a class="anchor" href="#resources"></a>3.4.3 Resources</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/resources.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Resources: Structured data or content that provides additional context to the model</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>The preferred way to define resources is to annotate a method with <a href="../api/io/micronaut/mcp/annotations/Resource.html">Resource</a> in a <code>@Singleton</code> bean. See <a href="#resourcesAnnotations">Resources with Annotations</a>.</p>
+</div>
+<div class="paragraph">
+<p>Alternatively, you define resources registering beans (typically in a <a href="https://docs.micronaut.io/latest/guide/#factories">bean factory</a>).</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The following example assumes you set <code>SYNC</code> as your server type. Because of that, the following example creates defining resources with the class <code>McpStatelessServerFeatures.SyncResourceSpecification</code>. <a href="#primitivesClassesPerServerType">If you used a different server type, you should use a different class</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-Java hljs" data-lang="Java">package example.micronaut;
+
+import io.micronaut.context.BeanContext;
+import io.micronaut.context.annotation.Context;
+import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.exceptions.ConfigurationException;
+import io.micronaut.core.io.ResourceLoader;
+import io.micronaut.mcp.server.utils.PgnLoader;
+import io.modelcontextprotocol.server.McpStatelessServerFeatures;
+import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.inject.Singleton;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Context
+@Factory
+class ResourcesFactory {
+    public static final String PGN_MIME_TYPE = "application/x-chess-pgn";
+
+    private final PgnLoader pgnLoader;
+
+    ResourcesFactory(BeanContext beanContext, ResourceLoader resourceLoader, PgnLoader pgnLoader) {
+        this.pgnLoader = pgnLoader;
+        for (int round = 1; round &lt;= 14; round++) {
+            Optional&lt;InputStream&gt; roundPgnInputStreamOptional = resourceLoader.getResourceAsStream("classpath:fidewwc2024/round_" + round + ".pgn");
+            if (roundPgnInputStreamOptional.isPresent()) {
+                try {
+                    Long size = Long.valueOf(roundPgnInputStreamOptional.get().readAllBytes().length);
+                    String uri = "pgn://round/" + round;
+                    String name = "round" + round + "PgnFideWCC2024";
+                    String title = "PGN of the Round " + round + " game of the World Chess Championship";
+                    String description = title + " between Ding Liren and Gukesh Dommaraju";
+                    beanContext.registerSingleton(new McpSchema.Resource(uri, name, title, description, PGN_MIME_TYPE, size, null, null));
+                } catch (IOException e) {
+                    throw new ConfigurationException("unable to calculate the size of the resource");
+                }
+            }
+        }
+    }
+
+    @EachBean(McpSchema.Resource.class)
+    @Singleton
+    McpStatelessServerFeatures.SyncResourceSpecification createPgnSyncResourceSpecification(McpSchema.Resource resource) {
+        return new McpStatelessServerFeatures.SyncResourceSpecification(resource, (mcpSyncServerExchange, readResourceRequest) -&gt; {
+            String uri = readResourceRequest.uri();
+            int lastSlash = uri.lastIndexOf('/');
+            String roundStr = uri.substring(lastSlash + 1);
+            int round = Integer.parseInt(roundStr);
+            List&lt;McpSchema.ResourceContents&gt; contents = new ArrayList&lt;&gt;();
+            pgnLoader.loadPgn(round).ifPresent(text -&gt;
+                contents.add(new McpSchema.TextResourceContents(uri, PGN_MIME_TYPE, text)));
+            return new McpSchema.ReadResourceResult(contents);
+        });
+    }
+}</code></pre>
+</div>
+</div>
+
+<h2 id="resourcesAnnotations"><a class="anchor" href="#resourcesAnnotations"></a>3.4.3.1 Resources with Annotations</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/resources/resourcesAnnotations.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The preferred way to declare a resource is using a method annotated with <a href="../api/io/micronaut/mcp/annotations/Resource.html">Resource</a> in a <code>@Singleton</code> bean.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example.micronaut;
+
+import io.micronaut.mcp.annotations.Resource;
+import jakarta.inject.Singleton;
+@Singleton
+class Resources {
+
+    @Resource(
+        uri = "example://hello",
+        name = "hello",
+        title = "Hello",
+        description = "Hello text",
+        mimeType = "text/plain"
+    )
+    String hello() {
+        return "Hello World";
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>uri</code> attribute is required and must be unique for the resource.</p>
+</li>
+<li>
+<p>By default, the method name is used as the resource <code>name</code>. You can override this by setting the <code>name</code> attribute of the <code>@Resource</code> annotation.</p>
+</li>
+<li>
+<p>You can optionally provide <code>title</code>, <code>description</code> and <code>mimeType</code> (defaults to <code>text/plain</code>).</p>
+</li>
+<li>
+<p>If the method returns a <code>String</code>, the server responds with a single text resource content using the provided <code>mimeType</code>.</p>
+</li>
+<li>
+<p>Supported method signatures:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>String myResource()</code> or <code>ReadResourceResult myResource()</code></p>
+</li>
+<li>
+<p><code>String myResource(String uri)</code> or <code>ReadResourceResult myResource(String uri)</code> — receive the requested URI</p>
+</li>
+<li>
+<p><code>ReadResourceResult myResource(io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest request)</code> — full access to request fields</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Supported return types:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>String</code> — serialized as a single <code>TextResourceContents</code> with the configured <code>mimeType</code></p>
+</li>
+<li>
+<p><code>io.modelcontextprotocol.spec.McpSchema.ReadResourceResult</code> — for advanced responses (multiple contents, binary, sizes, etc.)</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+
+<h2 id="resourcesConfiguration"><a class="anchor" href="#resourcesConfiguration"></a>3.4.3.2 Resources Configuration</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/resources/resourcesConfiguration.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<a id="io.micronaut.mcp.conf.ResourcesConfigurationProperties" href="#io.micronaut.mcp.conf.ResourcesConfigurationProperties">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/ResourcesConfigurationProperties.html">ResourcesConfigurationProperties</a></caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.resources.subscribe</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">whether the client can subscribe to be notified of changes to individual resources. Default value <code>false</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.resources.list-changed</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">whether the server will emit notifications when the list of available resources changes. Default value <code>false</code>.</p></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="resourcesTemplates"><a class="anchor" href="#resourcesTemplates"></a>3.4.3.3 Resources Templates</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/resources/resourcesTemplates.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Resource templates allow servers to expose parameterized resources using URI templates</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>You define resources registering beans of type <code>McpSchema.ResourceTemplate</code> (typically in a <a href="https://docs.micronaut.io/latest/guide/#factories">bean factory</a>).</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-Java hljs" data-lang="Java">package example.micronaut;
+
+import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Requires;
+import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.inject.Singleton;
+import static io.micronaut.mcp.server.stateless.sync.resources.ResourcesFactory.PGN_MIME_TYPE;
+
+@Factory
+class ResourcesTemplatesFactory {
+    @Singleton
+    McpSchema.ResourceTemplate createPgnResourceTemplate() {
+        String uriTemplate = "pgn://round/{round}";
+        String name = "2024ChessChampionshipRoundPgn";
+        String title = "PGN of a round World Chess Championship 2024";
+        String description = "Given a round, it returns a PGN of the World Chess Championship 2024 between Ding Liren and Gukesh Dommaraju";
+        return new McpSchema.ResourceTemplate(uriTemplate, name, title, description, PGN_MIME_TYPE, null, null);
+    }
+}</code></pre>
+</div>
+</div>
+
+<h2 id="stdio"><a class="anchor" href="#stdio"></a>3.5 STDIO Transport</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/stdio.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+If you use <a href="https://modelcontextprotocol.io/docs/concepts/transports#standard-input%2Foutput-stdio">Standard Input/Output (stdio) protocol</a>, your server MUST NOT write anything to its <code>stdout</code>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Disable the <a href="https://docs.micronaut.io/4.9.9/guide/#banner">Micronaut banner</a> and configure Logback not to log to <code>stdout</code>.</p>
+</div>
+<div class="paragraph">
+<p>For example, you can configure <a href="https://logback.qos.ch">Logback</a> to log to a file or to <code>stderr</code> (see <code>&lt;target&gt;System.err&lt;/target&gt;</code> in the configuration file below):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+    &lt;appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender"&gt;
+        &lt;target&gt;System.err&lt;/target&gt;
+        &lt;encoder&gt;
+            &lt;pattern&gt;%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n&lt;/pattern&gt;
+        &lt;/encoder&gt;
+    &lt;/appender&gt;
+
+    &lt;root level="INFO"&gt;
+        &lt;appender-ref ref="STDERR" /&gt;
+    &lt;/root&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+
+<h2 id="testingYourMcpServer"><a class="anchor" href="#testingYourMcpServer"></a>3.6 Testing your MCP Server</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/testingYourMcpServer.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To test the MCP Server, implementation you can use the <a href="https://github.com/modelcontextprotocol/inspector">MCP Inspector</a></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>The MCP inspector is a developer tool for testing and debugging MCP servers.</p>
+</div>
+</blockquote>
+</div>
+
+<h1 id="client"><a class="anchor" href="#client"></a>4 MCP Client</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/client.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+
+
+<h2 id="clientLangchain4j"><a class="anchor" href="#clientLangchain4j"></a>4.1 Langchain4j MCP Client</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/client/clientLangchain4j.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To use an <a href="https://docs.langchain4j.dev/tutorials/mcp#mcp-client">MCP Client powered by LangChain4j</a>, use the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.mcp:micronaut-mcp-client-langchain4j")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.mcp&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-mcp-client-langchain4j&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
+</div>
+
+<h1 id="repository"><a class="anchor" href="#repository"></a>5 Repository</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/repository.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can find the source code of this project in this repository:</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/micronaut-projects/micronaut-mcp">https://github.com/micronaut-projects/micronaut-mcp</a></p>
+</div>
+
+    </div>
+</div>
+
+<script type="text/javascript">
+
+</script>
+</body>
+</html>
