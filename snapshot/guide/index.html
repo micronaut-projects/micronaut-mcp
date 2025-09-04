@@ -127,9 +127,11 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-resources"><a href="#resources"><strong>3.4.3</strong><span>Resources</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-resourcesConfiguration"><a href="#resourcesConfiguration"><strong>3.4.3.1</strong><span>Resources Configuration</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-resourcesAnnotations"><a href="#resourcesAnnotations"><strong>3.4.3.1</strong><span>Resources with Annotations</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-resourcesTemplates"><a href="#resourcesTemplates"><strong>3.4.3.2</strong><span>Resources Templates</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-resourcesConfiguration"><a href="#resourcesConfiguration"><strong>3.4.3.2</strong><span>Resources Configuration</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-resourcesTemplates"><a href="#resourcesTemplates"><strong>3.4.3.3</strong><span>Resources Templates</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-stdio"><a href="#stdio"><strong>3.5</strong><span>STDIO Transport</span></a></div>
         
@@ -1137,7 +1139,10 @@ class PromptsFactory {
 </blockquote>
 </div>
 <div class="paragraph">
-<p>You define resources registering beans (typically in a <a href="https://docs.micronaut.io/latest/guide/#factories">bean factory</a>).</p>
+<p>The preferred way to define resources is to annotate a method with <a href="../api/io/micronaut/mcp/annotations/Resource.html">Resource</a> in a <code>@Singleton</code> bean. See <a href="#resourcesAnnotations">Resources with Annotations</a>.</p>
+</div>
+<div class="paragraph">
+<p>Alternatively, you define resources registering beans (typically in a <a href="https://docs.micronaut.io/latest/guide/#factories">bean factory</a>).</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -1217,7 +1222,90 @@ class ResourcesFactory {
 </div>
 </div>
 
-<h2 id="resourcesConfiguration"><a class="anchor" href="#resourcesConfiguration"></a>3.4.3.1 Resources Configuration</h2>
+<h2 id="resourcesAnnotations"><a class="anchor" href="#resourcesAnnotations"></a>3.4.3.1 Resources with Annotations</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/1.0.x/src/main/docs/guide/server/primitives/resources/resourcesAnnotations.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The preferred way to declare a resource is using a method annotated with <a href="../api/io/micronaut/mcp/annotations/Resource.html">Resource</a> in a <code>@Singleton</code> bean.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example.micronaut;
+
+import io.micronaut.mcp.annotations.Resource;
+import jakarta.inject.Singleton;
+@Singleton
+class Resources {
+
+    @Resource(
+        uri = "example://hello",
+        name = "hello",
+        title = "Hello",
+        description = "Hello text",
+        mimeType = "text/plain"
+    )
+    String hello() {
+        return "Hello World";
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>uri</code> attribute is required and must be unique for the resource.</p>
+</li>
+<li>
+<p>By default, the method name is used as the resource <code>name</code>. You can override this by setting the <code>name</code> attribute of the <code>@Resource</code> annotation.</p>
+</li>
+<li>
+<p>You can optionally provide <code>title</code>, <code>description</code> and <code>mimeType</code> (defaults to <code>text/plain</code>).</p>
+</li>
+<li>
+<p>If the method returns a <code>String</code>, the server responds with a single text resource content using the provided <code>mimeType</code>.</p>
+</li>
+<li>
+<p>Supported method signatures:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>String myResource()</code> or <code>ReadResourceResult myResource()</code></p>
+</li>
+<li>
+<p><code>String myResource(String uri)</code> or <code>ReadResourceResult myResource(String uri)</code> — receive the requested URI</p>
+</li>
+<li>
+<p><code>ReadResourceResult myResource(io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest request)</code> — full access to request fields</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Supported return types:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>String</code> — serialized as a single <code>TextResourceContents</code> with the configured <code>mimeType</code></p>
+</li>
+<li>
+<p><code>io.modelcontextprotocol.spec.McpSchema.ReadResourceResult</code> — for advanced responses (multiple contents, binary, sizes, etc.)</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+
+<h2 id="resourcesConfiguration"><a class="anchor" href="#resourcesConfiguration"></a>3.4.3.2 Resources Configuration</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/1.0.x/src/main/docs/guide/server/primitives/resources/resourcesConfiguration.adoc"'>
@@ -1255,7 +1343,7 @@ class ResourcesFactory {
 </tbody>
 </table>
 
-<h2 id="resourcesTemplates"><a class="anchor" href="#resourcesTemplates"></a>3.4.3.2 Resources Templates</h2>
+<h2 id="resourcesTemplates"><a class="anchor" href="#resourcesTemplates"></a>3.4.3.3 Resources Templates</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/1.0.x/src/main/docs/guide/server/primitives/resources/resourcesTemplates.adoc"'>

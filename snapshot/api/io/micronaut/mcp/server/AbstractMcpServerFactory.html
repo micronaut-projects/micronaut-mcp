@@ -131,11 +131,16 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">P</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getPrompts(io.micronaut.mcp.server.registry.PromptRegistry)" class="member-name-link">getPrompts</a><wbr>(<a href="registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a>&nbsp;promptRegistry)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Retrieves a list of prompts from the provided <code>PromptRegistry</code>.</div>
+<div class="block">Retrieves a list of prompts from the provided <a href="registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry"><code>PromptRegistry</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">T</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTools(io.micronaut.mcp.server.registry.ToolRegistry)" class="member-name-link">getTools</a><wbr>(<a href="registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a>&nbsp;toolRegistry)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">R</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getResources(io.micronaut.mcp.server.registry.ResourceRegistry)" class="member-name-link">getResources</a><wbr>(<a href="registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceRegistry</a>&nbsp;resourceRegistry)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Retrieves a list of resources from the provided <a href="registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry"><code>ResourceRegistry</code></a>.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">T</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTools(io.micronaut.mcp.server.registry.ToolRegistry)" class="member-name-link">getTools</a><wbr>(<a href="registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a>&nbsp;toolRegistry)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Retrieves a list of tools from the provided <a href="registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry"><code>ToolRegistry</code></a>.</div>
 </div>
 </div>
@@ -186,12 +191,25 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getPrompts(io.micronaut.mcp.server.registry.PromptRegistry)">
 <h3>getPrompts</h3>
 <div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">P</a>&gt;</span>&nbsp;<span class="element-name">getPrompts</span><wbr><span class="parameters">(<a href="registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a>&nbsp;promptRegistry)</span></div>
-<div class="block">Retrieves a list of prompts from the provided <code>PromptRegistry</code>.</div>
+<div class="block">Retrieves a list of prompts from the provided <a href="registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry"><code>PromptRegistry</code></a>.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>promptRegistry</code> - the registry of prompts from which to retrieve the prompts</dd>
 <dt>Returns:</dt>
 <dd>a list of prompts retrieved from the provided prompt registry</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getResources(io.micronaut.mcp.server.registry.ResourceRegistry)">
+<h3>getResources</h3>
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">R</a>&gt;</span>&nbsp;<span class="element-name">getResources</span><wbr><span class="parameters">(<a href="registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceRegistry</a>&nbsp;resourceRegistry)</span></div>
+<div class="block">Retrieves a list of resources from the provided <a href="registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry"><code>ResourceRegistry</code></a>.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>resourceRegistry</code> - the registry of resources from which to retrieve the resources</dd>
+<dt>Returns:</dt>
+<dd>a list of resources retrieved from the provided resource registry</dd>
 </dl>
 </section>
 </li>
