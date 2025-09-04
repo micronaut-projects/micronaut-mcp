@@ -80,7 +80,7 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
      * @param prompts           A list of prompt configurations for the MCP server.
      * @param resourceTemplates A list of resource templates for the MCP server.
      * @param resources         A list of server resources to be defined in the specification.
-     * @return The constructed server specification.
+     * @return the MCP server specification.
      */
     protected abstract Spec createMcpServerSpec(S transport,
                                                 @Nullable McpServerInfoConfiguration configuration,
@@ -91,9 +91,28 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
                                                 List<McpSchema.ResourceTemplate> resourceTemplates,
                                                 List<R> resources);
 
+    /**
+     *
+     * @param transport Transport
+     * @param configuration MCP Server Info Configuration
+     * @param toolsConfiguration Tools Configuration
+     * @param promptsConfiguration Prompts Configuration
+     * @param resourcesConfiguration Resources Configuration
+     * @param capabilitiesBuilder Capabilities Builder
+     * @param capabilitiesProvider Capabilities Provider
+     * @param toolRegistry Tool Registry
+     * @param promptRegistry Prompt Registry
+     * @param resourceRegistry Resource Registry
+     * @param tools Tools
+     * @param completions Completions
+     * @param prompts Prompts
+     * @param resourceTemplates Resource Templates
+     * @param resources Resources
+     * @return the MCP server specification.
+     */
     @SuppressWarnings({"java:S107", "ParameterNumber"})
     @Prototype
-    final Spec buildMcpServerSpec(S transport,
+    protected Spec buildMcpServerSpec(S transport,
                                   @Nullable McpServerInfoConfiguration configuration,
                                   ToolsConfiguration toolsConfiguration,
                                   PromptsConfiguration promptsConfiguration,
