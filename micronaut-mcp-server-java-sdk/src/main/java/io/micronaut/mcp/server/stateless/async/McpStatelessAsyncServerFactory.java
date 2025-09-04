@@ -16,13 +16,9 @@
 package io.micronaut.mcp.server.stateless.async;
 
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.mcp.conf.McpServerInfoConfiguration;
-import io.micronaut.mcp.conf.PromptsConfiguration;
-import io.micronaut.mcp.conf.ResourcesConfiguration;
-import io.micronaut.mcp.conf.ToolsConfiguration;
 import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
@@ -32,7 +28,6 @@ import io.modelcontextprotocol.server.McpStatelessAsyncServer;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpStatelessServerTransport;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.List;
@@ -89,41 +84,5 @@ final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpS
     @Singleton
     McpStatelessAsyncServer createMcpStatelessSyncServer(McpServer.StatelessAsyncSpecification specification) {
         return specification.build();
-    }
-
-    // GraalVM was removing the parent class method without overriding it.
-    @SuppressWarnings({"java:S107", "ParameterNumber"})
-    @Override
-    @Prototype
-    protected McpServer.StatelessAsyncSpecification buildMcpServerSpec(McpStatelessServerTransport transport,
-                                  @Nullable McpServerInfoConfiguration configuration,
-                                  ToolsConfiguration toolsConfiguration,
-                                  PromptsConfiguration promptsConfiguration,
-                                  ResourcesConfiguration resourcesConfiguration,
-                                  McpSchema.ServerCapabilities.Builder capabilitiesBuilder,
-                                  Provider<McpSchema.ServerCapabilities> capabilitiesProvider,
-                                  ToolRegistry toolRegistry,
-                                  PromptRegistry promptRegistry,
-                                  ResourceRegistry resourceRegistry,
-                                  List<McpStatelessServerFeatures.AsyncToolSpecification> tools,
-                                  List<McpStatelessServerFeatures.AsyncCompletionSpecification> completions,
-                                  List<McpStatelessServerFeatures.AsyncPromptSpecification> prompts,
-                                  List<McpSchema.ResourceTemplate> resourceTemplates,
-                                  List<McpStatelessServerFeatures.AsyncResourceSpecification> resources) {
-        return super.buildMcpServerSpec(transport,
-            configuration,
-            toolsConfiguration,
-            promptsConfiguration,
-            resourcesConfiguration,
-            capabilitiesBuilder,
-            capabilitiesProvider,
-            toolRegistry,
-            promptRegistry,
-            resourceRegistry,
-            tools,
-            completions,
-            prompts,
-            resourceTemplates,
-            resources);
     }
 }

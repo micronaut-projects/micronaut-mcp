@@ -112,7 +112,8 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
      */
     @SuppressWarnings({"java:S107", "ParameterNumber"})
     @Prototype
-    protected Spec buildMcpServerSpec(S transport,
+    // keep the visibility modifier public for GraalVM
+    public Spec buildMcpServerSpec(S transport,
                                   @Nullable McpServerInfoConfiguration configuration,
                                   ToolsConfiguration toolsConfiguration,
                                   PromptsConfiguration promptsConfiguration,
