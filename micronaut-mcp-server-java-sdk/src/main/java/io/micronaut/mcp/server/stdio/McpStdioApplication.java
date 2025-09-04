@@ -34,7 +34,7 @@ import jakarta.inject.Singleton;
 @Singleton
 @Requires(missingBeans = EmbeddedApplication.class)
 @Internal
-class McpStdioApplication implements EmbeddedApplication<McpStdioApplication>, Described {
+final class McpStdioApplication implements EmbeddedApplication<McpStdioApplication>, Described {
 
     private final ApplicationContext applicationContext;
     private final ApplicationConfiguration configuration;
