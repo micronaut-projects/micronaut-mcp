@@ -16,8 +16,12 @@
 package io.micronaut.mcp.server.stdio.sync;
 
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.mcp.conf.PromptsConfiguration;
+import io.micronaut.mcp.conf.ResourcesConfiguration;
+import io.micronaut.mcp.conf.ToolsConfiguration;
 import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.conf.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.registry.PromptRegistry;
@@ -28,6 +32,7 @@ import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.List;
@@ -81,5 +86,41 @@ final class McpServerSyncFactory extends AbstractMcpServerFactory<McpServer.Sync
             spec.serverInfo(configuration.getName(), configuration.getVersion());
         }
         return spec;
+    }
+
+    // GraalVM was removing the parent class method without overriding it.
+    @SuppressWarnings({"java:S107", "ParameterNumber"})
+    @Override
+    @Prototype
+    protected McpServer.SyncSpecification buildMcpServerSpec(McpServerTransportProvider transport,
+                                                             @Nullable McpServerInfoConfiguration configuration,
+                                                             ToolsConfiguration toolsConfiguration,
+                                                             PromptsConfiguration promptsConfiguration,
+                                                             ResourcesConfiguration resourcesConfiguration,
+                                                             McpSchema.ServerCapabilities.Builder capabilitiesBuilder,
+                                                             Provider<McpSchema.ServerCapabilities> capabilitiesProvider,
+                                                             ToolRegistry toolRegistry,
+                                                             PromptRegistry promptRegistry,
+                                                             ResourceRegistry resourceRegistry,
+                                                             List<McpServerFeatures.SyncToolSpecification> tools,
+                                                             List<McpServerFeatures.SyncCompletionSpecification> completions,
+                                                             List<McpServerFeatures.SyncPromptSpecification> prompts,
+                                                             List<McpSchema.ResourceTemplate> resourceTemplates,
+                                                             List<McpServerFeatures.SyncResourceSpecification> resources) {
+        return super.buildMcpServerSpec(transport,
+            configuration,
+            toolsConfiguration,
+            promptsConfiguration,
+            resourcesConfiguration,
+            capabilitiesBuilder,
+            capabilitiesProvider,
+            toolRegistry,
+            promptRegistry,
+            resourceRegistry,
+            tools,
+            completions,
+            prompts,
+            resourceTemplates,
+            resources);
     }
 }
