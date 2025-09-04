@@ -22,6 +22,7 @@ import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.conf.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
+import io.micronaut.mcp.server.registry.ResourceRegistry;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessSyncServer;
@@ -48,6 +49,11 @@ final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpSe
     @Override
     protected List<McpStatelessServerFeatures.SyncPromptSpecification> getPrompts(PromptRegistry promptRegistry) {
         return promptRegistry.getStatelessSyncSpecs();
+    }
+
+    @Override
+    protected List<McpStatelessServerFeatures.SyncResourceSpecification> getResources(ResourceRegistry resourceRegistry) {
+        return resourceRegistry.getStatelessSyncSpecs();
     }
 
     @Override

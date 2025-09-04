@@ -22,6 +22,7 @@ import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.conf.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
+import io.micronaut.mcp.server.registry.ResourceRegistry;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServer;
@@ -53,6 +54,11 @@ final class McpServerSyncFactory extends AbstractMcpServerFactory<McpServer.Sync
     @Override
     protected List<McpServerFeatures.SyncPromptSpecification> getPrompts(PromptRegistry promptRegistry) {
         return promptRegistry.getSyncSpecs();
+    }
+
+    @Override
+    protected List<McpServerFeatures.SyncResourceSpecification> getResources(ResourceRegistry resourceRegistry) {
+        return resourceRegistry.getSyncSpecs();
     }
 
     @Override

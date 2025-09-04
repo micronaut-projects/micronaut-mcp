@@ -24,6 +24,7 @@ import io.micronaut.mcp.conf.ResourcesConfiguration;
 import io.micronaut.mcp.conf.ToolsConfiguration;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
+import io.micronaut.mcp.server.registry.ResourceRegistry;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -53,6 +54,7 @@ class ServerCapabilitiesFactory {
         List<McpStatelessServerFeatures.SyncResourceSpecification> statelessSyncResources,
         ToolsConfiguration toolsConfiguration,
         ToolRegistry toolRegistry,
+        ResourceRegistry resourceRegistry,
         List<McpServerFeatures.SyncToolSpecification> syncTools,
         List<McpServerFeatures.AsyncToolSpecification> asyncTools,
         List<McpStatelessServerFeatures.AsyncToolSpecification> statelessAsyncTools,
@@ -84,7 +86,8 @@ class ServerCapabilitiesFactory {
             CollectionUtils.isNotEmpty(syncResources) ||
             CollectionUtils.isNotEmpty(asyncResources) ||
             CollectionUtils.isNotEmpty(statelessAsyncResources) ||
-            CollectionUtils.isNotEmpty(statelessSyncResources)) {
+            CollectionUtils.isNotEmpty(statelessSyncResources) ||
+            resourceRegistry.isNotEmpty()) {
             builder.resources(resourcesConfiguration.isSubscribe(), resourcesConfiguration.isListChanged());
         }
         if (CollectionUtils.isNotEmpty(syncCompletions) ||

@@ -22,6 +22,7 @@ import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.conf.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
+import io.micronaut.mcp.server.registry.ResourceRegistry;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -53,6 +54,11 @@ final class McpServerAsyncFactory extends AbstractMcpServerFactory<McpServer.Asy
     @Override
     protected List<McpServerFeatures.AsyncPromptSpecification> getPrompts(PromptRegistry promptRegistry) {
         return promptRegistry.getAsyncSpecs();
+    }
+
+    @Override
+    protected List<McpServerFeatures.AsyncResourceSpecification> getResources(ResourceRegistry resourceRegistry) {
+        return resourceRegistry.getAsyncSpecs();
     }
 
     @Override
