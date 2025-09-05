@@ -18,9 +18,12 @@ package io.micronaut.mcp.server;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
-import io.modelcontextprotocol.server.McpTransportContext;
+import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
 import jakarta.inject.Singleton;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Default implementation of {@link McpTransportContextExtractor}.
@@ -34,15 +37,20 @@ final class DefaultMcpTransportContextExtractor implements McpTransportContextEx
     public static final String HTTP_HEADER_DEFAULT_LAST_EVENT_ID = "Last-Event-ID";
 
     @Override
-    public McpTransportContext extract(HttpRequest<?> request, McpTransportContext transportContext) {
+    public McpTransportContext extract(HttpRequest<?> request) {
+        return McpTransportContext.create(metadata(request));
+    }
+
+    private Map<String, Object> metadata(HttpRequest<?> request) {
         HttpHeaders headers = request.getHeaders();
-        transportContext.put(HTTP_HEADER_MCP_PROTOCOL_VERSION,
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put(HTTP_HEADER_MCP_PROTOCOL_VERSION,
             headers.get(HTTP_HEADER_MCP_PROTOCOL_VERSION, String.class)
                 .orElse(DEFAULT_PROTOCOL_VERSION));
         headers.get(HTTP_HEADER_MCP_SESSION_ID, String.class)
-            .ifPresent(v -> transportContext.put(HTTP_HEADER_MCP_SESSION_ID, v));
+            .ifPresent(v -> metadata.put(HTTP_HEADER_MCP_SESSION_ID, v));
         headers.get(HTTP_HEADER_DEFAULT_LAST_EVENT_ID, String.class)
-            .ifPresent(v -> transportContext.put(HTTP_HEADER_DEFAULT_LAST_EVENT_ID, v));
-        return transportContext;
+            .ifPresent(v -> metadata.put(HTTP_HEADER_DEFAULT_LAST_EVENT_ID, v));
+        return metadata;
     }
 }

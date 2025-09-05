@@ -18,7 +18,7 @@ package io.micronaut.mcp.server.stateless;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.Nullable;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
-import io.modelcontextprotocol.server.McpTransportContext;
+import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpStatelessServerTransport;
 import jakarta.inject.Singleton;

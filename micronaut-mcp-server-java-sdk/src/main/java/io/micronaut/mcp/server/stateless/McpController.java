@@ -27,9 +27,8 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.mcp.conf.McpServerConfiguration;
-import io.modelcontextprotocol.server.DefaultMcpTransportContext;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
-import io.modelcontextprotocol.server.McpTransportContext;
+import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -66,7 +65,7 @@ final class McpController {
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_EVENT_STREAM})
     @Post
     public Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body Map<String, Object> body) {
-        McpTransportContext transportContext = contextExtractor.extract(request, new DefaultMcpTransportContext());
+        McpTransportContext transportContext = contextExtractor.extract(request);
         McpSchema.JSONRPCMessage jsonRpcMessage = jsonRpcMessage(body);
         try {
             if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
