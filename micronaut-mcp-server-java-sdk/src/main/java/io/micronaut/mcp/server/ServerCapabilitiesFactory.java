@@ -38,7 +38,7 @@ import java.util.List;
 @Internal
 @Factory
 class ServerCapabilitiesFactory {
-    @SuppressWarnings("java:S107")
+    @SuppressWarnings({"java:S107", "ParameterNumber"})
     @Prototype
     McpSchema.ServerCapabilities.Builder createServerCapabilitiesBuilder(
         List<McpServerFeatures.SyncCompletionSpecification> syncCompletions,

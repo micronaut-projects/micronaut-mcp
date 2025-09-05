@@ -39,7 +39,6 @@ final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpSe
     McpStatelessServerFeatures.SyncCompletionSpecification,
     McpStatelessServerFeatures.SyncPromptSpecification,
     McpStatelessServerFeatures.SyncResourceSpecification> {
-    @SuppressWarnings({"java:S107"})
 
     @Override
     protected List<McpStatelessServerFeatures.SyncToolSpecification> getTools(ToolRegistry toolRegistry) {
@@ -82,5 +81,4 @@ final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpSe
     McpStatelessSyncServer createMcpStatelessSyncServer(McpServer.StatelessSyncSpecification specification) {
         return specification.build();
     }
-
 }
