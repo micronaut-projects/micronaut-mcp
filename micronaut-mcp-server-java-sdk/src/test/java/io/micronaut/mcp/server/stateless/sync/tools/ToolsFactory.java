@@ -9,7 +9,7 @@ package example.micronaut;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
-import io.modelcontextprotocol.server.McpTransportContext;
+import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 
