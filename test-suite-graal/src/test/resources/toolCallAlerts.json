@@ -1,0 +1,14 @@
+{
+  "jsonrpc":"2.0",
+  "id":4,
+  "method":"tools/call",
+  "params":{
+    "_meta":{
+      "progressToken":4
+    },
+    "name":"getAlerts",
+    "arguments":{
+      "state":"CA"
+    }
+  }
+}

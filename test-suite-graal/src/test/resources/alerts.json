@@ -1,0 +1,891 @@
+{
+  "@context": [
+    "https://geojson.org/geojson-ld/geojson-context.jsonld",
+    {
+      "@version": "1.1",
+      "wx": "https://api.weather.gov/ontology#",
+      "@vocab": "https://api.weather.gov/ontology#"
+    }
+  ],
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c4e2d9d61a03dd497ff5f764d4899ecb464612e5.001.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c4e2d9d61a03dd497ff5f764d4899ecb464612e5.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.c4e2d9d61a03dd497ff5f764d4899ecb464612e5.001.1",
+        "areaDesc": "San Bernardino County Mountains; Riverside County Mountains; San Diego County Mountains; Apple and Lucerne Valleys; San Diego County Deserts",
+        "geocode": {
+          "SAME": [
+            "006071",
+            "006065",
+            "006073"
+          ],
+          "UGC": [
+            "CAZ055",
+            "CAZ056",
+            "CAZ058",
+            "CAZ060",
+            "CAZ062"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/CAZ055",
+          "https://api.weather.gov/zones/forecast/CAZ056",
+          "https://api.weather.gov/zones/forecast/CAZ058",
+          "https://api.weather.gov/zones/forecast/CAZ060",
+          "https://api.weather.gov/zones/forecast/CAZ062"
+        ],
+        "references": [
+          {
+            "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8d455631d71ec0f6cb897b87862377c036dbbf25.001.1",
+            "identifier": "urn:oid:2.49.0.1.840.0.8d455631d71ec0f6cb897b87862377c036dbbf25.001.1",
+            "sender": "w-nws.webmaster@noaa.gov",
+            "sent": "2025-09-08T14:22:00-07:00"
+          }
+        ],
+        "sent": "2025-09-08T21:20:00-07:00",
+        "effective": "2025-09-08T21:20:00-07:00",
+        "onset": "2025-09-09T14:00:00-07:00",
+        "expires": "2025-09-09T06:00:00-07:00",
+        "ends": "2025-09-10T01:00:00-07:00",
+        "status": "Actual",
+        "messageType": "Update",
+        "category": "Met",
+        "severity": "Moderate",
+        "certainty": "Likely",
+        "urgency": "Expected",
+        "event": "Wind Advisory",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS San Diego CA",
+        "headline": "Wind Advisory issued September 8 at 9:20PM PDT until September 10 at 1:00AM PDT by NWS San Diego CA",
+        "description": "* WHAT...Southwest winds 15 to 25 mph with gusts up to 45 mph\nexpected. Gusts to 55 mph for the desert slopes and mountain\nridges.\n\n* WHERE...Apple and Lucerne Valleys, Riverside County Mountains, San\nBernardino County Mountains, San Diego County Deserts, and San\nDiego County Mountains.\n\n* WHEN...From 2 PM Tuesday to 1 AM PDT Wednesday.\n\n* IMPACTS...Gusty winds will blow around unsecured objects. Tree\nlimbs could be blown down and a few power outages may result.\n\n* ADDITIONAL DETAILS...Strongest winds in the mountains are expected\nalong the mountain ridges and eastern slopes.",
+        "instruction": "Winds this strong can make driving difficult, especially for high\nprofile vehicles. Use extra caution.",
+        "response": "Execute",
+        "parameters": {
+          "AWIPSidentifier": [
+            "NPWSGX"
+          ],
+          "WMOidentifier": [
+            "WWUS76 KSGX 090420"
+          ],
+          "NWSheadline": [
+            "WIND ADVISORY REMAINS IN EFFECT FROM 2 PM TUESDAY TO 1 AM PDT WEDNESDAY"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ],
+          "VTEC": [
+            "/O.CON.KSGX.WI.Y.0019.250909T2100Z-250910T0800Z/"
+          ],
+          "eventEndingTime": [
+            "2025-09-10T01:00:00-07:00"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "WIY"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c4e2d9d61a03dd497ff5f764d4899ecb464612e5.002.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c4e2d9d61a03dd497ff5f764d4899ecb464612e5.002.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.c4e2d9d61a03dd497ff5f764d4899ecb464612e5.002.1",
+        "areaDesc": "San Gorgonio Pass Near Banning",
+        "geocode": {
+          "SAME": [
+            "006065"
+          ],
+          "UGC": [
+            "CAZ065"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/CAZ065"
+        ],
+        "references": [
+          {
+            "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8d455631d71ec0f6cb897b87862377c036dbbf25.002.1",
+            "identifier": "urn:oid:2.49.0.1.840.0.8d455631d71ec0f6cb897b87862377c036dbbf25.002.1",
+            "sender": "w-nws.webmaster@noaa.gov",
+            "sent": "2025-09-08T14:22:00-07:00"
+          }
+        ],
+        "sent": "2025-09-08T21:20:00-07:00",
+        "effective": "2025-09-08T21:20:00-07:00",
+        "onset": "2025-09-09T14:00:00-07:00",
+        "expires": "2025-09-09T06:00:00-07:00",
+        "ends": "2025-09-10T01:00:00-07:00",
+        "status": "Actual",
+        "messageType": "Update",
+        "category": "Met",
+        "severity": "Moderate",
+        "certainty": "Likely",
+        "urgency": "Expected",
+        "event": "Wind Advisory",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS San Diego CA",
+        "headline": "Wind Advisory issued September 8 at 9:20PM PDT until September 10 at 1:00AM PDT by NWS San Diego CA",
+        "description": "* WHAT...West winds 25 to 35 mph with gusts up to 60 mph expected.\n\n* WHERE...San Gorgonio Pass near Banning.\n\n* WHEN...From 2 PM Tuesday to 1 AM PDT Wednesday.\n\n* IMPACTS...Gusty winds will blow around unsecured objects. Tree\nlimbs could be blown down and a few power outages may result.",
+        "instruction": "Winds this strong can make driving difficult, especially for high\nprofile vehicles. Use extra caution.",
+        "response": "Execute",
+        "parameters": {
+          "AWIPSidentifier": [
+            "NPWSGX"
+          ],
+          "WMOidentifier": [
+            "WWUS76 KSGX 090420"
+          ],
+          "NWSheadline": [
+            "WIND ADVISORY REMAINS IN EFFECT FROM 2 PM TUESDAY TO 1 AM PDT WEDNESDAY"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ],
+          "VTEC": [
+            "/O.CON.KSGX.WI.Y.0019.250909T2100Z-250910T0800Z/"
+          ],
+          "eventEndingTime": [
+            "2025-09-10T01:00:00-07:00"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "WIY"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4ae52e77cc5a4d468d49440f40ac245c03040168.002.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4ae52e77cc5a4d468d49440f40ac245c03040168.002.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.4ae52e77cc5a4d468d49440f40ac245c03040168.002.1",
+        "areaDesc": "Santa Barbara County Southwestern Coast; Santa Ynez Mountains Western Range",
+        "geocode": {
+          "SAME": [
+            "006083"
+          ],
+          "UGC": [
+            "CAZ349",
+            "CAZ351"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/CAZ349",
+          "https://api.weather.gov/zones/forecast/CAZ351"
+        ],
+        "references": [
+          {
+            "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.88a3d44acc24537b10331f16d30ccfbc9b3e1af6.002.1",
+            "identifier": "urn:oid:2.49.0.1.840.0.88a3d44acc24537b10331f16d30ccfbc9b3e1af6.002.1",
+            "sender": "w-nws.webmaster@noaa.gov",
+            "sent": "2025-09-08T12:40:00-07:00"
+          }
+        ],
+        "sent": "2025-09-08T20:35:00-07:00",
+        "effective": "2025-09-08T20:35:00-07:00",
+        "onset": "2025-09-08T20:35:00-07:00",
+        "expires": "2025-09-09T05:00:00-07:00",
+        "ends": "2025-09-09T05:00:00-07:00",
+        "status": "Actual",
+        "messageType": "Update",
+        "category": "Met",
+        "severity": "Moderate",
+        "certainty": "Likely",
+        "urgency": "Expected",
+        "event": "Wind Advisory",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Los Angeles/Oxnard CA",
+        "headline": "Wind Advisory issued September 8 at 8:35PM PDT until September 9 at 5:00AM PDT by NWS Los Angeles/Oxnard CA",
+        "description": "* WHAT...North to northwest winds 15 to 25 mph with gusts up to 45\nmph expected.\n\n* WHERE...Santa Barbara County Southwestern Coast and Santa Ynez\nMountains Western Range.\n\n* WHEN...Until 5 AM PDT Tuesday.\n\n* IMPACTS...Gusty winds will blow around unsecured objects. Tree\nlimbs could be blown down and a few power outages may result.",
+        "instruction": "Winds this strong can make driving difficult, especially for drivers\nof high profile vehicles. Use extra caution.",
+        "response": "Execute",
+        "parameters": {
+          "AWIPSidentifier": [
+            "NPWLOX"
+          ],
+          "WMOidentifier": [
+            "WWUS76 KLOX 090335"
+          ],
+          "NWSheadline": [
+            "WIND ADVISORY REMAINS IN EFFECT UNTIL 5 AM PDT TUESDAY"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ],
+          "VTEC": [
+            "/O.CON.KLOX.WI.Y.0074.000000T0000Z-250909T1200Z/"
+          ],
+          "eventEndingTime": [
+            "2025-09-09T05:00:00-07:00"
+          ],
+          "expiredReferences": [
+            "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.b397cc72cc2c9d8dd8e0e6f5123aac264fc6c01a.001.1,2025-09-08T02:10:00-07:00"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "WIY"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4ae52e77cc5a4d468d49440f40ac245c03040168.003.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4ae52e77cc5a4d468d49440f40ac245c03040168.003.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.4ae52e77cc5a4d468d49440f40ac245c03040168.003.1",
+        "areaDesc": "Eastern San Gabriel Mountains; Western Antelope Valley Foothills; Eastern Antelope Valley Foothills",
+        "geocode": {
+          "SAME": [
+            "006037"
+          ],
+          "UGC": [
+            "CAZ380",
+            "CAZ381",
+            "CAZ382"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/CAZ380",
+          "https://api.weather.gov/zones/forecast/CAZ381",
+          "https://api.weather.gov/zones/forecast/CAZ382"
+        ],
+        "references": [
+          {
+            "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.88a3d44acc24537b10331f16d30ccfbc9b3e1af6.001.1",
+            "identifier": "urn:oid:2.49.0.1.840.0.88a3d44acc24537b10331f16d30ccfbc9b3e1af6.001.1",
+            "sender": "w-nws.webmaster@noaa.gov",
+            "sent": "2025-09-08T12:40:00-07:00"
+          }
+        ],
+        "sent": "2025-09-08T20:35:00-07:00",
+        "effective": "2025-09-08T20:35:00-07:00",
+        "onset": "2025-09-09T10:00:00-07:00",
+        "expires": "2025-09-09T08:45:00-07:00",
+        "ends": "2025-09-09T21:00:00-07:00",
+        "status": "Actual",
+        "messageType": "Update",
+        "category": "Met",
+        "severity": "Moderate",
+        "certainty": "Likely",
+        "urgency": "Expected",
+        "event": "Wind Advisory",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Los Angeles/Oxnard CA",
+        "headline": "Wind Advisory issued September 8 at 8:35PM PDT until September 9 at 9:00PM PDT by NWS Los Angeles/Oxnard CA",
+        "description": "* WHAT...Southwest winds 20 to 35 mph with gusts up to 50 mph.\nIsolated gusts to 55 mph possible.\n\n* WHERE...Eastern Antelope Valley Foothills, Eastern San Gabriel\nMountains, and Western Antelope Valley Foothills.\n\n* WHEN...From 10 AM to 9 PM PDT Tuesday.\n\n* IMPACTS...Gusty winds will blow around unsecured objects. Tree\nlimbs could be blown down and a few power outages may result.",
+        "instruction": "Winds this strong can make driving difficult, especially for drivers\nof high profile vehicles. Use extra caution.\n\nSecure outdoor objects.",
+        "response": "Execute",
+        "parameters": {
+          "AWIPSidentifier": [
+            "NPWLOX"
+          ],
+          "WMOidentifier": [
+            "WWUS76 KLOX 090335"
+          ],
+          "NWSheadline": [
+            "WIND ADVISORY REMAINS IN EFFECT FROM 10 AM TO 9 PM PDT TUESDAY"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ],
+          "VTEC": [
+            "/O.CON.KLOX.WI.Y.0075.250909T1700Z-250910T0400Z/"
+          ],
+          "eventEndingTime": [
+            "2025-09-09T21:00:00-07:00"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "WIY"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4ae52e77cc5a4d468d49440f40ac245c03040168.001.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4ae52e77cc5a4d468d49440f40ac245c03040168.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.4ae52e77cc5a4d468d49440f40ac245c03040168.001.1",
+        "areaDesc": "Western San Gabriel Mountains and Highway 14 Corridor",
+        "geocode": {
+          "SAME": [
+            "006037"
+          ],
+          "UGC": [
+            "CAZ379"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/CAZ379"
+        ],
+        "references": [],
+        "sent": "2025-09-08T20:35:00-07:00",
+        "effective": "2025-09-08T20:35:00-07:00",
+        "onset": "2025-09-09T10:00:00-07:00",
+        "expires": "2025-09-09T08:45:00-07:00",
+        "ends": "2025-09-09T21:00:00-07:00",
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Moderate",
+        "certainty": "Likely",
+        "urgency": "Expected",
+        "event": "Wind Advisory",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Los Angeles/Oxnard CA",
+        "headline": "Wind Advisory issued September 8 at 8:35PM PDT until September 9 at 9:00PM PDT by NWS Los Angeles/Oxnard CA",
+        "description": "* WHAT...Southwest winds 25 to 35 mph with gusts up to 50 mph\nexpected. Isolated gusts to 55 mph possible.\n\n* WHERE...Western San Gabriel Mountains and Highway 14 Corridor.\n\n* WHEN...From 10 AM to 9 PM PDT Tuesday.\n\n* IMPACTS...Gusty winds will blow around unsecured objects. Tree\nlimbs could be blown down and a few power outages may result.",
+        "instruction": "Winds this strong can make driving difficult, especially for high\nprofile vehicles. Use extra caution.\n\nSecure outdoor objects.",
+        "response": "Execute",
+        "parameters": {
+          "AWIPSidentifier": [
+            "NPWLOX"
+          ],
+          "WMOidentifier": [
+            "WWUS76 KLOX 090335"
+          ],
+          "NWSheadline": [
+            "WIND ADVISORY IN EFFECT FROM 10 AM TO 9 PM PDT TUESDAY"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ],
+          "VTEC": [
+            "/O.EXA.KLOX.WI.Y.0075.250909T1700Z-250910T0400Z/"
+          ],
+          "eventEndingTime": [
+            "2025-09-09T21:00:00-07:00"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "WIY"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4dbc73d2e13ab9d2767eb3df5505f6c3137af351.001.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4dbc73d2e13ab9d2767eb3df5505f6c3137af351.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.4dbc73d2e13ab9d2767eb3df5505f6c3137af351.001.1",
+        "areaDesc": "Fresno-Tulare Lower Sierra; San Joaquin River Canyon; Upper San Joaquin River; Kaiser to Rodgers Ridge; Kings Canyon NP; Grant Grove Area",
+        "geocode": {
+          "SAME": [
+            "006019",
+            "006107",
+            "006039"
+          ],
+          "UGC": [
+            "CAZ320",
+            "CAZ325",
+            "CAZ326",
+            "CAZ327",
+            "CAZ328",
+            "CAZ329"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/CAZ320",
+          "https://api.weather.gov/zones/forecast/CAZ325",
+          "https://api.weather.gov/zones/forecast/CAZ326",
+          "https://api.weather.gov/zones/forecast/CAZ327",
+          "https://api.weather.gov/zones/forecast/CAZ328",
+          "https://api.weather.gov/zones/forecast/CAZ329"
+        ],
+        "references": [
+          {
+            "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7dd9992006c8752311d498d408fa95b05ca5b581.001.1",
+            "identifier": "urn:oid:2.49.0.1.840.0.7dd9992006c8752311d498d408fa95b05ca5b581.001.1",
+            "sender": "w-nws.webmaster@noaa.gov",
+            "sent": "2025-09-08T08:46:00-07:00"
+          }
+        ],
+        "sent": "2025-09-08T17:01:00-07:00",
+        "effective": "2025-09-08T17:01:00-07:00",
+        "onset": "2025-09-08T17:01:00-07:00",
+        "expires": "2025-09-08T23:45:00-07:00",
+        "ends": "2025-09-09T11:00:00-07:00",
+        "status": "Actual",
+        "messageType": "Update",
+        "category": "Met",
+        "severity": "Moderate",
+        "certainty": "Likely",
+        "urgency": "Expected",
+        "event": "Dense Smoke Advisory",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Hanford CA",
+        "headline": "Dense Smoke Advisory issued September 8 at 5:01PM PDT until September 9 at 11:00AM PDT by NWS Hanford CA",
+        "description": "* WHAT...Visibility one quarter to one half mile in dense smoke.\n\n* WHERE...Fresno-Tulare Lower Sierra, Grant Grove Area, Kaiser to\nRodgers Ridge, Kings Canyon NP, San Joaquin River Canyon, and\nUpper San Joaquin River.\n\n* WHEN...Until 11 AM PDT Tuesday.\n\n* IMPACTS...Low visibility could make driving conditions hazardous.\n\n* ADDITIONAL DETAILS...For details on health impacts and recommended\nprecautions, please consult the San Joaquin Valley Air Pollution\nControl District valleyair.org",
+        "instruction": "Persons with respiratory illnesses should remain indoors to avoid\ninhaling smoke.",
+        "response": "Execute",
+        "parameters": {
+          "AWIPSidentifier": [
+            "NPWHNX"
+          ],
+          "WMOidentifier": [
+            "WWUS76 KHNX 090001"
+          ],
+          "NWSheadline": [
+            "DENSE SMOKE ADVISORY REMAINS IN EFFECT UNTIL 11 AM PDT TUESDAY"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ],
+          "VTEC": [
+            "/O.CON.KHNX.SM.Y.0001.000000T0000Z-250909T1800Z/"
+          ],
+          "eventEndingTime": [
+            "2025-09-09T11:00:00-07:00"
+          ],
+          "expiredReferences": [
+            "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.789cf6a26d1e61c4229d7edd65c88c0cd01fa1c9.001.1,2025-09-08T07:46:00-07:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.4ea2317e7a8de907493b65ec4cddf4807922f4e9.001.1,2025-09-07T23:14:00-07:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.5022780ca208631f0204745b09332b725537e4c7.001.1,2025-09-07T15:51:00-07:00"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "SMY"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.86ee0443d0edbbcbbda70bf54197e944db5d0119.003.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.86ee0443d0edbbcbbda70bf54197e944db5d0119.003.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.86ee0443d0edbbcbbda70bf54197e944db5d0119.003.1",
+        "areaDesc": "Greater Lake Tahoe Area; Greater Lake Tahoe Area; Western Nevada Basin and Range including Pyramid Lake",
+        "geocode": {
+          "SAME": [
+            "006003",
+            "006017",
+            "006057",
+            "006061",
+            "032005",
+            "032031",
+            "032510",
+            "032001",
+            "032019",
+            "032027"
+          ],
+          "UGC": [
+            "CAZ072",
+            "NVZ002",
+            "NVZ004"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/CAZ072",
+          "https://api.weather.gov/zones/forecast/NVZ002",
+          "https://api.weather.gov/zones/forecast/NVZ004"
+        ],
+        "references": [
+          {
+            "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10cb549805a639f86b2b142d0b24103c81cbdcd0.001.1",
+            "identifier": "urn:oid:2.49.0.1.840.0.10cb549805a639f86b2b142d0b24103c81cbdcd0.001.1",
+            "sender": "w-nws.webmaster@noaa.gov",
+            "sent": "2025-09-08T01:22:00-07:00"
+          }
+        ],
+        "sent": "2025-09-08T09:42:00-07:00",
+        "effective": "2025-09-08T09:42:00-07:00",
+        "onset": "2025-09-08T11:00:00-07:00",
+        "expires": "2025-09-08T23:00:00-07:00",
+        "ends": "2025-09-08T23:00:00-07:00",
+        "status": "Actual",
+        "messageType": "Update",
+        "category": "Met",
+        "severity": "Moderate",
+        "certainty": "Likely",
+        "urgency": "Expected",
+        "event": "Lake Wind Advisory",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Reno NV",
+        "headline": "Lake Wind Advisory issued September 8 at 9:42AM PDT until September 8 at 11:00PM PDT by NWS Reno NV",
+        "description": "* WHAT...Southwest winds 10 to 20 mph with gusts up to 35 mph and\nwaves 1 to 3 feet.\n\n* WHERE...Greater Lake Tahoe Area, and Western Nevada Basin and\nRange including Pyramid Lake.\n\n* WHEN...Until 11 PM PDT this evening.\n\n* IMPACTS...Small boats, kayaks and paddle boards will be prone to\ncapsizing and should remain off lake waters until conditions\nimprove.",
+        "instruction": "Check lake conditions before heading out and be prepared for a\nsudden increase in winds and wave heights. Consider postponing\nboating activities on the lake until a day with less wind.",
+        "response": "Execute",
+        "parameters": {
+          "AWIPSidentifier": [
+            "NPWREV"
+          ],
+          "WMOidentifier": [
+            "WWUS75 KREV 081642"
+          ],
+          "NWSheadline": [
+            "LAKE WIND ADVISORY REMAINS IN EFFECT UNTIL 11 PM PDT THIS EVENING"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ],
+          "VTEC": [
+            "/O.CON.KREV.LW.Y.0031.250908T1800Z-250909T0600Z/"
+          ],
+          "eventEndingTime": [
+            "2025-09-08T23:00:00-07:00"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "LWY"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.86ee0443d0edbbcbbda70bf54197e944db5d0119.002.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.86ee0443d0edbbcbbda70bf54197e944db5d0119.002.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.86ee0443d0edbbcbbda70bf54197e944db5d0119.002.1",
+        "areaDesc": "Mono",
+        "geocode": {
+          "SAME": [
+            "006051"
+          ],
+          "UGC": [
+            "CAZ073"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/CAZ073"
+        ],
+        "references": [
+          {
+            "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.37a7a5a41fec381b97dfc28aa040637a87656590.001.1",
+            "identifier": "urn:oid:2.49.0.1.840.0.37a7a5a41fec381b97dfc28aa040637a87656590.001.1",
+            "sender": "w-nws.webmaster@noaa.gov",
+            "sent": "2025-09-07T15:12:00-07:00"
+          },
+          {
+            "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10cb549805a639f86b2b142d0b24103c81cbdcd0.002.1",
+            "identifier": "urn:oid:2.49.0.1.840.0.10cb549805a639f86b2b142d0b24103c81cbdcd0.002.1",
+            "sender": "w-nws.webmaster@noaa.gov",
+            "sent": "2025-09-08T01:22:00-07:00"
+          }
+        ],
+        "sent": "2025-09-08T09:42:00-07:00",
+        "effective": "2025-09-08T09:42:00-07:00",
+        "onset": "2025-09-08T09:42:00-07:00",
+        "expires": "2025-09-08T23:00:00-07:00",
+        "ends": "2025-09-09T11:00:00-07:00",
+        "status": "Actual",
+        "messageType": "Update",
+        "category": "Met",
+        "severity": "Moderate",
+        "certainty": "Likely",
+        "urgency": "Expected",
+        "event": "Dense Smoke Advisory",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Reno NV",
+        "headline": "Dense Smoke Advisory issued September 8 at 9:42AM PDT until September 9 at 11:00AM PDT by NWS Reno NV",
+        "description": "* WHAT...Dense smoke reducing visibility to 1 mile or less at times.\nSmoke will also lead to degraded air quality.\n\n* WHERE...Mono County.\n\n* WHEN...Until 11 AM PDT Tuesday.\n\n* IMPACTS...Hazardous travel due to reduced visibility, especially\nalong US-395. Poor air quality may cause health issues for those\nwith respiratory illnesses.\n\n* ADDITIONAL DETAILS...For details on health impacts and recommended\nprecautions, please consult the Great Basin Unified Air Pollution\nControl District at GBUAPCD.org and AirNow.gov.",
+        "instruction": "Persons with respiratory illnesses should remain indoors to avoid\ninhaling smoke.",
+        "response": "Execute",
+        "parameters": {
+          "AWIPSidentifier": [
+            "NPWREV"
+          ],
+          "WMOidentifier": [
+            "WWUS75 KREV 081642"
+          ],
+          "NWSheadline": [
+            "DENSE SMOKE ADVISORY NOW IN EFFECT UNTIL 11 AM PDT TUESDAY"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ],
+          "VTEC": [
+            "/O.EXT.KREV.SM.Y.0001.000000T0000Z-250909T1800Z/"
+          ],
+          "eventEndingTime": [
+            "2025-09-09T11:00:00-07:00"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "SMY"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f8b72ae7afc4049caf52a47d47a97079ad7d3aee.001.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f8b72ae7afc4049caf52a47d47a97079ad7d3aee.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.f8b72ae7afc4049caf52a47d47a97079ad7d3aee.001.1",
+        "areaDesc": "Fresno, CA; Kern, CA; Kings, CA; Madera, CA; Merced, CA; San Joaquin, CA; Stanislaus, CA; Tulare, CA",
+        "geocode": {
+          "SAME": [
+            "006019",
+            "006029",
+            "006031",
+            "006039",
+            "006047",
+            "006077",
+            "006099",
+            "006107"
+          ],
+          "UGC": [
+            "CAC019",
+            "CAC029",
+            "CAC031",
+            "CAC039",
+            "CAC047",
+            "CAC077",
+            "CAC099",
+            "CAC107"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/county/CAC019",
+          "https://api.weather.gov/zones/county/CAC029",
+          "https://api.weather.gov/zones/county/CAC031",
+          "https://api.weather.gov/zones/county/CAC039",
+          "https://api.weather.gov/zones/county/CAC047",
+          "https://api.weather.gov/zones/county/CAC077",
+          "https://api.weather.gov/zones/county/CAC099",
+          "https://api.weather.gov/zones/county/CAC107"
+        ],
+        "references": [],
+        "sent": "2025-09-04T08:01:00-07:00",
+        "effective": "2025-09-04T08:01:00-07:00",
+        "onset": "2025-09-04T08:01:00-07:00",
+        "expires": "2025-09-11T08:15:00-07:00",
+        "ends": null,
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Unknown",
+        "certainty": "Unknown",
+        "urgency": "Unknown",
+        "event": "Air Quality Alert",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Hanford CA",
+        "headline": "Air Quality Alert issued September 4 at 8:01AM PDT by NWS Hanford CA",
+        "description": "The Valley Air District is issuing an Air Quality Alert on September 3, 2025, due to smoke impacts from wildfires in California including the Garnet Fire, the Marmon Fire, the Salt 11-2 Fire, and the TCU September Lightning Complex for San Joaquin, Stanislaus, Merced, Madera, Fresno, Kings, Tulare, and the Valley portion of Kern Counties.\n\nThis Air Quality Alert is in effect until the fires are extinguished.\n\nExposure to particle pollution can cause serious health problems, aggravate lung disease, cause asthma attacks and acute bronchitis, and increase risk of respiratory infections.\n\nResidents are advised to use caution as conditions warrant.  People with heart or lung diseases should follow their doctors advice for dealing with episodes of unhealthy air quality.\n\nAdditionally, older adults and children should avoid prolonged exposure, strenuous activities or heavy exertion, as conditions dictate.\n\nFor additional information, call your local San Joaquin Valley Air District office. Modesto 209-557-6400, Fresno 559-230-6000, Bakersfield 661-392-5500\n\nResidents can also follow air quality conditions by downloading\nthe free Valley Air app, available in the Apple store or Google\nPlay, or by visiting the AirNow Fire and Smoke Map at\nfire.airnow.gov.",
+        "instruction": null,
+        "response": "Monitor",
+        "parameters": {
+          "AWIPSidentifier": [
+            "AQAHNX"
+          ],
+          "WMOidentifier": [
+            "AEUS76 KHNX 041501"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "AQA"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.21b2e4cc24621729d8e14f7f7309502d77ab97bd.001.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.21b2e4cc24621729d8e14f7f7309502d77ab97bd.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.21b2e4cc24621729d8e14f7f7309502d77ab97bd.001.1",
+        "areaDesc": "Fresno, CA; Kern, CA; Kings, CA; Madera, CA; Merced, CA; San Joaquin, CA; Stanislaus, CA; Tulare, CA",
+        "geocode": {
+          "SAME": [
+            "006019",
+            "006029",
+            "006031",
+            "006039",
+            "006047",
+            "006077",
+            "006099",
+            "006107"
+          ],
+          "UGC": [
+            "CAC019",
+            "CAC029",
+            "CAC031",
+            "CAC039",
+            "CAC047",
+            "CAC077",
+            "CAC099",
+            "CAC107"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/county/CAC019",
+          "https://api.weather.gov/zones/county/CAC029",
+          "https://api.weather.gov/zones/county/CAC031",
+          "https://api.weather.gov/zones/county/CAC039",
+          "https://api.weather.gov/zones/county/CAC047",
+          "https://api.weather.gov/zones/county/CAC077",
+          "https://api.weather.gov/zones/county/CAC099",
+          "https://api.weather.gov/zones/county/CAC107"
+        ],
+        "references": [],
+        "sent": "2025-09-03T16:06:00-07:00",
+        "effective": "2025-09-03T16:06:00-07:00",
+        "onset": "2025-09-03T16:06:00-07:00",
+        "expires": "2025-09-10T16:15:00-07:00",
+        "ends": null,
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Unknown",
+        "certainty": "Unknown",
+        "urgency": "Unknown",
+        "event": "Air Quality Alert",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Hanford CA",
+        "headline": "Air Quality Alert issued September 3 at 4:06PM PDT by NWS Hanford CA",
+        "description": "The Valley Air District is issuing an Air Quality Alert on September 3, 2025, due to smoke impacts from wildfires in California including the Garnet Fire, the Marmon Fire, the Salt 11-2 Fire, and the TCU September Lightning Complex for San Joaquin, Stanislaus, Merced, Madera, Fresno, Kings, Tulare, and the Valley portion of Kern Counties.\n\nThis Air Quality Alert is in effect until the fires are extinguished.\n\nExposure to particle pollution can cause serious health problems, aggravate lung disease, cause asthma attacks and acute bronchitis, and increase risk of respiratory infections.\n\nResidents are advised to use caution as conditions warrant.  People with heart or lung diseases should follow their doctors advice for dealing with episodes of unhealthy air quality.\n\nAdditionally, older adults and children should avoid prolonged exposure, strenuous activities or heavy exertion, as conditions dictate.\n\nFor additional information, call your local San Joaquin Valley Air District office. Modesto 209-557-6400, Fresno 559-230-6000, Bakersfield 661-392-5500\n\nResidents can also follow air quality conditions by downloading\nthe free Valley Air app, available in the Apple store or Google\nPlay.",
+        "instruction": null,
+        "response": "Monitor",
+        "parameters": {
+          "AWIPSidentifier": [
+            "AQAHNX"
+          ],
+          "WMOidentifier": [
+            "AEUS76 KHNX 032306"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "AQA"
+          ]
+        }
+      }
+    }
+  ],
+  "title": "Current watches, warnings, and advisories for California",
+  "updated": "2025-09-09T04:21:51+00:00"
+}
