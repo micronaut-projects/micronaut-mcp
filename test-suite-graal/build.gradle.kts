@@ -21,10 +21,6 @@ dependencies {
 application {
     mainClass = "example.micronaut.Application"
 }
-java {
-    sourceCompatibility = JavaVersion.toVersion("21")
-    targetCompatibility = JavaVersion.toVersion("21")
-}
 micronaut {
     version(libs.versions.micronaut.platform.get())
     runtime("netty")
