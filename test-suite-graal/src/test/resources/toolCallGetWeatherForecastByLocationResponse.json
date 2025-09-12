@@ -1,0 +1,13 @@
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Temperature: 63°F\nWind: 3 mph SE\nForecast: A chance of rain after 11pm. Mostly cloudy, with a low around 63. Southeast wind around 3 mph. Chance of precipitation is 30%.\n\n---\nTemperature: 76°F\nWind: 2 to 10 mph SW\nForecast: A chance of rain before 11am, then a chance of rain showers between 11am and 5pm. Partly sunny. High near 76, with temperatures falling to around 73 in the afternoon. Southwest wind 2 to 10 mph, with gusts as high as 18 mph. Chance of precipitation is 30%.\n\n---\nTemperature: 62°F\nWind: 2 to 9 mph WSW\nForecast: A chance of rain showers after 5am. Partly cloudy, with a low around 62. West southwest wind 2 to 9 mph. Chance of precipitation is 30%.\n\n---\nTemperature: 73°F\nWind: 2 to 10 mph WSW\nForecast: A chance of rain showers before 5pm. Partly sunny, with a high near 73. West southwest wind 2 to 10 mph, with gusts as high as 18 mph. Chance of precipitation is 30%.\n\n---\nTemperature: 60°F\nWind: 2 to 10 mph W\nForecast: Mostly cloudy, with a low around 60. West wind 2 to 10 mph, with gusts as high as 18 mph.\n\n---\nTemperature: 76°F\nWind: 2 to 12 mph W\nForecast: Partly sunny, with a high near 76.\n\n---\nTemperature: 58°F\nWind: 3 to 12 mph W\nForecast: Partly cloudy, with a low around 58.\n\n---\nTemperature: 78°F\nWind: 2 to 12 mph W\nForecast: Mostly sunny, with a high near 78.\n\n---\nTemperature: 58°F\nWind: 3 to 12 mph WNW\nForecast: Mostly clear, with a low around 58.\n\n---\nTemperature: 77°F\nWind: 3 to 12 mph WNW\nForecast: Mostly sunny, with a high near 77.\n\n---\nTemperature: 60°F\nWind: 3 to 12 mph WNW\nForecast: Partly cloudy, with a low around 60.\n\n---\nTemperature: 78°F\nWind: 2 to 10 mph WNW\nForecast: Mostly sunny, with a high near 78.\n\n---\nTemperature: 58°F\nWind: 2 to 10 mph W\nForecast: Mostly clear, with a low around 58.\n\n---\nTemperature: 80°F\nWind: 2 to 10 mph W\nForecast: Sunny, with a high near 80.\n"
+      }
+    ],
+    "isError": false
+  }
+}

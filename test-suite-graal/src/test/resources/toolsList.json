@@ -1,0 +1,40 @@
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "result": {
+    "tools": [
+      {
+        "name": "getWeatherForecastByLocation",
+        "description": "Get weather forecast for a specific latitude/longitude coordinates",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "latitude": {
+              "type": "object"
+            },
+            "longitude": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "latitude",
+            "longitude"
+          ]
+        }
+      },
+      {
+        "name": "getAlerts",
+        "description": "Get weather alerts for a US state",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "state": {
+              "description": "Two-letter US state code (e.g. CA, NY)",
+              "type": "string"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

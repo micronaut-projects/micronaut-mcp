@@ -1,0 +1,22 @@
+plugins {
+    id("io.micronaut.build.internal.mcp-base")
+    id("io.micronaut.application")
+}
+version = "0.1"
+group = "example.micronaut"
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass = "example.micronaut.Application"
+}
+micronaut {
+    version(libs.versions.micronaut.platform.get())
+    runtime("netty")
+    testRuntime("junit5")
+    processing {
+        incremental(true)
+        annotations("example.micronaut.*")
+    }
+}
