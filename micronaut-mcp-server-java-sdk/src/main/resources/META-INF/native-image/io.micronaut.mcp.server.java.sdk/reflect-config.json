@@ -1,5 +1,4 @@
 [
-  {"name": "ch.qos.logback.core.ConsoleAppender", "allDeclaredConstructors": true, "methods": [ { "name": "setTarget", "parameterTypes": ["java.lang.String"] } ]},
   { "name": "io.modelcontextprotocol.spec.McpSchema$JSONRPCRequest", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
   { "name": "io.modelcontextprotocol.spec.McpSchema$JSONRPCNotification", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
   { "name": "io.modelcontextprotocol.spec.McpSchema$JSONRPCResponse", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
