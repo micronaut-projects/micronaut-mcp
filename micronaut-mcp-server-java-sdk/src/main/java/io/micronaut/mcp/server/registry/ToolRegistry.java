@@ -135,19 +135,9 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
 
 
         if (method.getArguments().length == 1 && jsonSchema(method).isPresent()) {
-            Argument<?> argument = method.getArguments()[0];
-            Class<?> classInputSchema = argument.getType();
-            BeanIntrospection<?> introspection = BeanIntrospection.getIntrospection(classInputSchema);
             Object[] args = new Object[1];
-            Object[] arguments = new Object[callToolRequest.arguments().size()];
-            int count = 0;
-            for (String name : introspection.getPropertyNames()) {
-                if (callToolRequest.arguments().containsKey(name)) {
-                    arguments[count] = callToolRequest.arguments().get(name);
-                    count++;
-                }
-            }
-            args[0] = introspection.instantiate(arguments);
+            args[0] = instantiateArgumentViaJsonMapper(method, callToolRequest);
+
             return args;
         }
 
@@ -157,6 +147,39 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             args[i] = callToolRequest.arguments().get(names.get(i));
         }
         return args;
+    }
+
+
+    private <B> Object instantiateArgumentViaJsonMapper(ExecutableMethod<B, Object> method,
+                                           McpSchema.CallToolRequest callToolRequest) {
+        try {
+            String payload = jsonMapper.writeValueAsString(callToolRequest.arguments());
+            Argument<?> argument = method.getArguments()[0];
+            Class<?> classInputSchema = argument.getType();
+            return jsonMapper.readValue(payload, classInputSchema);
+
+        } catch (IOException e) {
+            if (LOG.isErrorEnabled()) {
+                LOG.error(e.getMessage(), e);
+            }
+            return instantiateArgumentViaIntrospection(method, callToolRequest);
+        }
+    }
+
+    private <B> Object instantiateArgumentViaIntrospection(ExecutableMethod<B, Object> method,
+                                                           McpSchema.CallToolRequest callToolRequest) {
+        Argument<?> argument = method.getArguments()[0];
+        Class<?> classInputSchema = argument.getType();
+        BeanIntrospection<?> introspection = BeanIntrospection.getIntrospection(classInputSchema);
+        Object[] arguments = new Object[callToolRequest.arguments().size()];
+        int count = 0;
+        for (String name : introspection.getPropertyNames()) {
+            if (callToolRequest.arguments().containsKey(name)) {
+                arguments[count] = callToolRequest.arguments().get(name);
+                count++;
+            }
+        }
+        return introspection.instantiate(arguments);
     }
 
     private <B> McpSchema.CallToolResult callToolToResult(BeanDefinition<B> beanDefinition,
