@@ -8,6 +8,7 @@ dependencies {
     api(projects.micronautMcp)
     api(projects.micronautMcpAnnotations)
     api(mnJsonSchema.micronaut.json.schema.utils)
+    api(mnValidation.validation)
     compileOnly(mn.micronaut.http.server)
     testAnnotationProcessor(mn.micronaut.inject.java)
     testAnnotationProcessor(mnJsonSchema.micronaut.json.schema.processor)

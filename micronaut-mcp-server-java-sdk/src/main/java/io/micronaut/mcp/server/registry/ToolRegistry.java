@@ -17,18 +17,20 @@ package io.micronaut.mcp.server.registry;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.ToolArg;
+import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -40,6 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_OBJECT;
@@ -60,13 +63,29 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;
     private final JsonMapper jsonMapper;
     private final BeanContext beanContext;
+    private final Map<Class<? extends Throwable>, McpErrorExceptionMapper<? extends Throwable>> classToExceptionMapper = new ConcurrentHashMap<>();
+    private final List<McpErrorExceptionMapper<?>> exceptionMappers;
 
     ToolRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
                  JsonMapper jsonMapper,
-                 BeanContext beanContext) {
+                 BeanContext beanContext,
+                 List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers) {
         this.jsonSchemaClassPathResourceLoader = jsonSchemaClassPathResourceLoader;
         this.jsonMapper = jsonMapper;
         this.beanContext = beanContext;
+        this.exceptionMappers = exceptionMappers;
+    }
+
+    @Nullable
+    McpErrorExceptionMapper<? extends Throwable> getExceptionMapper(@NonNull Class<? extends Throwable> exceptionClass) {
+        return classToExceptionMapper.computeIfAbsent(exceptionClass, aClass -> {
+            for (McpErrorExceptionMapper<?> exceptionMapper : exceptionMappers) {
+                if (exceptionMapper.canMap(aClass)) {
+                    return exceptionMapper;
+                }
+            }
+            return null;
+        });
     }
 
     @Override
@@ -149,37 +168,17 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return args;
     }
 
-
     private <B> Object instantiateArgumentViaJsonMapper(ExecutableMethod<B, Object> method,
-                                           McpSchema.CallToolRequest callToolRequest) {
+                                                        McpSchema.CallToolRequest callToolRequest) {
         try {
             String payload = jsonMapper.writeValueAsString(callToolRequest.arguments());
             Argument<?> argument = method.getArguments()[0];
             Class<?> classInputSchema = argument.getType();
             return jsonMapper.readValue(payload, classInputSchema);
 
-        } catch (IOException e) {
-            if (LOG.isErrorEnabled()) {
-                LOG.error(e.getMessage(), e);
-            }
-            return instantiateArgumentViaIntrospection(method, callToolRequest);
+        } catch (IOException ex) {
+            throw mcpError(ex);
         }
-    }
-
-    private <B> Object instantiateArgumentViaIntrospection(ExecutableMethod<B, Object> method,
-                                                           McpSchema.CallToolRequest callToolRequest) {
-        Argument<?> argument = method.getArguments()[0];
-        Class<?> classInputSchema = argument.getType();
-        BeanIntrospection<?> introspection = BeanIntrospection.getIntrospection(classInputSchema);
-        Object[] arguments = new Object[callToolRequest.arguments().size()];
-        int count = 0;
-        for (String name : introspection.getPropertyNames()) {
-            if (callToolRequest.arguments().containsKey(name)) {
-                arguments[count] = callToolRequest.arguments().get(name);
-                count++;
-            }
-        }
-        return introspection.instantiate(arguments);
     }
 
     private <B> McpSchema.CallToolResult callToolToResult(BeanDefinition<B> beanDefinition,
@@ -190,27 +189,47 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         B bean = beanContext.getBean(beanDefinition);
 
         Object[] args = methodArgs(method, callToolRequest);
-        Object result = method.invoke(bean, args);
-        String text = "";
-        if (returnClass.isAssignableFrom(String.class)) {
-            text = result.toString();
-        } else {
-            try {
-                text = jsonMapper.writeValueAsString(result);
-            } catch (IOException e) {
-                if (LOG.isErrorEnabled()) {
-                    LOG.error(e.getMessage(), e);
+        try {
+            Object result = method.invoke(bean, args);
+            String text = "";
+            if (returnClass.isAssignableFrom(String.class)) {
+                text = result.toString();
+            } else {
+                try {
+                    text = jsonMapper.writeValueAsString(result);
+                } catch (IOException e) {
+                    if (LOG.isErrorEnabled()) {
+                        LOG.error(e.getMessage(), e);
+                    }
+                    return new McpSchema.CallToolResult(text, true);
                 }
-                return new McpSchema.CallToolResult(text, true);
             }
+            if (toolOutputSchema(method).isPresent()) {
+                return McpSchema.CallToolResult.builder()
+                    .structuredContent(text)
+                    .isError(false)
+                    .build();
+            }
+            return new McpSchema.CallToolResult(text, false);
+        } catch (Exception ex) {
+            throw mcpError(ex);
         }
-        if (toolOutputSchema(method).isPresent()) {
-            return McpSchema.CallToolResult.builder()
-                .structuredContent(text)
-                .isError(false)
-                .build();
+    }
+
+    private McpError mcpError(Exception ex) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(ex.getMessage(), ex);
         }
-        return new McpSchema.CallToolResult(text, false);
+        McpErrorExceptionMapper<? extends Throwable> exceptionMapper = getExceptionMapper(ex.getClass());
+        if (exceptionMapper != null) {
+            return mapException(exceptionMapper, ex);
+        }
+        return new McpError(McpSchema.ErrorCodes.INTERNAL_ERROR);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Exception> McpError mapException(McpErrorExceptionMapper<? extends Throwable> mapper, T ex) {
+        return ((McpErrorExceptionMapper<T>) mapper).map(ex);
     }
 
     private <B> McpSchema.Tool tool(ExecutableMethod<B, Object> method) {
@@ -281,12 +300,6 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
 
     private static Optional<String> toolDescription(ExecutableMethod<?, ?> method) {
         return method.stringValue(Tool.class, MEMBER_DESCRIPTION);
-    }
-
-    private static Optional<String> toolArgumentDescription(Argument<?> argument) {
-        return argument.findAnnotation(ToolArg.class)
-            .flatMap(annValue -> annValue.stringValue(ToolRegistry.MEMBER_DESCRIPTION))
-            .filter(StringUtils::isNotEmpty);
     }
 
     private static String toolArgumentType(Argument<?> argument) {
