@@ -4,6 +4,7 @@ import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.jsonschema.JsonSchema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 
 import java.time.LocalDate;
 
@@ -13,5 +14,5 @@ import java.time.LocalDate;
  */
 @JsonSchema
 @Introspected
-public record MoonPhaseRequest(@NonNull @NotNull LocalDate date) {
+public record MoonPhaseRequest(@NonNull @NotNull @PastOrPresent LocalDate date) {
 }
