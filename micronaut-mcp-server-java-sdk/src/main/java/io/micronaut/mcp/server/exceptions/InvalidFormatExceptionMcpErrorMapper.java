@@ -24,6 +24,9 @@ import jakarta.inject.Singleton;
 
 import java.util.stream.Collectors;
 
+/**
+ * {@link McpErrorExceptionMapper} for {@link InvalidFormatException}.
+ */
 @Requires(classes = InvalidFormatException.class)
 @Singleton
 @Internal
