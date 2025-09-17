@@ -277,17 +277,17 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     }
 
     private static Object toolArgumentJsonSchema(Argument<?> argument) {
-        String description = argument.getAnnotationMetadata().stringValue(ToolArg.class, "description")
+        String description = argument.getAnnotationMetadata().stringValue(ToolArg.class, MEMBER_DESCRIPTION)
             .filter(desc -> !desc.isEmpty())
             .orElse(null);
-        
+
         if (description != null) {
             Map<String, Object> schema = new LinkedHashMap<>();
             schema.put("type", toolArgumentType(argument));
-            schema.put("description", description);
+            schema.put(MEMBER_DESCRIPTION, description);
             return schema;
         }
-        
+
         return new McpSchema.JsonSchema(toolArgumentType(argument), null, null, null, null, null);
     }
 
