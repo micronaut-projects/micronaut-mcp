@@ -39,6 +39,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -275,7 +276,18 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(returnClass);
     }
 
-    private static McpSchema.JsonSchema toolArgumentJsonSchema(Argument<?> argument) {
+    private static Object toolArgumentJsonSchema(Argument<?> argument) {
+        String description = argument.getAnnotationMetadata().stringValue(ToolArg.class, "description")
+            .filter(desc -> !desc.isEmpty())
+            .orElse(null);
+        
+        if (description != null) {
+            Map<String, Object> schema = new LinkedHashMap<>();
+            schema.put("type", toolArgumentType(argument));
+            schema.put("description", description);
+            return schema;
+        }
+        
         return new McpSchema.JsonSchema(toolArgumentType(argument), null, null, null, null, null);
     }
 
