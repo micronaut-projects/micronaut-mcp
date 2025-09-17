@@ -36,6 +36,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import java.util.Map;
+import java.util.function.Function;
+
+import static io.modelcontextprotocol.spec.McpSchema.JSONRPC_VERSION;
 
 /**
  * This class exposes a POST endpoint in route {@value McpServerConfiguration#DEFAULT_ENDPOINT}.
@@ -67,27 +70,58 @@ final class McpController {
     public Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body Map<String, Object> body) {
         McpTransportContext transportContext = contextExtractor.extract(request);
         McpSchema.JSONRPCMessage jsonRpcMessage = jsonRpcMessage(body);
-        try {
-            if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
-                return handleJsonRpcRequest(jsonrpcRequest, transportContext);
-            } else if (jsonRpcMessage instanceof McpSchema.JSONRPCNotification notification) {
-                return handleJsonRpcNotification(notification, transportContext);
-            } else {
-                return Mono.just(HttpResponse.badRequest(mcpError(McpSchema.ErrorCodes.INVALID_REQUEST, "The server accepts either requests or notifications")));
-            }
-        } catch (IllegalArgumentException e) {
-            if (LOG.isErrorEnabled()) {
-                LOG.error("Failed to deserialize message: {}", e.getMessage());
-            }
-            return Mono.just(HttpResponse.badRequest(mcpError(McpSchema.ErrorCodes.PARSE_ERROR, "Invalid message format")));
-        } catch (Exception e) {
-            if (LOG.isErrorEnabled()) {
-                LOG.error("Unexpected error handling message: {}", e.getMessage());
-            }
-            return Mono.just(
-                HttpResponse.serverError(mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Unexpected error: " + e.getMessage()))
-            );
+        if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
+            return handleJsonRpcRequest(jsonrpcRequest, transportContext);
+        } else if (jsonRpcMessage instanceof McpSchema.JSONRPCNotification notification) {
+            return handleJsonRpcNotification(notification, transportContext);
         }
+        return Mono.just(HttpResponse.badRequest(mcpError(McpSchema.ErrorCodes.INVALID_REQUEST, "The server accepts either requests or notifications")));
+    }
+
+    @SuppressWarnings("java:S3740")
+    private Mono<HttpResponse<?>> handleJsonRpcNotification(McpSchema.JSONRPCNotification jsonrpcNotification, McpTransportContext transportContext) {
+
+        Mono<McpSchema.JSONRPCResponse> jsonrpcResponse = mcpHandler.handleNotification(transportContext, jsonrpcNotification)
+            .then(Mono.fromCallable(() -> {
+                McpSchema.JSONRPCResponse response = null;
+                return response;
+            }));
+        return handleJsonRPCResponse(jsonrpcNotification, transportContext, jsonrpcResponse, rsp -> {
+            HttpStatus status = status(rsp);
+            if (status.getCode() >= 400) {
+                return HttpResponse.status(status).body(rsp);
+            }
+            return HttpResponse.accepted();
+        });
+    }
+
+    @SuppressWarnings("java:S3740")
+    @NonNull
+    private Mono<HttpResponse<?>> handleJsonRpcRequest(@NonNull McpSchema.JSONRPCRequest jsonrpcRequest,
+                                                       @NonNull McpTransportContext transportContext) {
+        Mono<McpSchema.JSONRPCResponse> jsonrpcResponse = mcpHandler.handleRequest(transportContext, jsonrpcRequest);
+        return handleJsonRPCResponse(jsonrpcRequest, transportContext, jsonrpcResponse,
+            rsp -> HttpResponse.status(status(rsp)).body(rsp));
+    }
+
+    private Mono<HttpResponse<?>> handleJsonRPCResponse(McpSchema.JSONRPCMessage jsonrpcMessage,
+                                                        McpTransportContext transportContext,
+                                                        Mono<McpSchema.JSONRPCResponse> jsonrpcResponse,
+                                                        Function<McpSchema.JSONRPCResponse, HttpResponse> jsonrpcResponseHttpResponseFunction) {
+        return jsonrpcResponse.contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
+            .onErrorResume(McpError.class, e -> {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Failed to handle JSON RPC Message: {}", e.getMessage());
+                }
+                return Mono.just(errorJsonrpcResponse(jsonrpcMessage, e));
+            })
+            .onErrorResume(throwable -> {
+                if (LOG.isErrorEnabled()) {
+                    LOG.error("Failed to handle JSON RPC Message: {}", throwable.getMessage());
+                }
+                return Mono.just(errorJsonrpcResponse(jsonrpcMessage,
+                    mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Failed to handle request: " + throwable.getMessage())));
+            }).map(jsonrpcResponseHttpResponseFunction::apply);
     }
 
     @Nullable
@@ -100,40 +134,48 @@ final class McpController {
         return null;
     }
 
-    @SuppressWarnings("java:S3740")
-    private Mono<HttpResponse<?>> handleJsonRpcNotification(McpSchema.JSONRPCNotification jsonrpcNotification, McpTransportContext transportContext) {
-        try {
-            return mcpHandler.handleNotification(transportContext, jsonrpcNotification)
-                .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
-                .thenReturn(HttpResponse.accepted());
-        } catch (Exception e) {
-            if (LOG.isErrorEnabled()) {
-                LOG.error("Failed to handle notification: {}", e.getMessage());
-            }
-            return Mono.just(
-                HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Failed to handle notification: " + e.getMessage()))
-            );
+    @NonNull
+    static McpSchema.JSONRPCResponse errorJsonrpcResponse(@NonNull McpSchema.JSONRPCMessage jsonrpcMessage,
+                                                          @NonNull McpError error) {
+        McpSchema.JSONRPCResponse.JSONRPCError jsonrpcError = error.getJsonRpcError();
+        if (jsonrpcError == null) {
+            jsonrpcError = new McpSchema.JSONRPCResponse.JSONRPCError(McpSchema.ErrorCodes.INTERNAL_ERROR,
+                error.getMessage(),
+                null);
         }
+        return new McpSchema.JSONRPCResponse(
+            JSONRPC_VERSION,
+            jsonrpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest ? jsonrpcRequest.id() : null,
+            null,
+            jsonrpcError
+        );
     }
 
-    @SuppressWarnings("java:S3740")
-    private Mono<HttpResponse<?>> handleJsonRpcRequest(McpSchema.JSONRPCRequest jsonrpcRequest, McpTransportContext transportContext) {
-        try {
-            Mono<McpSchema.JSONRPCResponse> jsonrpcResponse = mcpHandler.handleRequest(transportContext, jsonrpcRequest)
-                .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext));
-            return jsonrpcResponse.map(HttpResponse::ok);
-        } catch (Exception e) {
-            if (LOG.isErrorEnabled()) {
-                LOG.error("Failed to handle request: {}", e.getMessage());
-            }
-            return Mono.just(
-                HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Failed to handle request: " + e.getMessage()))
-            );
+    @NonNull
+    private static HttpStatus status(@Nullable McpSchema.JSONRPCResponse response) {
+        if (response == null || response.error() == null) {
+            return HttpStatus.OK;
         }
+        return status(response.error());
     }
 
+    @NonNull
+    static HttpStatus status(@NonNull McpSchema.JSONRPCResponse.JSONRPCError error) {
+        if (error.code() == McpSchema.ErrorCodes.PARSE_ERROR) {
+            return HttpStatus.BAD_REQUEST;
+        } else if (error.code() == McpSchema.ErrorCodes.INVALID_REQUEST) {
+            return HttpStatus.BAD_REQUEST;
+        } else if (error.code() == McpSchema.ErrorCodes.METHOD_NOT_FOUND) {
+            return HttpStatus.BAD_REQUEST;
+        } else if (error.code() == McpSchema.ErrorCodes.INVALID_PARAMS) {
+            return HttpStatus.BAD_REQUEST;
+        } else if (error.code() == McpSchema.ErrorCodes.INTERNAL_ERROR) {
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        return HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+
+    @NonNull
     private static McpError mcpError(int error, String message) {
         return McpError.builder(error)
             .message(message)

@@ -18,6 +18,7 @@ dependencies {
     testImplementation(mn.micronaut.http.client)
     testImplementation(libs.jsonassert)
     testImplementation(mn.micronaut.http.server.netty)
+    testImplementation(mnTest.junit.jupiter.params)
 }
 micronautBuild {
     testFramework = TestFramework.JUNIT5
