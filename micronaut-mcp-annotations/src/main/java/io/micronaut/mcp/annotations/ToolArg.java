@@ -35,4 +35,6 @@ public @interface ToolArg {
 
     String name() default ELEMENT_NAME;
 
+    String description() default "";
+
 }
