@@ -61,6 +61,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
      * @see <a href="https://json-schema.org/understanding-json-schema/reference/type">JSON Schema Type</a>
      */
     private static final String MEMBER_DESCRIPTION = "description";
+    private static final String KEY_TYPE = "type";
 
     private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;
     private final JsonMapper jsonMapper;
@@ -284,7 +285,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
 
         if (description != null) {
             Map<String, Object> schema = new LinkedHashMap<>();
-            schema.put("type", toolArgumentType(argument));
+            schema.put(KEY_TYPE, toolArgumentType(argument));
             if (StringUtils.isNotEmpty(description)) {
                 schema.put(MEMBER_DESCRIPTION, description);
             }
