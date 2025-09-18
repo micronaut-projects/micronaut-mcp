@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.json.JsonMapper;
@@ -284,7 +285,9 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         if (description != null) {
             Map<String, Object> schema = new LinkedHashMap<>();
             schema.put("type", toolArgumentType(argument));
-            schema.put(MEMBER_DESCRIPTION, description);
+            if (StringUtils.isNotEmpty(description)) {
+                schema.put(MEMBER_DESCRIPTION, description);
+            }
             return schema;
         }
 
