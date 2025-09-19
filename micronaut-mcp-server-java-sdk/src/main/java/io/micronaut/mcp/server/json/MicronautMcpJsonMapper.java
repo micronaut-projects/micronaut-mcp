@@ -15,6 +15,7 @@
  */
 package io.micronaut.mcp.server.json;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.json.tree.JsonNode;
@@ -26,10 +27,11 @@ import java.io.IOException;
 /**
  * An implementation of {@link McpJsonMapper} that uses Micronaut's {@link JsonMapper} for JSON serialization and deserialization.
  */
-public class MicronautMcpJsonMapper implements McpJsonMapper {
+@Internal
+final class MicronautMcpJsonMapper implements McpJsonMapper {
     private final JsonMapper jsonMapper;
 
-    public MicronautMcpJsonMapper(JsonMapper jsonMapper) {
+    MicronautMcpJsonMapper(JsonMapper jsonMapper) {
         this.jsonMapper = jsonMapper;
     }
 

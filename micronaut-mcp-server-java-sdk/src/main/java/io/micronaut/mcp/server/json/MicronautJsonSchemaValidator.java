@@ -28,10 +28,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Micronaut implementation of {@link JsonSchemaValidator}.
+ * MCP {@link io.modelcontextprotocol.json.schema.JsonSchemaValidator} backed by Micronaut JSON Schema Validator {@link JsonSchemaValidator}.
  *
- * @author graemerocher
- * @since 1.0
  */
 public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.json.schema.JsonSchemaValidator {
     private static final Logger LOG = LoggerFactory.getLogger(MicronautJsonSchemaValidator.class);

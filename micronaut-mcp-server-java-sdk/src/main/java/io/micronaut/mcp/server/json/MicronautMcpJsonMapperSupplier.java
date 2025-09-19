@@ -15,6 +15,7 @@
  */
 package io.micronaut.mcp.server.json;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.json.JsonMapper;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.McpJsonMapperSupplier;
@@ -22,6 +23,7 @@ import io.modelcontextprotocol.json.McpJsonMapperSupplier;
 /**
  * A Micronaut implementation of {@link McpJsonMapperSupplier} that provides a {@link MicronautMcpJsonMapper}.
  */
+@Internal
 public class MicronautMcpJsonMapperSupplier implements McpJsonMapperSupplier {
     @Override
     public McpJsonMapper get() {
