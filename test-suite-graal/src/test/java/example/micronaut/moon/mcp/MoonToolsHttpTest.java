@@ -24,6 +24,35 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @MicronautTest
 class MoonToolsHttpTest {
     @Test
+    void invalidParamsCannotDeserialize(@Client("/") HttpClient httpClient) {
+        BlockingHttpClient client = httpClient.toBlocking();
+        final String toolsCallJson = """
+            {
+              "method": "tools/call",
+              "params": {
+                "name": "moon-phase-at-date",
+                "arguments": {
+                  "date": "1982-30-28"
+                },
+                "_meta": {
+                  "progressToken": 2
+                }
+              },
+              "jsonrpc": "2.0",
+              "id": 0
+            }
+            """;
+        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () ->
+            client.retrieve(createRequest(toolsCallJson), McpSchema.JSONRPCResponse.class));
+        Optional<McpSchema.JSONRPCResponse> jsonrpcResponseOptional = ex.getResponse().getBody(McpSchema.JSONRPCResponse.class);
+        assertTrue(jsonrpcResponseOptional.isPresent());
+        McpSchema.JSONRPCResponse json = jsonrpcResponseOptional.get();
+        assertNotNull(json.error());
+        assertEquals(-32602, json.error().code());
+        assertEquals("Text '1982-30-28' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 30", json.error().message());
+    }
+
+    @Test
     void invalidParamsConstraintViolationException(@Client("/") HttpClient httpClient) {
         BlockingHttpClient client = httpClient.toBlocking();
         final String toolsCallJson = """
