@@ -33,6 +33,19 @@ public @interface ToolArg {
      */
     String ELEMENT_NAME = "<<element name>>";
 
+    /**
+     * The name of the tool argument. If not specified, the parameter name will be used.
+     * 
+     * @return the name of the argument
+     */
     String name() default ELEMENT_NAME;
+
+    /**
+     * The description of the tool argument. This description will be included in the JSON schema
+     * for the tool, providing documentation for users of the MCP tool.
+     * 
+     * @return the description of the argument, or empty string if not specified
+     */
+    String description() default "";
 
 }

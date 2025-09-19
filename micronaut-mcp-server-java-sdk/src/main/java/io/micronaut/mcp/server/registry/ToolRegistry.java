@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.json.JsonMapper;
@@ -39,6 +40,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -59,6 +61,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
      * @see <a href="https://json-schema.org/understanding-json-schema/reference/type">JSON Schema Type</a>
      */
     private static final String MEMBER_DESCRIPTION = "description";
+    private static final String KEY_TYPE = "type";
 
     private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;
     private final JsonMapper jsonMapper;
@@ -275,7 +278,20 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(returnClass);
     }
 
-    private static McpSchema.JsonSchema toolArgumentJsonSchema(Argument<?> argument) {
+    private static Object toolArgumentJsonSchema(Argument<?> argument) {
+        String description = argument.getAnnotationMetadata().stringValue(ToolArg.class, MEMBER_DESCRIPTION)
+            .filter(desc -> !desc.isEmpty())
+            .orElse(null);
+
+        if (description != null) {
+            Map<String, Object> schema = new LinkedHashMap<>();
+            schema.put(KEY_TYPE, toolArgumentType(argument));
+            if (StringUtils.isNotEmpty(description)) {
+                schema.put(MEMBER_DESCRIPTION, description);
+            }
+            return schema;
+        }
+
         return new McpSchema.JsonSchema(toolArgumentType(argument), null, null, null, null, null);
     }
 
