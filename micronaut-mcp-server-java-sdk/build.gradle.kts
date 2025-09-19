@@ -3,7 +3,12 @@ plugins {
     id("io.micronaut.build.internal.mcp-module")
 }
 dependencies {
-    api(mn.micronaut.jackson.databind)
+    api(mn.micronaut.json.core)
+    implementation(mnSerde.micronaut.serde.api)
+    compileOnly(mn.jackson.databind)
+    annotationProcessor(mnSerde.micronaut.serde.processor)
+    testImplementation(mnSerde.micronaut.serde.jackson)
+
     api(libs.managed.mcp.java.sdk)
     api(projects.micronautMcp)
     api(projects.micronautMcpAnnotations)

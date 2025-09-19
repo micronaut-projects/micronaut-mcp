@@ -26,6 +26,8 @@ import io.micronaut.mcp.conf.ToolsConfiguration;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ResourceRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
+import io.modelcontextprotocol.json.McpJsonMapper;
+import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Provider;
 
@@ -73,6 +75,8 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
      * Creates an MCP server specification based on the provided parameters.
      *
      * @param transport         The transport protocol used by the MCP server.
+     * @param jsonMapper        MCP JSON Mapper
+     * @param jsonSchemaValidator MCP JSON schema validator
      * @param configuration     The configuration for the MCP server, or null if not provided.
      * @param capabilities      The server capabilities to be used for the MCP server.
      * @param tools             A list of tools to be included in the MCP server specification.
@@ -83,6 +87,8 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
      * @return the MCP server specification.
      */
     protected abstract Spec createMcpServerSpec(S transport,
+                                                McpJsonMapper jsonMapper,
+                                                JsonSchemaValidator jsonSchemaValidator,
                                                 @Nullable McpServerInfoConfiguration configuration,
                                                 McpSchema.ServerCapabilities capabilities,
                                                 List<T> tools,
@@ -94,6 +100,8 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
     /**
      *
      * @param transport Transport
+     * @param jsonMapper MCP JSON Mapper
+     * @param jsonSchemaValidator MCP JSON schema validator
      * @param configuration MCP Server Info Configuration
      * @param toolsConfiguration Tools Configuration
      * @param promptsConfiguration Prompts Configuration
@@ -114,7 +122,9 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
     @Prototype
     // keep the visibility modifier public for GraalVM
     public Spec buildMcpServerSpec(S transport,
-                                  @Nullable McpServerInfoConfiguration configuration,
+                                   McpJsonMapper jsonMapper,
+                                   JsonSchemaValidator jsonSchemaValidator,
+                                   @Nullable McpServerInfoConfiguration configuration,
                                   ToolsConfiguration toolsConfiguration,
                                   PromptsConfiguration promptsConfiguration,
                                   ResourcesConfiguration resourcesConfiguration,
@@ -143,7 +153,7 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
         if (!completions.isEmpty()) {
             capabilitiesBuilder.completions();
         }
-        return createMcpServerSpec(transport, configuration, capabilitiesProvider.get(), allTools, completions, allPrompts, resourceTemplates, allResources);
+        return createMcpServerSpec(transport, jsonMapper, jsonSchemaValidator, configuration, capabilitiesProvider.get(), allTools, completions, allPrompts, resourceTemplates, allResources);
     }
 
 }

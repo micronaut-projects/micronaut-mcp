@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.server.stdio;
+package io.micronaut.mcp.server.json;
 
-import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Prototype;
-import io.micronaut.core.annotation.Internal;
+import io.micronaut.json.JsonMapper;
 import io.modelcontextprotocol.json.McpJsonMapper;
-import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
-import io.modelcontextprotocol.spec.McpServerTransportProvider;
+import io.modelcontextprotocol.json.McpJsonMapperSupplier;
 
-@Internal
-@Factory
-final class StdioServerTransportProviderFactory {
-    @Prototype
-    McpServerTransportProvider createStdioServerTransportProvider(McpJsonMapper mcpJsonMapper) {
-        return new StdioServerTransportProvider(mcpJsonMapper);
+/**
+ * A Micronaut implementation of {@link McpJsonMapperSupplier} that provides a {@link MicronautMcpJsonMapper}.
+ */
+public class MicronautMcpJsonMapperSupplier implements McpJsonMapperSupplier {
+    @Override
+    public McpJsonMapper get() {
+        return new MicronautMcpJsonMapper(JsonMapper.createDefault());
     }
 }

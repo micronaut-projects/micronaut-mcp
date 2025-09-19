@@ -1,6 +1,5 @@
 package io.micronaut.mcp.server.stdio.async;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Prototype;
@@ -9,6 +8,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.mcp.server.utils.Stdio;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import jakarta.annotation.PreDestroy;
@@ -62,8 +62,8 @@ class AsyncPingTest {
 
         @Prototype
         @Replaces(McpServerTransportProvider.class)
-        McpServerTransportProvider stdioServerTransportProviderReplacement(ObjectMapper objectMapper) {
-            return new StdioServerTransportProvider(objectMapper, stdio.serverStdin, stdio.serverStdout);
+        McpServerTransportProvider stdioServerTransportProviderReplacement(McpJsonMapper jsonMapper) {
+            return new StdioServerTransportProvider(jsonMapper, stdio.serverStdin, stdio.serverStdout);
         }
 
         @PreDestroy

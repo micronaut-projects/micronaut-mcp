@@ -23,6 +23,8 @@ import io.micronaut.mcp.conf.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.micronaut.mcp.server.registry.ResourceRegistry;
+import io.modelcontextprotocol.json.McpJsonMapper;
+import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -63,6 +65,8 @@ final class McpServerAsyncFactory extends AbstractMcpServerFactory<McpServer.Asy
 
     @Override
     protected McpServer.AsyncSpecification<?> createMcpServerSpec(McpServerTransportProvider transport,
+                                                                  McpJsonMapper jsonMapper,
+                                                                  JsonSchemaValidator jsonSchemaValidator,
                                                                   @Nullable McpServerInfoConfiguration configuration,
                                                                   McpSchema.ServerCapabilities capabilities,
                                                                   List<McpServerFeatures.AsyncToolSpecification> tools,
@@ -71,6 +75,8 @@ final class McpServerAsyncFactory extends AbstractMcpServerFactory<McpServer.Asy
                                                                   List<McpSchema.ResourceTemplate> resourceTemplates,
                                                                   List<McpServerFeatures.AsyncResourceSpecification> resources) {
         McpServer.AsyncSpecification<?> spec = McpServer.async(transport)
+            .jsonMapper(jsonMapper)
+            .jsonSchemaValidator(jsonSchemaValidator)
             .capabilities(capabilities)
             .tools(tools)
             .completions(completions)

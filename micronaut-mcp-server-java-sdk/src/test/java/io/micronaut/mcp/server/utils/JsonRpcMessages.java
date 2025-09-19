@@ -23,7 +23,7 @@ public final class JsonRpcMessages {
               "jsonrpc":"2.0",
               "id":0,
               "result": {
-                "protocolVersion":"2025-03-26",
+                "protocolVersion":"2025-06-18",
                  "capabilities": {},
                  "serverInfo": {
                    "name": "mcp-server",

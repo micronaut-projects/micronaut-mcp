@@ -29,6 +29,7 @@ import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.ToolArg;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
+import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpError;
@@ -64,16 +65,19 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     private static final String KEY_TYPE = "type";
 
     private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;
+    private final McpJsonMapper mcpJsonMapper;
     private final JsonMapper jsonMapper;
     private final BeanContext beanContext;
     private final Map<Class<? extends Throwable>, McpErrorExceptionMapper<? extends Throwable>> classToExceptionMapper = new ConcurrentHashMap<>();
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
 
     ToolRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
+                 McpJsonMapper mcpJsonMapper,
                  JsonMapper jsonMapper,
                  BeanContext beanContext,
                  List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers) {
         this.jsonSchemaClassPathResourceLoader = jsonSchemaClassPathResourceLoader;
+        this.mcpJsonMapper = mcpJsonMapper;
         this.jsonMapper = jsonMapper;
         this.beanContext = beanContext;
         this.exceptionMappers = exceptionMappers;
@@ -241,11 +245,11 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         toolDescription(method).ifPresent(toolBuilder::description);
         Optional<String> jsonSchemaOptional = jsonSchema(method);
         if (jsonSchemaOptional.isPresent()) {
-            toolBuilder.inputSchema(jsonSchemaOptional.get());
+            toolBuilder.inputSchema(mcpJsonMapper, jsonSchemaOptional.get());
         } else {
             toolBuilder.inputSchema(inputSchema(method));
         }
-        toolOutputSchema(method).ifPresent(toolBuilder::outputSchema);
+        toolOutputSchema(method).ifPresent(schema -> toolBuilder.outputSchema(mcpJsonMapper, schema));
         return toolBuilder.build();
     }
 

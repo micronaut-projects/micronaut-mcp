@@ -27,7 +27,7 @@ micronaut-validation = "4.10.0"
 micronaut-test = "4.8.1"
 groovy = "4.0.27"
 spock = "2.3-groovy-4.0"
-managed-mcp-java-sdk = "0.12.0"
+managed-mcp-java-sdk = "0.13.0"
 jsonassert = "1.5.3"
 micronaut-gradle-plugin = "4.5.4"
 
@@ -41,7 +41,7 @@ micronaut-logging = { module = 'io.micronaut.logging:micronaut-logging-bom', ver
 micronaut-validation = { module = "io.micronaut.validation:micronaut-validation-bom", version.ref = "micronaut-validation" }
 junit-platform-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
 langchain4j-mcp = { module = "dev.langchain4j:langchain4j-mcp" }
-managed-mcp-java-sdk = { module = "io.modelcontextprotocol.sdk:mcp", version.ref = "managed-mcp-java-sdk" }
+managed-mcp-java-sdk = { module = "io.modelcontextprotocol.sdk:mcp-core", version.ref = "managed-mcp-java-sdk" }
 jsonassert = { module = 'org.skyscreamer:jsonassert', version.ref = 'jsonassert'}
 
 # Plugins

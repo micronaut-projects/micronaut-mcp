@@ -13,20 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.server.stdio;
+package io.micronaut.mcp.server.json;
 
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.json.JsonMapper;
 import io.modelcontextprotocol.json.McpJsonMapper;
-import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
-import io.modelcontextprotocol.spec.McpServerTransportProvider;
+import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
+import jakarta.inject.Singleton;
 
-@Internal
+/**
+ * An {@link Factory} that produces a singleton {@link McpJsonMapper} backed by {@link MicronautMcpJsonMapper}.
+ */
 @Factory
-final class StdioServerTransportProviderFactory {
-    @Prototype
-    McpServerTransportProvider createStdioServerTransportProvider(McpJsonMapper mcpJsonMapper) {
-        return new StdioServerTransportProvider(mcpJsonMapper);
+@Internal
+final class McpJsonFactory {
+
+    @Singleton
+    McpJsonMapper createMcpJsonMapper(JsonMapper jsonMapper) {
+        return new MicronautMcpJsonMapper(jsonMapper);
+    }
+
+    @Singleton
+    JsonSchemaValidator createJsonSchemaValidator() {
+        return new MicronautJsonSchemaValidator();
     }
 }
