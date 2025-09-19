@@ -34,10 +34,10 @@ import java.util.Set;
 public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.json.schema.JsonSchemaValidator {
     private static final Logger LOG = LoggerFactory.getLogger(MicronautJsonSchemaValidator.class);
     private final JsonMapper jsonMapper;
-    private final JsonSchemaValidatorReplacement validator;
+    private final JsonSchemaValidator validator;
 
     public MicronautJsonSchemaValidator(JsonMapper jsonMapper,
-                                        JsonSchemaValidatorReplacement validator) {
+                                        JsonSchemaValidator validator) {
         this.jsonMapper = jsonMapper;
         this.validator = validator;
     }
@@ -61,10 +61,14 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
 
             return ValidationResponse.asValid(jsonStructuredOutput.toString());
         } catch (JsonProcessingException e) {
-            LOG.error("Failed to validate CallToolResult: Error parsing schema: {}", e);
+            if (LOG.isErrorEnabled()) {
+                LOG.error("Error parsing schema: {}", e);
+            }
             return ValidationResponse.asInvalid("Error parsing tool JSON Schema: " + e.getMessage());
         } catch (IOException e) {
-            LOG.error("Failed to validate CallToolResult: Unexpected error: {}", e);
+            if (LOG.isErrorEnabled()) {
+                LOG.error("Unexpected error: {}", e);
+            }
             return ValidationResponse.asInvalid("Unexpected validation error: " + e.getMessage());
         }
     }
