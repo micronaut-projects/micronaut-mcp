@@ -24,7 +24,7 @@ import io.modelcontextprotocol.json.McpJsonMapperSupplier;
  * A Micronaut implementation of {@link McpJsonMapperSupplier} that provides a {@link MicronautMcpJsonMapper}.
  */
 @Internal
-public class MicronautMcpJsonMapperSupplier implements McpJsonMapperSupplier {
+public final class MicronautMcpJsonMapperSupplier implements McpJsonMapperSupplier {
     @Override
     public McpJsonMapper get() {
         return new MicronautMcpJsonMapper(JsonMapper.createDefault());
