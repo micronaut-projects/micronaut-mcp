@@ -15,6 +15,7 @@
  */
 package io.micronaut.mcp.server.json;
 
+import io.micronaut.json.JsonMapper;
 import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.json.schema.JsonSchemaValidatorSupplier;
 
@@ -25,6 +26,6 @@ public class MicronautJsonSchemaValidatorSupplier implements JsonSchemaValidator
 
     @Override
     public JsonSchemaValidator get() {
-        return new MicronautJsonSchemaValidator();
+        return new MicronautJsonSchemaValidator(JsonMapper.createDefault(), null);
     }
 }

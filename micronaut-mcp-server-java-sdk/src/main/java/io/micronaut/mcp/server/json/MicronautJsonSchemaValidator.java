@@ -15,9 +15,17 @@
  */
 package io.micronaut.mcp.server.json;
 
-import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.json.JsonMapper;
+import io.micronaut.jsonschema.validation.JsonSchemaValidator;
+import io.micronaut.jsonschema.validation.ValidationMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Micronaut implementation of {@link JsonSchemaValidator}.
@@ -25,9 +33,41 @@ import java.util.Map;
  * @author graemerocher
  * @since 1.0
  */
-public class MicronautJsonSchemaValidator implements JsonSchemaValidator {
+public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.json.schema.JsonSchemaValidator {
+    private static final Logger LOG = LoggerFactory.getLogger(MicronautJsonSchemaValidator.class);
+    private final JsonMapper jsonMapper;
+    private final JsonSchemaValidatorReplacement validator;
+
+    public MicronautJsonSchemaValidator(JsonMapper jsonMapper,
+                                        JsonSchemaValidatorReplacement validator) {
+        this.jsonMapper = jsonMapper;
+        this.validator = validator;
+    }
+
     @Override
     public ValidationResponse validate(Map<String, Object> schema, Object structuredContent) {
-        return ValidationResponse.asInvalid("not implemented");
+        if (schema == null) {
+            throw new IllegalArgumentException("Schema must not be null");
+        }
+        if (structuredContent == null) {
+            throw new IllegalArgumentException("Structured content must not be null");
+        }
+        try {
+            Set<? extends ValidationMessage> validationResult = validator.validate(structuredContent, schema);
+            if (CollectionUtils.isNotEmpty(validationResult)) {
+                return ValidationResponse
+                    .asInvalid("Validation failed: structuredContent does not match tool outputSchema. "
+                        + "Validation errors: " + validationResult);
+            }
+            String jsonStructuredOutput = jsonMapper.writeValueAsString(structuredContent);
+
+            return ValidationResponse.asValid(jsonStructuredOutput.toString());
+        } catch (JsonProcessingException e) {
+            LOG.error("Failed to validate CallToolResult: Error parsing schema: {}", e);
+            return ValidationResponse.asInvalid("Error parsing tool JSON Schema: " + e.getMessage());
+        } catch (IOException e) {
+            LOG.error("Failed to validate CallToolResult: Unexpected error: {}", e);
+            return ValidationResponse.asInvalid("Unexpected validation error: " + e.getMessage());
+        }
     }
 }

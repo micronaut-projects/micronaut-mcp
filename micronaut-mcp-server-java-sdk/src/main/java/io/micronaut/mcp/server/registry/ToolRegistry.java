@@ -212,8 +212,9 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                 }
             }
             if (toolOutputSchema(method).isPresent()) {
+                Map<String, Object> structuredContent = jsonMapper.readValue(text, Argument.mapOf(String.class, Object.class));
                 return McpSchema.CallToolResult.builder()
-                    .structuredContent(text)
+                    .structuredContent(structuredContent)
                     .isError(false)
                     .build();
             }

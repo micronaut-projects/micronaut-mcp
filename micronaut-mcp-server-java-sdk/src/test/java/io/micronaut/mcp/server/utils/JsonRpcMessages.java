@@ -157,7 +157,7 @@ public final class JsonRpcMessages {
             "content": [
               {
                 "type": "text",
-                "text": "{\\"evaluation\\":\\"+0.12\\",\\"fen\\":\\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\\"}"
+                "text": "{\\"fen\\":\\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\\",\\"evaluation\\":\\"+0.12\\"}"
               }
             ],
             "isError": false,
@@ -171,7 +171,7 @@ public final class JsonRpcMessages {
     public static final String TOOLS_CALL = """
         {"jsonrpc":"2.0","id":4,"method": "tools/call","params": {"name": "fenEvaluation","arguments": {"fen": "r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8"},"_meta": {"progressToken": 0}}}""";
 
-    public static final String EXPECTED_TOOLS_CALL_OBJECT_RETURN = "{\"jsonrpc\":\"2.0\",\"id\":4,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"evaluation\\\":\\\"+0.12\\\",\\\"fen\\\":\\\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\\\"}\"}],\"isError\":false,\"structuredContent\":{\"evaluation\":\"+0.12\",\"fen\":\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\"}}}";
+    public static final String EXPECTED_TOOLS_CALL_OBJECT_RETURN = "{\"jsonrpc\":\"2.0\",\"id\":4,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"fen\\\":\\\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\\\",\\\"evaluation\\\":\\\"+0.12\\\"}\"}],\"isError\":false,\"structuredContent\":{\"evaluation\":\"+0.12\",\"fen\":\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\"}}}";
 
     public static final String EXPECTED_TOOLS_LIST = """
         {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"fen":{"type":"string"}},"required":["fen"]}}]}}""";

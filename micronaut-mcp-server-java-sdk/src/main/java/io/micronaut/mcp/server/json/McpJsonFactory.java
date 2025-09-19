@@ -35,7 +35,8 @@ final class McpJsonFactory {
     }
 
     @Singleton
-    JsonSchemaValidator createJsonSchemaValidator() {
-        return new MicronautJsonSchemaValidator();
+    JsonSchemaValidator createJsonSchemaValidator(JsonMapper jsonMapper,
+                                                  JsonSchemaValidatorReplacement validator) {
+        return new MicronautJsonSchemaValidator(jsonMapper, validator);
     }
 }
