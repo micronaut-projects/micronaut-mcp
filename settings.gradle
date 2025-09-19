@@ -16,6 +16,7 @@ include 'micronaut-mcp-server-java-sdk'
 include 'micronaut-mcp-client-langchain4j'
 include 'micronaut-mcp-bom'
 include 'test-suite-graal'
+include 'test-suite-jackson-databind'
 
 enableFeaturePreview 'TYPESAFE_PROJECT_ACCESSORS'
 

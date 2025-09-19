@@ -13,9 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @MicronautTest
 class MoonToolsHttpTest {
     @Test
-    void invalidParamsConstraintViolationException(@Client("/") HttpClient httpClient) {
+    void invalidParamsCannotDeserialize(@Client("/") HttpClient httpClient) {
         BlockingHttpClient client = httpClient.toBlocking();
         final String toolsCallJson = """
             {
@@ -32,7 +30,7 @@ class MoonToolsHttpTest {
               "params": {
                 "name": "moon-phase-at-date",
                 "arguments": {
-                  "date": "2099-10-28"
+                  "date": "1982-30-28"
                 },
                 "_meta": {
                   "progressToken": 2
@@ -42,36 +40,14 @@ class MoonToolsHttpTest {
               "id": 0
             }
             """;
-        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(createRequest(toolsCallJson), McpSchema.JSONRPCResponse.class));
+        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () ->
+            client.retrieve(createRequest(toolsCallJson), McpSchema.JSONRPCResponse.class));
         Optional<McpSchema.JSONRPCResponse> jsonrpcResponseOptional = ex.getResponse().getBody(McpSchema.JSONRPCResponse.class);
         assertTrue(jsonrpcResponseOptional.isPresent());
         McpSchema.JSONRPCResponse json = jsonrpcResponseOptional.get();
         assertNotNull(json.error());
         assertEquals(-32602, json.error().code());
-        assertEquals("date: must be a date in the past or in the present", json.error().message());
-    }
-
-    @Test
-    void moonToolsCallViaHttp(@Client("/") HttpClient httpClient) {
-        BlockingHttpClient client = httpClient.toBlocking();
-        final String toolsCallJson = """
-            {
-              "method": "tools/call",
-              "params": {
-                "name": "moon-phase-at-date",
-                "arguments": {
-                  "date": "1982-10-28"
-                },
-                "_meta": {
-                  "progressToken": 2
-                }
-              },
-              "jsonrpc": "2.0",
-              "id": 0
-            }
-            """;
-        String json = assertDoesNotThrow(() -> client.retrieve(createRequest(toolsCallJson)));
-        assertFalse(json.contains("error"), json);
+        assertEquals("Invalid value for 'date': '1982-30-28'", json.error().message());
     }
 
     private static HttpRequest<?> createRequest(String json) {
