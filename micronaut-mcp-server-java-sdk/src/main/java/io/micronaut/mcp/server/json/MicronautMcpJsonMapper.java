@@ -17,6 +17,7 @@ package io.micronaut.mcp.server.json;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.json.JsonMapper;
+import io.micronaut.json.tree.JsonNode;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.TypeRef;
 
@@ -55,8 +56,8 @@ public class MicronautMcpJsonMapper implements McpJsonMapper {
     @Override
     public <T> T convertValue(Object fromValue, Class<T> type) {
         try {
-            byte[] bytes = jsonMapper.writeValueAsBytes(fromValue);
-            return jsonMapper.readValue(bytes, type);
+            JsonNode jsonNode = jsonMapper.writeValueToTree(fromValue);
+            return jsonMapper.readValueFromTree(jsonNode, type);
         } catch (IOException e) {
             throw new IllegalArgumentException("Error converting value", e);
         }
@@ -65,8 +66,8 @@ public class MicronautMcpJsonMapper implements McpJsonMapper {
     @Override
     public <T> T convertValue(Object fromValue, TypeRef<T> type) {
         try {
-            byte[] bytes = jsonMapper.writeValueAsBytes(fromValue);
-            return jsonMapper.readValue(bytes, toArgument(type));
+            JsonNode jsonNode = jsonMapper.writeValueToTree(fromValue);
+            return jsonMapper.readValueFromTree(jsonNode, toArgument(type));
         } catch (IOException e) {
             throw new IllegalArgumentException("Error converting value", e);
         }
