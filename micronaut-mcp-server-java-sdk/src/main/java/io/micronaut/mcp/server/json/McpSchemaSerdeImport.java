@@ -1,8 +1,9 @@
 package io.micronaut.mcp.server.json;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.context.annotation.ClassImport;
+import io.micronaut.context.annotation.Mixin;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.serde.annotation.SerdeImport;
 import io.micronaut.serde.annotation.Serdeable;
 
 @ClassImport(classes = {
@@ -73,7 +74,13 @@ import io.micronaut.serde.annotation.Serdeable;
     io.modelcontextprotocol.spec.McpSchema.ResourceLink.class,
     io.modelcontextprotocol.spec.McpSchema.Root.class,
     io.modelcontextprotocol.spec.McpSchema.ListRootsResult.class,
-},annotate = Serdeable.class)
+}, annotate = Serdeable.class)
 @Internal
 class McpSchemaSerdeImport {
+}
+
+@Mixin.Filter(removeAnnotations = {"com.fasterxml.jackson.annotation.JsonTypeInfo", "io.micronaut.serde.config.annotation.SerdeConfig.SerError"})
+@Mixin(value = Object.class, target = "io.modelcontextprotocol.spec.McpSchema.ResourceContents")
+@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
+class CorrectResourceContentsMixin {
 }
