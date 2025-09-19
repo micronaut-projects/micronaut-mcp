@@ -28,7 +28,7 @@ import jakarta.inject.Singleton;
 @Requires(classes = SerdeException.class)
 @Singleton
 @Internal
-class SerdeExceptionMcpErrorMapper implements McpErrorExceptionMapper<SerdeException> {
+final class SerdeExceptionMcpErrorMapper implements McpErrorExceptionMapper<SerdeException> {
     @Override
     public boolean canMap(Class<? extends Throwable> clazz) {
         return SerdeException.class.isAssignableFrom(clazz);
