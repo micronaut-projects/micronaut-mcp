@@ -1,75 +1,79 @@
 package io.micronaut.mcp.server.json;
 
+import io.micronaut.context.annotation.ClassImport;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.serde.annotation.SerdeImport;
+import io.micronaut.serde.annotation.Serdeable;
 
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.JSONRPCRequest.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.JSONRPCNotification.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.JSONRPCResponse.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.JSONRPCResponse.JSONRPCError.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.InitializeRequest.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.InitializeResult.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ClientCapabilities.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ClientCapabilities.RootCapabilities.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ClientCapabilities.Sampling.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ClientCapabilities.Elicitation.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.CompletionCapabilities.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.LoggingCapabilities.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.PromptCapabilities.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.ResourceCapabilities.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.ToolCapabilities.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.Implementation.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.Annotations.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.Resource.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ResourceTemplate.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ListResourcesResult.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ListResourceTemplatesResult.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ReadResourceResult.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.SubscribeRequest.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.UnsubscribeRequest.class)
-////@SerdeImport(io.modelcontextprotocol.spec.McpSchema.TextResourceContents.class)
-////@SerdeImport(io.modelcontextprotocol.spec.McpSchema.BlobResourceContents.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.Prompt.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.PromptArgument.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.PromptMessage.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ListPromptsResult.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.GetPromptRequest.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.GetPromptResult.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ListToolsResult.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.JsonSchema.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ToolAnnotations.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.Tool.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.CallToolRequest.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.CallToolResult.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ModelPreferences.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ModelHint.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.SamplingMessage.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.CreateMessageRequest.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.CreateMessageResult.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ElicitRequest.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ElicitResult.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.PaginatedRequest.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.PaginatedResult.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ProgressNotification.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ResourcesUpdatedNotification.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.LoggingMessageNotification.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.SetLevelRequest.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.PromptReference.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ResourceReference.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.CompleteRequest.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.CompleteRequest.CompleteArgument.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.CompleteRequest.CompleteContext.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.CompleteResult.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.CompleteResult.CompleteCompletion.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.TextContent.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ImageContent.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.AudioContent.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.EmbeddedResource.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ResourceLink.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.Root.class)
-//@SerdeImport(io.modelcontextprotocol.spec.McpSchema.ListRootsResult.class)
+@ClassImport(classes = {
+    io.modelcontextprotocol.spec.McpSchema.JSONRPCRequest.class,
+    io.modelcontextprotocol.spec.McpSchema.JSONRPCNotification.class,
+    io.modelcontextprotocol.spec.McpSchema.JSONRPCResponse.class,
+    io.modelcontextprotocol.spec.McpSchema.JSONRPCResponse.JSONRPCError.class,
+    io.modelcontextprotocol.spec.McpSchema.InitializeRequest.class,
+    io.modelcontextprotocol.spec.McpSchema.InitializeResult.class,
+    io.modelcontextprotocol.spec.McpSchema.ClientCapabilities.class,
+    io.modelcontextprotocol.spec.McpSchema.ClientCapabilities.RootCapabilities.class,
+    io.modelcontextprotocol.spec.McpSchema.ClientCapabilities.Sampling.class,
+    io.modelcontextprotocol.spec.McpSchema.ClientCapabilities.Elicitation.class,
+    io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.class,
+    io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.CompletionCapabilities.class,
+    io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.LoggingCapabilities.class,
+    io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.PromptCapabilities.class,
+    io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.ResourceCapabilities.class,
+    io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.ToolCapabilities.class,
+    io.modelcontextprotocol.spec.McpSchema.Implementation.class,
+    io.modelcontextprotocol.spec.McpSchema.Annotations.class,
+    io.modelcontextprotocol.spec.McpSchema.Resource.class,
+    io.modelcontextprotocol.spec.McpSchema.ResourceTemplate.class,
+    io.modelcontextprotocol.spec.McpSchema.ListResourcesResult.class,
+    io.modelcontextprotocol.spec.McpSchema.ListResourceTemplatesResult.class,
+    io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest.class,
+    io.modelcontextprotocol.spec.McpSchema.ReadResourceResult.class,
+    io.modelcontextprotocol.spec.McpSchema.SubscribeRequest.class,
+    io.modelcontextprotocol.spec.McpSchema.UnsubscribeRequest.class,
+    io.modelcontextprotocol.spec.McpSchema.TextResourceContents.class,
+    io.modelcontextprotocol.spec.McpSchema.BlobResourceContents.class,
+    io.modelcontextprotocol.spec.McpSchema.Prompt.class,
+    io.modelcontextprotocol.spec.McpSchema.PromptArgument.class,
+    io.modelcontextprotocol.spec.McpSchema.PromptMessage.class,
+    io.modelcontextprotocol.spec.McpSchema.ListPromptsResult.class,
+    io.modelcontextprotocol.spec.McpSchema.GetPromptRequest.class,
+    io.modelcontextprotocol.spec.McpSchema.GetPromptResult.class,
+    io.modelcontextprotocol.spec.McpSchema.ListToolsResult.class,
+    io.modelcontextprotocol.spec.McpSchema.JsonSchema.class,
+    io.modelcontextprotocol.spec.McpSchema.ToolAnnotations.class,
+    io.modelcontextprotocol.spec.McpSchema.Tool.class,
+    io.modelcontextprotocol.spec.McpSchema.CallToolRequest.class,
+    io.modelcontextprotocol.spec.McpSchema.CallToolResult.class,
+    io.modelcontextprotocol.spec.McpSchema.ModelPreferences.class,
+    io.modelcontextprotocol.spec.McpSchema.ModelHint.class,
+    io.modelcontextprotocol.spec.McpSchema.SamplingMessage.class,
+    io.modelcontextprotocol.spec.McpSchema.CreateMessageRequest.class,
+    io.modelcontextprotocol.spec.McpSchema.CreateMessageResult.class,
+    io.modelcontextprotocol.spec.McpSchema.ElicitRequest.class,
+    io.modelcontextprotocol.spec.McpSchema.ElicitResult.class,
+    io.modelcontextprotocol.spec.McpSchema.PaginatedRequest.class,
+    io.modelcontextprotocol.spec.McpSchema.PaginatedResult.class,
+    io.modelcontextprotocol.spec.McpSchema.ProgressNotification.class,
+    io.modelcontextprotocol.spec.McpSchema.ResourcesUpdatedNotification.class,
+    io.modelcontextprotocol.spec.McpSchema.LoggingMessageNotification.class,
+    io.modelcontextprotocol.spec.McpSchema.SetLevelRequest.class,
+    io.modelcontextprotocol.spec.McpSchema.PromptReference.class,
+    io.modelcontextprotocol.spec.McpSchema.ResourceReference.class,
+    io.modelcontextprotocol.spec.McpSchema.CompleteRequest.class,
+    io.modelcontextprotocol.spec.McpSchema.CompleteRequest.CompleteArgument.class,
+    io.modelcontextprotocol.spec.McpSchema.CompleteRequest.CompleteContext.class,
+    io.modelcontextprotocol.spec.McpSchema.CompleteResult.class,
+    io.modelcontextprotocol.spec.McpSchema.CompleteResult.CompleteCompletion.class,
+    io.modelcontextprotocol.spec.McpSchema.TextContent.class,
+    io.modelcontextprotocol.spec.McpSchema.ImageContent.class,
+    io.modelcontextprotocol.spec.McpSchema.AudioContent.class,
+    io.modelcontextprotocol.spec.McpSchema.EmbeddedResource.class,
+    io.modelcontextprotocol.spec.McpSchema.ResourceLink.class,
+    io.modelcontextprotocol.spec.McpSchema.Root.class,
+    io.modelcontextprotocol.spec.McpSchema.ListRootsResult.class,
+},annotate = Serdeable.class)
 @Internal
 class McpSchemaSerdeImport {
 }

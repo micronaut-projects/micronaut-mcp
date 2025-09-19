@@ -6,9 +6,8 @@ dependencies {
     api(mn.micronaut.json.core)
     implementation(mnSerde.micronaut.serde.api)
     compileOnly(mn.jackson.databind)
-    testImplementation(mn.micronaut.jackson.databind)
-//    annotationProcessor(mnSerde.micronaut.serde.processor)
-//    testImplementation(mnSerde.micronaut.serde.jackson)
+    annotationProcessor(mnSerde.micronaut.serde.processor)
+    testImplementation(mnSerde.micronaut.serde.jackson)
 
     api(libs.managed.mcp.java.sdk)
     api(projects.micronautMcp)
