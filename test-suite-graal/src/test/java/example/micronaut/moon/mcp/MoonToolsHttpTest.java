@@ -49,7 +49,7 @@ class MoonToolsHttpTest {
         McpSchema.JSONRPCResponse json = jsonrpcResponseOptional.get();
         assertNotNull(json.error());
         assertEquals(-32602, json.error().code());
-        assertEquals("Invalid value for 'date': '1982-30-28'", json.error().message());
+        assertEquals("Text '1982-30-28' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 30", json.error().message());
     }
 
     @Test

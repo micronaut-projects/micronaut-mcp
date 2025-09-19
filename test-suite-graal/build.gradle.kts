@@ -2,7 +2,8 @@ plugins {
     id("io.micronaut.build.internal.mcp-native-tests")
 }
 dependencies {
-    implementation(mn.micronaut.jackson.databind)
+    annotationProcessor(mnSerde.micronaut.serde.processor)
+    implementation(mnSerde.micronaut.serde.jackson)
     implementation(projects.micronautMcpServerJavaSdk)
     annotationProcessor(mnValidation.micronaut.validation.processor)
     implementation(mnValidation.micronaut.validation)

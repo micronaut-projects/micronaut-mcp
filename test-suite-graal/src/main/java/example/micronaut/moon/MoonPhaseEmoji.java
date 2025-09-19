@@ -16,8 +16,8 @@
 
 package example.micronaut.moon;
 
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.jsonschema.JsonSchema;
+import io.micronaut.serde.annotation.Serdeable;
 import jakarta.validation.constraints.NotBlank;
 
 /**
@@ -30,7 +30,7 @@ import jakarta.validation.constraints.NotBlank;
     description = "The phase of the moon is composed of the name of the phase and an emoji representing it",
     uri = "/moonPhase"
 )
-@Introspected
+@Serdeable
 public record MoonPhaseEmoji(
     MoonPhase phase,
     @NotBlank String emoji

@@ -1,13 +1,13 @@
 package example.micronaut.weather.model;
 
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.serde.annotation.Serdeable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
 
-@Introspected
+@Serdeable
 public record Location(double latitude, double longitude) {
     private static final Logger LOG = LoggerFactory.getLogger(Location.class);
 

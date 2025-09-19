@@ -23,6 +23,8 @@ import io.micronaut.mcp.conf.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.micronaut.mcp.server.registry.ResourceRegistry;
+import io.modelcontextprotocol.json.McpJsonMapper;
+import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessSyncServer;
@@ -57,6 +59,8 @@ final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpSe
 
     @Override
     protected McpServer.StatelessSyncSpecification createMcpServerSpec(McpStatelessServerTransport transport,
+                                                                       McpJsonMapper jsonMapper,
+                                                                       JsonSchemaValidator jsonSchemaValidator,
                                                                        @Nullable McpServerInfoConfiguration configuration,
                                                                        McpSchema.ServerCapabilities capabilities,
                                                                        List<McpStatelessServerFeatures.SyncToolSpecification> tools,
@@ -65,6 +69,8 @@ final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpSe
                                                                        List<McpSchema.ResourceTemplate> resourceTemplates,
                                                                        List<McpStatelessServerFeatures.SyncResourceSpecification> resources) {
         McpServer.StatelessSyncSpecification spec = McpServer.sync(transport)
+            .jsonMapper(jsonMapper)
+            .jsonSchemaValidator(jsonSchemaValidator)
             .tools(tools)
             .completions(completions)
             .prompts(prompts)

@@ -1,6 +1,5 @@
 package io.micronaut.mcp.server.stdio.sync;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
@@ -13,6 +12,7 @@ import io.micronaut.core.io.ResourceLoader;
 import io.micronaut.mcp.server.utils.PgnLoader;
 import io.micronaut.mcp.server.utils.Stdio;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -82,8 +82,8 @@ class SyncResourcesTest {
 
         @Prototype
         @Replaces(McpServerTransportProvider.class)
-        McpServerTransportProvider stdioServerTransportProviderReplacement(ObjectMapper objectMapper) {
-            return new StdioServerTransportProvider(objectMapper, stdio.serverStdin, stdio.serverStdout);
+        McpServerTransportProvider stdioServerTransportProviderReplacement(McpJsonMapper jsonMapper) {
+            return new StdioServerTransportProvider(jsonMapper, stdio.serverStdin, stdio.serverStdout);
         }
 
         @PreDestroy

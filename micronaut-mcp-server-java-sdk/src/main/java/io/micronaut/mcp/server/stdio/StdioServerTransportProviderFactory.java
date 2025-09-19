@@ -15,10 +15,10 @@
  */
 package io.micronaut.mcp.server.stdio;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
+import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 
@@ -26,7 +26,7 @@ import io.modelcontextprotocol.spec.McpServerTransportProvider;
 @Factory
 final class StdioServerTransportProviderFactory {
     @Prototype
-    McpServerTransportProvider createStdioServerTransportProvider(ObjectMapper objectMapper) {
-        return new StdioServerTransportProvider(objectMapper);
+    McpServerTransportProvider createStdioServerTransportProvider(McpJsonMapper mcpJsonMapper) {
+        return new StdioServerTransportProvider(mcpJsonMapper);
     }
 }
