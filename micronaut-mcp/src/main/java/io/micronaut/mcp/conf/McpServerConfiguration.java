@@ -16,13 +16,16 @@
 package io.micronaut.mcp.conf;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.util.Toggleable;
 
 /**
  * MCP Server Configuration.
  * @since 1.0.0
  */
-public interface McpServerConfiguration {
+public interface McpServerConfiguration extends Toggleable {
     String PREFIX = "micronaut.mcp.server";
+    String PROPERTY_ENABLED = PREFIX + ".enabled";
+    boolean DEFAULT_ENABLED = true;
     String PROPERTY_TRANSPORT = PREFIX + ".transport";
     String PROPERTY_REACTIVE = PREFIX + ".reactive";
     String DEFAULT_ENDPOINT = "/mcp";
