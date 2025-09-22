@@ -58,7 +58,11 @@ loadScripts(document, 'script');</script>
 <h1 title="Package io.micronaut.mcp.server" class="title">Package io.micronaut.mcp.server</h1>
 </div>
 <hr>
-<div class="package-signature">package <span class="element-name">io.micronaut.mcp.server</span></div>
+<div class="package-signature"><span class="annotations">@Configuration
+@Requires(property="micronaut.mcp.server.enabled",
+          notEquals="false",
+          defaultValue="true")
+</span>package <span class="element-name">io.micronaut.mcp.server</span></div>
 <section class="package-description" id="package-description">
 <div class="block">Micronaut MCP Server implementation built with Micronaut using the MCP Java SDK.
  <a href="https://github.com/modelcontextprotocol/java-sdk">MCP Java SDK</a></div>
