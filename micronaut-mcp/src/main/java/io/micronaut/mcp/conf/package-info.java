@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 /**
- * Micronaut MCP Server implementation built with Micronaut using the MCP Java SDK.
- * <a href="https://github.com/modelcontextprotocol/java-sdk">MCP Java SDK</a>
+ * MCP Configuration classes.
  */
 @Configuration
 @Requires(property = McpServerConfiguration.PROPERTY_ENABLED, notEquals = StringUtils.FALSE, defaultValue =  StringUtils.TRUE)
-package io.micronaut.mcp.server;
+package io.micronaut.mcp.conf;
 
 import io.micronaut.context.annotation.Configuration;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.mcp.conf.McpServerConfiguration;

@@ -26,6 +26,16 @@ final class McpServerConfigurationProperties implements McpServerConfiguration {
     private Transport transport = DEFAULT_TRANSPORT;
     private boolean reactive = DEFAULT_REACTIVE;
     private String endpoint = DEFAULT_ENDPOINT;
+    private boolean enabled = DEFAULT_ENABLED;
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
     @Override
     public String getEndpoint() {
