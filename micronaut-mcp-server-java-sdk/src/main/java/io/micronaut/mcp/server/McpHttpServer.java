@@ -17,6 +17,9 @@ package io.micronaut.mcp.server;
 
 import io.micronaut.core.annotation.Internal;
 
+/**
+ * An MCP Server.
+ */
 @Internal
 public interface McpHttpServer extends AutoCloseable {
     /**
