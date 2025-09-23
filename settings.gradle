@@ -18,6 +18,7 @@ include 'micronaut-mcp-bom'
 include 'test-suite-graal'
 include 'test-suite-jackson-databind'
 include 'test-suite-mcp-http-tck'
+include 'test-suite-mcp-http-tck-common'
 include 'test-suite-mcp-http-tck-sync'
 include 'test-suite-mcp-http-tck-async'
 

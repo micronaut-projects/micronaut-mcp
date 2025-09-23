@@ -12,8 +12,8 @@ dependencies {
     testAnnotationProcessor(mn.micronaut.inject.java)
     testRuntimeOnly(mnLogging.logback.classic)
 
+    testImplementation(projects.testSuiteMcpHttpTckCommon)
     testImplementation(projects.testSuiteMcpHttpTck)
-    testImplementation(projects.micronautMcpServerJavaSdk)
     testImplementation(mnTest.junit.platform.suite.api)
     // Add JUnit Jupiter API and engines
     testImplementation(mnTest.junit.jupiter.api)
