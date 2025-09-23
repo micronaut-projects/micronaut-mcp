@@ -62,6 +62,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
      * @see <a href="https://json-schema.org/understanding-json-schema/reference/type">JSON Schema Type</a>
      */
     private static final String MEMBER_DESCRIPTION = "description";
+    private static final String MEMBER_TITLE = "title";
     private static final String KEY_TYPE = "type";
 
     private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;
@@ -243,6 +244,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     private <B> McpSchema.Tool tool(ExecutableMethod<B, Object> method) {
         McpSchema.Tool.Builder toolBuilder = McpSchema.Tool.builder()
             .name(toolName(method));
+        toolTitle(method).ifPresent(toolBuilder::title);
         toolDescription(method).ifPresent(toolBuilder::description);
         Optional<String> jsonSchemaOptional = jsonSchema(method);
         if (jsonSchemaOptional.isPresent()) {
@@ -317,6 +319,10 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             names.add(toolArgumentName(argument));
         }
         return names;
+    }
+
+    private static Optional<String> toolTitle(ExecutableMethod<?, ?> method) {
+        return method.stringValue(Tool.class, MEMBER_TITLE);
     }
 
     private static Optional<String> toolDescription(ExecutableMethod<?, ?> method) {

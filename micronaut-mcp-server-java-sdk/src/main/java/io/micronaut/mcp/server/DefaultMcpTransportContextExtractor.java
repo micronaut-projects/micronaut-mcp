@@ -20,6 +20,7 @@ import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
+import io.modelcontextprotocol.spec.ProtocolVersions;
 import jakarta.inject.Singleton;
 
 import java.util.HashMap;
@@ -31,26 +32,24 @@ import java.util.Map;
 @Internal
 @Singleton
 final class DefaultMcpTransportContextExtractor implements McpTransportContextExtractor<HttpRequest<?>> {
-    public static final String HTTP_HEADER_MCP_PROTOCOL_VERSION = "MCP-Protocol-Version";
-    public static final String DEFAULT_PROTOCOL_VERSION = "2025-03-26";
-    public static final String HTTP_HEADER_MCP_SESSION_ID = "Mcp-Session-Id";
-    public static final String HTTP_HEADER_DEFAULT_LAST_EVENT_ID = "Last-Event-ID";
-
     @Override
     public McpTransportContext extract(HttpRequest<?> request) {
         return McpTransportContext.create(metadata(request));
     }
 
     private Map<String, Object> metadata(HttpRequest<?> request) {
-        HttpHeaders headers = request.getHeaders();
+        return metadata(request.getHeaders());
+    }
+
+    private Map<String, Object> metadata(HttpHeaders headers) {
         Map<String, Object> metadata = new HashMap<>();
-        metadata.put(HTTP_HEADER_MCP_PROTOCOL_VERSION,
-            headers.get(HTTP_HEADER_MCP_PROTOCOL_VERSION, String.class)
-                .orElse(DEFAULT_PROTOCOL_VERSION));
-        headers.get(HTTP_HEADER_MCP_SESSION_ID, String.class)
-            .ifPresent(v -> metadata.put(HTTP_HEADER_MCP_SESSION_ID, v));
-        headers.get(HTTP_HEADER_DEFAULT_LAST_EVENT_ID, String.class)
-            .ifPresent(v -> metadata.put(HTTP_HEADER_DEFAULT_LAST_EVENT_ID, v));
+        metadata.put(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION,
+            headers.get(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION, String.class)
+                .orElse(ProtocolVersions.MCP_2025_03_26));
+        headers.get(io.modelcontextprotocol.spec.HttpHeaders.MCP_SESSION_ID, String.class)
+            .ifPresent(v -> metadata.put(io.modelcontextprotocol.spec.HttpHeaders.MCP_SESSION_ID, v));
+        headers.get(io.modelcontextprotocol.spec.HttpHeaders.LAST_EVENT_ID, String.class)
+            .ifPresent(v -> metadata.put(io.modelcontextprotocol.spec.HttpHeaders.LAST_EVENT_ID, v));
         return metadata;
     }
 }

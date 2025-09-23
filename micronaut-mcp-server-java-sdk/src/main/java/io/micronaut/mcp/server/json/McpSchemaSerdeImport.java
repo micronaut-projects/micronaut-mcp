@@ -39,6 +39,7 @@ import io.micronaut.serde.annotation.Serdeable;
     io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.ResourceCapabilities.class,
     io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.ToolCapabilities.class,
     io.modelcontextprotocol.spec.McpSchema.Implementation.class,
+    io.modelcontextprotocol.spec.McpSchema.Role.class,
     io.modelcontextprotocol.spec.McpSchema.Annotations.class,
     io.modelcontextprotocol.spec.McpSchema.Resource.class,
     io.modelcontextprotocol.spec.McpSchema.ResourceTemplate.class,
