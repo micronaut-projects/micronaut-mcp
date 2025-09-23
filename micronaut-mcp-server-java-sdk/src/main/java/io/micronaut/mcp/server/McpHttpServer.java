@@ -19,10 +19,21 @@ import io.micronaut.core.annotation.Internal;
 
 @Internal
 public interface McpHttpServer extends AutoCloseable {
+    /**
+     * Starts the MCP Server.
+     */
     void start();
 
+    /**
+     *
+     * @return The Port the server is running at
+     */
     int getPort();
 
+    /**
+     *
+     * @return the MCP endpoint path. For example, `/mcp`
+     */
     String getEndpoint();
 
     /**
