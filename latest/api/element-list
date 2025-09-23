@@ -5,3 +5,4 @@ io.micronaut.mcp.server
 io.micronaut.mcp.server.exceptions
 io.micronaut.mcp.server.json
 io.micronaut.mcp.server.registry
+io.modelcontextprotocol.server.http.tck
