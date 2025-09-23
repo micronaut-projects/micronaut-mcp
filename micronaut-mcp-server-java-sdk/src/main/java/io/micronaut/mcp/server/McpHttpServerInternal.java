@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.server.stateless.transport;
+package io.micronaut.mcp.server;
 
 import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
+import io.micronaut.core.annotation.Internal;
 
 /**
  * Utility class for creating a default {@link McpHttpServer} instance.
  * This class provides a single method to create a default mapper using the {@link ServiceLoader}
  * mechanism.
  */
+@Internal
 final class McpHttpServerInternal {
     private static McpHttpServer defaultJsonMapper = null;
 

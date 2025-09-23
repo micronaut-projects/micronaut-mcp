@@ -15,7 +15,7 @@
  */
 package io.modelcontextprotocol.server.http.tck;
 
-import io.micronaut.mcp.server.stateless.transport.McpHttpServer;
+import io.micronaut.mcp.server.McpHttpServer;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 

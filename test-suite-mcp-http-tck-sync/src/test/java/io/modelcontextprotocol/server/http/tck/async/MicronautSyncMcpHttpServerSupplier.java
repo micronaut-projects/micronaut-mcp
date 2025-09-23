@@ -2,8 +2,8 @@ package io.modelcontextprotocol.server.http.tck.async;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.mcp.conf.McpServerConfiguration;
-import io.micronaut.mcp.server.stateless.transport.McpHttpServer;
-import io.micronaut.mcp.server.stateless.transport.McpHttpServerSupplier;
+import io.micronaut.mcp.server.McpHttpServer;
+import io.micronaut.mcp.server.McpHttpServerSupplier;
 import io.micronaut.runtime.server.EmbeddedServer;
 
 import java.util.Map;

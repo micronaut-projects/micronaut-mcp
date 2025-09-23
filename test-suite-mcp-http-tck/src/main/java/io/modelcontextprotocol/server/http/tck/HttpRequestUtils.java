@@ -15,7 +15,7 @@
  */
 package io.modelcontextprotocol.server.http.tck;
 
-import io.micronaut.mcp.server.stateless.transport.McpHttpServer;
+import io.micronaut.mcp.server.McpHttpServer;
 
 import java.net.URI;
 import java.net.URISyntaxException;
