@@ -51,6 +51,7 @@ import java.util.function.BiFunction;
 public final class PromptRegistry
     extends AbstractMcpMethodRegistry<McpServerFeatures.SyncPromptSpecification, McpServerFeatures.AsyncPromptSpecification, McpStatelessServerFeatures.SyncPromptSpecification, McpStatelessServerFeatures.AsyncPromptSpecification> {
     public static final String MEMBER_NAME = "name";
+    public static final String MEMBER_TITLE = "title";
     public static final String MEMBER_DESCRIPTION = "description";
     private final BeanContext beanContext;
 
@@ -134,6 +135,9 @@ public final class PromptRegistry
         }
         Object result = method.invoke(bean, args);
 
+        if (result instanceof McpSchema.GetPromptResult promptResult) {
+            return promptResult;
+        }
         if (method.getReturnType().getType().isAssignableFrom(String.class)) {
             McpSchema.TextContent assistantContent = new McpSchema.TextContent(result.toString());
             McpSchema.PromptMessage assistantMessage = new McpSchema.PromptMessage(McpSchema.Role.ASSISTANT, assistantContent);
@@ -146,7 +150,7 @@ public final class PromptRegistry
     }
 
     private McpSchema.Prompt prompt(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
-        return new McpSchema.Prompt(promptName(method), promptDescription(method).orElse(null),
+        return new McpSchema.Prompt(promptName(method), promptTitle(method).orElse(null), promptDescription(method).orElse(null),
             promptArguments(beanDefinition, method));
     }
 
@@ -187,6 +191,10 @@ public final class PromptRegistry
     private Optional<String> promptArgumentDescription(Argument<?> argument) {
         return argument.findAnnotation(PromptArg.class)
             .flatMap(ann -> ann.stringValue(MEMBER_DESCRIPTION));
+    }
+
+    private static Optional<String> promptTitle(ExecutableMethod<?, ?> method) {
+        return method.stringValue(Prompt.class, MEMBER_TITLE);
     }
 
     private static Optional<String> promptDescription(ExecutableMethod<?, ?> method) {

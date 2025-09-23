@@ -1,6 +1,7 @@
-package io.micronaut.mcp.server.stateless;
+package io.micronaut.mcp.server.stateless.transport;
 
 import io.micronaut.http.HttpStatus;
+import io.micronaut.mcp.server.stateless.transport.HttpServerMcpStatelessServerTransport;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
@@ -36,15 +37,15 @@ class McpControllerTest {
             .build()
             .getJsonRpcError();
 
-        HttpStatus actual = McpController.status(jsonRpcError);
-        assertEquals(expected, actual);
+        int actual = HttpServerMcpStatelessServerTransport.status(jsonRpcError);
+        assertEquals(expected.getCode(), actual);
     }
 
     @Test
     void errorJsonrpcResponse() {
         McpSchema.JSONRPCRequest request = new McpSchema.JSONRPCRequest("2.0", "prompts/list", 3, null);
         McpError error = new McpError("Missing handler request type: prompts/list");
-        McpSchema.JSONRPCResponse jsonrpcResponse = McpController.errorJsonrpcResponse(request, error);
+        McpSchema.JSONRPCResponse jsonrpcResponse = HttpServerMcpStatelessServerTransport.errorJsonrpcResponse(request, error);
         assertNotNull(jsonrpcResponse);
         assertNotNull(jsonrpcResponse.error());
     }

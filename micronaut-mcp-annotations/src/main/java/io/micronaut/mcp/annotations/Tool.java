@@ -46,6 +46,11 @@ public @interface Tool {
     String name() default ELEMENT_NAME;
 
     /**
+     * @return A human-readable title for the tool.
+     */
+    String title() default "";
+
+    /**
      * @return A human-readable description of the tool. A hint to the model.
      */
     String description() default "";

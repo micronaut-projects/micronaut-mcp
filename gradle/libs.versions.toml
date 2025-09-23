@@ -42,6 +42,7 @@ micronaut-validation = { module = "io.micronaut.validation:micronaut-validation-
 junit-platform-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
 langchain4j-mcp = { module = "dev.langchain4j:langchain4j-mcp" }
 managed-mcp-java-sdk = { module = "io.modelcontextprotocol.sdk:mcp-core", version.ref = "managed-mcp-java-sdk" }
+mcp-json-jackson2 = { module = "io.modelcontextprotocol.sdk:mcp-json-jackson2", version.ref = "managed-mcp-java-sdk" }
 jsonassert = { module = 'org.skyscreamer:jsonassert', version.ref = 'jsonassert'}
 
 # Plugins
