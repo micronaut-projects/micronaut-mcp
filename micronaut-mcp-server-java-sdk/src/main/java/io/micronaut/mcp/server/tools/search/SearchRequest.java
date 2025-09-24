@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.chatgpt;
+package io.micronaut.mcp.server.tools.search;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.jsonschema.JsonSchema;
 import io.micronaut.serde.annotation.Serdeable;
 
-import java.util.List;
-
 /**
- *
- * @param results array of result objects
+ * @param query A single query string.
  */
 @Serdeable
 @JsonSchema
-public record SearchToolResults(List<SearchToolResult> results) {
+public record SearchRequest(@NonNull String query) {
 }

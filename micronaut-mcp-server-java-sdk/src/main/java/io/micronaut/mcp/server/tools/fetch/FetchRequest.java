@@ -13,8 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.micronaut.mcp.server.tools.fetch;
+
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.jsonschema.JsonSchema;
+import io.micronaut.serde.annotation.Serdeable;
+
 /**
- * Classes related with MCP ChatGPT integration.
- * <a href="https://platform.openai.com/docs/mcp">Building MCP servers for ChatGPT and API integrations</a>
+ * Input of the fetch tool, which is used to retrieve the full contents of a search result document or item.
+ * @param id search document unique identifier
  */
-package io.micronaut.mcp.chatgpt;
+@Serdeable
+@JsonSchema
+public record FetchRequest(@NonNull String id) {
+}

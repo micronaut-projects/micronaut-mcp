@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.chatgpt;
+package io.micronaut.mcp.server.tools.search;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.jsonschema.JsonSchema;
 import io.micronaut.serde.annotation.Serdeable;
 
+import java.util.List;
+
 /**
- * @param id a unique ID for the document or search result item
- * @param title human-readable title
- * @param url canonical URL for citation
+ *
+ * @param results array of result objects
  */
 @Serdeable
 @JsonSchema
-public record SearchToolResult(
-    @NonNull String id,
-    @NonNull String title,
-    @NonNull String url
-) {
+@JsonInclude(JsonInclude.Include.ALWAYS)
+public record SearchResponse(@NonNull List<SearchResult> results) {
 }

@@ -13,21 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.chatgpt;
-
-import io.micronaut.core.annotation.NonNull;
-
 /**
- *  The search tool is responsible for returning a list of relevant search results from your MCP server's data source, given a user's query.
- *  <a href="https://platform.openai.com/docs/mcp#search-tool">search tool</a>
+ * Classes related with MCP ChatGPT integration.
+ * <a href="https://platform.openai.com/docs/mcp">Building MCP servers for ChatGPT and API integrations</a>
  */
-@FunctionalInterface
-public interface SearchTool {
-    /**
-     *
-     * @param query A single query string.
-     * @return An object with a single key, results, whose value is an array of result objects.
-     */
-    @NonNull
-    SearchToolResults search(@NonNull String query);
-}
+package io.micronaut.mcp.server.tools;
