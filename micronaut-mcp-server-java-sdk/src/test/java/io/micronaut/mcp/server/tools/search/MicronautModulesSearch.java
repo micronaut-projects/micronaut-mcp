@@ -6,7 +6,7 @@ import jakarta.inject.Singleton;
 
 import java.util.List;
 
-@Requires(property = "spec.name", value = "MicronautModulesSearch")
+@Requires(property = "spec.tool.name", value = "MicronautModulesSearch")
 //tag::clazz[]
 @Singleton
 class MicronautModulesSearch implements SearchTool {

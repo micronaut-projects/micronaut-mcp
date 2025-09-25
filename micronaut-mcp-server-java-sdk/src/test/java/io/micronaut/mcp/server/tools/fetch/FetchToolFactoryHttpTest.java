@@ -24,7 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class FetchToolFactoryHttpTest {
 
     @Test
-    void fetchTool(@Client("/") HttpClient httpClient) throws JSONException {
+    void fetchTool(@Client("/") HttpClient httpClient, FetchTool tool) throws JSONException {
+        assertEquals("fetch", tool.getName());
+        assertEquals("Fetch", tool.getTitle());
+        assertEquals("This tool retrieves the full contents of a search result document or item.", tool.getDescription());
         BlockingHttpClient client = httpClient.toBlocking();
         HttpRequest<?> req = HttpRequest.POST("/mcp", """
             {

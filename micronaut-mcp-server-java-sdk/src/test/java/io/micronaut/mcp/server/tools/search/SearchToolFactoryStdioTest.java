@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
 @Property(name = "micronaut.mcp.server.transport", value = "STDIO")
 @Property(name = "spec.name", value = "SearchToolFactoryStdioTest")
-@Requires(property = "spec.name", value = "MicronautModulesSearch")
+@Property(name = "spec.tool.name", value = "MicronautModulesSearch")
 @MicronautTest
 class SearchToolFactoryStdioTest {
     @Inject

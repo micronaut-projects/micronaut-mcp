@@ -19,12 +19,15 @@ import static org.junit.jupiter.api.Assertions.*;
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "spec.name", value = "SearchToolFactoryTest")
-@Requires(property = "spec.name", value = "MicronautModulesSearch")
+@Property(name = "spec.tool.name", value = "MicronautModulesSearch")
 @MicronautTest
 class SearchToolFactoryHttpTest {
 
     @Test
-    void searchTool(@Client("/") HttpClient httpClient) throws JSONException {
+    void searchTool(@Client("/") HttpClient httpClient, SearchTool tool) throws JSONException {
+        assertEquals("search", tool.getName());
+        assertEquals("Search", tool.getTitle());
+        assertEquals("Returns a list of relevant search results, given a user's query.", tool.getDescription());
         BlockingHttpClient client = httpClient.toBlocking();
         HttpRequest<?> req = HttpRequest.POST("/mcp", """
             {

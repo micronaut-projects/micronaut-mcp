@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Property(name = "micronaut.mcp.server.reactive", value = StringUtils.TRUE)
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "spec.name", value = "SearchToolFactoryTest")
-@Requires(property = "spec.name", value = "MicronautModulesSearch")
+@Property(name = "spec.tool.name", value = "MicronautModulesSearch")
 @MicronautTest
 class SearchToolFactoryHttpAsyncTest {
 
