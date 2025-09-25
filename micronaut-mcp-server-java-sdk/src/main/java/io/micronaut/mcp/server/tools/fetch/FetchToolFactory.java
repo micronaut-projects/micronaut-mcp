@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.server.tools;
+package io.micronaut.mcp.server.tools.fetch;
 
-import io.micronaut.mcp.server.tools.fetch.FetchRequest;
-import io.micronaut.mcp.server.tools.fetch.FetchResponse;
-import io.micronaut.mcp.server.tools.fetch.FetchTool;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;

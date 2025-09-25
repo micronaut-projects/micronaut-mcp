@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.server.tools;
+package io.micronaut.mcp.server.tools.search;
 
-import io.micronaut.mcp.server.tools.search.SearchRequest;
-import io.micronaut.mcp.server.tools.search.SearchResponse;
-import io.micronaut.mcp.server.tools.search.SearchTool;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;

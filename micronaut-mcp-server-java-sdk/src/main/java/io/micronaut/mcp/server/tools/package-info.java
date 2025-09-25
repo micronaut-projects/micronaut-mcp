@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Classes related with MCP ChatGPT integration.
+ * Classes related with MCP ChatGPT integration required Tools.
  * <a href="https://platform.openai.com/docs/mcp">Building MCP servers for ChatGPT and API integrations</a>
  */
 package io.micronaut.mcp.server.tools;
