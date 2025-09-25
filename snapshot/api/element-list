@@ -2,6 +2,7 @@ io.micronaut.mcp.annotations
 io.micronaut.mcp.client.langchain4j
 io.micronaut.mcp.conf
 io.micronaut.mcp.server
+io.micronaut.mcp.server.context
 io.micronaut.mcp.server.exceptions
 io.micronaut.mcp.server.json
 io.micronaut.mcp.server.registry
