@@ -14,6 +14,7 @@ server:
     serverInstance: Server Instance
     primitivesClassesPerServerType: Primitive types per Transport
     serverCapabilities: Server Capabilities
+  context: MCP Transport Context
   primitives:
     title: Primitives
     tools:

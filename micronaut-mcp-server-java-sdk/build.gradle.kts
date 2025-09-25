@@ -14,6 +14,7 @@ dependencies {
     annotationProcessor(mnJsonSchema.micronaut.json.schema.processor)
     implementation(mnJsonSchema.micronaut.json.schema.annotations)
     implementation(mnJsonSchema.micronaut.json.schema.validation)
+    testImplementation(mnSecurity.micronaut.security)
     api(mnJsonSchema.micronaut.json.schema.utils)
     api(mnValidation.validation)
     compileOnly(mn.micronaut.http.server)

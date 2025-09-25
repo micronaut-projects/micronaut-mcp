@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.server;
+package io.micronaut.mcp.server.context;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.LocaleResolver;
+import io.micronaut.http.HttpAttributes;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.server.util.HttpHostResolver;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
 import io.modelcontextprotocol.spec.ProtocolVersions;
 import jakarta.inject.Singleton;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,17 +36,32 @@ import java.util.Map;
 @Internal
 @Singleton
 final class DefaultMcpTransportContextExtractor implements McpTransportContextExtractor<HttpRequest<?>> {
+    private final HttpHostResolver hostResolver;
+    private final LocaleResolver<HttpRequest<?>> localeResolver;
+
+    DefaultMcpTransportContextExtractor(HttpHostResolver hostResolver,
+                                        LocaleResolver<HttpRequest<?>> localeResolver) {
+        this.hostResolver = hostResolver;
+        this.localeResolver = localeResolver;
+    }
+
     @Override
     public McpTransportContext extract(HttpRequest<?> request) {
-        return McpTransportContext.create(metadata(request));
+        return new MicronautMcpTransportContextAdapter(McpTransportContext.create(metadata(request)));
     }
 
     private Map<String, Object> metadata(HttpRequest<?> request) {
-        return metadata(request.getHeaders());
+        Map<String, Object> m = new HashMap<>(metadata(request.getHeaders()));
+        m.put(HttpHeaders.HOST, hostResolver.resolve(request));
+        localeResolver.resolve(request)
+            .ifPresent(locale -> m.put(HttpHeaders.ACCEPT_LANGUAGE, locale));
+        request.getAttribute(HttpAttributes.PRINCIPAL.toString(), Principal.class)
+            .ifPresent(auth -> m.put(HttpAttributes.PRINCIPAL.toString(), auth));
+        return m;
     }
 
     private Map<String, Object> metadata(HttpHeaders headers) {
-        Map<String, Object> metadata = new HashMap<>();
+        Map<String, Object> metadata = new HashMap<>(3);
         metadata.put(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION,
             headers.get(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION, String.class)
                 .orElse(ProtocolVersions.MCP_2025_03_26));
