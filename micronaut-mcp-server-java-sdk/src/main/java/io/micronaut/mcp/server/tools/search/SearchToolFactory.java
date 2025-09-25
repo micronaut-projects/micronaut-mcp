@@ -41,15 +41,14 @@ final class SearchToolFactory {
     SearchToolFactory(SearchTool tool,
                       McpJsonMapper mcpJsonMapper,
                       JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader) {
-        String searchRequestJsonSchema = jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(SearchRequest.class)
-                .orElseThrow(() -> new ConfigurationException("JSON Schema not found for SearchRequest"));
-        String searchResponseJsonSchema = jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(SearchResponse.class)
-                .orElseThrow(() -> new ConfigurationException("JSON Schema not found for SearchResponse"));
         this.mcpSearchTool = McpSchema.Tool.builder()
                 .name(tool.getName())
+                .title(tool.getTitle())
                 .description(tool.getDescription())
-                .inputSchema(mcpJsonMapper, searchRequestJsonSchema)
-                .outputSchema(mcpJsonMapper, searchResponseJsonSchema)
+                .inputSchema(mcpJsonMapper, jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(SearchRequest.class)
+                    .orElseThrow(() -> new ConfigurationException("JSON Schema not found for SearchRequest")))
+                .outputSchema(mcpJsonMapper, jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(SearchResponse.class)
+                    .orElseThrow(() -> new ConfigurationException("JSON Schema not found for SearchResponse")))
                 .build();
     }
 

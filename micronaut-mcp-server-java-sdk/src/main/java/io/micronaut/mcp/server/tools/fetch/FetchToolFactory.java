@@ -43,15 +43,14 @@ final class FetchToolFactory {
     FetchToolFactory(FetchTool tool,
                      McpJsonMapper mcpJsonMapper,
                      JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader) {
-        String fetchRequestJsonSchema = jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(FetchRequest.class)
-            .orElseThrow(() -> new ConfigurationException("JSON Schema not found for FetchRequest"));
-        String fetchResponseJsonSchema = jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(FetchResponse.class)
-            .orElseThrow(() -> new ConfigurationException("JSON Schema not found for FetchResponse"));
         this.mcpFetchTool = McpSchema.Tool.builder()
             .name(tool.getName())
+            .title(tool.getTitle())
             .description(tool.getDescription())
-            .inputSchema(mcpJsonMapper, fetchRequestJsonSchema)
-            .outputSchema(mcpJsonMapper, fetchResponseJsonSchema)
+            .inputSchema(mcpJsonMapper, jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(FetchRequest.class)
+                .orElseThrow(() -> new ConfigurationException("JSON Schema not found for FetchRequest")))
+            .outputSchema(mcpJsonMapper, jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(FetchResponse.class)
+                .orElseThrow(() -> new ConfigurationException("JSON Schema not found for FetchResponse")))
             .build();
     }
 

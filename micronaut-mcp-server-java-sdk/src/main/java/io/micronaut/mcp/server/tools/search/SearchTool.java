@@ -26,13 +26,31 @@ import io.modelcontextprotocol.common.McpTransportContext;
 @FunctionalInterface
 public interface SearchTool {
     String DEFAULT_NAME = "search";
+    String DEFAULT_TITLE = "Search";
     String DEFAULT_DESCRIPTION = "Returns a list of relevant search results, given a user's query.";
 
+    /**
+     *
+     * @return MCP Tool Name
+     */
     @NonNull
     default String getName() {
         return DEFAULT_NAME;
     }
 
+    /**
+     *
+     * @return MCP Tool Title
+     */
+    @NonNull
+    default String getTitle() {
+        return DEFAULT_TITLE;
+    }
+
+    /**
+     *
+     * @return MCP Tool Description
+     */
     @NonNull
     default String getDescription() {
         return DEFAULT_DESCRIPTION;

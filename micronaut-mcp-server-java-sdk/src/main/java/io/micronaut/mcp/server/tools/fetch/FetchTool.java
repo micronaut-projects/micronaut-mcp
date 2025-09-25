@@ -27,11 +27,21 @@ import java.util.Optional;
 @FunctionalInterface
 public interface FetchTool {
     String DEFAULT_NAME = "fetch";
+    String DEFAULT_TITLE = "Fetch";
     String DEFAULT_DESCRIPTION = "This tool retrieves the full contents of a search result document or item.";
 
     @NonNull
     default String getName() {
         return DEFAULT_NAME;
+    }
+
+    /**
+     *
+     * @return MCP Tool Title
+     */
+    @NonNull
+    default String getTitle() {
+        return DEFAULT_TITLE;
     }
 
     @NonNull
