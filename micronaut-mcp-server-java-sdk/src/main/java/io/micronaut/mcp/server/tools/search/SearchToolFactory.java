@@ -31,6 +31,9 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Mono;
 
+/**
+ * Factory to create beans of type {@link McpServerFeatures.SyncToolSpecification}, {@link McpServerFeatures.AsyncToolSpecification}, {@link McpStatelessServerFeatures.SyncToolSpecification}, and {@link McpStatelessServerFeatures.AsyncToolSpecification} given a bean of type {@link SearchTool}.
+ */
 @Requires(beans = SearchTool.class)
 @Factory
 @Internal
@@ -52,6 +55,13 @@ final class SearchToolFactory {
                 .build();
     }
 
+    /**
+     * Creates a bean of type {@link McpServerFeatures.SyncToolSpecification} for a bean of type {@link SearchTool}.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_REACTIVE} not to be set to true.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_TRANSPORT} be set to STDIO.
+     * @param searchTool Search Tool
+     * @return Bean of type {@link McpServerFeatures.SyncToolSpecification}
+     */
     @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
     @Requires(property = McpServerConfiguration.PROPERTY_TRANSPORT, value = McpServerConfiguration.TRANSPORT_STDIO)
     @Named(SearchTool.DEFAULT_NAME)
@@ -62,6 +72,13 @@ final class SearchToolFactory {
                 .callHandler((exchange, req) -> getCallToolResult(searchTool, req, exchange.transportContext())).build();
     }
 
+    /**
+     * Creates a bean of type {@link McpServerFeatures.AsyncToolSpecification} for a bean of type {@link SearchTool}.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_REACTIVE} to be set to true.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_TRANSPORT} be set to STDIO.
+     * @param searchTool Search Tool
+     * @return Bean of type {@link McpServerFeatures.AsyncToolSpecification}
+     */
     @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.TRUE)
     @Requires(property = McpServerConfiguration.PROPERTY_TRANSPORT, value = McpServerConfiguration.TRANSPORT_STDIO)
     @Named(SearchTool.DEFAULT_NAME)
@@ -74,6 +91,13 @@ final class SearchToolFactory {
                 .build();
     }
 
+    /**
+     * Creates a bean of type {@link McpStatelessServerFeatures.AsyncToolSpecification} for a bean of type {@link SearchTool}.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_REACTIVE} to be set to true.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_TRANSPORT} be set to HTTP.
+     * @param searchTool Search Tool
+     * @return Bean of type {@link McpStatelessServerFeatures.AsyncToolSpecification}
+     */
     @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.TRUE)
     @Requires(property = McpServerConfiguration.PROPERTY_TRANSPORT, value = McpServerConfiguration.TRANSPORT_HTTP)
     @Named(SearchTool.DEFAULT_NAME)
@@ -86,6 +110,13 @@ final class SearchToolFactory {
                 .build();
     }
 
+    /**
+     * Creates a bean of type {@link McpStatelessServerFeatures.SyncToolSpecification} for a bean of type {@link SearchTool}.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_REACTIVE} not to be set to true.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_TRANSPORT} be set to HTTP.
+     * @param searchTool Search Tool
+     * @return Bean of type {@link McpStatelessServerFeatures.SyncToolSpecification}
+     */
     @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
     @Requires(property = McpServerConfiguration.PROPERTY_TRANSPORT, value = McpServerConfiguration.TRANSPORT_HTTP)
     @Named(SearchTool.DEFAULT_NAME)

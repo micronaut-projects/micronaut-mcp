@@ -33,6 +33,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
+/**
+ * Factory to create beans of type {@link McpServerFeatures.SyncToolSpecification}, {@link McpServerFeatures.AsyncToolSpecification}, {@link McpStatelessServerFeatures.SyncToolSpecification}, and {@link McpStatelessServerFeatures.AsyncToolSpecification} given a bean of type {@link FetchTool}.
+ */
 @Requires(beans = FetchTool.class)
 @Factory
 @Internal
@@ -54,6 +57,13 @@ final class FetchToolFactory {
             .build();
     }
 
+    /**
+     * Creates a bean of type {@link McpServerFeatures.SyncToolSpecification} for a bean of type {@link FetchTool}.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_REACTIVE} not to be set to true.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_TRANSPORT} be set to STDIO.
+     * @param fetchTool Fetch Tool
+     * @return Bean of type {@link McpServerFeatures.SyncToolSpecification}
+     */
     @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
     @Requires(property = McpServerConfiguration.PROPERTY_TRANSPORT, value = McpServerConfiguration.TRANSPORT_STDIO)
     @Singleton
@@ -65,6 +75,13 @@ final class FetchToolFactory {
                     getCallToolResult(fetchTool, req, exchange.transportContext())).build();
     }
 
+    /**
+     * Creates a bean of type {@link McpServerFeatures.AsyncToolSpecification} for a bean of type {@link FetchTool}.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_REACTIVE} to be set to true.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_TRANSPORT} be set to STDIO.
+     * @param fetchTool Fetch Tool
+     * @return Bean of type {@link McpServerFeatures.AsyncToolSpecification}
+     */
     @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.TRUE)
     @Requires(property = McpServerConfiguration.PROPERTY_TRANSPORT, value = McpServerConfiguration.TRANSPORT_STDIO)
     @Singleton
@@ -77,6 +94,13 @@ final class FetchToolFactory {
             .build();
     }
 
+    /**
+     * Creates a bean of type {@link McpStatelessServerFeatures.AsyncToolSpecification} for a bean of type {@link FetchTool}.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_REACTIVE} to be set to true.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_TRANSPORT} be set to HTTP.
+     * @param fetchTool Fetch Tool
+     * @return Bean of type {@link McpStatelessServerFeatures.AsyncToolSpecification}
+     */
     @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.TRUE)
     @Requires(property = McpServerConfiguration.PROPERTY_TRANSPORT, value = McpServerConfiguration.TRANSPORT_HTTP)
     @Singleton
@@ -89,6 +113,13 @@ final class FetchToolFactory {
             .build();
     }
 
+    /**
+     * Creates a bean of type {@link McpStatelessServerFeatures.SyncToolSpecification} for a bean of type {@link FetchTool}.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_REACTIVE} not to be set to true.
+     * The method requires the property {@link McpServerConfiguration#PROPERTY_TRANSPORT} be set to HTTP.
+     * @param fetchTool Fetch Tool
+     * @return Bean of type {@link McpStatelessServerFeatures.SyncToolSpecification}
+     */
     @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
     @Requires(property = McpServerConfiguration.PROPERTY_TRANSPORT, value = McpServerConfiguration.TRANSPORT_HTTP)
     @Singleton
