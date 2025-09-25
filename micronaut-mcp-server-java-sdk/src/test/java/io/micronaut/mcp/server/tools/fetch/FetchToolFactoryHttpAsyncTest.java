@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Property(name = "micronaut.mcp.server.reactive", value = StringUtils.TRUE)
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "spec.name", value = "FetchToolFactoryTest")
+@Property(name = "spec.tool.name", value = "MicronautModulesFetch")
 @MicronautTest
 class FetchToolFactoryHttpAsyncTest {
 
@@ -70,19 +71,5 @@ class FetchToolFactoryHttpAsyncTest {
    }
  }""";
         JSONAssert.assertEquals(expected, responseJson, true);
-    }
-
-    @Requires(property = "spec.name", value = "FetchToolFactoryHttpAsyncTest")
-    @Singleton
-    static class MicronautModulesFetch implements FetchTool {
-        @Override
-        public Optional<FetchResponse> fetch(FetchRequest request, McpTransportContext transportContext) {
-            return Optional.of(FetchResponse.builder()
-                .id("micronaut-security")
-                .title("Micronaut Security")
-                .url("https://micronaut-projects.github.io/micronaut-security/latest/guide")
-                .text("Built-in security features. Authentication providers and strategies, Token Propagation.")
-                .build());
-        }
     }
 }

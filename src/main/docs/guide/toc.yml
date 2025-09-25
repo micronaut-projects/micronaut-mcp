@@ -18,6 +18,8 @@ server:
     title: Primitives
     tools:
       title: Tools
+      search: Search Tool
+      fetch: Fetch Tool
       toolsAnnotations: Tools with Annotations
       toolsInputJsonSchema: Tools Input JSON Schema
       toolsOutputJsonSchema: Tools Output JSON Schema

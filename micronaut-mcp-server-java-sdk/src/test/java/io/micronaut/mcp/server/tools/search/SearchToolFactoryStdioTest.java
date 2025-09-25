@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
 @Property(name = "micronaut.mcp.server.transport", value = "STDIO")
 @Property(name = "spec.name", value = "SearchToolFactoryStdioTest")
+@Requires(property = "spec.name", value = "MicronautModulesSearch")
 @MicronautTest
 class SearchToolFactoryStdioTest {
     @Inject
@@ -70,20 +71,6 @@ class SearchToolFactoryStdioTest {
   }
 }""";
         JSONAssert.assertEquals(expected, responseJson, true);
-    }
-
-    @Requires(property = "spec.name", value = "SearchToolFactoryStdioTest")
-    @Singleton
-    static class MicronautModulesSearch implements SearchTool {
-
-        @Override
-        public SearchResponse search(SearchRequest request, McpTransportContext transportContext) {
-            return new SearchResponse(List.of(SearchResult.builder()
-                .id("micronaut-security")
-                .title("Micronaut Security")
-                .url("https://micronaut-projects.github.io/micronaut-security/latest/guide")
-                .build()));
-        }
     }
 
     @Requires(property = "spec.name", value = "SearchToolFactoryStdioTest")
