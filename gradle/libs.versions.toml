@@ -19,6 +19,7 @@
 micronaut = "4.9.11"
 micronaut-platform = "4.9.3"
 micronaut-docs = "2.0.0"
+micronaut-security = "4.15.0"
 micronaut-serde = "2.15.1"
 micronaut-json-schema = "1.7.1"
 micronaut-logging = "1.7.0"
@@ -33,7 +34,7 @@ micronaut-gradle-plugin = "4.5.4"
 
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
-
+micronaut-security = { module = 'io.micronaut.security:micronaut-security-bom', version.ref = 'micronaut-security' }
 micronaut-json-schema = { module = 'io.micronaut.jsonschema:micronaut-json-schema-bom', version.ref = 'micronaut-json-schema' }
 micronaut-langchain4j = { module = 'io.micronaut.langchain4j:micronaut-langchain4j-bom', version.ref = 'micronaut-langchain4j' }
 micronaut-serde = { module = 'io.micronaut.serde:micronaut-serde-bom', version.ref = 'micronaut-serde' }

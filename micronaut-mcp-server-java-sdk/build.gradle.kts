@@ -13,6 +13,7 @@ dependencies {
     api(projects.micronautMcp)
     api(projects.micronautMcpAnnotations)
     implementation(mnJsonSchema.micronaut.json.schema.validation)
+    testImplementation(mnSecurity.micronaut.security)
     api(mnJsonSchema.micronaut.json.schema.utils)
     api(mnValidation.validation)
     compileOnly(mn.micronaut.http.server)
