@@ -1,7 +1,7 @@
 package io.micronaut.mcp.server.tools.fetch;
 
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
+import io.modelcontextprotocol.common.McpTransportContext;
 import jakarta.inject.Singleton;
 
 import java.util.Optional;
@@ -12,7 +12,7 @@ import java.util.Optional;
 class MicronautModulesFetch implements FetchTool {
 
     @Override
-    public Optional<FetchResponse> fetch(FetchRequest request, MicronautMcpTransportContext transportContext) {
+    public Optional<FetchResponse> fetch(FetchRequest request, McpTransportContext transportContext) {
         return Optional.of(FetchResponse.builder()
             .id("micronaut-security")
             .title("Micronaut Security")

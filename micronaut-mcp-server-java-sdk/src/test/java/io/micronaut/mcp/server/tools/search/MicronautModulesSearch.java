@@ -1,7 +1,7 @@
 package io.micronaut.mcp.server.tools.search;
 
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
+import io.modelcontextprotocol.common.McpTransportContext;
 import jakarta.inject.Singleton;
 
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.List;
 class MicronautModulesSearch implements SearchTool {
 
     @Override
-    public SearchResponse search(SearchRequest request, MicronautMcpTransportContext transportContext) {
+    public SearchResponse search(SearchRequest request, McpTransportContext transportContext) {
         return new SearchResponse(List.of(SearchResult.builder()
             .id("micronaut-security")
             .title("Micronaut Security")

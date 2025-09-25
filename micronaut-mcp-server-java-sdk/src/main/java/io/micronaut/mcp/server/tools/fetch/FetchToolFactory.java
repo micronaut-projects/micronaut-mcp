@@ -22,7 +22,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.conf.McpServerConfiguration;
-import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -137,8 +136,8 @@ final class FetchToolFactory {
                                                               McpSchema.CallToolRequest req,
                                                               McpTransportContext mcpTransportContext) {
         Object obj = req.arguments().get(ID);
-        if (obj instanceof String id && mcpTransportContext instanceof MicronautMcpTransportContext context) {
-            Optional<FetchResponse> fetchResponse = fetchTool.fetch(new FetchRequest(id), context);
+        if (obj instanceof String id) {
+            Optional<FetchResponse> fetchResponse = fetchTool.fetch(new FetchRequest(id), mcpTransportContext);
             if (fetchResponse.isEmpty()) {
                 return McpSchema.CallToolResult.builder()
                         .addTextContent("search result not found")

@@ -17,7 +17,7 @@ package io.micronaut.mcp.server.tools.fetch;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
+import io.modelcontextprotocol.common.McpTransportContext;
 
 import java.util.Optional;
 
@@ -57,5 +57,5 @@ public interface FetchTool {
      */
     @NonNull
     Optional<FetchResponse> fetch(@NonNull FetchRequest request,
-                                  @Nullable MicronautMcpTransportContext mcpTransportContext);
+                                  @Nullable McpTransportContext mcpTransportContext);
 }

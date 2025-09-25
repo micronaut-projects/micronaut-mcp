@@ -22,7 +22,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.conf.McpServerConfiguration;
-import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -133,8 +132,8 @@ final class SearchToolFactory {
     private static McpSchema.CallToolResult getCallToolResult(SearchTool searchTool,
                                                               McpSchema.CallToolRequest req,
                                                               McpTransportContext mcpTransportContext) {
-        if (req.arguments() != null && req.arguments().get(QUERY) instanceof String query && mcpTransportContext instanceof MicronautMcpTransportContext context) {
-            SearchResponse searchResponse = searchTool.search(new SearchRequest(query), context);
+        if (req.arguments() != null && req.arguments().get(QUERY) instanceof String query) {
+            SearchResponse searchResponse = searchTool.search(new SearchRequest(query), mcpTransportContext);
             return McpSchema.CallToolResult.builder()
                     .structuredContent(searchResponse)
                     .build();

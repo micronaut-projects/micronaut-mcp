@@ -17,7 +17,7 @@ package io.micronaut.mcp.server.tools.search;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
+import io.modelcontextprotocol.common.McpTransportContext;
 
 /**
  *  The search tool is responsible for returning a list of relevant search results from your MCP server's data source, given a user's query.
@@ -64,5 +64,5 @@ public interface SearchTool {
      */
     @NonNull
     SearchResponse search(@NonNull SearchRequest request,
-                          @Nullable MicronautMcpTransportContext mcpTransportContext);
+                          @Nullable McpTransportContext mcpTransportContext);
 }
