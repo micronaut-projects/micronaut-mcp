@@ -8,10 +8,11 @@ dependencies {
     compileOnly(mn.jackson.databind)
     annotationProcessor(mnSerde.micronaut.serde.processor)
     testImplementation(mnSerde.micronaut.serde.jackson)
-
     api(libs.managed.mcp.java.sdk)
     api(projects.micronautMcp)
     api(projects.micronautMcpAnnotations)
+    annotationProcessor(mnJsonSchema.micronaut.json.schema.processor)
+    implementation(mnJsonSchema.micronaut.json.schema.annotations)
     implementation(mnJsonSchema.micronaut.json.schema.validation)
     testImplementation(mnSecurity.micronaut.security)
     api(mnJsonSchema.micronaut.json.schema.utils)

@@ -1,0 +1,6 @@
+If you need to expose a https://platform.openai.com/docs/mcp#search-tool[Search Tool] in your MCP Server, you can do it easily defining a bean of type api:mcp.server.tools.search.SearchTool[]
+
+[source, Java]
+----
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/tools/search/MicronautModulesSearch.java[tags="clazz",indent=0]
+----
