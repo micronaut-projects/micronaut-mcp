@@ -60,7 +60,7 @@ class McpTransportContextToolBindingTest {
     "content": [
       {
         "type": "text",
-        "text": "Hola"
+        "text": "Hello: Hola"
       }
     ],
     "isError": false
@@ -173,7 +173,7 @@ class McpTransportContextToolBindingTest {
             if (obj instanceof Locale locale) {
                 if (request.query().equalsIgnoreCase("hello")) {
                     if (locale.toLanguageTag().equals("es-ES")) {
-                        return "Hola";
+                        return request.query() + ": Hola";
                     }
                     return "Hello";
                 }

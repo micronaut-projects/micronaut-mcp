@@ -22,9 +22,12 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.json.JsonMapper;
+import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.PromptArg;
 import io.micronaut.mcp.conf.McpServerConfiguration;
+import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -55,7 +58,11 @@ public final class PromptRegistry
     public static final String MEMBER_DESCRIPTION = "description";
     private final BeanContext beanContext;
 
-    PromptRegistry(BeanContext beanContext) {
+    PromptRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
+                   JsonMapper jsonMapper,
+                   List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
+                   BeanContext beanContext) {
+        super(jsonSchemaClassPathResourceLoader, jsonMapper, exceptionMappers);
         this.beanContext = beanContext;
     }
 
@@ -128,11 +135,7 @@ public final class PromptRegistry
                                                        Object mcpTransportContext,
                                                        McpSchema.GetPromptRequest promptRequest) {
         B bean = beanContext.getBean(beanDefinition);
-        List<String> names = promptArgumentsNames(method);
-        Object[] args = new Object[names.size()];
-        for (int i = 0; i < names.size(); i++) {
-            args[i] = promptRequest.arguments().get(names.get(i));
-        }
+        Object[] args = methodArgs(method, promptRequest.arguments(), promptRequest, mcpTransportContext, PromptRegistry::promptArgumentName);
         Object result = method.invoke(bean, args);
 
         if (result instanceof McpSchema.GetPromptResult promptResult) {
@@ -164,14 +167,6 @@ public final class PromptRegistry
 
     private McpSchema.PromptArgument promptArgument(Argument<?> argument) {
         return new McpSchema.PromptArgument(promptArgumentName(argument), promptArgumentDescription(argument).orElse(null), isPromptArgumentRequired(argument));
-    }
-
-    private static List<String> promptArgumentsNames(ExecutableMethod<?, ?> method) {
-        List<String> names = new ArrayList<>(method.getArguments().length);
-        for (Argument<?> argument : method.getArguments()) {
-            names.add(promptArgumentName(argument));
-        }
-        return names;
     }
 
     private static String promptArgumentName(Argument<?> argument) {

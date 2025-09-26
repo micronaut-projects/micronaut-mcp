@@ -17,11 +17,9 @@ package io.micronaut.mcp.server.registry;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.json.JsonMapper;
@@ -29,13 +27,9 @@ import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.ToolArg;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
-import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.McpJsonMapper;
-import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
-import io.modelcontextprotocol.server.McpSyncServerExchange;
-import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -43,17 +37,10 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
-
-import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_OBJECT;
-import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_STRING;
 
 /**
  * The registry of {@link Tool}s.
@@ -62,45 +49,23 @@ import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_STRING;
 @Internal
 public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatures.SyncToolSpecification, McpServerFeatures.AsyncToolSpecification, McpStatelessServerFeatures.SyncToolSpecification, McpStatelessServerFeatures.AsyncToolSpecification> {
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
-    private static final Class<?> TRANSPORT_CONTEXT_CLASS = McpTransportContext.class;
-    private static final List<Class<?>> BINDABLE_PARAMETER_TYPES = List.of(TRANSPORT_CONTEXT_CLASS);
-
-    /**
-     * @see <a href="https://json-schema.org/understanding-json-schema/reference/type">JSON Schema Type</a>
-     */
-    private static final String MEMBER_DESCRIPTION = "description";
     private static final String MEMBER_TITLE = "title";
-    private static final String KEY_TYPE = "type";
 
     private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;
     private final McpJsonMapper mcpJsonMapper;
     private final JsonMapper jsonMapper;
     private final BeanContext beanContext;
-    private final Map<Class<? extends Throwable>, McpErrorExceptionMapper<? extends Throwable>> classToExceptionMapper = new ConcurrentHashMap<>();
-    private final List<McpErrorExceptionMapper<?>> exceptionMappers;
 
     ToolRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
-                 McpJsonMapper mcpJsonMapper,
                  JsonMapper jsonMapper,
-                 BeanContext beanContext,
-                 List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers) {
+                 List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
+                 McpJsonMapper mcpJsonMapper,
+                 BeanContext beanContext) {
+        super(jsonSchemaClassPathResourceLoader, jsonMapper, exceptionMappers);
         this.jsonSchemaClassPathResourceLoader = jsonSchemaClassPathResourceLoader;
         this.mcpJsonMapper = mcpJsonMapper;
         this.jsonMapper = jsonMapper;
         this.beanContext = beanContext;
-        this.exceptionMappers = exceptionMappers;
-    }
-
-    @Nullable
-    McpErrorExceptionMapper<? extends Throwable> getExceptionMapper(@NonNull Class<? extends Throwable> exceptionClass) {
-        return classToExceptionMapper.computeIfAbsent(exceptionClass, aClass -> {
-            for (McpErrorExceptionMapper<?> exceptionMapper : exceptionMappers) {
-                if (exceptionMapper.canMap(aClass)) {
-                    return exceptionMapper;
-                }
-            }
-            return null;
-        });
     }
 
     @Override
@@ -164,73 +129,13 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return Mono.just(result);
     }
 
-    @Nullable
-    private McpTransportContext resolveMcpTransportContext(Object ctx) {
-        McpTransportContext mcpTransportContext = null;
-        if (ctx instanceof McpTransportContext mcpCtx) {
-            mcpTransportContext = mcpCtx;
-        }
-        if (mcpTransportContext == null && ctx instanceof McpSyncServerExchange ex) {
-            ex.transportContext();
-        }
-        if (mcpTransportContext == null && ctx instanceof McpAsyncServerExchange ex) {
-            ex.transportContext();
-        }
-        return mcpTransportContext;
-    }
-
-    private <B> Object[] methodArgs(ExecutableMethod<B, Object> method,
-                                    McpSchema.CallToolRequest callToolRequest,
-                                    Object ctx) {
-        McpTransportContext mcpTransportContext = resolveMcpTransportContext(ctx);
-        Object[] args = new Object[method.getArguments().length];
-        LinkedHashMap<Class<?>, Integer> boundArgumentsPositions = boundArgumentsPositions(method);
-        Integer position = boundArgumentsPositions.get(TRANSPORT_CONTEXT_CLASS);
-        int boundArguments = 0;
-        if (position != null) {
-            args[position] = mcpTransportContext;
-            boundArguments++;
-        }
-        if (jsonSchema(method).isPresent()) {
-            for (int i = 0; i < args.length; i++) {
-                if (boundArgumentsPositions.values().contains(i)) {
-                    continue;
-                }
-                args[i] = instantiateArgumentViaJsonMapper(method, i, callToolRequest);
-            }
-            return args;
-        }
-        for (int i = 0; i < args.length; i++) {
-            if (boundArgumentsPositions.values().contains(i)) {
-                continue;
-            }
-            args[i] = callToolRequest.arguments().get(argName(method, i));
-        }
-        return args;
-    }
-
-    private <B> Object instantiateArgumentViaJsonMapper(ExecutableMethod<B, Object> method,
-                                                        int position,
-                                                        McpSchema.CallToolRequest callToolRequest) {
-        try {
-            String payload = jsonMapper.writeValueAsString(callToolRequest.arguments());
-            Argument<?> argument = method.getArguments()[position];
-            Class<?> classInputSchema = argument.getType();
-            return jsonMapper.readValue(payload, classInputSchema);
-
-        } catch (IOException ex) {
-            throw mcpError(ex);
-        }
-    }
-
     private <B> McpSchema.CallToolResult callToolToResult(BeanDefinition<B> beanDefinition,
                                                           ExecutableMethod<B, Object> method,
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
         Argument<?> returnClass = method.getReturnType().asArgument();
         B bean = beanContext.getBean(beanDefinition);
-
-        Object[] args = methodArgs(method, callToolRequest, mcpTransportContext);
+        Object[] args = methodArgs(method, callToolRequest.arguments(), callToolRequest, mcpTransportContext, ToolRegistry::toolArgumentName);
         try {
             Object result = method.invoke(bean, args);
             String text = "";
@@ -259,22 +164,6 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         }
     }
 
-    private McpError mcpError(Exception ex) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(ex.getMessage(), ex);
-        }
-        McpErrorExceptionMapper<? extends Throwable> exceptionMapper = getExceptionMapper(ex.getClass());
-        if (exceptionMapper != null) {
-            return mapException(exceptionMapper, ex);
-        }
-        return new McpError(McpSchema.ErrorCodes.INTERNAL_ERROR);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T extends Exception> McpError mapException(McpErrorExceptionMapper<? extends Throwable> mapper, T ex) {
-        return ((McpErrorExceptionMapper<T>) mapper).map(ex);
-    }
-
     private <B> McpSchema.Tool tool(ExecutableMethod<B, Object> method) {
         McpSchema.Tool.Builder toolBuilder = McpSchema.Tool.builder()
             .name(toolName(method));
@@ -284,75 +173,10 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         if (jsonSchemaOptional.isPresent()) {
             toolBuilder.inputSchema(mcpJsonMapper, jsonSchemaOptional.get());
         } else {
-            toolBuilder.inputSchema(inputSchema(method));
+            toolBuilder.inputSchema(inputSchema(method, ToolRegistry::toolArgumentName, ToolRegistry::toolArgDescription));
         }
         toolOutputSchema(method).ifPresent(schema -> toolBuilder.outputSchema(mcpJsonMapper, schema));
         return toolBuilder.build();
-    }
-
-    private Optional<String> jsonSchema(ExecutableMethod<?, ?> method) {
-        Argument<?>[] arguments = method.getArguments();
-        int boundArguments = 0;
-        for (int i = 0; i < arguments.length; i++) {
-            Argument<?> argument = arguments[i];
-            Class<?> type = argument.getType();
-            if (BINDABLE_PARAMETER_TYPES.stream().anyMatch(bindableParameterType -> bindableParameterType.isAssignableFrom(type))) {
-                boundArguments++;
-            }
-        }
-        if ((method.getArguments().length - boundArguments) != 1) {
-            return Optional.empty();
-        }
-        int index = -1;
-        for (int i = 0; i < arguments.length; i++) {
-            Argument<?> argument = arguments[i];
-            Class<?> type = argument.getType();
-            if (BINDABLE_PARAMETER_TYPES.stream().anyMatch(bindableParameterType -> bindableParameterType.isAssignableFrom(type))) {
-                continue;
-            }
-            index = i;
-            break;
-        }
-        if (index == -1) {
-            return Optional.empty();
-        }
-        Argument<?> argument = arguments[index];
-        Class<?> argumentClass = argument.getType();
-        return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(argumentClass);
-    }
-
-    private <B> LinkedHashMap<Class<?>, Integer> boundArgumentsPositions(ExecutableMethod<B, Object> method) {
-        LinkedHashMap<Class<?>, Integer> result = new LinkedHashMap<>();
-        Argument<?>[] arguments = method.getArguments();
-        for (int i = 0; i < arguments.length; i++) {
-            Argument<?> argument = arguments[i];
-            for (Class<?> bindinableParameterType : BINDABLE_PARAMETER_TYPES) {
-                if (bindinableParameterType.isAssignableFrom(argument.getType())) {
-                    result.put(bindinableParameterType, i);
-                    break;
-                }
-            }
-        }
-        return result;
-    }
-
-    private <B> McpSchema.JsonSchema inputSchema(ExecutableMethod<B, Object> method) {
-        Collection<Integer> boundArgumentsPositions = boundArgumentsPositions(method).values();
-        Argument<?>[] arguments = method.getArguments();
-        Map<String, Object> properties = CollectionUtils.newHashMap(arguments.length);
-        List<String> requiredProperties = new ArrayList<>(arguments.length);
-        for (int i = 0; i < arguments.length; i++) {
-            if (boundArgumentsPositions.contains(i)) {
-                continue;
-            }
-            Argument<?> argument = arguments[i];
-            String propertyName = toolArgumentName(argument);
-            properties.put(propertyName, toolArgumentJsonSchema(argument));
-            if (isToolArgumentRequired(argument)) {
-                requiredProperties.add(propertyName);
-            }
-        }
-        return new McpSchema.JsonSchema(TYPE_OBJECT, properties, requiredProperties, null, null, null);
     }
 
     private Optional<String> toolOutputSchema(ExecutableMethod<?, ?> method) {
@@ -360,37 +184,11 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(returnClass);
     }
 
-    private static Object toolArgumentJsonSchema(Argument<?> argument) {
-        String description = argument.getAnnotationMetadata().stringValue(ToolArg.class, MEMBER_DESCRIPTION)
-            .filter(desc -> !desc.isEmpty())
-            .orElse(null);
-
-        if (description != null) {
-            Map<String, Object> schema = new LinkedHashMap<>();
-            schema.put(KEY_TYPE, toolArgumentType(argument));
-            if (StringUtils.isNotEmpty(description)) {
-                schema.put(MEMBER_DESCRIPTION, description);
-            }
-            return schema;
-        }
-
-        return new McpSchema.JsonSchema(toolArgumentType(argument), null, null, null, null, null);
-    }
-
-    private static boolean isToolArgumentRequired(Argument<?> argument) {
-        return !argument.isNullable();
-    }
-
     private static String toolArgumentName(Argument<?> argument) {
         return argument.findAnnotation(ToolArg.class)
             .flatMap(annValue -> annValue.stringValue("name"))
             .filter(name -> !name.equals(ToolArg.ELEMENT_NAME))
             .orElseGet(argument::getName);
-    }
-
-    private static String argName(ExecutableMethod<?, ?> method, int position) {
-        Argument<?> argument = method.getArguments()[position];
-        return toolArgumentName(argument);
     }
 
     private static Optional<String> toolTitle(ExecutableMethod<?, ?> method) {
@@ -401,11 +199,11 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return method.stringValue(Tool.class, MEMBER_DESCRIPTION);
     }
 
-    private static String toolArgumentType(Argument<?> argument) {
-        if (argument.isAssignableFrom(String.class)) {
-            return TYPE_STRING;
-        }
-        return TYPE_OBJECT;
+    @Nullable
+    private static String toolArgDescription(Argument<?> argument) {
+        return argument.getAnnotationMetadata().stringValue(ToolArg.class, MEMBER_DESCRIPTION)
+            .filter(desc -> !desc.isEmpty())
+            .orElse(null);
     }
 
     private static String toolName(ExecutableMethod<?, ?> method) {

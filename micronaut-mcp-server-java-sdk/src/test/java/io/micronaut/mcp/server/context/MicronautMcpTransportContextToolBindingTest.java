@@ -129,7 +129,7 @@ class MicronautMcpTransportContextToolBindingTest {
     "content": [
       {
         "type": "text",
-        "text": "es-ES"
+        "text": "localees-ES"
       }
     ],
     "isError": false
@@ -142,10 +142,10 @@ class MicronautMcpTransportContextToolBindingTest {
     @Singleton
     static class Tools {
         @Tool
-        String locale(MicronautMcpTransportContext ctx) {
+        String locale(MicronautMcpTransportContext ctx, McpSchema.CallToolRequest request) {
             Locale locale = ctx.locale();
             if (locale != null) {
-                return locale.toLanguageTag();
+                return request.name() + locale.toLanguageTag();
             }
             throw new McpError(new McpSchema.JSONRPCResponse.JSONRPCError(McpSchema.ErrorCodes.INTERNAL_ERROR, "could not get the locale", null));
         }
