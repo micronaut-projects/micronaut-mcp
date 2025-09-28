@@ -47,7 +47,7 @@ class MoonToolsHttpTest {
         McpSchema.JSONRPCResponse json = jsonrpcResponseOptional.get();
         assertNotNull(json.error());
         assertEquals(-32602, json.error().code());
-        assertEquals("Invalid value for 'date': '1982-30-28'", json.error().message());
+        assertEquals("Required argument [MoonPhaseRequest moonPhaseRequest] not specified", json.error().message());
     }
 
     private static HttpRequest<?> createRequest(String json) {

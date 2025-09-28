@@ -14,7 +14,7 @@ class Tools {
     }
 
     @Tool(description = "Get weather forecast for a specific latitude/longitude coordinates")
-    String getWeatherForecastByLocation(double latitude,double longitude) {
+    String getWeatherForecastByLocation(double latitude, double longitude) {
         return weatherClient.formattedForecast(latitude, longitude);
     }
 

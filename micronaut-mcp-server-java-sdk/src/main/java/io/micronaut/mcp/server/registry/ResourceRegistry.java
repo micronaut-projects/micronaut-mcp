@@ -18,10 +18,12 @@ package io.micronaut.mcp.server.registry;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.bind.ArgumentBinderRegistry;
+import io.micronaut.core.bind.BoundExecutable;
+import io.micronaut.core.bind.DefaultExecutableBinder;
+import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
-import io.micronaut.json.JsonMapper;
-import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.annotations.Resource;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
@@ -33,7 +35,6 @@ import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -58,13 +59,14 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     private static final String URI_PROPERTY = "uri";
 
     private final BeanContext beanContext;
+    private final ArgumentBinderRegistry<McpSchema.ReadResourceRequest> argumentBinderRegistry;
 
-    public ResourceRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
-                            JsonMapper jsonMapper,
-                            List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
-                            BeanContext beanContext) {
-        super(jsonSchemaClassPathResourceLoader, jsonMapper, exceptionMappers);
+    public ResourceRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
+                            BeanContext beanContext,
+                            ArgumentBinderRegistry<McpSchema.ReadResourceRequest> argumentBinderRegistry) {
+        super(exceptionMappers);
         this.beanContext = beanContext;
+        this.argumentBinderRegistry = argumentBinderRegistry;
     }
 
     @Override
@@ -140,8 +142,11 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
         B bean = beanContext.getBean(beanDefinition);
-        Object[] args = methodArgs(method, request, mcpTransportContext);
-        Object result = method.invoke(bean, args);
+
+        ExecutableBinder<McpSchema.ReadResourceRequest> executableBinder = new DefaultExecutableBinder<>(
+            prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), request)));
+        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, request);
+        Object result = executable.invoke(bean);
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
         }

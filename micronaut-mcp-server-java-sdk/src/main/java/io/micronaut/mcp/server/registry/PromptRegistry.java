@@ -18,12 +18,14 @@ package io.micronaut.mcp.server.registry;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.bind.ArgumentBinderRegistry;
+import io.micronaut.core.bind.BoundExecutable;
+import io.micronaut.core.bind.DefaultExecutableBinder;
+import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
-import io.micronaut.json.JsonMapper;
-import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.PromptArg;
 import io.micronaut.mcp.conf.McpServerConfiguration;
@@ -57,13 +59,14 @@ public final class PromptRegistry
     public static final String MEMBER_TITLE = "title";
     public static final String MEMBER_DESCRIPTION = "description";
     private final BeanContext beanContext;
+    private final ArgumentBinderRegistry<McpSchema.GetPromptRequest> argumentBinderRegistry;
 
-    PromptRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
-                   JsonMapper jsonMapper,
-                   List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
-                   BeanContext beanContext) {
-        super(jsonSchemaClassPathResourceLoader, jsonMapper, exceptionMappers);
+    PromptRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
+                   BeanContext beanContext,
+                   ArgumentBinderRegistry<McpSchema.GetPromptRequest> argumentBinderRegistry) {
+        super(exceptionMappers);
         this.beanContext = beanContext;
+        this.argumentBinderRegistry = argumentBinderRegistry;
     }
 
     @Override
@@ -135,8 +138,10 @@ public final class PromptRegistry
                                                        Object mcpTransportContext,
                                                        McpSchema.GetPromptRequest promptRequest) {
         B bean = beanContext.getBean(beanDefinition);
-        Object[] args = methodArgs(method, promptRequest.arguments(), promptRequest, mcpTransportContext, PromptRegistry::promptArgumentName);
-        Object result = method.invoke(bean, args);
+        ExecutableBinder<McpSchema.GetPromptRequest> executableBinder = new DefaultExecutableBinder<>(
+            prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), promptRequest)));
+        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, promptRequest);
+        Object result = executable.invoke(bean);
 
         if (result instanceof McpSchema.GetPromptResult promptResult) {
             return promptResult;
