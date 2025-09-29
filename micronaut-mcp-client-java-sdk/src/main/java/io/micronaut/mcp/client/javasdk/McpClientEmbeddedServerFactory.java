@@ -29,7 +29,6 @@ import jakarta.inject.Singleton;
 @Internal
 @Factory
 final class McpClientEmbeddedServerFactory {
-    @Requires(beans = EmbeddedServer.class)
     @Named("embeddedServer")
     @Singleton
     HttpClientStreamableHttpTransport embeddedTransport(EmbeddedServer embeddedServer, McpServerConfiguration mcpServerConfiguration) {
