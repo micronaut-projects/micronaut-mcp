@@ -34,21 +34,37 @@ final class McpClientHtttpConfigurationProperties implements McpClientHtttpConfi
     private URI url;
     private Duration requestTimeout;
 
+    /**
+     * Constructor.
+     * @param name Name Qualifier
+     */
     McpClientHtttpConfigurationProperties(@Parameter String name) {
         this.name = name;
     }
 
+    /**
+     *
+     * @return The name qualifier
+     */
     @Override
     public String getName() {
         return name;
     }
 
+    /**
+     *
+     * @return The MCP Server URL
+     */
     @Override
     @NonNull
     public URI getUrl() {
         return url;
     }
 
+    /**
+     *
+     * @param url The MCP Server URL
+     */
     public void setUrl(@NonNull URI url) {
         this.url = url;
     }
@@ -59,6 +75,10 @@ final class McpClientHtttpConfigurationProperties implements McpClientHtttpConfi
         return requestTimeout;
     }
 
+    /**
+     *
+     * @param requestTimeout The duration to wait for server responses before timing out requests.
+     */
     public void setRequestTimeout(@Nullable Duration requestTimeout) {
         this.requestTimeout = requestTimeout;
     }
