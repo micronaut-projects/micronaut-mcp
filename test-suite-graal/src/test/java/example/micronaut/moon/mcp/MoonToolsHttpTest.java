@@ -51,6 +51,11 @@ class MoonToolsHttpTest {
         List<String> toolNames = listToolsResult.tools().stream().map(McpSchema.Tool::name).toList();
         assertTrue(toolNames.stream().anyMatch(name -> name.equals("current-moon-phase")));
         assertTrue(toolNames.stream().anyMatch(name -> name.equals("moon-phase-at-date")));
+
+        assertDoesNotThrow(() -> client.callTool(McpSchema.CallToolRequest.builder()
+                .name("moon-phase-at-date")
+                .arguments(Map.of("date", "1982-10-28"))
+            .build()));
     }
 
     @Test
