@@ -16,13 +16,13 @@
 package io.micronaut.mcp.client.javasdk;
 
 import io.micronaut.context.BeanContext;
-import io.micronaut.context.Qualifier;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.core.annotation.Nullable;
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
@@ -36,12 +36,6 @@ import jakarta.inject.Singleton;
 @Factory
 @Internal
 final class McpClientHttpFactory {
-    private final BeanContext beanContext;
-
-    McpClientHttpFactory(BeanContext beanContext) {
-        this.beanContext = beanContext;
-    }
-
     @EachBean(McpClientHtttpConfiguration.class)
     @Prototype
     HttpClientStreamableHttpTransport transport(McpClientHtttpConfiguration clientHtttpConfiguration) {
@@ -59,28 +53,28 @@ final class McpClientHttpFactory {
     @EachBean(HttpClientStreamableHttpTransport.class)
     @Bean(preDestroy = "close")
     @Singleton
-    McpSyncClient mcpSyncClient(HttpClientStreamableHttpTransport transport, Qualifier<?> qualifier) {
-        String nameQualifier = Qualifiers.findName(qualifier);
-        McpSchema.ClientCapabilities clientCapabilities = beanContext.getBean(McpSchema.ClientCapabilities.class, Qualifiers.byName(nameQualifier));
+    McpSyncClient mcpSyncClient(HttpClientStreamableHttpTransport transport,
+                                @Parameter McpSchema.ClientCapabilities clientCapabilities,
+                                @Nullable @Parameter McpClientHtttpConfiguration config) {
         McpClient.SyncSpec builder = McpClient.sync(transport)
             .capabilities(clientCapabilities);
-        beanContext.findBean(McpClientHtttpConfiguration.class, Qualifiers.byName(nameQualifier))
-            .map(McpClientHtttpConfiguration::getRequestTimeout)
-            .ifPresent(builder::requestTimeout);
+        if (config != null && config.getRequestTimeout() != null) {
+            builder.requestTimeout(config.getRequestTimeout());
+        }
         return builder.build();
     }
 
     @EachBean(HttpClientStreamableHttpTransport.class)
     @Bean(preDestroy = "close")
     @Singleton
-    McpAsyncClient mcpAysncClient(HttpClientStreamableHttpTransport transport, Qualifier<?> qualifier) {
-        String nameQualifier = Qualifiers.findName(qualifier);
-        McpSchema.ClientCapabilities clientCapabilities = beanContext.getBean(McpSchema.ClientCapabilities.class, Qualifiers.byName(nameQualifier));
+    McpAsyncClient mcpAysncClient(HttpClientStreamableHttpTransport transport,
+                                  @Parameter McpSchema.ClientCapabilities clientCapabilities,
+                                  @Nullable @Parameter McpClientHtttpConfiguration config) {
         McpClient.AsyncSpec builder = McpClient.async(transport)
             .capabilities(clientCapabilities);
-        beanContext.findBean(McpClientHtttpConfiguration.class, Qualifiers.byName(nameQualifier))
-            .map(McpClientHtttpConfiguration::getRequestTimeout)
-            .ifPresent(builder::requestTimeout);
+        if (config != null && config.getRequestTimeout() != null) {
+            builder.requestTimeout(config.getRequestTimeout());
+        }
         return builder.build();
     }
 }
