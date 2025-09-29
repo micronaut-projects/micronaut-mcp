@@ -33,8 +33,7 @@ import java.util.Optional;
  * @param <T> The argument type
  */
 @Internal
-non-sealed
-class JsonMapperTypedCallToRequestArgumentBinder<T> implements TypedCallToRequestArgumentBinder<T> {
+final class JsonMapperTypedCallToRequestArgumentBinder<T> implements TypedCallToRequestArgumentBinder<T> {
     private static final Logger LOG = LoggerFactory.getLogger(JsonMapperTypedCallToRequestArgumentBinder.class);
     private final Argument<T> argument;
     private final JsonMapper jsonMapper;
