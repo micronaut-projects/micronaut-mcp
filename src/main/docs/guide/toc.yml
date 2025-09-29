@@ -38,6 +38,5 @@ server:
   testingYourMcpServer: Testing your MCP Server
 client:
   title: MCP Client
-  clientJavaSdk: Java SDK MCP Client
   clientLangchain4j: Langchain4j MCP Client
 repository: Repository
