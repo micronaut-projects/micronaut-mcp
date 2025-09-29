@@ -53,7 +53,7 @@ final class CallToolRequestArgumentBinderRegistry implements ArgumentBinderRegis
     public <T> Optional<ArgumentBinder<T, McpSchema.CallToolRequest>> findArgumentBinder(Argument<T> argument) {
         TypedCallToRequestArgumentBinder<T> binder = byType.get(argument.typeHashCode());
         if (binder != null) {
-            return Optional.ofNullable(byType.get(Argument.of(argument.getType()).typeHashCode()));
+            return Optional.ofNullable(byType.get(argument.typeHashCode()));
         }
         return Optional.ofNullable(defaultBinder);
     }
