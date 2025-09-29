@@ -5,6 +5,7 @@ import dev.langchain4j.mcp.client.McpClient;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,9 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "moon.enabled", value = StringUtils.TRUE)
 @MicronautTest
-class McpClientTest {
+class McpClientEmbeddedServerNameQualifierTest {
     @Test
-    void testInjectMcpClient(McpClient client) {
+    void testInjectMcpClient(@Named("embeddedServer") McpClient client) {
         List<ToolSpecification> listToolsResult = assertDoesNotThrow(client::listTools);
         List<String> toolNames = listToolsResult.stream().map(ToolSpecification::name).toList();
         assertTrue(toolNames.stream().anyMatch(name -> name.equals("current-moon-phase")));
