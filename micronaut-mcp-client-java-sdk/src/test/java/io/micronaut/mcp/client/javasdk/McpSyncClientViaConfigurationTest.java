@@ -1,13 +1,13 @@
-package example.micronaut.moon.mcp;
+package io.micronaut.mcp.client.javasdk;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import io.micronaut.mcp.client.javasdk.McpClientHtttpConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,9 +23,9 @@ class McpSyncClientViaConfigurationTest {
         try (EmbeddedServer mcpServer = ApplicationContext.run(EmbeddedServer.class, mcpServerConfig)) {
             Map<String, Object> serverConfig = Map.of("micronaut.mcp.client.http.remotemcpserver.url", mcpServer.getURL().toString());
             try (EmbeddedServer server = ApplicationContext.run(EmbeddedServer.class, serverConfig)) {
-                assertTrue(server.getApplicationContext().containsBean(McpClientHtttpConfiguration.class, Qualifiers.byName("remotemcpserver")));
-                assertTrue(server.getApplicationContext().containsBean(McpClientHtttpConfiguration.class, Qualifiers.byName("remotemcpserver")));
-                assertTrue(server.getApplicationContext().containsBean(HttpClientStreamableHttpTransport.class, Qualifiers.byName("remotemcpserver")));
+                Assertions.assertTrue(server.getApplicationContext().containsBean(McpClientHtttpConfiguration.class, Qualifiers.byName("remotemcpserver")));
+                Assertions.assertTrue(server.getApplicationContext().containsBean(McpClientHtttpConfiguration.class, Qualifiers.byName("remotemcpserver")));
+                Assertions.assertTrue(server.getApplicationContext().containsBean(HttpClientStreamableHttpTransport.class, Qualifiers.byName("remotemcpserver")));
 
                 McpSyncClient client = server.getApplicationContext().getBean(McpSyncClient.class, Qualifiers.byName("remotemcpserver"));
                 McpSchema.ListToolsResult listToolsResult = assertDoesNotThrow(() -> client.listTools());

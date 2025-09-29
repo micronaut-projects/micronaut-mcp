@@ -1,9 +1,8 @@
-package example.micronaut.moon.mcp;
+package io.micronaut.mcp.client.javasdk;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
-import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -12,9 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
-public class McpAsyncClientEmbeddedServerNameQualifierTest {
+class McpAsyncClientTest {
     @Test
-    void testInjectMcpAsyncClientWithEmbeddedServerNameQualifier(@Named("embeddedServer") McpAsyncClient client) {
+    void testInjectMcpAsyncClient(McpAsyncClient client) {
         assertDoesNotThrow(() -> client.initialize().block());
         McpSchema.ListToolsResult listToolsResult = assertDoesNotThrow(() -> client.listTools().block());
         List<String> toolNames = listToolsResult.tools().stream().map(McpSchema.Tool::name).toList();
