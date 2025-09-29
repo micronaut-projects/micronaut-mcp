@@ -83,6 +83,7 @@ import io.micronaut.serde.annotation.Serdeable;
     io.modelcontextprotocol.spec.McpSchema.CompleteRequest.CompleteContext.class,
     io.modelcontextprotocol.spec.McpSchema.CompleteResult.class,
     io.modelcontextprotocol.spec.McpSchema.CompleteResult.CompleteCompletion.class,
+    io.modelcontextprotocol.spec.McpSchema.Content.class,
     io.modelcontextprotocol.spec.McpSchema.TextContent.class,
     io.modelcontextprotocol.spec.McpSchema.ImageContent.class,
     io.modelcontextprotocol.spec.McpSchema.AudioContent.class,
