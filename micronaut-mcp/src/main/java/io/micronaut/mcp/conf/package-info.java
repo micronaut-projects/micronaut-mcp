@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 /**
- * MCP Configuration classes.
+ * MCP Configuration related classes.
  */
-@Configuration
-@Requires(property = McpServerConfiguration.PROPERTY_ENABLED, notEquals = StringUtils.FALSE, defaultValue =  StringUtils.TRUE)
 package io.micronaut.mcp.conf;
-
-import io.micronaut.context.annotation.Configuration;
-import io.micronaut.context.annotation.Requires;
-import io.micronaut.core.util.StringUtils;

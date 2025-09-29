@@ -20,7 +20,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ShutdownEvent;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.mcp.conf.McpServerConfiguration;
+import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.runtime.event.annotation.EventListener;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpStatelessAsyncServer;

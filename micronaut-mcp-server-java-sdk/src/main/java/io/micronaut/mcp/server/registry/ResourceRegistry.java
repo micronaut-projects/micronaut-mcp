@@ -25,6 +25,7 @@ import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.annotations.Resource;
+import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -43,7 +44,7 @@ import java.util.function.BiFunction;
  * The registry of {@link Resource}-annotated methods.
  * Produces MCP Resource specifications with handlers that invoke the annotated methods.
  */
-@Requires(beans = io.micronaut.mcp.conf.McpServerConfiguration.class)
+@Requires(beans = McpServerConfiguration.class)
 @Singleton
 @Internal
 public final class ResourceRegistry extends AbstractMcpMethodRegistry<

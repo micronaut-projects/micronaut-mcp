@@ -23,4 +23,4 @@ package io.micronaut.mcp.server.stdio.sync;
 import io.micronaut.context.annotation.Configuration;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.mcp.conf.McpServerConfiguration;
+import io.micronaut.mcp.conf.server.McpServerConfiguration;

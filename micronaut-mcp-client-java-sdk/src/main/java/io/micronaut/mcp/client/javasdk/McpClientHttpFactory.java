@@ -15,7 +15,6 @@
  */
 package io.micronaut.mcp.client.javasdk;
 
-import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
@@ -23,6 +22,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
@@ -36,11 +36,11 @@ import jakarta.inject.Singleton;
 @Factory
 @Internal
 final class McpClientHttpFactory {
-    @EachBean(McpClientHtttpConfiguration.class)
+    @EachBean(McpClientHttpConfiguration.class)
     @Prototype
-    HttpClientStreamableHttpTransport transport(McpClientHtttpConfiguration clientHtttpConfiguration) {
+    HttpClientStreamableHttpTransport transport(McpClientHttpConfiguration clientHttpConfiguration) {
         return HttpClientStreamableHttpTransport
-            .builder(clientHtttpConfiguration.getUrl().toString())
+            .builder(clientHttpConfiguration.getUrl().toString())
             .build();
     }
 
@@ -55,11 +55,11 @@ final class McpClientHttpFactory {
     @Singleton
     McpSyncClient mcpSyncClient(HttpClientStreamableHttpTransport transport,
                                 @Parameter McpSchema.ClientCapabilities clientCapabilities,
-                                @Nullable @Parameter McpClientHtttpConfiguration config) {
+                                @Nullable @Parameter McpClientHttpConfiguration config) {
         McpClient.SyncSpec builder = McpClient.sync(transport)
             .capabilities(clientCapabilities);
-        if (config != null && config.getRequestTimeout() != null) {
-            builder.requestTimeout(config.getRequestTimeout());
+        if (config != null && config.getTimeout() != null) {
+            builder.requestTimeout(config.getTimeout());
         }
         return builder.build();
     }
@@ -69,11 +69,11 @@ final class McpClientHttpFactory {
     @Singleton
     McpAsyncClient mcpAysncClient(HttpClientStreamableHttpTransport transport,
                                   @Parameter McpSchema.ClientCapabilities clientCapabilities,
-                                  @Nullable @Parameter McpClientHtttpConfiguration config) {
+                                  @Nullable @Parameter McpClientHttpConfiguration config) {
         McpClient.AsyncSpec builder = McpClient.async(transport)
             .capabilities(clientCapabilities);
-        if (config != null && config.getRequestTimeout() != null) {
-            builder.requestTimeout(config.getRequestTimeout());
+        if (config != null && config.getTimeout() != null) {
+            builder.requestTimeout(config.getTimeout());
         }
         return builder.build();
     }
