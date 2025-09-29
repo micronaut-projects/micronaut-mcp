@@ -26,5 +26,6 @@ import io.modelcontextprotocol.spec.McpSchema;
  */
 @Indexed(CallToolRequestArgumentBinder.class)
 @Internal
-interface CallToolRequestArgumentBinder<T> extends ArgumentBinder<T, McpSchema.CallToolRequest> {
+sealed interface CallToolRequestArgumentBinder<T> extends ArgumentBinder<T, McpSchema.CallToolRequest>
+    permits DefaultCallToRequestArgumentBinder, TypedCallToRequestArgumentBinder {
 }

@@ -30,7 +30,7 @@ import static io.micronaut.mcp.annotations.PromptArg.ELEMENT_NAME;
  */
 @Internal
 @Singleton
-class DefaultGetPromptRequestArgumentBinder<T> extends AbstractMcpPrimitiveArgumentBinder<T> implements GetPromptRequestArgumentBinder<T> {
+non-sealed class DefaultGetPromptRequestArgumentBinder<T> extends AbstractMcpPrimitiveArgumentBinder<T> implements GetPromptRequestArgumentBinder<T> {
     private static final String MEMBER_NAME = "name";
 
     DefaultGetPromptRequestArgumentBinder(ConversionService conversionService) {

@@ -30,7 +30,7 @@ import static io.micronaut.mcp.annotations.ToolArg.ELEMENT_NAME;
  */
 @Internal
 @Singleton
-class DefaultCallToRequestArgumentBinder<T> extends AbstractMcpPrimitiveArgumentBinder<T> implements CallToolRequestArgumentBinder<T> {
+final class DefaultCallToRequestArgumentBinder<T> extends AbstractMcpPrimitiveArgumentBinder<T> implements CallToolRequestArgumentBinder<T> {
     private static final String MEMBER_NAME = "name";
 
     DefaultCallToRequestArgumentBinder(ConversionService conversionService) {

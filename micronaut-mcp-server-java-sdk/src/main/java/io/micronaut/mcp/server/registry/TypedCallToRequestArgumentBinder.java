@@ -28,5 +28,7 @@ import io.modelcontextprotocol.spec.McpSchema;
  * @since 1.0
  */
 @Internal
-interface TypedCallToRequestArgumentBinder<T> extends CallToolRequestArgumentBinder<T>, TypeArgumentBinder<T, McpSchema.CallToolRequest> {
+sealed interface TypedCallToRequestArgumentBinder<T>
+    extends CallToolRequestArgumentBinder<T>, TypeArgumentBinder<T, McpSchema.CallToolRequest>
+    permits JsonMapperTypedCallToRequestArgumentBinder {
 }

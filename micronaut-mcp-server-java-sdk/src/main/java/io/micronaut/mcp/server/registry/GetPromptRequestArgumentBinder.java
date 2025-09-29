@@ -26,5 +26,6 @@ import io.modelcontextprotocol.spec.McpSchema;
  */
 @Indexed(GetPromptRequestArgumentBinder.class)
 @Internal
-interface GetPromptRequestArgumentBinder<T> extends ArgumentBinder<T, McpSchema.GetPromptRequest> {
+sealed interface GetPromptRequestArgumentBinder<T> extends ArgumentBinder<T, McpSchema.GetPromptRequest>
+    permits DefaultGetPromptRequestArgumentBinder {
 }

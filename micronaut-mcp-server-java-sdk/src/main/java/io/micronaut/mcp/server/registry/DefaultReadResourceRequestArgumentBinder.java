@@ -30,7 +30,7 @@ import java.util.Map;
  */
 @Internal
 @Singleton
-class DefaultReadResourceRequestArgumentBinder<T> extends AbstractMcpPrimitiveArgumentBinder<T> implements ReadResourceRequestArgumentBinder<T> {
+final class DefaultReadResourceRequestArgumentBinder<T> extends AbstractMcpPrimitiveArgumentBinder<T> implements ReadResourceRequestArgumentBinder<T> {
     DefaultReadResourceRequestArgumentBinder(ConversionService conversionService) {
         super(conversionService);
     }

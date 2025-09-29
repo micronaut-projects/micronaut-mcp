@@ -26,5 +26,6 @@ import io.modelcontextprotocol.spec.McpSchema;
  */
 @Indexed(ReadResourceRequestArgumentBinder.class)
 @Internal
-interface ReadResourceRequestArgumentBinder<T> extends ArgumentBinder<T, McpSchema.ReadResourceRequest> {
+sealed interface ReadResourceRequestArgumentBinder<T> extends ArgumentBinder<T, McpSchema.ReadResourceRequest>
+    permits DefaultReadResourceRequestArgumentBinder {
 }
