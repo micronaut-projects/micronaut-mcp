@@ -8,6 +8,7 @@ package example.micronaut;
 //tag::imports[]
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.annotations.Tool;
+import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
 import io.micronaut.mcp.server.stateless.sync.EvaluationResult;
 import jakarta.inject.Singleton;
 //end::imports[]
@@ -17,7 +18,8 @@ import jakarta.inject.Singleton;
 @Singleton
 class ToolsObjectReturn {
     @Tool(description = "Evaluate a chess position using a FEN string.")
-    EvaluationResult fenEvaluation(String fen) {
+    EvaluationResult fenEvaluation(String fen,
+                                   MicronautMcpTransportContext ctx) {
         return new EvaluationResult(fen, "+0.12");
     }
 }
