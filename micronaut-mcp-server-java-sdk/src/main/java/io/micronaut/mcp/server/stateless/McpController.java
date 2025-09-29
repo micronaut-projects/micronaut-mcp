@@ -80,48 +80,37 @@ final class McpController {
 
     @SuppressWarnings("java:S3740")
     private Mono<HttpResponse<?>> handleJsonRpcNotification(McpSchema.JSONRPCNotification jsonrpcNotification, McpTransportContext transportContext) {
+        return mcpHandler.handleNotification(transportContext, jsonrpcNotification)
+            .map((Function<Void, HttpResponse<?>>) response -> HttpResponse.accepted())
+            .defaultIfEmpty(HttpResponse.accepted())
+            .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
+            .onErrorResume(McpError.class, e -> exceptionJsonRpcResponse(e, jsonrpcNotification))
+            .onErrorResume(throwable -> exceptionJsonRpcResponse(throwable, jsonrpcNotification));
+    }
 
-        Mono<McpSchema.JSONRPCResponse> jsonrpcResponse = mcpHandler.handleNotification(transportContext, jsonrpcNotification)
-            .then(Mono.fromCallable(() -> {
-                McpSchema.JSONRPCResponse response = null;
-                return response;
-            }));
-        return handleJsonRPCResponse(jsonrpcNotification, transportContext, jsonrpcResponse, rsp -> {
-            HttpStatus status = status(rsp);
-            if (status.getCode() >= 400) {
-                return HttpResponse.status(status).body(rsp);
-            }
-            return HttpResponse.accepted();
-        });
+    private Mono<HttpResponse<?>> exceptionJsonRpcResponse(Throwable e, McpSchema.JSONRPCMessage jsonrpcMessage) {
+        McpError mcpError = mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Failed to handle request: " + e.getMessage());
+        return exceptionJsonRpcResponse(mcpError, jsonrpcMessage);
+    }
+
+    private Mono<HttpResponse<?>> exceptionJsonRpcResponse(McpError e, McpSchema.JSONRPCMessage jsonrpcMessage) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Failed to handle JSON RPC Message: {}", e.getMessage());
+        }
+        McpSchema.JSONRPCResponse rsp = errorJsonrpcResponse(jsonrpcMessage, e);
+        return Mono.just(HttpResponse.status(status(rsp)).body(rsp));
     }
 
     @SuppressWarnings("java:S3740")
     @NonNull
     private Mono<HttpResponse<?>> handleJsonRpcRequest(@NonNull McpSchema.JSONRPCRequest jsonrpcRequest,
                                                        @NonNull McpTransportContext transportContext) {
-        Mono<McpSchema.JSONRPCResponse> jsonrpcResponse = mcpHandler.handleRequest(transportContext, jsonrpcRequest);
-        return handleJsonRPCResponse(jsonrpcRequest, transportContext, jsonrpcResponse,
-            rsp -> HttpResponse.status(status(rsp)).body(rsp));
-    }
-
-    private Mono<HttpResponse<?>> handleJsonRPCResponse(McpSchema.JSONRPCMessage jsonrpcMessage,
-                                                        McpTransportContext transportContext,
-                                                        Mono<McpSchema.JSONRPCResponse> jsonrpcResponse,
-                                                        Function<McpSchema.JSONRPCResponse, HttpResponse> jsonrpcResponseHttpResponseFunction) {
-        return jsonrpcResponse.contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
-            .onErrorResume(McpError.class, e -> {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Failed to handle JSON RPC Message: {}", e.getMessage());
-                }
-                return Mono.just(errorJsonrpcResponse(jsonrpcMessage, e));
-            })
-            .onErrorResume(throwable -> {
-                if (LOG.isErrorEnabled()) {
-                    LOG.error("Failed to handle JSON RPC Message: {}", throwable.getMessage());
-                }
-                return Mono.just(errorJsonrpcResponse(jsonrpcMessage,
-                    mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Failed to handle request: " + throwable.getMessage())));
-            }).map(jsonrpcResponseHttpResponseFunction::apply);
+        Mono<HttpResponse<?>> mono = mcpHandler.handleRequest(transportContext, jsonrpcRequest)
+            .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
+            .map(rsp -> HttpResponse.status(status(rsp)).body(rsp));
+        return mono
+            .onErrorResume(McpError.class, e -> exceptionJsonRpcResponse(e, jsonrpcRequest))
+            .onErrorResume(throwable -> exceptionJsonRpcResponse(throwable, jsonrpcRequest));
     }
 
     @Nullable
