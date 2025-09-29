@@ -801,12 +801,14 @@ class MicronautModulesFetch implements FetchTool {
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.annotations.Tool;
+import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
 import jakarta.inject.Singleton;
 
 @Singleton
 class Tools {
     @Tool(description = "Evaluate a chess position using a FEN string.")
-    String fenEvaluation(String fen) {
+    String fenEvaluation(String fen,
+                         MicronautMcpTransportContext ctx) {
         if (fen.equals("r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8")) {
             return "+0.12";
         }
@@ -829,12 +831,14 @@ You can override this by setting the <code>name</code> attribute of the <code>@T
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.ToolArg;
+import io.modelcontextprotocol.common.McpTransportContext;
 import jakarta.inject.Singleton;
 
 @Singleton
 class Tools {
     @Tool(name = "fenEvaluation", description = "Evaluate a chess position using a FEN string.")
-    String forsythEdwardsNotationEvaluation(@ToolArg(name = "fen") String forsythEdwardsNotation) {
+    String forsythEdwardsNotationEvaluation(@ToolArg(name = "fen") String forsythEdwardsNotation,
+                                            McpTransportContext ctx) {
         if (forsythEdwardsNotation.equals("r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8")) {
             return "+0.12";
         }
@@ -842,6 +846,18 @@ class Tools {
     }
 }</code></pre>
 </div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Micronaut MCP binds parameters with type <a href="../api/io/micronaut/mcp/server/context/MicronautMcpTransportContext.html">MicronautMcpTransportContext</a> or <code>io.modelcontextprotocol.spec.McpSchema.CallToolRequest</code> automatically.
+</td>
+</tr>
+</table>
 </div>
 
 <h2 id="toolsInputJsonSchema"><a class="anchor" href="#toolsInputJsonSchema"></a>3.5.1.4 Tools Input JSON Schema</h2>
@@ -888,12 +904,14 @@ public record FenEvaluationRequest(String fen) {
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.annotations.Tool;
+import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
 import jakarta.inject.Singleton;
 
 @Singleton
 class Tools {
     @Tool(description = "Evaluate a chess position using a FEN string.")
-    String fenEvaluation(FenEvaluationRequest req) {
+    String fenEvaluation(FenEvaluationRequest req,
+                         MicronautMcpTransportContext ctx) {
         if (req.fen().equals("r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8")) {
             return "+0.12";
         }
@@ -948,13 +966,15 @@ public record FenEvaluationResponse(
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.annotations.Tool;
+import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
 import io.micronaut.mcp.server.stateless.sync.tools.jsonschema.FenEvaluationRequest;
 import jakarta.inject.Singleton;
 
 @Singleton
 class Tools {
     @Tool(description = "Evaluate a chess position using a FEN string.")
-    FenEvaluationResponse fenEvaluation(FenEvaluationRequest req) {
+    FenEvaluationResponse fenEvaluation(FenEvaluationRequest req,
+                                        MicronautMcpTransportContext ctx) {
         String fen = req.fen();
         if (fen.equals("r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8")) {
             return new FenEvaluationResponse(fen, "+0.12");
@@ -1113,6 +1133,18 @@ class Prompts {
     }
 }</code></pre>
 </div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Micronaut MCP binds parameters with type <a href="../api/io/micronaut/mcp/server/context/MicronautMcpTransportContext.html">MicronautMcpTransportContext</a> or <code>io.modelcontextprotocol.spec.McpSchema.GetPromptRequest</code> automatically.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>Alternatively, you define prompts registering beans (typically in a <a href="https://docs.micronaut.io/latest/guide/#factories">bean factory</a>) using the low-level MCP SDK API.</p>
@@ -1327,6 +1359,18 @@ class Resources {
 }</code></pre>
 </div>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Micronaut MCP binds parameters with type <a href="../api/io/micronaut/mcp/server/context/MicronautMcpTransportContext.html">MicronautMcpTransportContext</a> or <code>io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest</code> automatically.
+</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
 <p>Notes:</p>
 </div>
@@ -1350,9 +1394,6 @@ class Resources {
 <ul>
 <li>
 <p><code>String myResource()</code> or <code>ReadResourceResult myResource()</code></p>
-</li>
-<li>
-<p><code>String myResource(String uri)</code> or <code>ReadResourceResult myResource(String uri)</code> — receive the requested URI</p>
 </li>
 <li>
 <p><code>ReadResourceResult myResource(io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest request)</code> — full access to request fields</p>
