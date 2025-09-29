@@ -14,3 +14,5 @@ The method parameter names will be automatically used as the tool argument names
 ----
 include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/toolarg/Tools.java[tags="fakepackage,imports,clazz",indent=0]
 ----
+
+NOTE: Micronaut MCP binds parameters with type api:mcp.server.context.MicronautMcpTransportContext[] or `io.modelcontextprotocol.spec.McpSchema.CallToolRequest` automatically.

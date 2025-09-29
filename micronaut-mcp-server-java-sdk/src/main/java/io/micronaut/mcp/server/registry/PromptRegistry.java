@@ -18,6 +18,10 @@ package io.micronaut.mcp.server.registry;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.bind.ArgumentBinderRegistry;
+import io.micronaut.core.bind.BoundExecutable;
+import io.micronaut.core.bind.DefaultExecutableBinder;
+import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.inject.BeanDefinition;
@@ -25,6 +29,7 @@ import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.PromptArg;
 import io.micronaut.mcp.conf.McpServerConfiguration;
+import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -54,9 +59,14 @@ public final class PromptRegistry
     public static final String MEMBER_TITLE = "title";
     public static final String MEMBER_DESCRIPTION = "description";
     private final BeanContext beanContext;
+    private final ArgumentBinderRegistry<McpSchema.GetPromptRequest> argumentBinderRegistry;
 
-    PromptRegistry(BeanContext beanContext) {
+    PromptRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
+                   BeanContext beanContext,
+                   ArgumentBinderRegistry<McpSchema.GetPromptRequest> argumentBinderRegistry) {
+        super(exceptionMappers);
         this.beanContext = beanContext;
+        this.argumentBinderRegistry = argumentBinderRegistry;
     }
 
     @Override
@@ -128,12 +138,10 @@ public final class PromptRegistry
                                                        Object mcpTransportContext,
                                                        McpSchema.GetPromptRequest promptRequest) {
         B bean = beanContext.getBean(beanDefinition);
-        List<String> names = promptArgumentsNames(method);
-        Object[] args = new Object[names.size()];
-        for (int i = 0; i < names.size(); i++) {
-            args[i] = promptRequest.arguments().get(names.get(i));
-        }
-        Object result = method.invoke(bean, args);
+        ExecutableBinder<McpSchema.GetPromptRequest> executableBinder = new DefaultExecutableBinder<>(
+            prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), promptRequest)));
+        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, promptRequest);
+        Object result = executable.invoke(bean);
 
         if (result instanceof McpSchema.GetPromptResult promptResult) {
             return promptResult;
@@ -164,14 +172,6 @@ public final class PromptRegistry
 
     private McpSchema.PromptArgument promptArgument(Argument<?> argument) {
         return new McpSchema.PromptArgument(promptArgumentName(argument), promptArgumentDescription(argument).orElse(null), isPromptArgumentRequired(argument));
-    }
-
-    private static List<String> promptArgumentsNames(ExecutableMethod<?, ?> method) {
-        List<String> names = new ArrayList<>(method.getArguments().length);
-        for (Argument<?> argument : method.getArguments()) {
-            names.add(promptArgumentName(argument));
-        }
-        return names;
     }
 
     private static String promptArgumentName(Argument<?> argument) {

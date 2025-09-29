@@ -18,9 +18,14 @@ package io.micronaut.mcp.server.registry;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.bind.ArgumentBinderRegistry;
+import io.micronaut.core.bind.BoundExecutable;
+import io.micronaut.core.bind.DefaultExecutableBinder;
+import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.annotations.Resource;
+import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
@@ -54,9 +59,14 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     private static final String URI_PROPERTY = "uri";
 
     private final BeanContext beanContext;
+    private final ArgumentBinderRegistry<McpSchema.ReadResourceRequest> argumentBinderRegistry;
 
-    public ResourceRegistry(BeanContext beanContext) {
+    public ResourceRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
+                            BeanContext beanContext,
+                            ArgumentBinderRegistry<McpSchema.ReadResourceRequest> argumentBinderRegistry) {
+        super(exceptionMappers);
         this.beanContext = beanContext;
+        this.argumentBinderRegistry = argumentBinderRegistry;
     }
 
     @Override
@@ -103,36 +113,40 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
         BeanDefinition<B> beanDefinition,
         ExecutableMethod<B, Object> method
     ) {
-        return (exchange, request) -> invokeAndMap(beanDefinition, method, request);
+        return (exchange, request) -> invokeAndMap(beanDefinition, method, exchange, request);
     }
 
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> asyncHandler(
         BeanDefinition<B> beanDefinition,
         ExecutableMethod<B, Object> method
     ) {
-        return (exchange, request) -> Mono.just(invokeAndMap(beanDefinition, method, request));
+        return (exchange, request) -> Mono.just(invokeAndMap(beanDefinition, method, exchange, request));
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> statelessSyncHandler(
         BeanDefinition<B> beanDefinition,
         ExecutableMethod<B, Object> method
     ) {
-        return (ctx, request) -> invokeAndMap(beanDefinition, method, request);
+        return (ctx, request) -> invokeAndMap(beanDefinition, method, ctx, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> statelessAsyncHandler(
         BeanDefinition<B> beanDefinition,
         ExecutableMethod<B, Object> method
     ) {
-        return (ctx, request) -> Mono.just(invokeAndMap(beanDefinition, method, request));
+        return (ctx, request) -> Mono.just(invokeAndMap(beanDefinition, method, ctx, request));
     }
 
     private <B> McpSchema.ReadResourceResult invokeAndMap(BeanDefinition<B> beanDefinition,
                                                           ExecutableMethod<B, Object> method,
+                                                          Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
         B bean = beanContext.getBean(beanDefinition);
-        Object[] args = resolveArgs(method, request);
-        Object result = method.invoke(bean, args);
+
+        ExecutableBinder<McpSchema.ReadResourceRequest> executableBinder = new DefaultExecutableBinder<>(
+            prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), request)));
+        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, request);
+        Object result = executable.invoke(bean);
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
         }
