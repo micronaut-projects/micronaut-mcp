@@ -102,7 +102,6 @@ abstract class AbstractMcpPrimitiveArgumentBinder<T> {
                                 @Nullable String member,
                                 @Nullable String defaultMemberValue) {
         if (argAnn != null && member != null && defaultMemberValue != null) {
-            argument.findAnnotation(String.valueOf(argAnn));
             Optional<String> nameOptional = argument.findAnnotation(argAnn)
                 .flatMap(ann -> ann.stringValue(member));
             if (nameOptional.isPresent()) {
