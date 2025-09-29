@@ -12,6 +12,7 @@ plugins {
 rootProject.name = 'micronaut-mcp-parent'
 include 'micronaut-mcp'
 include 'micronaut-mcp-annotations'
+include 'micronaut-mcp-client-java-sdk'
 include 'micronaut-mcp-server-java-sdk'
 include 'micronaut-mcp-client-langchain4j'
 include 'micronaut-mcp-bom'
