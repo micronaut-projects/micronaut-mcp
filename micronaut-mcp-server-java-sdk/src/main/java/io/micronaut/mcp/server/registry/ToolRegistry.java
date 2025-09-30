@@ -172,6 +172,8 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             String text = "";
             if (returnClass.isAssignableFrom(String.class)) {
                 text = result.toString();
+            } else if (Enum.class.isAssignableFrom(result.getClass())) {
+                text = result.toString();
             } else {
                 try {
                     text = jsonMapper.writeValueAsString(result);
