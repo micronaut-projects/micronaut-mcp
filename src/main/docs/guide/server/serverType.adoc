@@ -3,5 +3,5 @@ with one of the values `STDIO`, `HTTP`.
 
 If you define the property `micronaut.mcp.server.reactive` with the value `true`, you can define primitives (tools, prompts or resources) with call handlers wrapped in a Project Reactor `Mono`.
 
-include::{includedir}configurationProperties/io.micronaut.mcp.conf.McpServerConfigurationProperties.adoc[]
+include::{includedir}configurationProperties/io.micronaut.mcp.conf.server.McpServerConfigurationProperties.adoc[]
 

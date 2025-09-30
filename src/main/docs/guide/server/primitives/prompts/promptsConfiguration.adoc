@@ -1,1 +1,1 @@
-include::{includedir}configurationProperties/io.micronaut.mcp.conf.PromptsConfigurationProperties.adoc[]
+include::{includedir}configurationProperties/io.micronaut.mcp.conf.server.PromptsConfigurationProperties.adoc[]
