@@ -2,8 +2,6 @@ package io.micronaut.mcp.client.javasdk;
 
 import example.micronaut.moon.MoonPhase;
 import example.micronaut.moon.MoonPhaseEmoji;
-import io.micronaut.context.annotation.Property;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.client.McpSyncClient;
