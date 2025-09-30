@@ -21,7 +21,7 @@ import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
-import io.micronaut.mcp.conf.McpServerConfiguration;
+import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;

@@ -1,3 +1,7 @@
 To use an https://docs.langchain4j.dev/tutorials/mcp#mcp-client[MCP Client powered by LangChain4j], use the following dependency:
 
 dependency:micronaut-mcp-client-langchain4j[groupId=io.micronaut.mcp]
+
+Additionally, if you are building an MCP Server, you can test it by injecting a bean of type `dev.langchain4j.mcp.client.McpClient` in your tests.
+The MCP Client pointing to your MCP Server has a name qualifier with value `embeddedServer`.
+

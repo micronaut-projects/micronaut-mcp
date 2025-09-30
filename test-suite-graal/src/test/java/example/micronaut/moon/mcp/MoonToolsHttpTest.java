@@ -7,19 +7,15 @@ import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.mcp.conf.McpServerConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
+import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
-import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -32,26 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Property(name = "moon.enabled", value = StringUtils.TRUE)
 @MicronautTest
 class MoonToolsHttpTest {
-    @Inject
-    EmbeddedServer embeddedServer;
-
-    @Test
-    void testCurrentMoon(McpServerConfiguration mcpServerConfiguration) {
-        HttpClientStreamableHttpTransport transport = HttpClientStreamableHttpTransport
-            .builder(embeddedServer.getURL().toString() + mcpServerConfiguration.getEndpoint())
-            .build();
-
-        McpSyncClient client = McpClient.sync(transport)
-            .requestTimeout(Duration.ofSeconds(10))
-            .capabilities(McpSchema.ClientCapabilities.builder().build())
-            .build();
-        assertDoesNotThrow(client::initialize);
-
-        McpSchema.ListToolsResult listToolsResult = assertDoesNotThrow(() -> client.listTools());
-        List<String> toolNames = listToolsResult.tools().stream().map(McpSchema.Tool::name).toList();
-        assertTrue(toolNames.stream().anyMatch(name -> name.equals("current-moon-phase")));
-        assertTrue(toolNames.stream().anyMatch(name -> name.equals("moon-phase-at-date")));
-    }
 
     @Test
     void invalidParamsCannotDeserialize(@Client("/") HttpClient httpClient) {

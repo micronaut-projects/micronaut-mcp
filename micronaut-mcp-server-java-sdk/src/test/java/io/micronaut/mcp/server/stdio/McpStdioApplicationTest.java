@@ -1,7 +1,7 @@
 package io.micronaut.mcp.server.stdio;
 
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.mcp.conf.McpServerConfiguration;
+import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.runtime.ApplicationConfiguration;
 import org.junit.jupiter.api.Test;
 

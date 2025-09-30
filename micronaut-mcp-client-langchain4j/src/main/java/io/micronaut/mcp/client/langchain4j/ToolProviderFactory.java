@@ -26,7 +26,7 @@ import java.util.List;
 
 @Internal
 @Factory
-class ToolProviderFactory {
+final class ToolProviderFactory {
     @Prototype
     McpToolProvider.Builder toolProviderBuilder(List<McpClient> clients) {
         return McpToolProvider.builder()
