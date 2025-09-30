@@ -16,7 +16,7 @@
 # a managed version (a version which alias starts with "managed-"
 
 [versions]
-micronaut = "4.9.11"
+micronaut = "4.9.12"
 micronaut-platform = "4.9.3"
 micronaut-docs = "2.0.0"
 micronaut-security = "4.15.0"
