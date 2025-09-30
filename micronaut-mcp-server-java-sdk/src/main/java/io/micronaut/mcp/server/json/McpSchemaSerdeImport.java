@@ -20,6 +20,7 @@ import io.micronaut.context.annotation.ClassImport;
 import io.micronaut.context.annotation.Mixin;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.serde.annotation.Serdeable;
+import io.modelcontextprotocol.spec.McpSchema;
 
 @ClassImport(classes = {
     io.modelcontextprotocol.spec.McpSchema.JSONRPCRequest.class,
@@ -97,8 +98,20 @@ import io.micronaut.serde.annotation.Serdeable;
 class McpSchemaSerdeImport {
 }
 
-@Mixin.Filter(removeAnnotations = {"com.fasterxml.jackson.annotation.JsonTypeInfo", "io.micronaut.serde.config.annotation.SerdeConfig.SerError"})
-@Mixin(value = Object.class, target = "io.modelcontextprotocol.spec.McpSchema.ResourceContents")
+@Mixin.Filter(removeAnnotations = {"com.fasterxml.jackson.annotation.JsonTypeInfo", "io.micronaut.serde.config.annotation.SerdeConfig$SerError"})
+@Mixin(McpSchema.ResourceContents.class)
 @JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
 class CorrectResourceContentsMixin {
+}
+
+@Mixin.Filter(removeAnnotations = {"com.fasterxml.jackson.annotation.JsonTypeInfo", "io.micronaut.serde.config.annotation.SerdeConfig$SerError"})
+@Mixin(McpSchema.TextResourceContents.class)
+@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
+class CorrectTextResourceContentsMixin {
+}
+
+@Mixin.Filter(removeAnnotations = {"com.fasterxml.jackson.annotation.JsonTypeInfo", "io.micronaut.serde.config.annotation.SerdeConfig$SerError"})
+@Mixin(McpSchema.BlobResourceContents.class)
+@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
+class CorrectBlobResourceContentsMixin {
 }
