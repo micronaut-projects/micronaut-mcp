@@ -18,7 +18,7 @@ package io.micronaut.mcp.server.stateless.async;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.mcp.conf.McpServerInfoConfiguration;
+import io.micronaut.mcp.conf.server.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;

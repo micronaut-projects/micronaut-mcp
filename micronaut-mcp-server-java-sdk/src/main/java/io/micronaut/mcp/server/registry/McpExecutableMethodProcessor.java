@@ -24,7 +24,7 @@ import io.micronaut.mcp.annotations.McpPrimitive;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.Resource;
-import io.micronaut.mcp.conf.McpServerConfiguration;
+import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import jakarta.inject.Singleton;
 
 @Requires(beans = McpServerConfiguration.class)
