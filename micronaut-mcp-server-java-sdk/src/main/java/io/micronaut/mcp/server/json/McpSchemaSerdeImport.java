@@ -91,6 +91,7 @@ import io.micronaut.serde.annotation.Serdeable;
     io.modelcontextprotocol.spec.McpSchema.ResourceLink.class,
     io.modelcontextprotocol.spec.McpSchema.Root.class,
     io.modelcontextprotocol.spec.McpSchema.ListRootsResult.class,
+    io.modelcontextprotocol.spec.McpSchema.ResourceContents.class
 }, annotate = Serdeable.class)
 @Internal
 class McpSchemaSerdeImport {
