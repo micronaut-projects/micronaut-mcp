@@ -1,0 +1,14 @@
+It is possible to define prompts by placing a text file in the classpath and defining the prompt attributes and path via configuration:
+
+[source, properties]
+----
+include::micronaut-mcp-client-java-sdk/src/test/resources/application-test.properties[tags="promptclasspath",indent=0]
+----
+
+You can define the prompt content with argument interpolation in a text file.
+
+[source, markdown]
+.src/main/resources/prompts/
+----
+include::micronaut-mcp-client-java-sdk/src/test/resources/prompts/introspection-testing.md[indent=0]
+----

@@ -29,6 +29,7 @@ server:
     prompts:
       title: Prompts
       promptsConfiguration: Tools Configuration
+      classpathPrompts: Classpath Prompts
     resources:
       title: Resources
       resourcesAnnotations: Resources with Annotations

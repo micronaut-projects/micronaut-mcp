@@ -9,7 +9,6 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
