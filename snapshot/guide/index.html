@@ -145,7 +145,9 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-client"><a href="#client"><strong>4</strong><span>MCP Client</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-clientLangchain4j"><a href="#clientLangchain4j"><strong>4.1</strong><span>Langchain4j MCP Client</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-clientJavaSdk"><a href="#clientJavaSdk"><strong>4.1</strong><span>Java SDK MCP Client</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-clientLangchain4j"><a href="#clientLangchain4j"><strong>4.2</strong><span>Langchain4j MCP Client</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>5</strong><span>Repository</span></a></div>
         
@@ -157,7 +159,7 @@
         <h1>Micronaut MCP</h1>
         <p></p>
         <p>Integration with MCP (Model Context Protocol).</p>
-        <p><strong>Version:</strong> 0.0.8-SNAPSHOT </p>
+        <p><strong>Version:</strong> 0.0.8 </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
@@ -242,9 +244,9 @@
 <div class="paragraph">
 <p>Via configuration, you should define your mcp server name and version:</p>
 </div>
-<a id="io.micronaut.mcp.conf.McpServerInfoConfigurationProperties" href="#io.micronaut.mcp.conf.McpServerInfoConfigurationProperties">&#128279;</a>
+<a id="io.micronaut.mcp.conf.server.McpServerInfoConfigurationProperties" href="#io.micronaut.mcp.conf.server.McpServerInfoConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/McpServerInfoConfigurationProperties.html">McpServerInfoConfigurationProperties</a></caption>
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/McpServerInfoConfigurationProperties.html">McpServerInfoConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -287,9 +289,9 @@ with one of the values <code>STDIO</code>, <code>HTTP</code>.</p>
 <div class="paragraph">
 <p>If you define the property <code>micronaut.mcp.server.reactive</code> with the value <code>true</code>, you can define primitives (tools, prompts or resources) with call handlers wrapped in a Project Reactor <code>Mono</code>.</p>
 </div>
-<a id="io.micronaut.mcp.conf.McpServerConfigurationProperties" href="#io.micronaut.mcp.conf.McpServerConfigurationProperties">&#128279;</a>
+<a id="io.micronaut.mcp.conf.server.McpServerConfigurationProperties" href="#io.micronaut.mcp.conf.server.McpServerConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/McpServerConfigurationProperties.html">McpServerConfigurationProperties</a></caption>
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/McpServerConfigurationProperties.html">McpServerConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -1072,9 +1074,9 @@ class ToolsFactory {
 </div>
 
 
-<a id="io.micronaut.mcp.conf.ToolsConfigurationProperties" href="#io.micronaut.mcp.conf.ToolsConfigurationProperties">&#128279;</a>
+<a id="io.micronaut.mcp.conf.server.ToolsConfigurationProperties" href="#io.micronaut.mcp.conf.server.ToolsConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/ToolsConfigurationProperties.html">ToolsConfigurationProperties</a></caption>
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/ToolsConfigurationProperties.html">ToolsConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -1201,9 +1203,9 @@ class PromptsFactory {
 </div>
 
 
-<a id="io.micronaut.mcp.conf.PromptsConfigurationProperties" href="#io.micronaut.mcp.conf.PromptsConfigurationProperties">&#128279;</a>
+<a id="io.micronaut.mcp.conf.server.PromptsConfigurationProperties" href="#io.micronaut.mcp.conf.server.PromptsConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/PromptsConfigurationProperties.html">PromptsConfigurationProperties</a></caption>
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/PromptsConfigurationProperties.html">PromptsConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -1426,9 +1428,9 @@ Micronaut MCP binds parameters with type <a href="../api/io/micronaut/mcp/server
 </div>
 
 
-<a id="io.micronaut.mcp.conf.ResourcesConfigurationProperties" href="#io.micronaut.mcp.conf.ResourcesConfigurationProperties">&#128279;</a>
+<a id="io.micronaut.mcp.conf.server.ResourcesConfigurationProperties" href="#io.micronaut.mcp.conf.server.ResourcesConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/ResourcesConfigurationProperties.html">ResourcesConfigurationProperties</a></caption>
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/ResourcesConfigurationProperties.html">ResourcesConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 33.3333%;">
 <col style="width: 33.3333%;">
@@ -1571,9 +1573,81 @@ If you use <a href="https://modelcontextprotocol.io/docs/concepts/transports#sta
 </div>
 
 
+<div class="paragraph">
+<p>You can configure multiple clients via configuration:</p>
+</div>
+<a id="io.micronaut.mcp.conf.client.McpClientHttpConfigurationProperties" href="#io.micronaut.mcp.conf.client.McpClientHttpConfigurationProperties">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/client/McpClientHttpConfigurationProperties.html">McpClientHttpConfigurationProperties</a></caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.url</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.net.URI</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The duration to wait for server responses before timing out requests.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.log-requests</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to log requests. Default value <code>false</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.log-responses</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to log responses. Default value <code>false</code>.</p></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="clientJavaSdk"><a class="anchor" href="#clientJavaSdk"></a>4.1 Java SDK MCP Client</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/client/clientJavaSdk.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
 
 
-<h2 id="clientLangchain4j"><a class="anchor" href="#clientLangchain4j"></a>4.1 Langchain4j MCP Client</h2>
+<div class="paragraph">
+<p>To use MCP Clients powered by the <a href="https://github.com/modelcontextprotocol/java-sdk">MCP Java SDK</a>, use the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.mcp:micronaut-mcp-client-java-sdk")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.mcp&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-mcp-client-java-sdk&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
+</div>
+<div class="paragraph">
+<p>Additionally, if you are building an <a href="#serverJavaSdk">MCP Server</a>, you can test it by injecting a bean of type <code>io.modelcontextprotocol.client.McpSyncClient</code> or <code>io.modelcontextprotocol.client.McpAsyncClient</code> in your tests. The MCP Client pointing to your MCP Server has a <a href="https://docs.micronaut.io/latest/guide/#qualifiers">name qualifier</a> with value <code>embeddedServer</code>.</p>
+</div>
+
+<h2 id="clientLangchain4j"><a class="anchor" href="#clientLangchain4j"></a>4.2 Langchain4j MCP Client</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/client/clientLangchain4j.adoc"'>
@@ -1600,6 +1674,10 @@ If you use <a href="https://modelcontextprotocol.io/docs/concepts/transports#sta
 &lt;/dependency&gt;</code></pre>
 </div>
 </div></p>
+</div>
+<div class="paragraph">
+<p>Additionally, if you are building an MCP Server, you can test it by injecting a bean of type <code>dev.langchain4j.mcp.client.McpClient</code> in your tests.
+The MCP Client pointing to your MCP Server has a name qualifier with value <code>embeddedServer</code>.</p>
 </div>
 
 <h1 id="repository"><a class="anchor" href="#repository"></a>5 Repository</h1>
