@@ -1,0 +1,5 @@
+In a method annotated with `@Tool`, you can use as a return type:
+
+- `io.modelcontextprotocol.spec.McpSchema.CallToolResult`
+- `String`
+- A class or Java record which will be serialized to JSON. If the return type is annotated with `@JsonSchema` and it is defined <<toolsOutputJsonSchema, as the tool output>> it will be used as structured content.

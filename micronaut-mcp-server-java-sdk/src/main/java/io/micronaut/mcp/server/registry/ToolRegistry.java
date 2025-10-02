@@ -169,7 +169,9 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, callToolRequest);
             Object result = executable.invoke(bean);
             String text = "";
-            if (returnClass.isAssignableFrom(String.class)) {
+            if (returnClass.isAssignableFrom(McpSchema.CallToolResult.class)) {
+                return (McpSchema.CallToolResult) result;
+            } else if (returnClass.isAssignableFrom(String.class)) {
                 text = result.toString();
             } else if (Enum.class.isAssignableFrom(result.getClass())) {
                 text = result.toString();

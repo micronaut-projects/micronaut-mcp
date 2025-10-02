@@ -1,0 +1,4 @@
+In a method annotated with `@Prompt`, you can use as a return type:
+
+- `io.modelcontextprotocol.spec.McpSchema.GetPromptResult`
+- `String`

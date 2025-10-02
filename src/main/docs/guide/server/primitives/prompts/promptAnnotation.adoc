@@ -1,0 +1,6 @@
+The preferred way to define prompts is to annotate a method with api:mcp.annotations.Prompt[] in a `@Singleton` bean.
+
+[source, Java]
+----
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/prompts/Prompts.java[tags="imports,clazz",indent=0]
+----

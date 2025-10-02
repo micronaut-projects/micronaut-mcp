@@ -139,7 +139,6 @@ public final class PromptRegistry
             prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), promptRequest)));
         BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, promptRequest);
         Object result = executable.invoke(bean);
-
         if (result instanceof McpSchema.GetPromptResult promptResult) {
             return promptResult;
         }

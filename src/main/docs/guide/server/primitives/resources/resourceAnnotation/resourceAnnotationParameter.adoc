@@ -1,0 +1,4 @@
+In a method annotated with `@Resource` you can bind parameters with types:
+
+- api:mcp.server.context.MicronautMcpTransportContext[]
+- `io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest`

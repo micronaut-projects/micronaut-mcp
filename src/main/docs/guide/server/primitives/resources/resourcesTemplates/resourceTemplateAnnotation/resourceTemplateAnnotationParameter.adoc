@@ -1,0 +1,6 @@
+In a method annotated with `@ResourceTemplate` you can bind parameters with types:
+
+- api:mcp.server.context.MicronautMcpTransportContext[]
+- `io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest`
+
+Additionally, you can add method parameter matching the uri template variable as show in the previous example.
