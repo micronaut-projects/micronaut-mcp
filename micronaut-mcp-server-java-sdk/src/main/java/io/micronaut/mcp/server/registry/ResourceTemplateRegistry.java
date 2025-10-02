@@ -52,14 +52,13 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
     McpServerFeatures.AsyncResourceTemplateSpecification,
     McpStatelessServerFeatures.SyncResourceTemplateSpecification,
     McpStatelessServerFeatures.AsyncResourceTemplateSpecification> {
-    private final BeanContext beanContext;
+
     private final ArgumentBinderRegistry<UriTemplateReadResourceRequest> argumentBinderRegistry;
 
     ResourceTemplateRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
                              BeanContext beanContext,
                              ArgumentBinderRegistry<UriTemplateReadResourceRequest> argumentBinderRegistry) {
-        super(exceptionMappers);
-        this.beanContext = beanContext;
+        super(exceptionMappers, beanContext);
         this.argumentBinderRegistry = argumentBinderRegistry;
     }
 

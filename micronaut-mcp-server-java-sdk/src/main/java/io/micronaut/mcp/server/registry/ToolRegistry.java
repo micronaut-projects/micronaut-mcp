@@ -72,7 +72,6 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     private final McpJsonMapper mcpJsonMapper;
     private final JsonMapper jsonMapper;
     private final ArgumentBinderRegistry<McpSchema.CallToolRequest> argumentBinderRegistry;
-    private final BeanContext beanContext;
 
     ToolRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
                  List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
@@ -80,12 +79,11 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                  JsonMapper jsonMapper,
                  ArgumentBinderRegistry<McpSchema.CallToolRequest> argumentBinderRegistry,
                  BeanContext beanContext) {
-        super(exceptionMappers);
+        super(exceptionMappers, beanContext);
         this.jsonSchemaClassPathResourceLoader = jsonSchemaClassPathResourceLoader;
         this.mcpJsonMapper = mcpJsonMapper;
         this.jsonMapper = jsonMapper;
         this.argumentBinderRegistry = argumentBinderRegistry;
-        this.beanContext = beanContext;
     }
 
     @Override

@@ -25,20 +25,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Default implementation of {@link ReadResourceRequestArgumentBinder}.
+ * Default implementation of {@link CompleteRequestArgumentBinder}.
  * @param <T> the argument type
  */
-@Internal
 @Singleton
-final class DefaultReadResourceRequestArgumentBinder<T> extends AbstractMcpPrimitiveArgumentBinder<T> implements ReadResourceRequestArgumentBinder<T> {
-    DefaultReadResourceRequestArgumentBinder(ConversionService conversionService) {
+@Internal
+final class DefaultCompleteRequestArgumentBinder<T> extends AbstractMcpPrimitiveArgumentBinder<T> implements CompleteRequestArgumentBinder<T> {
+    DefaultCompleteRequestArgumentBinder(ConversionService conversionService) {
         super(conversionService);
     }
 
     @Override
-    public BindingResult<T> bind(ArgumentConversionContext<T> context, McpSchema.ReadResourceRequest source) {
+    public BindingResult<T> bind(ArgumentConversionContext<T> context, McpSchema.CompleteRequest source) {
         Map<String, Object> arguments = new HashMap<>();
-        arguments.put("uri", source.uri());
+        arguments.put(source.argument().name(), source.argument().value());
         if (source.meta() != null) {
             arguments.putAll(source.meta());
         }

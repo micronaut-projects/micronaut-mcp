@@ -22,6 +22,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.mcp.conf.server.PromptsConfiguration;
 import io.micronaut.mcp.conf.server.ResourcesConfiguration;
 import io.micronaut.mcp.conf.server.ToolsConfiguration;
+import io.micronaut.mcp.server.registry.CompletionRegistry;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ResourceTemplateRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
@@ -39,6 +40,12 @@ import java.util.List;
 @Internal
 @Factory
 class ServerCapabilitiesFactory {
+    private final CompletionRegistry completionRegistry;
+
+    ServerCapabilitiesFactory(CompletionRegistry completionRegistry) {
+        this.completionRegistry = completionRegistry;
+    }
+
     @SuppressWarnings({"java:S107", "ParameterNumber"})
     @Prototype
     McpSchema.ServerCapabilities.Builder createServerCapabilitiesBuilder(
@@ -102,7 +109,8 @@ class ServerCapabilitiesFactory {
         if (CollectionUtils.isNotEmpty(syncCompletions) ||
             CollectionUtils.isNotEmpty(asyncCompletions) ||
             CollectionUtils.isNotEmpty(statelessAsyncCompletions) ||
-            CollectionUtils.isNotEmpty(statelessSyncCompletions)) {
+            CollectionUtils.isNotEmpty(statelessSyncCompletions) ||
+            completionRegistry.isNotEmpty()) {
             builder.completions();
         }
         return builder;

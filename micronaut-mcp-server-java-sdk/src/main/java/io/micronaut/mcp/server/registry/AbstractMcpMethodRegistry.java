@@ -15,6 +15,7 @@
  */
 package io.micronaut.mcp.server.registry;
 
+import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -50,7 +51,7 @@ import java.util.stream.Stream;
 @Singleton
 @Internal
 abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrimitiveRegistry<S, A, SS, SA>
-    permits PromptRegistry, ResourceRegistry, ResourceTemplateRegistry, ToolRegistry {
+    permits CompletionRegistry, PromptRegistry, ResourceRegistry, ResourceTemplateRegistry, ToolRegistry {
     protected static final String MEMBER_DESCRIPTION = "description";
     protected static final String KEY_TYPE = "type";
     protected static final String DESCRIPTION_PROPERTY = "description";
@@ -63,11 +64,14 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected static final String MEMBER_TITLE = "title";
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMcpMethodRegistry.class);
     protected final List<Method<Object>> methods = new ArrayList<>();
+    protected final BeanContext beanContext;
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
     private final Map<Class<? extends Throwable>, McpErrorExceptionMapper<? extends Throwable>> classToExceptionMapper = new ConcurrentHashMap<>();
 
-    AbstractMcpMethodRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers) {
+    AbstractMcpMethodRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
+                              BeanContext beanContext) {
         this.exceptionMappers = exceptionMappers;
+        this.beanContext = beanContext;
     }
 
     /**

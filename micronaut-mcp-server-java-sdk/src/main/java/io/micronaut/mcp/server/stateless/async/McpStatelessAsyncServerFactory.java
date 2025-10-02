@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.mcp.conf.server.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.AbstractMcpServerFactory;
+import io.micronaut.mcp.server.registry.CompletionRegistry;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ResourceTemplateRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
@@ -66,6 +67,11 @@ final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpS
     @Override
     protected List<McpStatelessServerFeatures.AsyncResourceTemplateSpecification> getResourceTemplates(ResourceTemplateRegistry resourceTemplateRegistry) {
         return resourceTemplateRegistry.getStatelessAsyncSpecs();
+    }
+
+    @Override
+    protected List<McpStatelessServerFeatures.AsyncCompletionSpecification> getCompletions(CompletionRegistry completionRegistry) {
+        return completionRegistry.getStatelessAsyncSpecs();
     }
 
     @Override

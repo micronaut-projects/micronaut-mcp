@@ -3,6 +3,23 @@ package io.micronaut.mcp.server.utils;
 public final class JsonRpcMessages {
     private JsonRpcMessages() {
     }
+
+    public static final String PROMPT_COMPLETION_REQUEST = """
+        {"jsonrpc":"2.0","id": 1,"method":"completion/complete","params":{"ref":{"type": "ref/prompt","name": "code_review"},"argument":{"name": "language","value": "py"}}}""";
+
+    public static final String PROMPT_COMPLETION_RESPONSE = """
+        {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "result": {
+            "completion": {
+              "values": ["python", "pytorch", "pyside"],
+              "total": 3,
+              "hasMore": false
+            }
+          }
+        }""";
+
     public static final String PROMPTS_GET = """
         {"jsonrpc":"2.0","id":0,"method": "prompts/get","params":{"name":"chess-statistics","arguments":{"name": "sergio"}}}""";
 

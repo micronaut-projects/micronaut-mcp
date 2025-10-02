@@ -53,6 +53,12 @@ server:
           resourceTemplateAnnotationParameter: Resource Annotation Method Parameters
           resourceTemplateAnnotationReturnType: Resource Annotation Method Return Type
         resourcesTemplatesFactory: Resource Templates with a Factory
+    completions:
+      title: Completions
+      promptCompletionAnnotation:
+        title: Resources with Annotations
+        promptCompletionParameter: Resource Annotation Method Parameters
+        promptCompletionReturnType: Resource Annotation Method Return Type
   stdio: STDIO Transport
   testingYourMcpServer: Testing your MCP Server
 client:

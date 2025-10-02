@@ -23,6 +23,7 @@ import io.micronaut.mcp.conf.server.McpServerInfoConfiguration;
 import io.micronaut.mcp.conf.server.PromptsConfiguration;
 import io.micronaut.mcp.conf.server.ResourcesConfiguration;
 import io.micronaut.mcp.conf.server.ToolsConfiguration;
+import io.micronaut.mcp.server.registry.CompletionRegistry;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ResourceRegistry;
 import io.micronaut.mcp.server.registry.ResourceTemplateRegistry;
@@ -82,6 +83,14 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
     protected abstract List<U> getResourceTemplates(ResourceTemplateRegistry resourceTemplateRegistry);
 
     /**
+     * Retrieves a list of completions from the provided {@link CompletionRegistry}.
+     *
+     * @param completionRegistry the registry of completions from which to retrieve the completions.
+     * @return a list of completions retrieved from the provided resource registry
+     */
+    protected abstract List<C> getCompletions(CompletionRegistry completionRegistry);
+
+    /**
      * Creates an MCP server specification based on the provided parameters.
      *
      * @param transport         The transport protocol used by the MCP server.
@@ -122,6 +131,7 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
      * @param promptRegistry Prompt Registry
      * @param resourceRegistry Resource Registry
      * @param resourceTemplateRegistry Resource Template Registry
+     * @param completionRegistry Completion Registry
      * @param tools Tools
      * @param completions Completions
      * @param prompts Prompts
@@ -145,6 +155,7 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
                                   PromptRegistry promptRegistry,
                                   ResourceRegistry resourceRegistry,
                                   ResourceTemplateRegistry resourceTemplateRegistry,
+                                  CompletionRegistry completionRegistry,
                                   List<T> tools,
                                   List<C> completions,
                                   List<P> prompts,
@@ -163,10 +174,11 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
         if (!allResourceTemplates.isEmpty() || !allResources.isEmpty()) {
             capabilitiesBuilder.resources(resourcesConfiguration.isSubscribe(), resourcesConfiguration.isListChanged());
         }
-        if (!completions.isEmpty()) {
+        List<C> allCompletions = CollectionUtils.concat(completions, getCompletions(completionRegistry));
+        if (!allCompletions.isEmpty()) {
             capabilitiesBuilder.completions();
         }
-        return createMcpServerSpec(transport, jsonMapper, jsonSchemaValidator, configuration, capabilitiesProvider.get(), allTools, completions, allPrompts, allResources, allResourceTemplates);
+        return createMcpServerSpec(transport, jsonMapper, jsonSchemaValidator, configuration, capabilitiesProvider.get(), allTools, allCompletions, allPrompts, allResources, allResourceTemplates);
     }
 
 }

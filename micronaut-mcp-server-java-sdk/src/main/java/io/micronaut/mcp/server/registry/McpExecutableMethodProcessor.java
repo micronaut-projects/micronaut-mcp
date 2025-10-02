@@ -22,6 +22,8 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.annotations.McpPrimitive;
 import io.micronaut.mcp.annotations.Prompt;
+import io.micronaut.mcp.annotations.PromptCompletion;
+import io.micronaut.mcp.annotations.ResourceCompletion;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.Resource;
 import io.micronaut.mcp.annotations.ResourceTemplate;
@@ -37,15 +39,18 @@ final class McpExecutableMethodProcessor implements ExecutableMethodProcessor<Mc
     private final PromptRegistry promptRegistry;
     private final ResourceRegistry resourceRegistry;
     private final ResourceTemplateRegistry resourceTemplateRegistry;
+    private final CompletionRegistry completionRegistry;
 
     McpExecutableMethodProcessor(ToolRegistry toolRegistry,
                                  PromptRegistry promptRegistry,
                                  ResourceRegistry resourceRegistry,
-                                 ResourceTemplateRegistry resourceTemplateRegistry) {
+                                 ResourceTemplateRegistry resourceTemplateRegistry,
+                                 CompletionRegistry completionRegistry) {
         this.toolRegistry = toolRegistry;
         this.promptRegistry = promptRegistry;
         this.resourceRegistry = resourceRegistry;
         this.resourceTemplateRegistry = resourceTemplateRegistry;
+        this.completionRegistry = completionRegistry;
     }
 
     @Override
@@ -58,9 +63,12 @@ final class McpExecutableMethodProcessor implements ExecutableMethodProcessor<Mc
             resourceRegistry.addMethod(beanDefinition, method);
         } else if (method.hasStereotype(ResourceTemplate.class)) {
             resourceTemplateRegistry.addMethod(beanDefinition, method);
+        } else if (method.hasStereotype(PromptCompletion.class)) {
+            completionRegistry.addMethod(beanDefinition, method);
+        } else if (method.hasStereotype(ResourceCompletion.class)) {
+            completionRegistry.addMethod(beanDefinition, method);
         } else {
             throw new IllegalStateException("Unknown method: " + method);
         }
     }
-
 }
