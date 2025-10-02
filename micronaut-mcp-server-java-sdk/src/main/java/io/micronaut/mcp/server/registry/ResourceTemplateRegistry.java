@@ -169,8 +169,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
             return r;
         }
         if (result instanceof String s) {
-            String mimeType = method.getAnnotation(ResourceTemplate.class)
-                .stringValue(MIME_TYPE_PROPERTY)
+            String mimeType = method.stringValue(ResourceTemplate.class, MIME_TYPE_PROPERTY)
                 .orElse(ResourceTemplate.DEFAULT_MIME_TYPE);
             McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(request.uri(), mimeType, s);
             return new McpSchema.ReadResourceResult(List.of(contents));
