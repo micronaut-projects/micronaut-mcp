@@ -1,0 +1,13 @@
+The preferred way to declare a resource completion is using a method annotated with api:mcp.annotations.ResourceCompletion[] in a `@Singleton` bean.
+
+[source, java]
+----
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/completions/resources/MyResourceCompletions.java[tags="clazz",indent=0]
+----
+
+You can use resource completions, for example, in combination with Resource templates (see the uri for both the resource template and resource completion match):
+
+[source, java]
+----
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/completions/resources/MyResourceTemplates.java[tags="clazz",indent=0]
+----

@@ -1,4 +1,4 @@
-package io.micronaut.mcp.server.stateless.sync.completions;
+package io.micronaut.mcp.server.stateless.sync.completions.prompts;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;

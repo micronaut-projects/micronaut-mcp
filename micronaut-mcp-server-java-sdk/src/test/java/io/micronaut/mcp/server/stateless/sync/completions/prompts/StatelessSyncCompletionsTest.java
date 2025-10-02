@@ -1,4 +1,4 @@
-package io.micronaut.mcp.server.stateless.sync.completions;
+package io.micronaut.mcp.server.stateless.sync.completions.prompts;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
@@ -11,7 +11,6 @@ import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.PromptArg;
-import io.micronaut.mcp.annotations.PromptCompletion;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
@@ -19,7 +18,6 @@ import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
-import java.util.Collections;
 import java.util.List;
 
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.PROMPT_COMPLETION_REQUEST;
@@ -41,18 +39,6 @@ class StatelessSyncCompletionsTest {
         assertEquals(HttpStatus.OK, response.getStatus());
         String responseJson = response.body();
         JSONAssert.assertEquals(PROMPT_COMPLETION_RESPONSE, responseJson, true);
-    }
-
-    @Requires(property = "spec.name", value = "StatelessSyncCompletionsTest")
-    @Singleton
-    static class MyCompletions {
-        @PromptCompletion(name = "code_review")
-        List<String> languages(String language) {
-            if (language != null && language.startsWith("py")) {
-                return List.of("python", "pytorch", "pyside");
-            }
-            return Collections.emptyList();
-        }
     }
 
     @Requires(property = "spec.name", value = "StatelessSyncCompletionsTest")

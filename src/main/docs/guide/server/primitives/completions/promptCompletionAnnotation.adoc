@@ -1,0 +1,8 @@
+The preferred way to declare a prompt completion is using a method annotated with api:mcp.annotations.PromptCompletion[] in a `@Singleton` bean.
+
+[source, java]
+----
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/completions/prompts/MyPromptsCompletions.java[tags="clazz",indent=0]
+----
+
+NOTE: You need a prompt with the same name as the completion prompt. Moreover, the name of the prompt completion argument must match the name of the prompt argument.

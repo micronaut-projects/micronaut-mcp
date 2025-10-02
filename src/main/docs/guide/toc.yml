@@ -56,9 +56,13 @@ server:
     completions:
       title: Completions
       promptCompletionAnnotation:
-        title: Resources with Annotations
-        promptCompletionParameter: Resource Annotation Method Parameters
-        promptCompletionReturnType: Resource Annotation Method Return Type
+        title: Prompt Completions with Annotations
+        promptCompletionParameter: PromptCompletion Annotation Method Parameters
+        promptCompletionReturnType: PromptCompletion Annotation Method Return Type
+      resourceCompletionAnnotation:
+        title: Resource Completions with Annotations
+        resourceCompletionParameter: ResourceCompletion Annotation Method Parameters
+        resourceCompletionReturnType: ResourceCompletion Annotation Method Return Type
   stdio: STDIO Transport
   testingYourMcpServer: Testing your MCP Server
 client:
