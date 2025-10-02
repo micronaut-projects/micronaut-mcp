@@ -32,7 +32,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @MicronautTest
 @Property(name = "spec.name", value = "StatelessSyncResourceCompletionsTest")
 class StatelessSyncResourceCompletionsTest {
-
     @Test
     void resourceCompletion(@Client("/") HttpClient httpClient) throws JSONException {
         BlockingHttpClient client = httpClient.toBlocking();

@@ -19,6 +19,7 @@ import static io.micronaut.mcp.server.stateless.sync.resources.ResourcesFactory.
 
 //end::imports[]
 
+@Requires(property = "spec.name", value = "StatelessSyncResourceListTest")
 //tag::clazz[]
 @Factory
 class ResourcesTemplatesFactory {

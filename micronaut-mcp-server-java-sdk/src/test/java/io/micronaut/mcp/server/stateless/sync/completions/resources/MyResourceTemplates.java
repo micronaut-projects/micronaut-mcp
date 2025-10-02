@@ -14,11 +14,11 @@ class  MyResourceTemplates {
         title = "User Document"
     )
     String ref(String fileName) {
-        if (fileName.endsWith("report.pdf")) {
+        if (fileName.equals("report.pdf")) {
             return "Report PDF";
-        } else if (fileName.endsWith("data.csv")) {
+        } else if (fileName.equals("data.csv")) {
             return "Data CSV";
-        } else if (fileName.endsWith("notes.txt")) {
+        } else if (fileName.equals("notes.txt")) {
             return "Notes TXT";
         }
         return "";
