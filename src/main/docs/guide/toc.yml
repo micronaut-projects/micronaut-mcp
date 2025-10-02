@@ -19,6 +19,7 @@ server:
     title: Primitives
     tools:
       title: Tools
+      toolsConfiguration: Tools Configuration
       search: Search Tool
       fetch: Fetch Tool
       toolAnnotation:
@@ -28,9 +29,9 @@ server:
       toolsInputJsonSchema: Tools Input JSON Schema
       toolsOutputJsonSchema: Tools Output JSON Schema
       toolsFactory: Tools with a Factory
-      toolsConfiguration: Tools Configuration
     prompts:
       title: Prompts
+      classpathPrompts: Classpath Prompts
       promptsConfiguration: Prompts Configuration
       promptAnnotation:
         title: Prompts with Annotations
@@ -39,12 +40,12 @@ server:
       promptsFactory: Prompts with a Factory
     resources:
       title: Resources
+      resourcesConfiguration: Resources Configuration
       resourceAnnotation:
         title: Resources with Annotations
         resourceAnnotationParameter: Resource Annotation Method Parameters
         resourceAnnotationReturnType: Resource Annotation Method Return Type
       resourcesFactory: Resources with a Factory
-      resourcesConfiguration: Resources Configuration
       resourcesTemplates:
         title: Resources Templates
         resourceTemplateAnnotation:
