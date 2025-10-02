@@ -1,0 +1,5 @@
+In a method annotated with `@Resource`, you can use as a return type:
+
+- `io.modelcontextprotocol.spec.McpSchema.ReadResourceResult`
+- `String`. If the method returns a `String`, the server responds with a single text resource content using the provided `mimeType`.
+

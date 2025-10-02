@@ -23,17 +23,20 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Method annotation to define an MCP Resource handler.
- * The annotated method will be invoked to read the contents of the declared resource URI.
+ * Method annotation to define an MCP Resource Template handler.
+ * The annotated method will be invoked to read the contents of the declared resource template.
  *
- * This mirrors {@link Prompt} for prompts and allows declaring Resources declaratively.
+ * This allows to define resource templates declaratively.
  *
  * Minimal usage:
  * <pre>
  * &#64;Singleton
- * class MyResources {
- *   &#64;Resource(uri = "example://hello", name = "hello", title = "Hello", description = "Hello text", mimeType = "text/plain")
- *   String hello() {
+ * class MyResourceTemplates {
+ *   &#64;ResourceTemplate(uriTemplate = "example://hello/{locale}", name = "hello", title = "Hello", description = "Hello text", mimeType = "text/plain")
+ *   String hello(String locale) {
+ *     if (locale.equals("es) {
+ *         return "Hola Mundo";
+ *     }
  *     return "Hello World";
  *   }
  * }
@@ -42,6 +45,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * Supported method parameters:
  * - parameter of type {@code io.micronaut.mcp.server.context.MicronautMcpTransportContext}
  * - parameter of type {@code io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest}
+ *
  * Supported return types:
  * - {@code String}: returned as text content with the configured {@link #mimeType()}
  * - {@code io.modelcontextprotocol.spec.McpSchema.ReadResourceResult}: used as-is
@@ -50,8 +54,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Target(METHOD)
 @McpPrimitive
-public @interface Resource {
-
+public @interface ResourceTemplate {
     String DEFAULT_MIME_TYPE = "text/plain";
 
     /**
@@ -65,9 +68,9 @@ public @interface Resource {
     String name() default ELEMENT_NAME;
 
     /**
-     * @return The resource URI this handler serves (e.g. "pgn://round/1"). For now this is a concrete URI, not a template.
+     * @return The resource URI this handler serves (e.g. ""file:///{path}").
      */
-    String uri();
+    String uriTemplate() default "pgn://round/{round}";
 
     /**
      * @return A concise human-readable title of the resource.

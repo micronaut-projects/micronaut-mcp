@@ -66,14 +66,13 @@ import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_STRING;
 @Internal
 public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatures.SyncToolSpecification, McpServerFeatures.AsyncToolSpecification, McpStatelessServerFeatures.SyncToolSpecification, McpStatelessServerFeatures.AsyncToolSpecification> {
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
-    private static final String MEMBER_TITLE = "title";
+    private static final List<Class<?>> BINDABLE_PARAMETER_TYPES = List.of(McpTransportContext.class,
+        McpSchema.CallToolRequest.class);
     private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;
     private final McpJsonMapper mcpJsonMapper;
     private final JsonMapper jsonMapper;
     private final ArgumentBinderRegistry<McpSchema.CallToolRequest> argumentBinderRegistry;
     private final BeanContext beanContext;
-    private static final List<Class<?>> BINDABLE_PARAMETER_TYPES = List.of(McpTransportContext.class,
-        McpSchema.CallToolRequest.class);
 
     ToolRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
                  List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
@@ -170,7 +169,9 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, callToolRequest);
             Object result = executable.invoke(bean);
             String text = "";
-            if (returnClass.isAssignableFrom(String.class)) {
+            if (returnClass.isAssignableFrom(McpSchema.CallToolResult.class)) {
+                return (McpSchema.CallToolResult) result;
+            } else if (returnClass.isAssignableFrom(String.class)) {
                 text = result.toString();
             } else if (Enum.class.isAssignableFrom(result.getClass())) {
                 text = result.toString();

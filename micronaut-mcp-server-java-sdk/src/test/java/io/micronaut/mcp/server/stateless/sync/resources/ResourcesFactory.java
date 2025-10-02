@@ -15,6 +15,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.io.ResourceLoader;
 import io.micronaut.mcp.server.utils.PgnLoader;
+import io.micronaut.mcp.server.utils.ResourceLoaderUtils;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
@@ -34,38 +35,44 @@ class ResourcesFactory {
     public static final String PGN_MIME_TYPE = "application/x-chess-pgn";
 
     private final PgnLoader pgnLoader;
+    private final ResourceLoader resourceLoader;
 
-    ResourcesFactory(BeanContext beanContext, ResourceLoader resourceLoader, PgnLoader pgnLoader) {
+    ResourcesFactory(ResourceLoader resourceLoader, PgnLoader pgnLoader) {
+        this.resourceLoader = resourceLoader;
         this.pgnLoader = pgnLoader;
-        for (int round = 1; round <= 14; round++) {
-            Optional<InputStream> roundPgnInputStreamOptional = resourceLoader.getResourceAsStream("classpath:fidewwc2024/round_" + round + ".pgn");
-            if (roundPgnInputStreamOptional.isPresent()) {
-                try {
-                    Long size = Long.valueOf(roundPgnInputStreamOptional.get().readAllBytes().length);
-                    String uri = "pgn://round/" + round;
-                    String name = "round" + round + "PgnFideWCC2024";
-                    String title = "PGN of the Round " + round + " game of the World Chess Championship";
-                    String description = title + " between Ding Liren and Gukesh Dommaraju";
-                    beanContext.registerSingleton(new McpSchema.Resource(uri, name, title, description, PGN_MIME_TYPE, size, null, null));
-                } catch (IOException e) {
-                    throw new ConfigurationException("unable to calculate the size of the resource");
-                }
-            }
-        }
     }
 
-    @EachBean(McpSchema.Resource.class)
+    @EachBean(PgnFile.class)
     @Singleton
-    McpStatelessServerFeatures.SyncResourceSpecification createPgnSyncResourceSpecification(McpSchema.Resource resource) {
-        return new McpStatelessServerFeatures.SyncResourceSpecification(resource, (mcpSyncServerExchange, readResourceRequest) -> {
-            String uri = readResourceRequest.uri();
-            int lastSlash = uri.lastIndexOf('/');
-            String roundStr = uri.substring(lastSlash + 1);
-            int round = Integer.parseInt(roundStr);
-            List<McpSchema.ResourceContents> contents = new ArrayList<>();
-            pgnLoader.loadPgn(round).ifPresent(text ->
-                contents.add(new McpSchema.TextResourceContents(uri, PGN_MIME_TYPE, text)));
-            return new McpSchema.ReadResourceResult(contents);
-        });
+    McpStatelessServerFeatures.SyncResourceSpecification createPgnSyncResourceSpecification(PgnFile pgnFile) throws IOException {
+        McpSchema.Resource resource = getResource(pgnFile);
+        return new McpStatelessServerFeatures.SyncResourceSpecification(resource,
+            (mcpSyncServerExchange,  readResourceRequest) -> readResourceResult(readResourceRequest.uri(), pgnLoader));
+    }
+
+    private static Integer round(String uri) {
+        int lastSlash = uri.lastIndexOf('/');
+        String roundStr = uri.substring(lastSlash + 1);
+        return Integer.parseInt(roundStr);
+    }
+
+    static McpSchema.ReadResourceResult readResourceResult(String uri, PgnLoader pgnLoader) {
+        Integer round = round(uri);
+        List<McpSchema.ResourceContents> contents = new ArrayList<>();
+        pgnLoader.loadPgn(round).ifPresent(text ->
+            contents.add(new McpSchema.TextResourceContents(uri, PGN_MIME_TYPE, text)));
+        return new McpSchema.ReadResourceResult(contents);
+    }
+
+    private McpSchema.Resource getResource(PgnFile pgnFile) throws IOException {
+        return ResourceLoaderUtils.size(resourceLoader, pgnFile.getPath())
+            .map(size -> {
+                Integer round = pgnFile.getRound();
+                String uri = "pgn://round/" + round;
+                String name = "round" + round + "PgnFideWCC2024";
+                String title = "PGN of the Round " + round + " game of the World Chess Championship";
+                String description = title + " between Ding Liren and Gukesh Dommaraju";
+                return new McpSchema.Resource(uri, name, title, description, PGN_MIME_TYPE, size, null, null);
+        }).orElseThrow(() -> new ConfigurationException("unable find resource for path " + pgnFile.getPath()));
     }
 }

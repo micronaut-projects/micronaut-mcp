@@ -24,6 +24,7 @@ import io.micronaut.mcp.annotations.McpPrimitive;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.Resource;
+import io.micronaut.mcp.annotations.ResourceTemplate;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import jakarta.inject.Singleton;
 
@@ -35,11 +36,16 @@ final class McpExecutableMethodProcessor implements ExecutableMethodProcessor<Mc
     private final ToolRegistry toolRegistry;
     private final PromptRegistry promptRegistry;
     private final ResourceRegistry resourceRegistry;
+    private final ResourceTemplateRegistry resourceTemplateRegistry;
 
-    McpExecutableMethodProcessor(ToolRegistry toolRegistry, PromptRegistry promptRegistry, ResourceRegistry resourceRegistry) {
+    McpExecutableMethodProcessor(ToolRegistry toolRegistry,
+                                 PromptRegistry promptRegistry,
+                                 ResourceRegistry resourceRegistry,
+                                 ResourceTemplateRegistry resourceTemplateRegistry) {
         this.toolRegistry = toolRegistry;
         this.promptRegistry = promptRegistry;
         this.resourceRegistry = resourceRegistry;
+        this.resourceTemplateRegistry = resourceTemplateRegistry;
     }
 
     @Override
@@ -50,6 +56,8 @@ final class McpExecutableMethodProcessor implements ExecutableMethodProcessor<Mc
             toolRegistry.addMethod(beanDefinition, method);
         } else if (method.hasStereotype(Resource.class)) {
             resourceRegistry.addMethod(beanDefinition, method);
+        } else if (method.hasStereotype(ResourceTemplate.class)) {
+            resourceTemplateRegistry.addMethod(beanDefinition, method);
         } else {
             throw new IllegalStateException("Unknown method: " + method);
         }

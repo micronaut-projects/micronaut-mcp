@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.conf.server.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.registry.PromptRegistry;
+import io.micronaut.mcp.server.registry.ResourceTemplateRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.micronaut.mcp.server.registry.ResourceRegistry;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -41,7 +42,8 @@ final class McpServerAsyncFactory extends AbstractMcpServerFactory<McpServer.Asy
     McpServerFeatures.AsyncToolSpecification,
     McpServerFeatures.AsyncCompletionSpecification,
     McpServerFeatures.AsyncPromptSpecification,
-    McpServerFeatures.AsyncResourceSpecification> {
+    McpServerFeatures.AsyncResourceSpecification,
+    McpServerFeatures.AsyncResourceTemplateSpecification> {
 
     @Singleton
     McpAsyncServer createMcpSyncServer(@SuppressWarnings("java:S3740") McpServer.AsyncSpecification<?> asyncSpecification) {
@@ -64,6 +66,11 @@ final class McpServerAsyncFactory extends AbstractMcpServerFactory<McpServer.Asy
     }
 
     @Override
+    protected List<McpServerFeatures.AsyncResourceTemplateSpecification> getResourceTemplates(ResourceTemplateRegistry resourceTemplateRegistry) {
+        return resourceTemplateRegistry.getAsyncSpecs();
+    }
+
+    @Override
     protected McpServer.AsyncSpecification<?> createMcpServerSpec(McpServerTransportProvider transport,
                                                                   McpJsonMapper jsonMapper,
                                                                   JsonSchemaValidator jsonSchemaValidator,
@@ -72,8 +79,8 @@ final class McpServerAsyncFactory extends AbstractMcpServerFactory<McpServer.Asy
                                                                   List<McpServerFeatures.AsyncToolSpecification> tools,
                                                                   List<McpServerFeatures.AsyncCompletionSpecification> completions,
                                                                   List<McpServerFeatures.AsyncPromptSpecification> prompts,
-                                                                  List<McpSchema.ResourceTemplate> resourceTemplates,
-                                                                  List<McpServerFeatures.AsyncResourceSpecification> resources) {
+                                                                  List<McpServerFeatures.AsyncResourceSpecification> resources,
+                                                                  List<McpServerFeatures.AsyncResourceTemplateSpecification> resourceTemplates) {
         McpServer.AsyncSpecification<?> spec = McpServer.async(transport)
             .jsonMapper(jsonMapper)
             .jsonSchemaValidator(jsonSchemaValidator)

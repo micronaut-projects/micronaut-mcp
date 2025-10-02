@@ -1,0 +1,12 @@
+The preferred way to declare a resource is using a method annotated with api:mcp.annotations.Resource[] in a `@Singleton` bean.
+
+[source, java]
+----
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/resources/Resources.java[tags="fakepackage,imports,clazz",indent=0]
+----
+
+Notes:
+
+- The `uri` attribute is required and must be unique for the resource.
+- By default, the method name is used as the resource `name`. You can override this by setting the `name` attribute of the `@Resource` annotation.
+- You can optionally provide `title`, `description` and `mimeType` (defaults to `text/plain`).

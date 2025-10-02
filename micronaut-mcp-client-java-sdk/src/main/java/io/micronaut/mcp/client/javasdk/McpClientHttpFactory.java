@@ -21,12 +21,14 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
+import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 
@@ -53,10 +55,12 @@ final class McpClientHttpFactory {
     @EachBean(HttpClientStreamableHttpTransport.class)
     @Bean(preDestroy = "close")
     @Singleton
-    McpSyncClient mcpSyncClient(HttpClientStreamableHttpTransport transport,
+    McpSyncClient mcpSyncClient(@NonNull HttpClientStreamableHttpTransport transport,
+                                @NonNull JsonSchemaValidator jsonSchemaValidator,
                                 @Parameter McpSchema.ClientCapabilities clientCapabilities,
                                 @Nullable @Parameter McpClientHttpConfiguration config) {
         McpClient.SyncSpec builder = McpClient.sync(transport)
+            .jsonSchemaValidator(jsonSchemaValidator)
             .capabilities(clientCapabilities);
         if (config != null && config.getTimeout() != null) {
             builder.requestTimeout(config.getTimeout());
@@ -67,10 +71,12 @@ final class McpClientHttpFactory {
     @EachBean(HttpClientStreamableHttpTransport.class)
     @Bean(preDestroy = "close")
     @Singleton
-    McpAsyncClient mcpAysncClient(HttpClientStreamableHttpTransport transport,
+    McpAsyncClient mcpAysncClient(@NonNull HttpClientStreamableHttpTransport transport,
+                                  @NonNull JsonSchemaValidator jsonSchemaValidator,
                                   @Parameter McpSchema.ClientCapabilities clientCapabilities,
                                   @Nullable @Parameter McpClientHttpConfiguration config) {
         McpClient.AsyncSpec builder = McpClient.async(transport)
+            .jsonSchemaValidator(jsonSchemaValidator)
             .capabilities(clientCapabilities);
         if (config != null && config.getTimeout() != null) {
             builder.requestTimeout(config.getTimeout());

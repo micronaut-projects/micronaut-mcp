@@ -14,4 +14,5 @@ dependencies {
     implementation(mn.micronaut.http.client)
     runtimeOnly(mnLogging.logback.classic)
     testImplementation(libs.jsonassert)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }

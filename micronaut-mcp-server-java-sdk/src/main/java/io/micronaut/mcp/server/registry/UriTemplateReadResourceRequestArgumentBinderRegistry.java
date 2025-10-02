@@ -19,25 +19,24 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinder;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.core.type.Argument;
-import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 
 import java.util.Optional;
 
 /**
- * Default implementation of {@link ArgumentBinderRegistry} for {@link McpSchema.ReadResourceRequest} that provides a default binder.
+ * Default implementation of {@link ArgumentBinderRegistry} for {@link UriTemplateReadResourceRequest} that provides a default binder.
  */
 @Internal
 @Singleton
-final class ReadResourceRequestArgumentBinderRegistry implements ArgumentBinderRegistry<McpSchema.ReadResourceRequest> {
-    private final ReadResourceRequestArgumentBinder defaultBinder;
+final class UriTemplateReadResourceRequestArgumentBinderRegistry implements ArgumentBinderRegistry<UriTemplateReadResourceRequest> {
+    private final UriTemplateReadResourceRequestArgumentBinder defaultBinder;
 
-    ReadResourceRequestArgumentBinderRegistry(ReadResourceRequestArgumentBinder defaultBinder) {
+    UriTemplateReadResourceRequestArgumentBinderRegistry(UriTemplateReadResourceRequestArgumentBinder defaultBinder) {
         this.defaultBinder = defaultBinder;
     }
 
     @Override
-    public <T> Optional<ArgumentBinder<T, McpSchema.ReadResourceRequest>> findArgumentBinder(Argument<T> argument) {
+    public <T> Optional<ArgumentBinder<T, UriTemplateReadResourceRequest>> findArgumentBinder(Argument<T> argument) {
         return Optional.of(defaultBinder);
     }
 }

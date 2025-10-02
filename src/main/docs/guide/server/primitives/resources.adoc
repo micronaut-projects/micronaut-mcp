@@ -2,13 +2,3 @@ ____
 Resources: Structured data or content that provides additional context to the model
 ____
 
-The preferred way to define resources is to annotate a method with api:mcp.annotations.Resource[] in a `@Singleton` bean. See <<resourcesAnnotations, Resources with Annotations>>.
-
-Alternatively, you define resources registering beans (typically in a https://docs.micronaut.io/latest/guide/#factories[bean factory]).
-
-NOTE: The following example assumes you set `SYNC` as your server type. Because of that, the following example creates defining resources with the class `McpStatelessServerFeatures.SyncResourceSpecification`. <<primitivesClassesPerServerType, If you used a different server type, you should use a different class>>.
-
-[source, Java]
-----
-include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/resources/ResourcesFactory.java[tags="fakepackage,imports,clazz",indent=0]
-----

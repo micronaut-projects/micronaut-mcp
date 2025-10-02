@@ -25,6 +25,7 @@ import io.micronaut.mcp.conf.server.ResourcesConfiguration;
 import io.micronaut.mcp.conf.server.ToolsConfiguration;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ResourceRegistry;
+import io.micronaut.mcp.server.registry.ResourceTemplateRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
@@ -43,9 +44,10 @@ import java.util.List;
  * @param <C>    the type representing completion specifications.
  * @param <P>    the type representing prompt specifications.
  * @param <R>    the type representing resource specifications.
+ * @param <U>    the type representing resource template specifications.
  */
 @Internal
-public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
+public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
 
     /**
      * Retrieves a list of tools from the provided {@link ToolRegistry}.
@@ -72,6 +74,14 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
     protected abstract List<R> getResources(ResourceRegistry resourceRegistry);
 
     /**
+     * Retrieves a list of resources templates from the provided {@link ResourceTemplateRegistry}.
+     *
+     * @param resourceTemplateRegistry the registry of resource templates from which to retrieve the resource templates.
+     * @return a list of resources templates retrieved from the provided resource registry
+     */
+    protected abstract List<U> getResourceTemplates(ResourceTemplateRegistry resourceTemplateRegistry);
+
+    /**
      * Creates an MCP server specification based on the provided parameters.
      *
      * @param transport         The transport protocol used by the MCP server.
@@ -82,8 +92,8 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
      * @param tools             A list of tools to be included in the MCP server specification.
      * @param completions       A list of completion configurations for the MCP server.
      * @param prompts           A list of prompt configurations for the MCP server.
-     * @param resourceTemplates A list of resource templates for the MCP server.
      * @param resources         A list of server resources to be defined in the specification.
+     * @param resourcesTemplates A list of resource templates for the MCP server.
      * @return the MCP server specification.
      */
     protected abstract Spec createMcpServerSpec(S transport,
@@ -94,8 +104,8 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
                                                 List<T> tools,
                                                 List<C> completions,
                                                 List<P> prompts,
-                                                List<McpSchema.ResourceTemplate> resourceTemplates,
-                                                List<R> resources);
+                                                List<R> resources,
+                                                List<U> resourcesTemplates);
 
     /**
      *
@@ -111,6 +121,7 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
      * @param toolRegistry Tool Registry
      * @param promptRegistry Prompt Registry
      * @param resourceRegistry Resource Registry
+     * @param resourceTemplateRegistry Resource Template Registry
      * @param tools Tools
      * @param completions Completions
      * @param prompts Prompts
@@ -133,11 +144,12 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
                                   ToolRegistry toolRegistry,
                                   PromptRegistry promptRegistry,
                                   ResourceRegistry resourceRegistry,
+                                  ResourceTemplateRegistry resourceTemplateRegistry,
                                   List<T> tools,
                                   List<C> completions,
                                   List<P> prompts,
-                                  List<McpSchema.ResourceTemplate> resourceTemplates,
-                                  List<R> resources) {
+                                  List<R> resources,
+                                   List<U> resourceTemplates) {
         List<T> allTools = CollectionUtils.concat(tools, getTools(toolRegistry));
         if (!allTools.isEmpty()) {
             capabilitiesBuilder.tools(toolsConfiguration.isListChanged());
@@ -147,13 +159,14 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R> {
             capabilitiesBuilder.prompts(promptsConfiguration.isListChanged());
         }
         List<R> allResources = CollectionUtils.concat(resources, getResources(resourceRegistry));
-        if (!resourceTemplates.isEmpty() || !allResources.isEmpty()) {
+        List<U> allResourceTemplates = CollectionUtils.concat(resourceTemplates, getResourceTemplates(resourceTemplateRegistry));
+        if (!allResourceTemplates.isEmpty() || !allResources.isEmpty()) {
             capabilitiesBuilder.resources(resourcesConfiguration.isSubscribe(), resourcesConfiguration.isListChanged());
         }
         if (!completions.isEmpty()) {
             capabilitiesBuilder.completions();
         }
-        return createMcpServerSpec(transport, jsonMapper, jsonSchemaValidator, configuration, capabilitiesProvider.get(), allTools, completions, allPrompts, resourceTemplates, allResources);
+        return createMcpServerSpec(transport, jsonMapper, jsonSchemaValidator, configuration, capabilitiesProvider.get(), allTools, completions, allPrompts, allResources, allResourceTemplates);
     }
 
 }

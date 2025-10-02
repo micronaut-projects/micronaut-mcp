@@ -55,9 +55,6 @@ import java.util.function.BiFunction;
 @Singleton
 public final class PromptRegistry
     extends AbstractMcpMethodRegistry<McpServerFeatures.SyncPromptSpecification, McpServerFeatures.AsyncPromptSpecification, McpStatelessServerFeatures.SyncPromptSpecification, McpStatelessServerFeatures.AsyncPromptSpecification> {
-    public static final String MEMBER_NAME = "name";
-    public static final String MEMBER_TITLE = "title";
-    public static final String MEMBER_DESCRIPTION = "description";
     private final BeanContext beanContext;
     private final ArgumentBinderRegistry<McpSchema.GetPromptRequest> argumentBinderRegistry;
 
@@ -142,7 +139,6 @@ public final class PromptRegistry
             prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), promptRequest)));
         BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, promptRequest);
         Object result = executable.invoke(bean);
-
         if (result instanceof McpSchema.GetPromptResult promptResult) {
             return promptResult;
         }

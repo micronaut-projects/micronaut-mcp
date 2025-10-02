@@ -19,22 +19,40 @@ server:
     title: Primitives
     tools:
       title: Tools
+      toolsConfiguration: Tools Configuration
       search: Search Tool
       fetch: Fetch Tool
-      toolsAnnotations: Tools with Annotations
+      toolAnnotation:
+        title: Tools with Annotations
+        toolAnnotationParameter: Tool Annotation Method Parameters
+        toolAnnotationReturnType: Tool Annotation Method Return Type
       toolsInputJsonSchema: Tools Input JSON Schema
       toolsOutputJsonSchema: Tools Output JSON Schema
       toolsFactory: Tools with a Factory
-      toolsConfiguration: Tools Configuration
     prompts:
       title: Prompts
-      promptsConfiguration: Tools Configuration
       classpathPrompts: Classpath Prompts
+      promptsConfiguration: Prompts Configuration
+      promptAnnotation:
+        title: Prompts with Annotations
+        promptAnnotationParameter: Prompt Annotation Method Parameters
+        promptAnnotationReturnType: Prompt Annotation Method Return Type
+      promptsFactory: Prompts with a Factory
     resources:
       title: Resources
-      resourcesAnnotations: Resources with Annotations
       resourcesConfiguration: Resources Configuration
-      resourcesTemplates: Resources Templates
+      resourceAnnotation:
+        title: Resources with Annotations
+        resourceAnnotationParameter: Resource Annotation Method Parameters
+        resourceAnnotationReturnType: Resource Annotation Method Return Type
+      resourcesFactory: Resources with a Factory
+      resourcesTemplates:
+        title: Resources Templates
+        resourceTemplateAnnotation:
+          title: Resource Template with Annotations
+          resourceTemplateAnnotationParameter: Resource Annotation Method Parameters
+          resourceTemplateAnnotationReturnType: Resource Annotation Method Return Type
+        resourcesTemplatesFactory: Resource Templates with a Factory
   stdio: STDIO Transport
   testingYourMcpServer: Testing your MCP Server
 client:

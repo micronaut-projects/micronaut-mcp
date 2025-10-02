@@ -1,0 +1,4 @@
+In a method annotated with `@Prompt` you can bind parameters with types:
+
+- api:mcp.server.context.MicronautMcpTransportContext[]
+- `io.modelcontextprotocol.spec.McpSchema.GetPromptRequest`

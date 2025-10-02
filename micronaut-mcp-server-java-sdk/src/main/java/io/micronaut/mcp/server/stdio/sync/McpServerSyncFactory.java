@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.conf.server.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.registry.PromptRegistry;
+import io.micronaut.mcp.server.registry.ResourceTemplateRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.micronaut.mcp.server.registry.ResourceRegistry;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -41,7 +42,8 @@ final class McpServerSyncFactory extends AbstractMcpServerFactory<McpServer.Sync
     McpServerFeatures.SyncToolSpecification,
     McpServerFeatures.SyncCompletionSpecification,
     McpServerFeatures.SyncPromptSpecification,
-    McpServerFeatures.SyncResourceSpecification> {
+    McpServerFeatures.SyncResourceSpecification,
+    McpServerFeatures.SyncResourceTemplateSpecification> {
 
     @Singleton
     McpSyncServer createMcpSyncServer(McpServer.SyncSpecification<?> syncSpecification) {
@@ -64,6 +66,11 @@ final class McpServerSyncFactory extends AbstractMcpServerFactory<McpServer.Sync
     }
 
     @Override
+    protected List<McpServerFeatures.SyncResourceTemplateSpecification> getResourceTemplates(ResourceTemplateRegistry resourceTemplateRegistry) {
+        return resourceTemplateRegistry.getSyncSpecs();
+    }
+
+    @Override
     protected McpServer.SyncSpecification<?> createMcpServerSpec(McpServerTransportProvider transport,
                                                                  McpJsonMapper jsonMapper,
                                                                  JsonSchemaValidator jsonSchemaValidator,
@@ -72,8 +79,8 @@ final class McpServerSyncFactory extends AbstractMcpServerFactory<McpServer.Sync
                                                                  List<McpServerFeatures.SyncToolSpecification> tools,
                                                                  List<McpServerFeatures.SyncCompletionSpecification> completions,
                                                                  List<McpServerFeatures.SyncPromptSpecification> prompts,
-                                                                 List<McpSchema.ResourceTemplate> resourceTemplates,
-                                                                 List<McpServerFeatures.SyncResourceSpecification> resources) {
+                                                                 List<McpServerFeatures.SyncResourceSpecification> resources,
+                                                                 List<McpServerFeatures.SyncResourceTemplateSpecification> resourceTemplates) {
         McpServer.SyncSpecification<?> spec = McpServer.sync(transport)
             .jsonMapper(jsonMapper)
             .jsonSchemaValidator(jsonSchemaValidator)
