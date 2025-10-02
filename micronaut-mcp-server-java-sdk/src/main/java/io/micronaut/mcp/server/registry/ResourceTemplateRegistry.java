@@ -17,6 +17,7 @@ package io.micronaut.mcp.server.registry;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.core.bind.BoundExecutable;
@@ -24,84 +25,102 @@ import io.micronaut.core.bind.DefaultExecutableBinder;
 import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
-import io.micronaut.mcp.annotations.Resource;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
+import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
-import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
+import io.micronaut.mcp.annotations.ResourceTemplate;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiFunction;
 
 /**
- * The registry of {@link Resource}-annotated methods.
- * Produces MCP Resource specifications with handlers that invoke the annotated methods.
+ * The registry of {@link ResourceTemplate}-annotated methods.
+ * Produces MCP Resource Template specifications with handlers that invoke the annotated methods.
  */
 @Requires(beans = McpServerConfiguration.class)
 @Singleton
 @Internal
-public final class ResourceRegistry extends AbstractMcpMethodRegistry<
-    McpServerFeatures.SyncResourceSpecification,
-    McpServerFeatures.AsyncResourceSpecification,
-    McpStatelessServerFeatures.SyncResourceSpecification,
-    McpStatelessServerFeatures.AsyncResourceSpecification> {
-
+public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
+    McpServerFeatures.SyncResourceTemplateSpecification,
+    McpServerFeatures.AsyncResourceTemplateSpecification,
+    McpStatelessServerFeatures.SyncResourceTemplateSpecification,
+    McpStatelessServerFeatures.AsyncResourceTemplateSpecification> {
     private final BeanContext beanContext;
-    private final ArgumentBinderRegistry<McpSchema.ReadResourceRequest> argumentBinderRegistry;
+    private final ArgumentBinderRegistry<UriTemplateReadResourceRequest> argumentBinderRegistry;
 
-    public ResourceRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
-                            BeanContext beanContext,
-                            ArgumentBinderRegistry<McpSchema.ReadResourceRequest> argumentBinderRegistry) {
+    ResourceTemplateRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
+                             BeanContext beanContext,
+                             ArgumentBinderRegistry<UriTemplateReadResourceRequest> argumentBinderRegistry) {
         super(exceptionMappers);
         this.beanContext = beanContext;
         this.argumentBinderRegistry = argumentBinderRegistry;
     }
 
     @Override
-    public List<McpServerFeatures.SyncResourceSpecification> getSyncSpecs() {
+    public List<McpServerFeatures.SyncResourceTemplateSpecification> getSyncSpecs() {
         return drainMethods()
-            .map(m -> new McpServerFeatures.SyncResourceSpecification(
-                toResource(m.method()),
+            .map(m -> new McpServerFeatures.SyncResourceTemplateSpecification(
+                toResourceTemplate(m.method()),
                 syncHandler(m.beanDefinition(), m.method())
             ))
             .toList();
     }
 
     @Override
-    public List<McpServerFeatures.AsyncResourceSpecification> getAsyncSpecs() {
+    public List<McpServerFeatures.AsyncResourceTemplateSpecification> getAsyncSpecs() {
         return drainMethods()
-            .map(m -> new McpServerFeatures.AsyncResourceSpecification(
-                toResource(m.method()),
+            .map(m -> new McpServerFeatures.AsyncResourceTemplateSpecification(
+                toResourceTemplate(m.method()),
                 asyncHandler(m.beanDefinition(), m.method())
             ))
             .toList();
     }
 
     @Override
-    public List<McpStatelessServerFeatures.SyncResourceSpecification> getStatelessSyncSpecs() {
+    public List<McpStatelessServerFeatures.SyncResourceTemplateSpecification> getStatelessSyncSpecs() {
         return drainMethods()
-            .map(m -> new McpStatelessServerFeatures.SyncResourceSpecification(
-                toResource(m.method()),
+            .map(m -> new McpStatelessServerFeatures.SyncResourceTemplateSpecification(
+                toResourceTemplate(m.method()),
                 statelessSyncHandler(m.beanDefinition(), m.method())
             ))
             .toList();
     }
 
     @Override
-    public List<McpStatelessServerFeatures.AsyncResourceSpecification> getStatelessAsyncSpecs() {
+    public List<McpStatelessServerFeatures.AsyncResourceTemplateSpecification> getStatelessAsyncSpecs() {
         return drainMethods()
-            .map(m -> new McpStatelessServerFeatures.AsyncResourceSpecification(
-                toResource(m.method()),
+            .map(m -> new McpStatelessServerFeatures.AsyncResourceTemplateSpecification(
+                toResourceTemplate(m.method()),
                 statelessAsyncHandler(m.beanDefinition(), m.method())
             ))
             .toList();
+    }
+
+    @Override
+    public boolean isNotEmpty() {
+        return !getSyncSpecs().isEmpty()
+            || !getAsyncSpecs().isEmpty()
+            || !getStatelessSyncSpecs().isEmpty()
+            || !getStatelessAsyncSpecs().isEmpty();
+    }
+
+    private static <B> McpSchema.ResourceTemplate toResourceTemplate(ExecutableMethod<B, Object> method) {
+        String uri = method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY).orElseThrow();
+        String name = method.stringValue(ResourceTemplate.class, NAME_PROPERTY).orElse(ResourceTemplate.ELEMENT_NAME);
+        if (ResourceTemplate.ELEMENT_NAME.equals(name)) {
+            name = method.getName();
+        }
+        String title = method.stringValue(ResourceTemplate.class, TITLE_PROPERTY).orElse(null);
+        String description = method.stringValue(ResourceTemplate.class, DESCRIPTION_PROPERTY).orElse(null);
+        String mimeType = method.stringValue(ResourceTemplate.class, MIME_TYPE_PROPERTY).orElse(ResourceTemplate.DEFAULT_MIME_TYPE);
+        return new McpSchema.ResourceTemplate(uri, name, title, description, mimeType, null, null);
     }
 
     private <B> BiFunction<McpSyncServerExchange, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> syncHandler(
@@ -138,59 +157,25 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
                                                           McpSchema.ReadResourceRequest request) {
         B bean = beanContext.getBean(beanDefinition);
 
-        ExecutableBinder<McpSchema.ReadResourceRequest> executableBinder = new DefaultExecutableBinder<>(
+        ExecutableBinder<UriTemplateReadResourceRequest> executableBinder = new DefaultExecutableBinder<>(
             prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), request)));
-        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, request);
+
+        String uriTemplate = method.getAnnotation(ResourceTemplate.class)
+            .stringValue(URI_TEMPLATE_PROPERTY)
+            .orElseThrow(() -> new ConfigurationException("Missing required member uriTemplate in @ResourceTemplate annotation"));
+        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, new UriTemplateReadResourceRequest(uriTemplate, request));
         Object result = executable.invoke(bean);
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
         }
         if (result instanceof String s) {
-            String mimeType = method.getAnnotation(Resource.class)
+            String mimeType = method.getAnnotation(ResourceTemplate.class)
                 .stringValue(MIME_TYPE_PROPERTY)
-                .orElse(Resource.DEFAULT_MIME_TYPE);
+                .orElse(ResourceTemplate.DEFAULT_MIME_TYPE);
             McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(request.uri(), mimeType, s);
             return new McpSchema.ReadResourceResult(List.of(contents));
         }
         // Unsupported return type: return empty contents
         return new McpSchema.ReadResourceResult(List.of());
-    }
-
-    private static <B> Object[] resolveArgs(ExecutableMethod<B, Object> method, McpSchema.ReadResourceRequest request) {
-        if (method.getArguments().length == 0) {
-            return new Object[0];
-        }
-        if (method.getArguments().length == 1) {
-            Class<?> t = method.getArguments()[0].getType();
-            if (Objects.equals(t, String.class)) {
-                return new Object[] { request.uri() };
-            }
-            if (Objects.equals(t, McpSchema.ReadResourceRequest.class)) {
-                return new Object[] { request };
-            }
-        }
-        // Fallback: no arguments passed if signature doesn't match supported variants
-        return new Object[0];
-    }
-
-    private static <B> McpSchema.Resource toResource(ExecutableMethod<B, Object> method) {
-        String uri = method.stringValue(Resource.class, URI_PROPERTY).orElseThrow();
-        String name = method.stringValue(Resource.class, NAME_PROPERTY).orElse(Resource.ELEMENT_NAME);
-        if (Resource.ELEMENT_NAME.equals(name)) {
-            name = method.getName();
-        }
-        String title = method.stringValue(Resource.class, TITLE_PROPERTY).orElse(null);
-        String description = method.stringValue(Resource.class, DESCRIPTION_PROPERTY).orElse(null);
-        String mimeType = method.stringValue(Resource.class, MIME_TYPE_PROPERTY).orElse(Resource.DEFAULT_MIME_TYPE);
-        // size, attributes, and other optional fields are left null for declarative resources
-        return new McpSchema.Resource(uri, name, title, description, mimeType, null, null, null);
-    }
-
-    @Override
-    public boolean isNotEmpty() {
-        return !getSyncSpecs().isEmpty()
-            || !getAsyncSpecs().isEmpty()
-            || !getStatelessSyncSpecs().isEmpty()
-            || !getStatelessAsyncSpecs().isEmpty();
     }
 }

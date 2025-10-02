@@ -1,14 +1,9 @@
 package io.micronaut.mcp.server.stdio.sync;
 
-import io.micronaut.context.BeanContext;
-import io.micronaut.context.annotation.EachBean;
-import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Property;
-import io.micronaut.context.annotation.Prototype;
-import io.micronaut.context.annotation.Replaces;
-import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.*;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.io.ResourceLoader;
+import io.micronaut.core.naming.Named;
 import io.micronaut.mcp.server.utils.PgnLoader;
 import io.micronaut.mcp.server.utils.Stdio;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -41,6 +36,34 @@ import static io.micronaut.mcp.server.utils.JsonRpcMessages.RESOURCES_TEMPLATES_
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_RESOURCES_LIST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Property(name = "pgn.rounda.path", value = "classpath:fidewwc2024/round_1.pgn")
+@Property(name = "pgn.rounda.round", value = "1")
+@Property(name = "pgn.roundb.path", value = "classpath:fidewwc2024/round_2.pgn")
+@Property(name = "pgn.roundb.round", value = "2")
+@Property(name = "pgn.roundc.path", value = "classpath:fidewwc2024/round_3.pgn")
+@Property(name = "pgn.roundc.round", value = "3")
+@Property(name = "pgn.roundd.path", value = "classpath:fidewwc2024/round_4.pgn")
+@Property(name = "pgn.roundd.round", value = "4")
+@Property(name = "pgn.rounde.path", value = "classpath:fidewwc2024/round_5.pgn")
+@Property(name = "pgn.rounde.round", value = "5")
+@Property(name = "pgn.roundf.path", value = "classpath:fidewwc2024/round_6.pgn")
+@Property(name = "pgn.roundf.round", value = "6")
+@Property(name = "pgn.roundg.path", value = "classpath:fidewwc2024/round_7.pgn")
+@Property(name = "pgn.roundg.round", value = "7")
+@Property(name = "pgn.roundh.path", value = "classpath:fidewwc2024/round_8.pgn")
+@Property(name = "pgn.roundh.round", value = "8")
+@Property(name = "pgn.roundi.path", value = "classpath:fidewwc2024/round_9.pgn")
+@Property(name = "pgn.roundi.round", value = "9")
+@Property(name = "pgn.roundj.path", value = "classpath:fidewwc2024/round_10.pgn")
+@Property(name = "pgn.roundj.round", value = "10")
+@Property(name = "pgn.roundk.path", value = "classpath:fidewwc2024/round_11.pgn")
+@Property(name = "pgn.roundk.round", value = "11")
+@Property(name = "pgn.roundl.path", value = "classpath:fidewwc2024/round_12.pgn")
+@Property(name = "pgn.roundl.round", value = "12")
+@Property(name = "pgn.roundm.path", value = "classpath:fidewwc2024/round_13.pgn")
+@Property(name = "pgn.roundm.round", value = "13")
+@Property(name = "pgn.roundn.path", value = "classpath:fidewwc2024/round_14.pgn")
+@Property(name = "pgn.roundn.round", value = "14")
 @Property(name = "micronaut.mcp.server.info.name", value="world-chess-championship-2024-pgn")
 @Property(name = "micronaut.mcp.server.info.version", value="0.0.1")
 @Property(name = "micronaut.mcp.server.transport", value = "STDIO")
@@ -94,53 +117,104 @@ class SyncResourcesTest {
     }
 
     @Requires(property = "spec.name", value = "SyncResourcesTest")
+    @EachProperty("pgn")
+    static class PgnFile implements Named {
+        private final String name;
+        private String path;
+        private Integer round;
+
+        PgnFile(@Parameter String name) {
+            this.name = name;
+        }
+
+        public Integer getRound() {
+            return round;
+        }
+
+        public void setRound(Integer round) {
+            this.round = round;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        public void setPath(String path) {
+            this.path = path;
+        }
+    }
+
+    @Requires(property = "spec.name", value = "SyncResourcesTest")
     @Factory
     static class ResourcesFactory {
         public static final String PGN_MIME_TYPE = "application/x-chess-pgn";
-
         private final PgnLoader pgnLoader;
+        private final ResourceLoader resourceLoader;
 
-        ResourcesFactory(BeanContext beanContext, ResourceLoader resourceLoader, PgnLoader pgnLoader) {
+        ResourcesFactory(ResourceLoader resourceLoader, PgnLoader pgnLoader) {
+            this.resourceLoader = resourceLoader;
             this.pgnLoader = pgnLoader;
-            for (int round = 1; round <= 14; round++) {
-                Optional<InputStream> roundPgnInputStreamOptional = resourceLoader.getResourceAsStream("classpath:fidewwc2024/round_" + round + ".pgn");
-                if (roundPgnInputStreamOptional.isPresent()) {
-                    try {
-                        Long size = Long.valueOf(roundPgnInputStreamOptional.get().readAllBytes().length);
-                        String uri = "pgn://round/" + round;
-                        String name = "round" + round + "PgnFideWCC2024";
-                        String title = "PGN of the Round " + round + " game of the World Chess Championship";
-                        String description = title + " between Ding Liren and Gukesh Dommaraju";
-                        beanContext.registerSingleton(new McpSchema.Resource(uri, name, title, description, PGN_MIME_TYPE, size, null, null));
-                    } catch (IOException e) {
-                        throw new ConfigurationException("unable to calculate the size of the resource");
-                    }
-                }
-            }
         }
 
         @Singleton
-        McpSchema.ResourceTemplate createPgnResourceTemplate() {
+        McpServerFeatures.SyncResourceTemplateSpecification createPgnResourceTemplate() {
             String uriTemplate = "pgn://round/{round}";
             String name = "2024ChessChampionshipRoundPgn";
             String title = "PGN of a round World Chess Championship 2024";
             String description = "Given a round, it returns a PGN of the World Chess Championship 2024 between Ding Liren and Gukesh Dommaraju";
-            return new McpSchema.ResourceTemplate(uriTemplate, name, title, description, PGN_MIME_TYPE, null, null);
+            return new McpServerFeatures.SyncResourceTemplateSpecification(
+                new McpSchema.ResourceTemplate(uriTemplate, name, title, description, PGN_MIME_TYPE, null, null),
+                (mcpTransportContext, readResourceRequest) -> {
+                    Integer round = round(readResourceRequest.uri());
+                    return readResourceResult(readResourceRequest.uri(), round);
+                });
         }
 
-        @EachBean(McpSchema.Resource.class)
+        @EachBean(PgnFile.class)
         @Singleton
-        McpServerFeatures.SyncResourceSpecification createPgnSyncResourceSpecification(McpSchema.Resource resource) {
+        McpServerFeatures.SyncResourceSpecification createPgnSyncResourceSpecification(PgnFile pgnFile) {
+            McpSchema.Resource resource = getResource(pgnFile);
             return new McpServerFeatures.SyncResourceSpecification(resource, (mcpSyncServerExchange, readResourceRequest) -> {
                 String uri = readResourceRequest.uri();
-                int lastSlash = uri.lastIndexOf('/');
-                String roundStr = uri.substring(lastSlash + 1);
-                int round = Integer.parseInt(roundStr);
-                List<McpSchema.ResourceContents> contents = new ArrayList<>();
-                pgnLoader.loadPgn(round).ifPresent(text ->
-                    contents.add(new McpSchema.TextResourceContents(uri, PGN_MIME_TYPE, text)));
-                return new McpSchema.ReadResourceResult(contents);
+                Integer round = round(readResourceRequest.uri());
+                return readResourceResult(uri, round);
             });
+        }
+
+        private Integer round(String uri) {
+            int lastSlash = uri.lastIndexOf('/');
+            String roundStr = uri.substring(lastSlash + 1);
+            return Integer.parseInt(roundStr);
+        }
+
+        private McpSchema.ReadResourceResult readResourceResult(String uri, Integer round) {
+            List<McpSchema.ResourceContents> contents = new ArrayList<>();
+            pgnLoader.loadPgn(round).ifPresent(text ->
+                contents.add(new McpSchema.TextResourceContents(uri, PGN_MIME_TYPE, text)));
+            return new McpSchema.ReadResourceResult(contents);
+        }
+
+        private McpSchema.Resource getResource(PgnFile pgnFile) {
+            Optional<InputStream> roundPgnInputStreamOptional = resourceLoader.getResourceAsStream(pgnFile.getPath());
+            if (roundPgnInputStreamOptional.isPresent()) {
+                try {
+                    Integer round = pgnFile.getRound();
+                    Long size = Long.valueOf(roundPgnInputStreamOptional.get().readAllBytes().length);
+                    String uri = "pgn://round/" + round;
+                    String name = "round" + round + "PgnFideWCC2024";
+                    String title = "PGN of the Round " + round + " game of the World Chess Championship";
+                    String description = title + " between Ding Liren and Gukesh Dommaraju";
+                    return new McpSchema.Resource(uri, name, title, description, PGN_MIME_TYPE, size, null, null);
+                } catch (IOException e) {
+                    throw new ConfigurationException("unable to calculate the size of the resource");
+                }
+            }
+            throw new ConfigurationException("unable find resource for path " + pgnFile.getPath());
         }
     }
 }

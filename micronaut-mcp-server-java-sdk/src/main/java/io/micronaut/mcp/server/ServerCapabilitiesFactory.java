@@ -23,6 +23,7 @@ import io.micronaut.mcp.conf.server.PromptsConfiguration;
 import io.micronaut.mcp.conf.server.ResourcesConfiguration;
 import io.micronaut.mcp.conf.server.ToolsConfiguration;
 import io.micronaut.mcp.server.registry.PromptRegistry;
+import io.micronaut.mcp.server.registry.ResourceTemplateRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.micronaut.mcp.server.registry.ResourceRegistry;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -46,15 +47,19 @@ class ServerCapabilitiesFactory {
         List<McpStatelessServerFeatures.AsyncCompletionSpecification> statelessAsyncCompletions,
         List<McpStatelessServerFeatures.SyncCompletionSpecification> statelessSyncCompletions,
         ResourcesConfiguration resourcesConfiguration,
-        List<McpSchema.ResourceTemplate> resourceTemplates,
         List<McpSchema.Resource> resources,
         List<McpServerFeatures.SyncResourceSpecification> syncResources,
         List<McpServerFeatures.AsyncResourceSpecification> asyncResources,
         List<McpStatelessServerFeatures.AsyncResourceSpecification> statelessAsyncResources,
         List<McpStatelessServerFeatures.SyncResourceSpecification> statelessSyncResources,
+        List<McpServerFeatures.SyncResourceTemplateSpecification> syncResourceTemplates,
+        List<McpServerFeatures.AsyncResourceTemplateSpecification> asyncResourceTemplates,
+        List<McpStatelessServerFeatures.AsyncResourceTemplateSpecification> statelessAsyncResourceTemplates,
+        List<McpStatelessServerFeatures.SyncResourceTemplateSpecification> statelessSyncResourceTemplates,
         ToolsConfiguration toolsConfiguration,
         ToolRegistry toolRegistry,
         ResourceRegistry resourceRegistry,
+        ResourceTemplateRegistry resourceTemplateRegistry,
         List<McpServerFeatures.SyncToolSpecification> syncTools,
         List<McpServerFeatures.AsyncToolSpecification> asyncTools,
         List<McpStatelessServerFeatures.AsyncToolSpecification> statelessAsyncTools,
@@ -81,7 +86,11 @@ class ServerCapabilitiesFactory {
             promptRegistry.isNotEmpty()) {
             builder.prompts(promptsConfiguration.isListChanged());
         }
-        if (CollectionUtils.isNotEmpty(resourceTemplates) ||
+        if (CollectionUtils.isNotEmpty(syncResourceTemplates) ||
+            CollectionUtils.isNotEmpty(asyncResourceTemplates) ||
+            CollectionUtils.isNotEmpty(statelessAsyncResourceTemplates) ||
+            CollectionUtils.isNotEmpty(statelessSyncResourceTemplates) ||
+            resourceTemplateRegistry.isNotEmpty() ||
             CollectionUtils.isNotEmpty(resources) ||
             CollectionUtils.isNotEmpty(syncResources) ||
             CollectionUtils.isNotEmpty(asyncResources) ||

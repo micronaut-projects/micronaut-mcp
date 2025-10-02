@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.mcp.conf.server.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.server.registry.PromptRegistry;
+import io.micronaut.mcp.server.registry.ResourceTemplateRegistry;
 import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.micronaut.mcp.server.registry.ResourceRegistry;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -44,7 +45,8 @@ final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpS
     McpStatelessServerFeatures.AsyncToolSpecification,
     McpStatelessServerFeatures.AsyncCompletionSpecification,
     McpStatelessServerFeatures.AsyncPromptSpecification,
-    McpStatelessServerFeatures.AsyncResourceSpecification> {
+    McpStatelessServerFeatures.AsyncResourceSpecification,
+    McpStatelessServerFeatures.AsyncResourceTemplateSpecification> {
 
     @Override
     protected List<McpStatelessServerFeatures.AsyncToolSpecification> getTools(ToolRegistry toolRegistry) {
@@ -62,6 +64,11 @@ final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpS
     }
 
     @Override
+    protected List<McpStatelessServerFeatures.AsyncResourceTemplateSpecification> getResourceTemplates(ResourceTemplateRegistry resourceTemplateRegistry) {
+        return resourceTemplateRegistry.getStatelessAsyncSpecs();
+    }
+
+    @Override
     protected McpServer.StatelessAsyncSpecification createMcpServerSpec(McpStatelessServerTransport transport,
                                                                         McpJsonMapper jsonMapper,
                                                                         JsonSchemaValidator jsonSchemaValidator,
@@ -70,8 +77,8 @@ final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpS
                                                                         List<McpStatelessServerFeatures.AsyncToolSpecification> tools,
                                                                         List<McpStatelessServerFeatures.AsyncCompletionSpecification> completions,
                                                                         List<McpStatelessServerFeatures.AsyncPromptSpecification> prompts,
-                                                                        List<McpSchema.ResourceTemplate> resourceTemplates,
-                                                                        List<McpStatelessServerFeatures.AsyncResourceSpecification> resources) {
+                                                                        List<McpStatelessServerFeatures.AsyncResourceSpecification> resources,
+                                                                        List<McpStatelessServerFeatures.AsyncResourceTemplateSpecification> resourcesTemplates) {
         McpServer.StatelessAsyncSpecification spec = McpServer.async(transport)
             .jsonMapper(jsonMapper)
             .jsonSchemaValidator(jsonSchemaValidator)
@@ -79,7 +86,7 @@ final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpS
             .tools(tools)
             .completions(completions)
             .prompts(prompts)
-            .resourceTemplates(resourceTemplates)
+            .resourceTemplates(resourcesTemplates)
             .resources(resources);
         if (configuration != null) {
             spec.serverInfo(configuration.getName(), configuration.getVersion());

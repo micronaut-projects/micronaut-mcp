@@ -50,12 +50,17 @@ import java.util.stream.Stream;
 @Singleton
 @Internal
 abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrimitiveRegistry<S, A, SS, SA>
-    permits PromptRegistry, ToolRegistry, ResourceRegistry {
-    /**
-     * @see <a href="https://json-schema.org/understanding-json-schema/reference/type">JSON Schema Type</a>
-     */
+    permits PromptRegistry, ResourceRegistry, ResourceTemplateRegistry, ToolRegistry {
     protected static final String MEMBER_DESCRIPTION = "description";
     protected static final String KEY_TYPE = "type";
+    protected static final String DESCRIPTION_PROPERTY = "description";
+    protected static final String MIME_TYPE_PROPERTY = "mimeType";
+    protected static final String NAME_PROPERTY = "name";
+    protected static final String TITLE_PROPERTY = "title";
+    protected static final String URI_PROPERTY = "uri";
+    protected static final String URI_TEMPLATE_PROPERTY = "uriTemplate";
+    protected static final String MEMBER_NAME = "name";
+    protected static final String MEMBER_TITLE = "title";
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMcpMethodRegistry.class);
     protected final List<Method<Object>> methods = new ArrayList<>();
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
