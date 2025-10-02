@@ -131,6 +131,8 @@
         
         <div class="toc-item" style="margin-left:30px" id="toc-item-promptsConfiguration"><a href="#promptsConfiguration"><strong>3.5.2.1</strong><span>Tools Configuration</span></a></div>
         
+        <div class="toc-item" style="margin-left:30px" id="toc-item-classpathPrompts"><a href="#classpathPrompts"><strong>3.5.2.2</strong><span>Classpath Prompts</span></a></div>
+        
         <div class="toc-item" style="margin-left:20px" id="toc-item-resources"><a href="#resources"><strong>3.5.3</strong><span>Resources</span></a></div>
         
         <div class="toc-item" style="margin-left:30px" id="toc-item-resourcesAnnotations"><a href="#resourcesAnnotations"><strong>3.5.3.1</strong><span>Resources with Annotations</span></a></div>
@@ -1226,6 +1228,47 @@ class PromptsFactory {
 </tr>
 </tbody>
 </table>
+
+<h2 id="classpathPrompts"><a class="anchor" href="#classpathPrompts"></a>3.5.2.2 Classpath Prompts</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/prompts/classpathPrompts.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>It is possible to define prompts by placing a text file in the classpath and defining the prompt attributes and path via configuration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.mcp.classpath-prompts.introspection-testing.name=introspection-testing
+micronaut.mcp.classpath-prompts.introspection-testing.title=Introspection-Testing
+micronaut.mcp.classpath-prompts.introspection-testing.description=Test whether a class is introspected in a Micronaut application
+micronaut.mcp.classpath-prompts.introspection-testing.path=prompts/introspection-testing.md
+micronaut.mcp.classpath-prompts.introspection-testing.arguments[0].name=className
+micronaut.mcp.classpath-prompts.introspection-testing.arguments[0].description=The class for which you want to test introspection</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can define the prompt content with argument interpolation in a text file.</p>
+</div>
+<div class="listingblock">
+<div class="title">src/main/resources/prompts/</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-markdown hljs" data-lang="markdown">Please, write a test to verify introspection for ${className}
+
+The following tests shows how to test if a class is introspected. The following test verifies if the `CreateGame` class is annotated with `@Introspected`.
+
+```java
+@Test
+void isAnnotatedWithIntrospected() {
+    assertDoesNotThrow(() -&gt; BeanIntrospection.getIntrospection(CreateGame.class));
+}
+```</code></pre>
+</div>
+</div>
 
 <h2 id="resources"><a class="anchor" href="#resources"></a>3.5.3 Resources</h2>
 
