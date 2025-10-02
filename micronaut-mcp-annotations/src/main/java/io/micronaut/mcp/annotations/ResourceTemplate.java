@@ -22,6 +22,34 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Method annotation to define an MCP Resource Template handler.
+ * The annotated method will be invoked to read the contents of the declared resource template.
+ *
+ * This allows to define resource templates declaratively.
+ *
+ * Minimal usage:
+ * <pre>
+ * &#64;Singleton
+ * class MyResourceTemplates {
+ *   &#64;ResourceTemplate(uriTemplate = "example://hello/{locale}", name = "hello", title = "Hello", description = "Hello text", mimeType = "text/plain")
+ *   String hello(String locale) {
+ *     if (locale.equals("es) {
+ *         return "Hola Mundo";
+ *     }
+ *     return "Hello World";
+ *   }
+ * }
+ * </pre>
+ *
+ * Supported method parameters:
+ * - parameter of type {@code io.micronaut.mcp.server.context.MicronautMcpTransportContext}
+ * - parameter of type {@code io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest}
+ *
+ * Supported return types:
+ * - {@code String}: returned as text content with the configured {@link #mimeType()}
+ * - {@code io.modelcontextprotocol.spec.McpSchema.ReadResourceResult}: used as-is
+ */
 @Documented
 @Retention(RUNTIME)
 @Target(METHOD)

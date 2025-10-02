@@ -39,15 +39,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * }
  * </pre>
  *
- * Supported method signatures:
- * - No parameters
- * - Single parameter of type {@code String} (receives the requested URI)
- * - Single parameter of type {@code io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest}
- *
+ * Supported method parameters:
+ * - parameter of type {@code io.micronaut.mcp.server.context.MicronautMcpTransportContext}
+ * - parameter of type {@code io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest}
  * Supported return types:
  * - {@code String}: returned as text content with the configured {@link #mimeType()}
  * - {@code io.modelcontextprotocol.spec.McpSchema.ReadResourceResult}: used as-is
- * Future improvements may add support for additional content types.
  */
 @Documented
 @Retention(RUNTIME)
