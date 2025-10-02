@@ -20,7 +20,11 @@ import io.micronaut.context.processor.ExecutableMethodProcessor;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
-import io.micronaut.mcp.annotations.*;
+import io.micronaut.mcp.annotations.McpPrimitive;
+import io.micronaut.mcp.annotations.Prompt;
+import io.micronaut.mcp.annotations.Tool;
+import io.micronaut.mcp.annotations.Resource;
+import io.micronaut.mcp.annotations.ResourceTemplate;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import jakarta.inject.Singleton;
 
