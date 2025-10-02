@@ -83,7 +83,7 @@ class ResourceTemplateTest {
         JSONAssert.assertEquals(EXPECTED_RESOURCES_LIST_TEMPLATES, jsonRpc, true);
     }
 
-    @Property(name = "spec.name", value = "ResourceTemplateTest")
+    @Requires(property = "spec.name", value = "ResourceTemplateTest")
     @Singleton
     static class MyResources {
         private static final String PGN_MIME_TYPE = "application/x-chess-pgn";

@@ -76,7 +76,7 @@ class ResourceTemplatePathVariablesTest {
         JSONAssert.assertEquals(EXPECTED_RESOURCES_LIST_TEMPLATES, jsonRpc, true);
     }
 
-    @Property(name = "spec.name", value = "ResourceTemplatePathVariablesTest")
+    @Requires(property = "spec.name", value = "ResourceTemplatePathVariablesTest")
     @Singleton
     static class MyResources {
         private static final String PGN_MIME_TYPE = "application/x-chess-pgn";

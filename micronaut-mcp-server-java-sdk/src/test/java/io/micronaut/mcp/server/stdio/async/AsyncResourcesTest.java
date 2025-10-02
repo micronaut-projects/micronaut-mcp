@@ -72,7 +72,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Property(name = "micronaut.mcp.server.reactive", value = StringUtils.TRUE)
 @Property(name = "spec.name", value = "AsyncResourcesTest")
 @MicronautTest
-public class AsyncResourcesTest {
+class AsyncResourcesTest {
     @Inject
     AsyncResourcesFactory factory;
 

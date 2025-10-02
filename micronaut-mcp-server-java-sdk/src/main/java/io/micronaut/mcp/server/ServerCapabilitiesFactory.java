@@ -47,7 +47,6 @@ class ServerCapabilitiesFactory {
         List<McpStatelessServerFeatures.AsyncCompletionSpecification> statelessAsyncCompletions,
         List<McpStatelessServerFeatures.SyncCompletionSpecification> statelessSyncCompletions,
         ResourcesConfiguration resourcesConfiguration,
-        List<McpSchema.Resource> resources,
         List<McpServerFeatures.SyncResourceSpecification> syncResources,
         List<McpServerFeatures.AsyncResourceSpecification> asyncResources,
         List<McpStatelessServerFeatures.AsyncResourceSpecification> statelessAsyncResources,
@@ -86,17 +85,18 @@ class ServerCapabilitiesFactory {
             promptRegistry.isNotEmpty()) {
             builder.prompts(promptsConfiguration.isListChanged());
         }
-        if (CollectionUtils.isNotEmpty(syncResourceTemplates) ||
-            CollectionUtils.isNotEmpty(asyncResourceTemplates) ||
-            CollectionUtils.isNotEmpty(statelessAsyncResourceTemplates) ||
-            CollectionUtils.isNotEmpty(statelessSyncResourceTemplates) ||
-            resourceTemplateRegistry.isNotEmpty() ||
-            CollectionUtils.isNotEmpty(resources) ||
-            CollectionUtils.isNotEmpty(syncResources) ||
+        boolean resourcesNotEmpty = CollectionUtils.isNotEmpty(syncResources) ||
             CollectionUtils.isNotEmpty(asyncResources) ||
             CollectionUtils.isNotEmpty(statelessAsyncResources) ||
             CollectionUtils.isNotEmpty(statelessSyncResources) ||
-            resourceRegistry.isNotEmpty()) {
+            resourceRegistry.isNotEmpty();
+
+        boolean resourceTemplateNotEmpty = CollectionUtils.isNotEmpty(syncResourceTemplates) ||
+            CollectionUtils.isNotEmpty(asyncResourceTemplates) ||
+            CollectionUtils.isNotEmpty(statelessAsyncResourceTemplates) ||
+            CollectionUtils.isNotEmpty(statelessSyncResourceTemplates) ||
+            resourceTemplateRegistry.isNotEmpty();
+        if (resourcesNotEmpty || resourceTemplateNotEmpty) {
             builder.resources(resourcesConfiguration.isSubscribe(), resourcesConfiguration.isListChanged());
         }
         if (CollectionUtils.isNotEmpty(syncCompletions) ||
