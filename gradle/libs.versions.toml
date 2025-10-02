@@ -30,7 +30,7 @@ groovy = "4.0.27"
 spock = "2.3-groovy-4.0"
 managed-mcp-java-sdk = "0.13.1"
 jsonassert = "1.5.3"
-micronaut-gradle-plugin = "4.5.4"
+micronaut-gradle-plugin = "4.5.5"
 
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
