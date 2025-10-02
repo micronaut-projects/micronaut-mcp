@@ -68,10 +68,10 @@ loadScripts(document, 'script');</script>
 <!-- ======== START OF CLASS DATA ======== -->
 <div class="header">
 <div class="sub-title"><span class="package-label-in-type">Package</span>&nbsp;<a href="package-summary.html">io.micronaut.mcp.server</a></div>
-<h1 title="Class AbstractMcpServerFactory" class="title">Class AbstractMcpServerFactory&lt;Spec,<wbr>S,<wbr>T,<wbr>C,<wbr>P,<wbr>R&gt;</h1>
+<h1 title="Class AbstractMcpServerFactory" class="title">Class AbstractMcpServerFactory&lt;Spec,<wbr>S,<wbr>T,<wbr>C,<wbr>P,<wbr>R,<wbr>U&gt;</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
-<div class="inheritance">io.micronaut.mcp.server.AbstractMcpServerFactory&lt;Spec,<wbr>S,<wbr>T,<wbr>C,<wbr>P,<wbr>R&gt;</div>
+<div class="inheritance">io.micronaut.mcp.server.AbstractMcpServerFactory&lt;Spec,<wbr>S,<wbr>T,<wbr>C,<wbr>P,<wbr>R,<wbr>U&gt;</div>
 </div>
 <section class="class-description" id="class-description">
 <dl class="notes">
@@ -82,10 +82,11 @@ loadScripts(document, 'script');</script>
 <dd><code>C</code> - the type representing completion specifications.</dd>
 <dd><code>P</code> - the type representing prompt specifications.</dd>
 <dd><code>R</code> - the type representing resource specifications.</dd>
+<dd><code>U</code> - the type representing resource template specifications.</dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Internal
-</span><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractMcpServerFactory&lt;Spec,<wbr>S,<wbr>T,<wbr>C,<wbr>P,<wbr>R&gt;</span>
+</span><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractMcpServerFactory&lt;Spec,<wbr>S,<wbr>T,<wbr>C,<wbr>P,<wbr>R,<wbr>U&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">An abstract factory class responsible for creating MCP server specifications.
  This class provides a framework for deriving specific implementations of MCP server factories.</div>
@@ -117,7 +118,7 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">Spec</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.micronaut.mcp.conf.server.ToolsConfiguration,io.micronaut.mcp.conf.server.PromptsConfiguration,io.micronaut.mcp.conf.server.ResourcesConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.Builder,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)" class="member-name-link">buildMcpServerSpec</a><wbr>(<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">S</a>&nbsp;transport,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.micronaut.mcp.conf.server.ToolsConfiguration,io.micronaut.mcp.conf.server.PromptsConfiguration,io.micronaut.mcp.conf.server.ResourcesConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.Builder,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,io.micronaut.mcp.server.registry.ResourceTemplateRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)" class="member-name-link">buildMcpServerSpec</a><wbr>(<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">S</a>&nbsp;transport,
  io.modelcontextprotocol.json.McpJsonMapper&nbsp;jsonMapper,
  io.modelcontextprotocol.json.schema.JsonSchemaValidator&nbsp;jsonSchemaValidator,
  @Nullable <a href="../conf/server/McpServerInfoConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerInfoConfiguration</a>&nbsp;configuration,
@@ -129,11 +130,12 @@ loadScripts(document, 'script');</script>
  <a href="registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a>&nbsp;toolRegistry,
  <a href="registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a>&nbsp;promptRegistry,
  <a href="registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceRegistry</a>&nbsp;resourceRegistry,
+ <a href="registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceTemplateRegistry</a>&nbsp;resourceTemplateRegistry,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">T</a>&gt;&nbsp;tools,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">C</a>&gt;&nbsp;completions,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">P</a>&gt;&nbsp;prompts,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.modelcontextprotocol.spec.McpSchema.ResourceTemplate&gt;&nbsp;resourceTemplates,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">R</a>&gt;&nbsp;resources)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">R</a>&gt;&nbsp;resources,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">U</a>&gt;&nbsp;resourceTemplates)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">Spec</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)" class="member-name-link">createMcpServerSpec</a><wbr>(<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">S</a>&nbsp;transport,
@@ -144,8 +146,8 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">T</a>&gt;&nbsp;tools,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">C</a>&gt;&nbsp;completions,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">P</a>&gt;&nbsp;prompts,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.modelcontextprotocol.spec.McpSchema.ResourceTemplate&gt;&nbsp;resourceTemplates,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">R</a>&gt;&nbsp;resources)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">R</a>&gt;&nbsp;resources,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">U</a>&gt;&nbsp;resourcesTemplates)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Creates an MCP server specification based on the provided parameters.</div>
 </div>
@@ -159,9 +161,14 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Retrieves a list of resources from the provided <a href="registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry"><code>ResourceRegistry</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">T</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTools(io.micronaut.mcp.server.registry.ToolRegistry)" class="member-name-link">getTools</a><wbr>(<a href="registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a>&nbsp;toolRegistry)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">U</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getResourceTemplates(io.micronaut.mcp.server.registry.ResourceTemplateRegistry)" class="member-name-link">getResourceTemplates</a><wbr>(<a href="registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceTemplateRegistry</a>&nbsp;resourceTemplateRegistry)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Retrieves a list of resources templates from the provided <a href="registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry"><code>ResourceTemplateRegistry</code></a>.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">T</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTools(io.micronaut.mcp.server.registry.ToolRegistry)" class="member-name-link">getTools</a><wbr>(<a href="registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a>&nbsp;toolRegistry)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Retrieves a list of tools from the provided <a href="registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry"><code>ToolRegistry</code></a>.</div>
 </div>
 </div>
@@ -235,6 +242,19 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
+<section class="detail" id="getResourceTemplates(io.micronaut.mcp.server.registry.ResourceTemplateRegistry)">
+<h3>getResourceTemplates</h3>
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">U</a>&gt;</span>&nbsp;<span class="element-name">getResourceTemplates</span><wbr><span class="parameters">(<a href="registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceTemplateRegistry</a>&nbsp;resourceTemplateRegistry)</span></div>
+<div class="block">Retrieves a list of resources templates from the provided <a href="registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry"><code>ResourceTemplateRegistry</code></a>.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>resourceTemplateRegistry</code> - the registry of resource templates from which to retrieve the resource templates.</dd>
+<dt>Returns:</dt>
+<dd>a list of resources templates retrieved from the provided resource registry</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="createMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)">
 <h3 id="createMcpServerSpec(java.lang.Object,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)">createMcpServerSpec</h3>
 <div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">Spec</a></span>&nbsp;<span class="element-name">createMcpServerSpec</span><wbr><span class="parameters">(<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">S</a>&nbsp;transport,
@@ -246,8 +266,8 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">T</a>&gt;&nbsp;tools,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">C</a>&gt;&nbsp;completions,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">P</a>&gt;&nbsp;prompts,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.modelcontextprotocol.spec.McpSchema.ResourceTemplate&gt;&nbsp;resourceTemplates,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">R</a>&gt;&nbsp;resources)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">R</a>&gt;&nbsp;resources,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">U</a>&gt;&nbsp;resourcesTemplates)</span></div>
 <div class="block">Creates an MCP server specification based on the provided parameters.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -259,16 +279,16 @@ loadScripts(document, 'script');</script>
 <dd><code>tools</code> - A list of tools to be included in the MCP server specification.</dd>
 <dd><code>completions</code> - A list of completion configurations for the MCP server.</dd>
 <dd><code>prompts</code> - A list of prompt configurations for the MCP server.</dd>
-<dd><code>resourceTemplates</code> - A list of resource templates for the MCP server.</dd>
 <dd><code>resources</code> - A list of server resources to be defined in the specification.</dd>
+<dd><code>resourcesTemplates</code> - A list of resource templates for the MCP server.</dd>
 <dt>Returns:</dt>
 <dd>the MCP server specification.</dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="buildMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.micronaut.mcp.conf.server.ToolsConfiguration,io.micronaut.mcp.conf.server.PromptsConfiguration,io.micronaut.mcp.conf.server.ResourcesConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.Builder,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)">
-<h3 id="buildMcpServerSpec(java.lang.Object,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.micronaut.mcp.conf.server.ToolsConfiguration,io.micronaut.mcp.conf.server.PromptsConfiguration,io.micronaut.mcp.conf.server.ResourcesConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.Builder,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)">buildMcpServerSpec</h3>
+<section class="detail" id="buildMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.micronaut.mcp.conf.server.ToolsConfiguration,io.micronaut.mcp.conf.server.PromptsConfiguration,io.micronaut.mcp.conf.server.ResourcesConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.Builder,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,io.micronaut.mcp.server.registry.ResourceTemplateRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)">
+<h3 id="buildMcpServerSpec(java.lang.Object,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.micronaut.mcp.conf.server.ToolsConfiguration,io.micronaut.mcp.conf.server.PromptsConfiguration,io.micronaut.mcp.conf.server.ResourcesConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.Builder,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,io.micronaut.mcp.server.registry.ResourceTemplateRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)">buildMcpServerSpec</h3>
 <div class="member-signature"><span class="annotations">@Prototype
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">Spec</a></span>&nbsp;<span class="element-name">buildMcpServerSpec</span><wbr><span class="parameters">(<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">S</a>&nbsp;transport,
  io.modelcontextprotocol.json.McpJsonMapper&nbsp;jsonMapper,
@@ -283,11 +303,12 @@ loadScripts(document, 'script');</script>
  <a href="registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a>&nbsp;toolRegistry,
  <a href="registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a>&nbsp;promptRegistry,
  <a href="registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceRegistry</a>&nbsp;resourceRegistry,
+ <a href="registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceTemplateRegistry</a>&nbsp;resourceTemplateRegistry,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">T</a>&gt;&nbsp;tools,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">C</a>&gt;&nbsp;completions,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">P</a>&gt;&nbsp;prompts,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.modelcontextprotocol.spec.McpSchema.ResourceTemplate&gt;&nbsp;resourceTemplates,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">R</a>&gt;&nbsp;resources)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">R</a>&gt;&nbsp;resources,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AbstractMcpServerFactory.html" title="type parameter in AbstractMcpServerFactory">U</a>&gt;&nbsp;resourceTemplates)</span></div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>transport</code> - Transport</dd>
@@ -302,6 +323,7 @@ loadScripts(document, 'script');</script>
 <dd><code>toolRegistry</code> - Tool Registry</dd>
 <dd><code>promptRegistry</code> - Prompt Registry</dd>
 <dd><code>resourceRegistry</code> - Resource Registry</dd>
+<dd><code>resourceTemplateRegistry</code> - Resource Template Registry</dd>
 <dd><code>tools</code> - Tools</dd>
 <dd><code>completions</code> - Completions</dd>
 <dd><code>prompts</code> - Prompts</dd>

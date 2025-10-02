@@ -96,6 +96,20 @@ loadScripts(document, 'script');</script>
 </div>
 </li>
 <li>
+<div class="caption"><span>io.micronaut.mcp.annotations.<a href="io/micronaut/mcp/annotations/ResourceTemplate.html" title="annotation interface in io.micronaut.mcp.annotations">ResourceTemplate</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Constant Field</div>
+<div class="table-header col-last">Value</div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.annotations.ResourceTemplate.DEFAULT_MIME_TYPE">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/mcp/annotations/ResourceTemplate.html#DEFAULT_MIME_TYPE">DEFAULT_MIME_TYPE</a></code></div>
+<div class="col-last even-row-color"><code>"text/plain"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.annotations.ResourceTemplate.ELEMENT_NAME">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="io/micronaut/mcp/annotations/ResourceTemplate.html#ELEMENT_NAME">ELEMENT_NAME</a></code></div>
+<div class="col-last odd-row-color"><code>"&lt;&lt;element name&gt;&gt;"</code></div>
+</div>
+</li>
+<li>
 <div class="caption"><span>io.micronaut.mcp.annotations.<a href="io/micronaut/mcp/annotations/Tool.html" title="annotation interface in io.micronaut.mcp.annotations">Tool</a></span></div>
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -284,18 +298,36 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Constant Field</div>
 <div class="table-header col-last">Value</div>
-<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.KEY_TYPE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code>KEY_TYPE</code></div>
-<div class="col-last even-row-color"><code>"type"</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.MEMBER_DESCRIPTION">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/mcp/server/registry/PromptRegistry.html#MEMBER_DESCRIPTION">MEMBER_DESCRIPTION</a></code></div>
-<div class="col-last odd-row-color"><code>"description"</code></div>
-<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.MEMBER_NAME">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="io/micronaut/mcp/server/registry/PromptRegistry.html#MEMBER_NAME">MEMBER_NAME</a></code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.DESCRIPTION_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>DESCRIPTION_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"description"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.KEY_TYPE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>KEY_TYPE</code></div>
+<div class="col-last odd-row-color"><code>"type"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.MEMBER_DESCRIPTION">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>MEMBER_DESCRIPTION</code></div>
+<div class="col-last even-row-color"><code>"description"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.MEMBER_NAME">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>MEMBER_NAME</code></div>
+<div class="col-last odd-row-color"><code>"name"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.MEMBER_TITLE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>MEMBER_TITLE</code></div>
+<div class="col-last even-row-color"><code>"title"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.MIME_TYPE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>MIME_TYPE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"mimeType"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.NAME_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>NAME_PROPERTY</code></div>
 <div class="col-last even-row-color"><code>"name"</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.MEMBER_TITLE">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/mcp/server/registry/PromptRegistry.html#MEMBER_TITLE">MEMBER_TITLE</a></code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.TITLE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>TITLE_PROPERTY</code></div>
 <div class="col-last odd-row-color"><code>"title"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.URI_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>URI_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"uri"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.PromptRegistry.URI_TEMPLATE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>URI_TEMPLATE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"uriTemplate"</code></div>
 </div>
 </li>
 <li>
@@ -304,12 +336,74 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Constant Field</div>
 <div class="table-header col-last">Value</div>
-<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ResourceRegistry.KEY_TYPE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code>KEY_TYPE</code></div>
-<div class="col-last even-row-color"><code>"type"</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ResourceRegistry.MEMBER_DESCRIPTION">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code>MEMBER_DESCRIPTION</code></div>
-<div class="col-last odd-row-color"><code>"description"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ResourceRegistry.DESCRIPTION_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>DESCRIPTION_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"description"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ResourceRegistry.KEY_TYPE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>KEY_TYPE</code></div>
+<div class="col-last odd-row-color"><code>"type"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ResourceRegistry.MEMBER_DESCRIPTION">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>MEMBER_DESCRIPTION</code></div>
+<div class="col-last even-row-color"><code>"description"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ResourceRegistry.MEMBER_NAME">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>MEMBER_NAME</code></div>
+<div class="col-last odd-row-color"><code>"name"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ResourceRegistry.MEMBER_TITLE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>MEMBER_TITLE</code></div>
+<div class="col-last even-row-color"><code>"title"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ResourceRegistry.MIME_TYPE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>MIME_TYPE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"mimeType"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ResourceRegistry.NAME_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>NAME_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"name"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ResourceRegistry.TITLE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>TITLE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"title"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ResourceRegistry.URI_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>URI_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"uri"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ResourceRegistry.URI_TEMPLATE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>URI_TEMPLATE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"uriTemplate"</code></div>
+</div>
+</li>
+<li>
+<div class="caption"><span>io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceTemplateRegistry</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Constant Field</div>
+<div class="table-header col-last">Value</div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ResourceTemplateRegistry.DESCRIPTION_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>DESCRIPTION_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"description"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ResourceTemplateRegistry.KEY_TYPE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>KEY_TYPE</code></div>
+<div class="col-last odd-row-color"><code>"type"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ResourceTemplateRegistry.MEMBER_DESCRIPTION">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>MEMBER_DESCRIPTION</code></div>
+<div class="col-last even-row-color"><code>"description"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ResourceTemplateRegistry.MEMBER_NAME">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>MEMBER_NAME</code></div>
+<div class="col-last odd-row-color"><code>"name"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ResourceTemplateRegistry.MEMBER_TITLE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>MEMBER_TITLE</code></div>
+<div class="col-last even-row-color"><code>"title"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ResourceTemplateRegistry.MIME_TYPE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>MIME_TYPE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"mimeType"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ResourceTemplateRegistry.NAME_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>NAME_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"name"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ResourceTemplateRegistry.TITLE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>TITLE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"title"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ResourceTemplateRegistry.URI_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>URI_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"uri"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ResourceTemplateRegistry.URI_TEMPLATE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>URI_TEMPLATE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"uriTemplate"</code></div>
 </div>
 </li>
 <li>
@@ -318,12 +412,36 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Constant Field</div>
 <div class="table-header col-last">Value</div>
-<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ToolRegistry.KEY_TYPE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code>KEY_TYPE</code></div>
-<div class="col-last even-row-color"><code>"type"</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ToolRegistry.MEMBER_DESCRIPTION">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code>MEMBER_DESCRIPTION</code></div>
-<div class="col-last odd-row-color"><code>"description"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ToolRegistry.DESCRIPTION_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>DESCRIPTION_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"description"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ToolRegistry.KEY_TYPE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>KEY_TYPE</code></div>
+<div class="col-last odd-row-color"><code>"type"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ToolRegistry.MEMBER_DESCRIPTION">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>MEMBER_DESCRIPTION</code></div>
+<div class="col-last even-row-color"><code>"description"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ToolRegistry.MEMBER_NAME">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>MEMBER_NAME</code></div>
+<div class="col-last odd-row-color"><code>"name"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ToolRegistry.MEMBER_TITLE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>MEMBER_TITLE</code></div>
+<div class="col-last even-row-color"><code>"title"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ToolRegistry.MIME_TYPE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>MIME_TYPE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"mimeType"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ToolRegistry.NAME_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>NAME_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"name"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ToolRegistry.TITLE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>TITLE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"title"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.ToolRegistry.URI_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>URI_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"uri"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.ToolRegistry.URI_TEMPLATE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>URI_TEMPLATE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"uriTemplate"</code></div>
 </div>
 </li>
 </ul>
