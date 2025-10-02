@@ -28,8 +28,7 @@ public class PgnLoader {
         if (roundPgnInputStreamOptional.isEmpty()) {
             return Optional.empty();
         }
-        InputStream inputStream = roundPgnInputStreamOptional.get();
-        try {
+        try (InputStream inputStream = roundPgnInputStreamOptional.get()) {
             return Optional.of(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
         } catch (IOException e) {
             if (LOG.isErrorEnabled()) {

@@ -6,6 +6,7 @@ import io.micronaut.core.io.ResourceLoader;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.mcp.server.utils.PgnLoader;
+import io.micronaut.mcp.server.utils.ResourceLoaderUtils;
 import io.micronaut.mcp.server.utils.Stdio;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -181,7 +182,7 @@ class AsyncResourcesTest {
 
         @EachBean(PgnFile.class)
         @Singleton
-        McpServerFeatures.AsyncResourceSpecification createPgnSyncResourceSpecification(PgnFile pgnFile) {
+        McpServerFeatures.AsyncResourceSpecification createPgnSyncResourceSpecification(PgnFile pgnFile) throws IOException {
             McpSchema.Resource resource = getResource(pgnFile);
             return new McpServerFeatures.AsyncResourceSpecification(resource, (mcpSyncServerExchange, readResourceRequest) -> {
                 String uri = readResourceRequest.uri();
@@ -203,22 +204,17 @@ class AsyncResourcesTest {
             return new McpSchema.ReadResourceResult(contents);
         }
 
-        private McpSchema.Resource getResource(PgnFile pgnFile) {
-            Optional<InputStream> roundPgnInputStreamOptional = resourceLoader.getResourceAsStream(pgnFile.getPath());
-            if (roundPgnInputStreamOptional.isPresent()) {
-                try {
+        private McpSchema.Resource getResource(PgnFile pgnFile) throws IOException {
+            return ResourceLoaderUtils.size(resourceLoader, pgnFile.getPath())
+                .map(size -> {
+
                     Integer round = pgnFile.getRound();
-                    Long size = Long.valueOf(roundPgnInputStreamOptional.get().readAllBytes().length);
                     String uri = "pgn://round/" + round;
                     String name = "round" + round + "PgnFideWCC2024";
                     String title = "PGN of the Round " + round + " game of the World Chess Championship";
                     String description = title + " between Ding Liren and Gukesh Dommaraju";
                     return new McpSchema.Resource(uri, name, title, description, PGN_MIME_TYPE, size, null, null);
-                } catch (IOException e) {
-                    throw new ConfigurationException("unable to calculate the size of the resource");
-                }
-            }
-            throw new ConfigurationException("unable find resource for path " + pgnFile.getPath());
+                }).orElseThrow(() -> new ConfigurationException("unable find resource for path " + pgnFile.getPath()));
         }
     }
 }
