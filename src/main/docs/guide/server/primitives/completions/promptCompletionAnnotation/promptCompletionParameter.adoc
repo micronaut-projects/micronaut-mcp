@@ -1,0 +1,7 @@
+In a method annotated with `@PromptCompletion` you can bind parameters with types:
+
+- api:mcp.server.context.MicronautMcpTransportContext[]
+- `io.modelcontextprotocol.spec.McpSchema.CompleteRequest`
+- `io.modelcontextprotocol.spec.McpSchema.CompleteRequest.CompleteArgument`
+
+You can also bind the completion argument's name as a method parameter, as illustrated in the code listing above.

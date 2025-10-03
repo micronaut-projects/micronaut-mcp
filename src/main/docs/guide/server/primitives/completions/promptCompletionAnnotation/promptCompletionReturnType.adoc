@@ -1,0 +1,4 @@
+In a method annotated with `@PromptCompletion`, you can use as a return type:
+
+- `io.modelcontextprotocol.spec.McpSchema.CompleteResult`
+- `List<String>`

@@ -37,7 +37,6 @@ import jakarta.inject.Singleton;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiFunction;
 
 /**
@@ -53,14 +52,12 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     McpStatelessServerFeatures.SyncResourceSpecification,
     McpStatelessServerFeatures.AsyncResourceSpecification> {
 
-    private final BeanContext beanContext;
     private final ArgumentBinderRegistry<McpSchema.ReadResourceRequest> argumentBinderRegistry;
 
     public ResourceRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
-                            BeanContext beanContext,
-                            ArgumentBinderRegistry<McpSchema.ReadResourceRequest> argumentBinderRegistry) {
-        super(exceptionMappers);
-        this.beanContext = beanContext;
+                            ArgumentBinderRegistry<McpSchema.ReadResourceRequest> argumentBinderRegistry,
+                            BeanContext beanContext) {
+        super(exceptionMappers, beanContext);
         this.argumentBinderRegistry = argumentBinderRegistry;
     }
 
@@ -154,23 +151,6 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
         }
         // Unsupported return type: return empty contents
         return new McpSchema.ReadResourceResult(List.of());
-    }
-
-    private static <B> Object[] resolveArgs(ExecutableMethod<B, Object> method, McpSchema.ReadResourceRequest request) {
-        if (method.getArguments().length == 0) {
-            return new Object[0];
-        }
-        if (method.getArguments().length == 1) {
-            Class<?> t = method.getArguments()[0].getType();
-            if (Objects.equals(t, String.class)) {
-                return new Object[] { request.uri() };
-            }
-            if (Objects.equals(t, McpSchema.ReadResourceRequest.class)) {
-                return new Object[] { request };
-            }
-        }
-        // Fallback: no arguments passed if signature doesn't match supported variants
-        return new Object[0];
     }
 
     private static <B> McpSchema.Resource toResource(ExecutableMethod<B, Object> method) {
