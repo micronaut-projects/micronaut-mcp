@@ -27,6 +27,7 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
+import io.micronaut.mcp.server.exceptions.JsonRrpcResponseUtils;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
@@ -35,10 +36,9 @@ import io.modelcontextprotocol.spec.McpSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
+
 import java.util.Map;
 import java.util.function.Function;
-
-import static io.modelcontextprotocol.spec.McpSchema.JSONRPC_VERSION;
 
 /**
  * This class exposes a POST endpoint in route {@value McpServerConfiguration#DEFAULT_ENDPOINT}.
@@ -97,7 +97,7 @@ final class McpController {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Failed to handle JSON RPC Message: {}", e.getMessage());
         }
-        McpSchema.JSONRPCResponse rsp = errorJsonrpcResponse(jsonrpcMessage, e);
+        McpSchema.JSONRPCResponse rsp = JsonRrpcResponseUtils.jsonrpcResponse(e, jsonrpcMessage);
         return Mono.just(HttpResponse.status(status(rsp)).body(rsp));
     }
 
@@ -121,23 +121,6 @@ final class McpController {
             return new McpSchema.JSONRPCNotification(body.get(KEY_JSONRPC).toString(), body.get(KEY_METHOD).toString(), body.get(KEY_PARAMS));
         }
         return null;
-    }
-
-    @NonNull
-    static McpSchema.JSONRPCResponse errorJsonrpcResponse(@NonNull McpSchema.JSONRPCMessage jsonrpcMessage,
-                                                          @NonNull McpError error) {
-        McpSchema.JSONRPCResponse.JSONRPCError jsonrpcError = error.getJsonRpcError();
-        if (jsonrpcError == null) {
-            jsonrpcError = new McpSchema.JSONRPCResponse.JSONRPCError(McpSchema.ErrorCodes.INTERNAL_ERROR,
-                error.getMessage(),
-                null);
-        }
-        return new McpSchema.JSONRPCResponse(
-            JSONRPC_VERSION,
-            jsonrpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest ? jsonrpcRequest.id() : null,
-            null,
-            jsonrpcError
-        );
     }
 
     @NonNull
