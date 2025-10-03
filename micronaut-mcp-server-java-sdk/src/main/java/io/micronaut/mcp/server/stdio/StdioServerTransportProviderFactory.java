@@ -19,7 +19,6 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.modelcontextprotocol.json.McpJsonMapper;
-import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 
 @Internal
@@ -27,6 +26,6 @@ import io.modelcontextprotocol.spec.McpServerTransportProvider;
 final class StdioServerTransportProviderFactory {
     @Prototype
     McpServerTransportProvider createStdioServerTransportProvider(McpJsonMapper mcpJsonMapper) {
-        return new StdioServerTransportProvider(mcpJsonMapper);
+        return new StdioServerTransportProviderReplacement(mcpJsonMapper);
     }
 }
