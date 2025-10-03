@@ -6,3 +6,5 @@ ____
 For https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#stdio[stdio transport], define the property `micronaut.mcp.server.transport` as `STDIO`.
 
 For https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#streamable-http[HTTP transport], define the property `micronaut.mcp.server.transport` as `HTTP`.
+
+WARNING: https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#listening-for-messages-from-the-server[Server to Client communication] via an SSE stream is not yet supported. The server responses are currently only of `Content-Type`: `application/json`.
