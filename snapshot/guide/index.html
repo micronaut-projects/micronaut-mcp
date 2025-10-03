@@ -167,6 +167,20 @@
         
         <div class="toc-item" style="margin-left:40px" id="toc-item-resourcesTemplatesFactory"><a href="#resourcesTemplatesFactory"><strong>3.5.3.4.2</strong><span>Resource Templates with a Factory</span></a></div>
         
+        <div class="toc-item" style="margin-left:20px" id="toc-item-completions"><a href="#completions"><strong>3.5.4</strong><span>Completions</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-promptCompletionAnnotation"><a href="#promptCompletionAnnotation"><strong>3.5.4.1</strong><span>Prompt Completions with Annotations</span></a></div>
+        
+        <div class="toc-item" style="margin-left:40px" id="toc-item-promptCompletionParameter"><a href="#promptCompletionParameter"><strong>3.5.4.1.1</strong><span>PromptCompletion Annotation Method Parameters</span></a></div>
+        
+        <div class="toc-item" style="margin-left:40px" id="toc-item-promptCompletionReturnType"><a href="#promptCompletionReturnType"><strong>3.5.4.1.2</strong><span>PromptCompletion Annotation Method Return Type</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-resourceCompletionAnnotation"><a href="#resourceCompletionAnnotation"><strong>3.5.4.2</strong><span>Resource Completions with Annotations</span></a></div>
+        
+        <div class="toc-item" style="margin-left:40px" id="toc-item-resourceCompletionParameter"><a href="#resourceCompletionParameter"><strong>3.5.4.2.1</strong><span>ResourceCompletion Annotation Method Parameters</span></a></div>
+        
+        <div class="toc-item" style="margin-left:40px" id="toc-item-resourceCompletionReturnType"><a href="#resourceCompletionReturnType"><strong>3.5.4.2.2</strong><span>ResourceCompletion Annotation Method Return Type</span></a></div>
+        
         <div class="toc-item" style="margin-left:10px" id="toc-item-stdio"><a href="#stdio"><strong>3.6</strong><span>STDIO Transport</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-testingYourMcpServer"><a href="#testingYourMcpServer"><strong>3.7</strong><span>Testing your MCP Server</span></a></div>
@@ -1802,6 +1816,224 @@ class ResourcesTemplatesFactory {
     }
 }</code></pre>
 </div>
+</div>
+
+<h2 id="completions"><a class="anchor" href="#completions"></a>3.5.4 Completions</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/completions.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p><a href="https://modelcontextprotocol.io/specification/2025-06-18/server/utilities/completion#requesting-completions">Completion</a>:</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>The Model Context Protocol (MCP) provides a standardized way for servers to offer argument autocompletion suggestions for prompts and resource URIs.</p>
+</div>
+</blockquote>
+</div>
+
+<h2 id="promptCompletionAnnotation"><a class="anchor" href="#promptCompletionAnnotation"></a>3.5.4.1 Prompt Completions with Annotations</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/completions/promptCompletionAnnotation.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The preferred way to declare a prompt completion is using a method annotated with <a href="../api/io/micronaut/mcp/annotations/PromptCompletion.html">PromptCompletion</a> in a <code>@Singleton</code> bean.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Singleton
+class MyPromptsCompletions {
+    @PromptCompletion(name = "code_review")
+    List&lt;String&gt; languages(String language) {
+        if (language != null &amp;&amp; language.startsWith("py")) {
+            return List.of("python", "pytorch", "pyside");
+        }
+        return Collections.emptyList();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+You need a prompt with the same name as the completion prompt. Moreover, the name of the prompt completion argument must match the name of the prompt argument.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="promptCompletionParameter"><a class="anchor" href="#promptCompletionParameter"></a>3.5.4.1.1 PromptCompletion Annotation Method Parameters</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/completions/promptCompletionAnnotation/promptCompletionParameter.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>In a method annotated with <code>@PromptCompletion</code> you can bind parameters with types:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../api/io/micronaut/mcp/server/context/MicronautMcpTransportContext.html">MicronautMcpTransportContext</a></p>
+</li>
+<li>
+<p><code>io.modelcontextprotocol.spec.McpSchema.CompleteRequest</code></p>
+</li>
+<li>
+<p><code>io.modelcontextprotocol.spec.McpSchema.CompleteRequest.CompleteArgument</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You can also bind the completion argument&#8217;s name as a method parameter, as illustrated in the code listing above.</p>
+</div>
+
+<h2 id="promptCompletionReturnType"><a class="anchor" href="#promptCompletionReturnType"></a>3.5.4.1.2 PromptCompletion Annotation Method Return Type</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/completions/promptCompletionAnnotation/promptCompletionReturnType.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>In a method annotated with <code>@PromptCompletion</code>, you can use as a return type:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>io.modelcontextprotocol.spec.McpSchema.CompleteResult</code></p>
+</li>
+<li>
+<p><code>List&lt;String&gt;</code></p>
+</li>
+</ul>
+</div>
+
+<h2 id="resourceCompletionAnnotation"><a class="anchor" href="#resourceCompletionAnnotation"></a>3.5.4.2 Resource Completions with Annotations</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/completions/resourceCompletionAnnotation.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The preferred way to declare a resource completion is using a method annotated with <a href="../api/io/micronaut/mcp/annotations/ResourceCompletion.html">ResourceCompletion</a> in a <code>@Singleton</code> bean.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Singleton
+class MyResourceCompletions {
+    @ResourceCompletion(uri =  "file:///home/user/documents/{fileName}")
+    List&lt;String&gt; resourcesCompletions(String fileName) {
+        return List.of(
+                "report.pdf",
+                "data.csv",
+                "notes.txt"
+            ).stream()
+            .filter(name -&gt; name.startsWith(fileName))
+            .toList();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can use resource completions, for example, in combination with Resource templates (see the uri for both the resource template and resource completion match):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Singleton
+class  MyResourceTemplates {
+    @ResourceTemplate(
+        uriTemplate = "file:///home/user/documents/{fileName}",
+        name = "userDocument",
+        title = "User Document"
+    )
+    String ref(String fileName) {
+        if (fileName.equals("report.pdf")) {
+            return "Report PDF";
+        } else if (fileName.equals("data.csv")) {
+            return "Data CSV";
+        } else if (fileName.equals("notes.txt")) {
+            return "Notes TXT";
+        }
+        return "";
+    }
+}</code></pre>
+</div>
+</div>
+
+<h2 id="resourceCompletionParameter"><a class="anchor" href="#resourceCompletionParameter"></a>3.5.4.2.1 ResourceCompletion Annotation Method Parameters</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/completions/resourceCompletionAnnotation/resourceCompletionParameter.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>In a method annotated with <code>@ResourceCompletion</code> you can bind parameters with types:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../api/io/micronaut/mcp/server/context/MicronautMcpTransportContext.html">MicronautMcpTransportContext</a></p>
+</li>
+<li>
+<p><code>io.modelcontextprotocol.spec.McpSchema.CompleteRequest</code></p>
+</li>
+<li>
+<p><code>io.modelcontextprotocol.spec.McpSchema.CompleteRequest.CompleteArgument</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You can also bind the completion argument&#8217;s name as a method parameter, as illustrated in the code listing above.</p>
+</div>
+
+<h2 id="resourceCompletionReturnType"><a class="anchor" href="#resourceCompletionReturnType"></a>3.5.4.2.2 ResourceCompletion Annotation Method Return Type</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/completions/resourceCompletionAnnotation/resourceCompletionReturnType.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>In a method annotated with <code>@ResourceCompletion</code>, you can use as a return type:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>io.modelcontextprotocol.spec.McpSchema.CompleteResult</code></p>
+</li>
+<li>
+<p><code>List&lt;String&gt;</code></p>
+</li>
+</ul>
 </div>
 
 <h2 id="stdio"><a class="anchor" href="#stdio"></a>3.6 STDIO Transport</h2>

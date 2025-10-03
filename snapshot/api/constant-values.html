@@ -82,6 +82,17 @@ loadScripts(document, 'script');</script>
 </div>
 </li>
 <li>
+<div class="caption"><span>io.micronaut.mcp.annotations.<a href="io/micronaut/mcp/annotations/PromptCompletion.html" title="annotation interface in io.micronaut.mcp.annotations">PromptCompletion</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Constant Field</div>
+<div class="table-header col-last">Value</div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.annotations.PromptCompletion.ELEMENT_NAME">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/mcp/annotations/PromptCompletion.html#ELEMENT_NAME">ELEMENT_NAME</a></code></div>
+<div class="col-last even-row-color"><code>"&lt;&lt;element name&gt;&gt;"</code></div>
+</div>
+</li>
+<li>
 <div class="caption"><span>io.micronaut.mcp.annotations.<a href="io/micronaut/mcp/annotations/Resource.html" title="annotation interface in io.micronaut.mcp.annotations">Resource</a></span></div>
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -292,6 +303,44 @@ loadScripts(document, 'script');</script>
 </li>
 </ul>
 <ul class="block-list">
+<li>
+<div class="caption"><span>io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/CompletionRegistry.html" title="class in io.micronaut.mcp.server.registry">CompletionRegistry</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Constant Field</div>
+<div class="table-header col-last">Value</div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.CompletionRegistry.DESCRIPTION_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>DESCRIPTION_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"description"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.CompletionRegistry.KEY_TYPE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>KEY_TYPE</code></div>
+<div class="col-last odd-row-color"><code>"type"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.CompletionRegistry.MEMBER_DESCRIPTION">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>MEMBER_DESCRIPTION</code></div>
+<div class="col-last even-row-color"><code>"description"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.CompletionRegistry.MEMBER_NAME">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>MEMBER_NAME</code></div>
+<div class="col-last odd-row-color"><code>"name"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.CompletionRegistry.MEMBER_TITLE">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>MEMBER_TITLE</code></div>
+<div class="col-last even-row-color"><code>"title"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.CompletionRegistry.MIME_TYPE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>MIME_TYPE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"mimeType"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.CompletionRegistry.NAME_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>NAME_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"name"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.CompletionRegistry.TITLE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>TITLE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"title"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.mcp.server.registry.CompletionRegistry.URI_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code>URI_PROPERTY</code></div>
+<div class="col-last even-row-color"><code>"uri"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.mcp.server.registry.CompletionRegistry.URI_TEMPLATE_PROPERTY">protected&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code>URI_TEMPLATE_PROPERTY</code></div>
+<div class="col-last odd-row-color"><code>"uriTemplate"</code></div>
+</div>
+</li>
 <li>
 <div class="caption"><span>io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a></span></div>
 <div class="summary-table three-column-summary">
