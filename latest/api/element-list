@@ -3,6 +3,8 @@ io.micronaut.mcp.client.langchain4j.stdio
 io.micronaut.mcp.conf
 io.micronaut.mcp.conf.client
 io.micronaut.mcp.conf.server
+io.micronaut.mcp.primitives.prompts
+io.micronaut.mcp.primitives.utils
 io.micronaut.mcp.server
 io.micronaut.mcp.server.context
 io.micronaut.mcp.server.exceptions
