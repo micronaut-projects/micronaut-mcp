@@ -21,11 +21,9 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
-import io.micronaut.http.annotation.Produces;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
 import io.modelcontextprotocol.common.McpTransportContext;
@@ -65,7 +63,6 @@ final class McpController {
     }
 
     @SuppressWarnings("java:S3740")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_EVENT_STREAM})
     @Post
     public Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body Map<String, Object> body) {
         McpTransportContext transportContext = contextExtractor.extract(request);
