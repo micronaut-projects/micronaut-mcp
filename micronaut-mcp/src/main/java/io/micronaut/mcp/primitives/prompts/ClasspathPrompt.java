@@ -18,9 +18,7 @@ package io.micronaut.mcp.primitives.prompts;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.util.CollectionUtils;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
