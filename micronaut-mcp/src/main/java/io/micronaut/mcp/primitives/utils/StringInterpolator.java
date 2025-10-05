@@ -33,7 +33,7 @@ public final class StringInterpolator {
     }
 
     /**
-     * If you supplied a template such as `Name: ${firstName} ${lastName}` and map of values such as `[firstName: Sergio, lastName: Amo] it returns `Name: Sergio Amo`
+     * If you supplied a template such as `Name: ${firstName} ${lastName}` and map of values such as `[firstName: Sergio, lastName: Amo] it returns `Name: Sergio Amo`.
      * @param template A String template
      * @param values a Map of values
      * @return a itnerpolated string
