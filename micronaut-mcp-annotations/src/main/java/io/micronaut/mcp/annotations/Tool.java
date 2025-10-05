@@ -16,6 +16,7 @@
 package io.micronaut.mcp.annotations;
 
 import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -54,4 +55,54 @@ public @interface Tool {
      * @return A human-readable description of the tool. A hint to the model.
      */
     String description() default "";
+
+    /**
+     * Additional hints for clients.
+     * <p>
+     * Note that the default value of this annotation member is ignored. In other words, the annotations have to be declared
+     * explicitly in order to be included in Tool metadata.
+     * @return Additional hints for clients.
+     */
+    Annotations annotations() default @Annotations;
+
+    /**
+     * Additional hints for clients.
+     * <a href="https://modelcontextprotocol.io/specification/2025-06-18/schema#toolannotations">Tool Annotations</a>
+     */
+    @Retention(RUNTIME)
+    @Target(ElementType.ANNOTATION_TYPE)
+    @interface Annotations {
+
+        /**
+         * @return A human-readable title for the tool.
+         */
+        String title() default "";
+
+        /**
+         * @return If true, the tool does not modify its environment.
+         */
+        boolean readOnlyHint() default false;
+
+        /**
+         * @return If true, the tool may perform destructive updates to its environment. If false, the tool performs only additive
+         * updates.
+         */
+        boolean destructiveHint() default true;
+
+        /**
+         * @return If true, calling the tool repeatedly with the same arguments will have no additional effect on the its environment.
+         */
+        boolean idempotentHint() default false;
+
+        /**
+         * @return If true, this tool may interact with an "open world" of external entities. If false, the tool's domain of interaction
+         * is closed.
+         */
+        boolean openWorldHint() default true;
+
+        /**
+         * @return It tells the client/agent whether the tool's result can be surfaced to the end user immediately (as the assistant reply) without another model turn.
+         */
+        boolean returnDirect() default false;
+    }
 }
