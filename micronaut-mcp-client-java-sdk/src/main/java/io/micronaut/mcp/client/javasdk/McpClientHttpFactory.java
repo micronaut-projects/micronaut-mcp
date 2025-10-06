@@ -28,6 +28,7 @@ import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
+import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
@@ -38,11 +39,18 @@ import jakarta.inject.Singleton;
 @Factory
 @Internal
 final class McpClientHttpFactory {
+    private final McpJsonMapper mcpJsonMapper;
+
+    McpClientHttpFactory(McpJsonMapper mcpJsonMapper) {
+        this.mcpJsonMapper = mcpJsonMapper;
+    }
+
     @EachBean(McpClientHttpConfiguration.class)
     @Prototype
     HttpClientStreamableHttpTransport transport(McpClientHttpConfiguration clientHttpConfiguration) {
         return HttpClientStreamableHttpTransport
             .builder(clientHttpConfiguration.getUrl().toString())
+            .jsonMapper(mcpJsonMapper)
             .build();
     }
 

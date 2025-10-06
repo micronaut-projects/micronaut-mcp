@@ -27,8 +27,10 @@ import io.micronaut.mcp.primitives.prompts.ClasspathPrompt;
 import io.micronaut.mcp.primitives.prompts.PromptArgument;
 import io.micronaut.mcp.primitives.utils.StringInterpolator;
 import io.modelcontextprotocol.common.McpTransportContext;
+import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
+import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Mono;
@@ -36,15 +38,19 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 
 @Factory
 final class ClasspathPromptFactory {
     private static final String CLASSPATH_PREFIX = "classpath:";
     private final Map<String, String> nameToPrompt = new ConcurrentHashMap<>();
+    private static final McpSchema.CompleteResult EMPTY_COMPLETION = new McpSchema.CompleteResult(
+        new McpSchema.CompleteResult.CompleteCompletion(Collections.emptyList(), 0, false));
 
     ClasspathPromptFactory(ResourceLoader resourceLoader,
                            List<ClasspathPrompt> prompts) {
@@ -97,6 +103,38 @@ final class ClasspathPromptFactory {
     McpServerFeatures.AsyncPromptSpecification asyncPromptSpecification(ClasspathPrompt classpathPrompt) {
         return new McpServerFeatures.AsyncPromptSpecification(prompt(classpathPrompt),
                 (mcpSyncServerExchange, getPromptRequest) -> Mono.just(result(mcpSyncServerExchange.transportContext(), getPromptRequest)));
+    }
+
+    @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
+    @Requires(property = McpServerConfiguration.PROPERTY_TRANSPORT, value = McpServerConfiguration.TRANSPORT_HTTP)
+    @EachBean(ClasspathPrompt.class)
+    McpStatelessServerFeatures.SyncCompletionSpecification statelessSyncCompletionSpecification(ClasspathPrompt classpathPrompt) {
+        return new McpStatelessServerFeatures.SyncCompletionSpecification(new McpSchema.PromptReference(classpathPrompt.getName()),
+            (mcpTransportContext, completeRequest) -> EMPTY_COMPLETION);
+    }
+
+    @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
+    @Requires(property = McpServerConfiguration.PROPERTY_TRANSPORT, value = McpServerConfiguration.TRANSPORT_STDIO)
+    @EachBean(ClasspathPrompt.class)
+    McpServerFeatures.SyncCompletionSpecification syncCompletionSpecification(ClasspathPrompt classpathPrompt) {
+        return new McpServerFeatures.SyncCompletionSpecification(new McpSchema.PromptReference(classpathPrompt.getName()),
+            (mcpSyncServerExchange, completeRequest) -> EMPTY_COMPLETION);
+    }
+
+    @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.TRUE)
+    @Requires(property = McpServerConfiguration.PROPERTY_TRANSPORT, value = McpServerConfiguration.TRANSPORT_HTTP)
+    @EachBean(ClasspathPrompt.class)
+    McpStatelessServerFeatures.AsyncCompletionSpecification statelessAsyncCompletionSpecification(ClasspathPrompt classpathPrompt) {
+        return new McpStatelessServerFeatures.AsyncCompletionSpecification(new McpSchema.PromptReference(classpathPrompt.getName()),
+            (mcpTransportContext, completeRequest) -> Mono.just(EMPTY_COMPLETION));
+    }
+
+    @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.TRUE)
+    @Requires(property = McpServerConfiguration.PROPERTY_TRANSPORT, value = McpServerConfiguration.TRANSPORT_STDIO)
+    @EachBean(ClasspathPrompt.class)
+    McpServerFeatures.AsyncCompletionSpecification asyncCompletionSpecification(ClasspathPrompt classpathPrompt) {
+        return new McpServerFeatures.AsyncCompletionSpecification(new McpSchema.PromptReference(classpathPrompt.getName()),
+            (mcpAsyncServerExchange, completeRequest) -> Mono.just(EMPTY_COMPLETION));
     }
 
     private McpSchema.GetPromptResult result(McpTransportContext transportContext, McpSchema.GetPromptRequest getPromptRequest) {
