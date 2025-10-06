@@ -15,12 +15,14 @@
  */
 package io.micronaut.mcp.server.json;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.context.annotation.ClassImport;
 import io.micronaut.context.annotation.Mixin;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.serde.annotation.Serdeable;
 import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpSchema.CompleteResult.CompleteCompletion;
 
 @ClassImport(classes = {
     io.modelcontextprotocol.spec.McpSchema.JSONRPCRequest.class,
@@ -83,7 +85,7 @@ import io.modelcontextprotocol.spec.McpSchema;
     io.modelcontextprotocol.spec.McpSchema.CompleteRequest.CompleteArgument.class,
     io.modelcontextprotocol.spec.McpSchema.CompleteRequest.CompleteContext.class,
     io.modelcontextprotocol.spec.McpSchema.CompleteResult.class,
-    io.modelcontextprotocol.spec.McpSchema.CompleteResult.CompleteCompletion.class,
+    CompleteCompletion.class,
     io.modelcontextprotocol.spec.McpSchema.Content.class,
     io.modelcontextprotocol.spec.McpSchema.TextContent.class,
     io.modelcontextprotocol.spec.McpSchema.ImageContent.class,
@@ -96,6 +98,12 @@ import io.modelcontextprotocol.spec.McpSchema;
 }, annotate = Serdeable.class)
 @Internal
 class McpSchemaSerdeImport {
+}
+
+@JsonInclude(JsonInclude.Include.ALWAYS)
+@Mixin(CompleteCompletion.class)
+class CompleteCompletionMixin {
+
 }
 
 @Mixin.Filter(removeAnnotations = {"com.fasterxml.jackson.annotation.JsonTypeInfo", "io.micronaut.serde.config.annotation.SerdeConfig$SerError"})
