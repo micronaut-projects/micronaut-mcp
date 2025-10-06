@@ -125,9 +125,11 @@
         
         <div class="toc-item" style="margin-left:30px" id="toc-item-toolAnnotation"><a href="#toolAnnotation"><strong>3.7.1.4</strong><span>Tools with Annotations</span></a></div>
         
-        <div class="toc-item" style="margin-left:40px" id="toc-item-toolAnnotationParameter"><a href="#toolAnnotationParameter"><strong>3.7.1.4.1</strong><span>Tool Annotation Method Parameters</span></a></div>
+        <div class="toc-item" style="margin-left:40px" id="toc-item-toolAnnotationsHints"><a href="#toolAnnotationsHints"><strong>3.7.1.4.1</strong><span>Tool Hints</span></a></div>
         
-        <div class="toc-item" style="margin-left:40px" id="toc-item-toolAnnotationReturnType"><a href="#toolAnnotationReturnType"><strong>3.7.1.4.2</strong><span>Tool Annotation Method Return Type</span></a></div>
+        <div class="toc-item" style="margin-left:40px" id="toc-item-toolAnnotationParameter"><a href="#toolAnnotationParameter"><strong>3.7.1.4.2</strong><span>Tool Annotation Method Parameters</span></a></div>
+        
+        <div class="toc-item" style="margin-left:40px" id="toc-item-toolAnnotationReturnType"><a href="#toolAnnotationReturnType"><strong>3.7.1.4.3</strong><span>Tool Annotation Method Return Type</span></a></div>
         
         <div class="toc-item" style="margin-left:30px" id="toc-item-toolsInputJsonSchema"><a href="#toolsInputJsonSchema"><strong>3.7.1.5</strong><span>Tools Input JSON Schema</span></a></div>
         
@@ -201,7 +203,7 @@
         <h1>Micronaut MCP</h1>
         <p></p>
         <p>Integration with MCP (Model Context Protocol).</p>
-        <p><strong>Version:</strong> 0.0.10 </p>
+        <p><strong>Version:</strong> 0.0.11 </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
@@ -975,7 +977,38 @@ class Tools {
 You can override this by setting the <code>name</code> attribute of the <code>@Tool</code> annotation.</p>
 </div>
 
-<h2 id="toolAnnotationParameter"><a class="anchor" href="#toolAnnotationParameter"></a>3.7.1.4.1 Tool Annotation Method Parameters</h2>
+<h2 id="toolAnnotationsHints"><a class="anchor" href="#toolAnnotationsHints"></a>3.7.1.4.1 Tool Hints</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/tools/toolAnnotation/toolAnnotationsHints.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can use annotation hints to inform the client that a tool is read-only.
+ChatGPT, for example, informs users whether a tool performs write operations.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Singleton
+class HelloWorldTool {
+    @Tool(title = "Hello World",
+        annotations = @Tool.ToolAnnotations(readOnlyHint = true,
+            title = "Hello World",
+            destructiveHint = false,
+            idempotentHint = true,
+            openWorldHint = false,
+            returnDirect = true))
+    String helloWorld() {
+        return "Hello, World!";
+    }
+}</code></pre>
+</div>
+</div>
+
+<h2 id="toolAnnotationParameter"><a class="anchor" href="#toolAnnotationParameter"></a>3.7.1.4.2 Tool Annotation Method Parameters</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/tools/toolAnnotation/toolAnnotationParameter.adoc"'>
@@ -1027,7 +1060,7 @@ class Tools {
 </ul>
 </div>
 
-<h2 id="toolAnnotationReturnType"><a class="anchor" href="#toolAnnotationReturnType"></a>3.7.1.4.2 Tool Annotation Method Return Type</h2>
+<h2 id="toolAnnotationReturnType"><a class="anchor" href="#toolAnnotationReturnType"></a>3.7.1.4.3 Tool Annotation Method Return Type</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/0.0.x/src/main/docs/guide/server/primitives/tools/toolAnnotation/toolAnnotationReturnType.adoc"'>
@@ -1292,7 +1325,11 @@ micronaut.mcp.classpath-prompts.introspection-testing.title=Introspection-Testin
 micronaut.mcp.classpath-prompts.introspection-testing.description=Test whether a class is introspected in a Micronaut application
 micronaut.mcp.classpath-prompts.introspection-testing.path=prompts/introspection-testing.md
 micronaut.mcp.classpath-prompts.introspection-testing.arguments[0].name=className
-micronaut.mcp.classpath-prompts.introspection-testing.arguments[0].description=The class for which you want to test introspection</code></pre>
+micronaut.mcp.classpath-prompts.introspection-testing.arguments[0].description=The class for which you want to test introspection
+micronaut.mcp.classpath-prompts.dev-default-environment.name=dev-default-environment
+micronaut.mcp.classpath-prompts.dev-default-environment.title=Development-Default-Environment
+micronaut.mcp.classpath-prompts.dev-default-environment.description=Modify a Micronaut application to set dev as the default environment
+micronaut.mcp.classpath-prompts.dev-default-environment.path=prompts/dev-default-environment.md</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2143,7 +2180,7 @@ class  MyResourceTemplates {
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.url</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.net.URI</p></td>
-<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The MCP Server URL</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.timeout</code></p></td>
