@@ -27,10 +27,8 @@ import io.micronaut.mcp.primitives.prompts.ClasspathPrompt;
 import io.micronaut.mcp.primitives.prompts.PromptArgument;
 import io.micronaut.mcp.primitives.utils.StringInterpolator;
 import io.modelcontextprotocol.common.McpTransportContext;
-import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
-import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Mono;
@@ -43,14 +41,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiFunction;
 
 @Factory
 final class ClasspathPromptFactory {
     private static final String CLASSPATH_PREFIX = "classpath:";
-    private final Map<String, String> nameToPrompt = new ConcurrentHashMap<>();
     private static final McpSchema.CompleteResult EMPTY_COMPLETION = new McpSchema.CompleteResult(
         new McpSchema.CompleteResult.CompleteCompletion(Collections.emptyList(), 0, false));
+    private final Map<String, String> nameToPrompt = new ConcurrentHashMap<>();
 
     ClasspathPromptFactory(ResourceLoader resourceLoader,
                            List<ClasspathPrompt> prompts) {
