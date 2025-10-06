@@ -12,8 +12,8 @@ import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.TOOLS_LIST;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
@@ -29,6 +29,9 @@ class FetchToolFactoryHttpTest {
         assertEquals("Fetch", tool.getTitle());
         assertEquals("This tool retrieves the full contents of a search result document or item.", tool.getDescription());
         BlockingHttpClient client = httpClient.toBlocking();
+        String json = assertDoesNotThrow(() -> client.retrieve(HttpRequest.POST("/mcp", TOOLS_LIST)));
+        assertTrue(json.contains(",\"annotations\":{\"title\":\"Fetch\",\"readOnlyHint\":true,\"destructiveHint\":false,\"idempotentHint\":false,\"openWorldHint\":true,\"returnDirect\":false}}]}}"), json);
+
         HttpRequest<?> req = HttpRequest.POST("/mcp", """
             {
               "method": "tools/call",

@@ -1,0 +1,7 @@
+You can use annotation hints to inform the client that a tool is read-only.
+ChatGPT, for example, informs users whether a tool performs write operations.
+
+[source, java]
+----
+include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/HelloWorldTool.java[tags="clazz",indent=0]
+----
