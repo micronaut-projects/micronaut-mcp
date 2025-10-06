@@ -65,9 +65,29 @@ import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_STRING;
 @Singleton
 @Internal
 public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatures.SyncToolSpecification, McpServerFeatures.AsyncToolSpecification, McpStatelessServerFeatures.SyncToolSpecification, McpStatelessServerFeatures.AsyncToolSpecification> {
+    public static final boolean DEFAULT_IDEMPOTENT_HINT_VALUE = false;
+    public static final boolean DEFAULT_OPEN_WORLD_HINT_VALUE = true;
+    public static final boolean DEFAULT_RETURN_DIRECT_VALUE = false;
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
     private static final List<Class<?>> BINDABLE_PARAMETER_TYPES = List.of(McpTransportContext.class,
         McpSchema.CallToolRequest.class);
+    private static final String MEMBER_ANNOTATIONS = "annotations";
+    private static final String MEMBER_READ_ONLY_HINT = "readOnlyHint";
+    private static final String MEMBER_DESTRUCTIVE_HINT = "destructiveHint";
+    private static final String MEMBER_IDEMPOTENT_HINT = "idempotentHint";
+    private static final String MEMBER_OPEN_WORLD_HINT = "openWorldHint";
+    private static final String METHOD_RETURN_DIRECT = "returnDirect";
+    private static final String DEFAULT_TOOL_ANNOTATION_MEMBER_TITLE_VALUE = "";
+    private static final boolean DEFAULT_MEMBER_READ_ONLY_HINT_VALUE = false;
+    private static final boolean DEFAULT_MEMBER_DESTRUCTIVE_HINT_VALUE = true;
+    private static final McpSchema.ToolAnnotations DEFAULT_TOOL_ANNOTATIONS = new McpSchema.ToolAnnotations(
+        DEFAULT_TOOL_ANNOTATION_MEMBER_TITLE_VALUE,
+        DEFAULT_MEMBER_READ_ONLY_HINT_VALUE,
+        DEFAULT_MEMBER_DESTRUCTIVE_HINT_VALUE,
+        DEFAULT_IDEMPOTENT_HINT_VALUE,
+        DEFAULT_OPEN_WORLD_HINT_VALUE,
+        DEFAULT_RETURN_DIRECT_VALUE
+    );
     private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;
     private final McpJsonMapper mcpJsonMapper;
     private final JsonMapper jsonMapper;
@@ -201,6 +221,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             .name(toolName(method));
         toolTitle(method).ifPresent(toolBuilder::title);
         toolDescription(method).ifPresent(toolBuilder::description);
+        toolAnnotations(method).ifPresent(toolBuilder::annotations);
         Optional<Argument<?>> jsonSchemaArgumentOptional = jsonSchemaArgument(method);
         String jsonSchema = jsonSchemaArgumentOptional.flatMap(this::jsonSchema).orElse(null);
         if (jsonSchema != null) {
@@ -228,6 +249,19 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
 
     private static Optional<String> toolTitle(ExecutableMethod<?, ?> method) {
         return method.stringValue(Tool.class, MEMBER_TITLE);
+    }
+
+    private static Optional<McpSchema.ToolAnnotations> toolAnnotations(ExecutableMethod<?, ?> method) {
+        return method.findAnnotation(Tool.class)
+            .flatMap(toolAnnotationValue -> toolAnnotationValue.getAnnotation(MEMBER_ANNOTATIONS))
+            .map(annotationAnnotationValue -> new McpSchema.ToolAnnotations(
+                annotationAnnotationValue.stringValue(MEMBER_TITLE).orElse(DEFAULT_TOOL_ANNOTATION_MEMBER_TITLE_VALUE),
+                    annotationAnnotationValue.booleanValue(MEMBER_READ_ONLY_HINT).orElse(DEFAULT_MEMBER_READ_ONLY_HINT_VALUE),
+                    annotationAnnotationValue.booleanValue(MEMBER_DESTRUCTIVE_HINT).orElse(DEFAULT_MEMBER_DESTRUCTIVE_HINT_VALUE),
+                    annotationAnnotationValue.booleanValue(MEMBER_IDEMPOTENT_HINT).orElse(DEFAULT_IDEMPOTENT_HINT_VALUE),
+                    annotationAnnotationValue.booleanValue(MEMBER_OPEN_WORLD_HINT).orElse(DEFAULT_OPEN_WORLD_HINT_VALUE),
+                    annotationAnnotationValue.booleanValue(METHOD_RETURN_DIRECT).orElse(DEFAULT_RETURN_DIRECT_VALUE)
+            )).filter(toolAnnotations -> !toolAnnotations.equals(DEFAULT_TOOL_ANNOTATIONS));
     }
 
     private static Optional<String> toolDescription(ExecutableMethod<?, ?> method) {

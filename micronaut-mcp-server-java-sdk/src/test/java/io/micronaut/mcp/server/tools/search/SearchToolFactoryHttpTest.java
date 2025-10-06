@@ -13,6 +13,7 @@ import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.TOOLS_LIST;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
@@ -25,10 +26,13 @@ class SearchToolFactoryHttpTest {
 
     @Test
     void searchTool(@Client("/") HttpClient httpClient, SearchTool tool) throws JSONException {
+        BlockingHttpClient client = httpClient.toBlocking();
         assertEquals("search", tool.getName());
         assertEquals("Search", tool.getTitle());
         assertEquals("Returns a list of relevant search results, given a user's query.", tool.getDescription());
-        BlockingHttpClient client = httpClient.toBlocking();
+        String json = assertDoesNotThrow(() -> client.retrieve(HttpRequest.POST("/mcp", TOOLS_LIST)));
+        assertTrue(json.contains(",\"annotations\":{\"title\":\"Search\",\"readOnlyHint\":true,\"destructiveHint\":false,\"idempotentHint\":false,\"openWorldHint\":true,\"returnDirect\":false}}]}}"), json);
+
         HttpRequest<?> req = HttpRequest.POST("/mcp", """
             {
               "method": "tools/call",

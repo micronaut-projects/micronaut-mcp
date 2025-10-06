@@ -33,6 +33,10 @@ import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
+import static io.micronaut.mcp.server.registry.ToolRegistry.DEFAULT_IDEMPOTENT_HINT_VALUE;
+import static io.micronaut.mcp.server.registry.ToolRegistry.DEFAULT_OPEN_WORLD_HINT_VALUE;
+import static io.micronaut.mcp.server.registry.ToolRegistry.DEFAULT_RETURN_DIRECT_VALUE;
+
 /**
  * Factory to create beans of type {@link McpServerFeatures.SyncToolSpecification}, {@link McpServerFeatures.AsyncToolSpecification}, {@link McpStatelessServerFeatures.SyncToolSpecification}, and {@link McpStatelessServerFeatures.AsyncToolSpecification} given a bean of type {@link FetchTool}.
  */
@@ -50,6 +54,7 @@ final class FetchToolFactory {
             .name(tool.getName())
             .title(tool.getTitle())
             .description(tool.getDescription())
+            .annotations(toolAnnotations(tool))
             .inputSchema(mcpJsonMapper, jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(FetchRequest.class)
                 .orElseThrow(() -> new ConfigurationException("JSON Schema not found for FetchRequest")))
             .outputSchema(mcpJsonMapper, jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(FetchResponse.class)
@@ -153,5 +158,14 @@ final class FetchToolFactory {
                 .isError(true)
                 .build();
         }
+    }
+
+    private static McpSchema.ToolAnnotations toolAnnotations(FetchTool tool) {
+        boolean readOnlyHint = true;
+        boolean destructiveHint = false;
+        boolean idempotentHint = DEFAULT_IDEMPOTENT_HINT_VALUE;
+        boolean openWorldHint = DEFAULT_OPEN_WORLD_HINT_VALUE;
+        boolean returnDirect = DEFAULT_RETURN_DIRECT_VALUE;
+        return new McpSchema.ToolAnnotations(tool.getTitle(), readOnlyHint, destructiveHint, idempotentHint, openWorldHint, returnDirect);
     }
 }

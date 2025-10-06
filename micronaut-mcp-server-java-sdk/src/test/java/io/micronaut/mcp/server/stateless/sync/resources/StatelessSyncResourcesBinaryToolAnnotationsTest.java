@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "spec.name", value = "StatelessSyncResourcesBinaryAnnotationsTest")
 @MicronautTest
-class StatelessSyncResourcesBinaryAnnotationsTest {
+class StatelessSyncResourcesBinaryToolAnnotationsTest {
 
     @Test
     void resourcesListContainsZip(@Client("/") HttpClient httpClient) throws JSONException {

@@ -26,6 +26,7 @@ server:
       fetch: Fetch Tool
       toolAnnotation:
         title: Tools with Annotations
+        toolAnnotationsHints: Tool Hints
         toolAnnotationParameter: Tool Annotation Method Parameters
         toolAnnotationReturnType: Tool Annotation Method Return Type
       toolsInputJsonSchema: Tools Input JSON Schema
