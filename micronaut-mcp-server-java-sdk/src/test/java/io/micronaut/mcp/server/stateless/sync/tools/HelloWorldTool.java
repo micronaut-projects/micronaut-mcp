@@ -10,7 +10,7 @@ import jakarta.inject.Singleton;
 @Singleton
 class HelloWorldTool {
     @Tool(title = "Hello World",
-        annotations = @Tool.Annotations(readOnlyHint = true,
+        annotations = @Tool.ToolAnnotations(readOnlyHint = true,
             title = "Hello World",
             destructiveHint = false,
             idempotentHint = true,

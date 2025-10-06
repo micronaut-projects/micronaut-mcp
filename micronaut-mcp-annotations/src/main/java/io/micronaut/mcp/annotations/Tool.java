@@ -63,7 +63,7 @@ public @interface Tool {
      * explicitly in order to be included in Tool metadata.
      * @return Additional hints for clients.
      */
-    Annotations annotations() default @Annotations;
+    ToolAnnotations annotations() default @ToolAnnotations;
 
     /**
      * Additional hints for clients.
@@ -71,7 +71,7 @@ public @interface Tool {
      */
     @Retention(RUNTIME)
     @Target(ElementType.ANNOTATION_TYPE)
-    @interface Annotations {
+    @interface ToolAnnotations {
 
         /**
          * @return A human-readable title for the tool.

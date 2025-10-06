@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "spec.name", value = "ToolAnnotationsTest")
 @MicronautTest
-class ToolAnnotationsTest {
+class ToolToolAnnotationsTest {
 
     @Test
     void toolAnnotationsTest(@Client("/") HttpClient httpClient) throws JSONException {

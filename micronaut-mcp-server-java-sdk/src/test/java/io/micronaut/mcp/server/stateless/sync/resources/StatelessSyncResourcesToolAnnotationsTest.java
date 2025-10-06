@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "spec.name", value = "StatelessSyncResourcesAnnotationsTest")
 @MicronautTest
-class StatelessSyncResourcesAnnotationsTest {
+class StatelessSyncResourcesToolAnnotationsTest {
 
     @Test
     void resourcesList(@Client("/") HttpClient httpClient) throws JSONException {
