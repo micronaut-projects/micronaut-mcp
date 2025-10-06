@@ -101,19 +101,18 @@ import io.modelcontextprotocol.spec.McpSchema.CompleteResult.CompleteCompletion;
 class McpSchemaSerdeImport {
 }
 
-@Mixin.Filter(removeAnnotations = {
-    "com.fasterxml.jackson.annotation.JsonTypeInfo",
-    "com.fasterxml.jackson.annotation.JsonSubTypes",
-    "io.micronaut.serde.config.annotation.SerdeConfig$SerError",
-    "io.micronaut.serde.config.annotation.SerdeConfig$SerSubtyped"
-})
 @JsonInclude(JsonInclude.Include.ALWAYS)
 @Mixin(CompleteCompletion.class)
 class CompleteCompletionMixin {
 
 }
 
-@Mixin.Filter(removeAnnotations = {"com.fasterxml.jackson.annotation.JsonTypeInfo", "io.micronaut.serde.config.annotation.SerdeConfig$SerError"})
+@Mixin.Filter(removeAnnotations = {
+    "com.fasterxml.jackson.annotation.JsonTypeInfo",
+    "com.fasterxml.jackson.annotation.JsonSubTypes",
+    "io.micronaut.serde.config.annotation.SerdeConfig$SerError",
+    "io.micronaut.serde.config.annotation.SerdeConfig$SerSubtyped"
+})
 @Mixin(McpSchema.ResourceContents.class)
 @JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
 class CorrectResourceContentsMixin {
