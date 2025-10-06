@@ -78,6 +78,23 @@ loadScripts(document, 'script');</script>
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+<li>
+<section class="nested-class-summary" id="nested-class-summary">
+<h2>Nested Class Summary</h2>
+<div class="caption"><span>Nested Classes</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Class</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static @interface&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="Tool.ToolAnnotations.html" class="type-name-link" title="annotation interface in io.micronaut.mcp.annotations">Tool.ToolAnnotations</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Additional hints for clients.</div>
+</div>
+</div>
+</section>
+</li>
 <!-- =========== ANNOTATION INTERFACE OPTIONAL MEMBER SUMMARY =========== -->
 <li>
 <section class="member-summary" id="annotation-interface-optional-element-summary">
@@ -87,17 +104,22 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Optional Element</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#description()" class="member-name-link">description</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code><a href="Tool.ToolAnnotations.html" title="annotation interface in io.micronaut.mcp.annotations">Tool.ToolAnnotations</a></code></div>
+<div class="col-second even-row-color"><code><a href="#annotations()" class="member-name-link">annotations</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Additional hints for clients.</div>
+</div>
 <div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#name()" class="member-name-link">name</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-second odd-row-color"><code><a href="#description()" class="member-name-link">description</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#name()" class="member-name-link">name</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Each tool must have a unique name.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#title()" class="member-name-link">title</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#title()" class="member-name-link">title</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -190,6 +212,24 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Default:</dt>
 <dd>""</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="annotations()">
+<h3>annotations</h3>
+<div class="member-signature"><span class="return-type"><a href="Tool.ToolAnnotations.html" title="annotation interface in io.micronaut.mcp.annotations">Tool.ToolAnnotations</a></span>&nbsp;<span class="element-name">annotations</span></div>
+<div class="block">Additional hints for clients.
+ <p>
+ Note that the default value of this annotation member is ignored. In other words, the annotations have to be declared
+ explicitly in order to be included in Tool metadata.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Additional hints for clients.</dd>
+</dl>
+<dl class="notes">
+<dt>Default:</dt>
+<dd>@io.micronaut.mcp.annotations.Tool.ToolAnnotations</dd>
 </dl>
 </section>
 </li>
