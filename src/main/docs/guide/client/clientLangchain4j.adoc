@@ -5,3 +5,6 @@ dependency:micronaut-mcp-client-langchain4j[groupId=io.micronaut.mcp]
 Additionally, if you are building an MCP Server, you can test it by injecting a bean of type `dev.langchain4j.mcp.client.McpClient` in your tests.
 The MCP Client pointing to your MCP Server has a name qualifier with value `embeddedServer`.
 
+To customize client creation for your application's needs, define a
+https://docs.micronaut.io/latest/api/io/micronaut/context/event/BeanCreatedEventListener.html[BeanCreatedEventListener]
+for `StreamableHttpMcpTransport.Builder`.

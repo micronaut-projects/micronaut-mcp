@@ -47,11 +47,16 @@ final class McpClientHttpFactory {
 
     @EachBean(McpClientHttpConfiguration.class)
     @Prototype
-    HttpClientStreamableHttpTransport transport(McpClientHttpConfiguration clientHttpConfiguration) {
+    HttpClientStreamableHttpTransport.Builder transportBuilder(McpClientHttpConfiguration clientHttpConfiguration) {
         return HttpClientStreamableHttpTransport
             .builder(clientHttpConfiguration.getUrl().toString())
-            .jsonMapper(mcpJsonMapper)
-            .build();
+            .jsonMapper(mcpJsonMapper);
+    }
+
+    @EachBean(HttpClientStreamableHttpTransport.Builder.class)
+    @Prototype
+    HttpClientStreamableHttpTransport transport(HttpClientStreamableHttpTransport.Builder builder) {
+        return builder.build();
     }
 
     @EachBean(HttpClientStreamableHttpTransport.class)
@@ -61,9 +66,8 @@ final class McpClientHttpFactory {
     }
 
     @EachBean(HttpClientStreamableHttpTransport.class)
-    @Bean(preDestroy = "close")
-    @Singleton
-    McpSyncClient mcpSyncClient(@NonNull HttpClientStreamableHttpTransport transport,
+    @Prototype
+    McpClient.SyncSpec mcpClientSyncSpec(@NonNull HttpClientStreamableHttpTransport transport,
                                 @NonNull JsonSchemaValidator jsonSchemaValidator,
                                 @Parameter McpSchema.ClientCapabilities clientCapabilities,
                                 @Nullable @Parameter McpClientHttpConfiguration config) {
@@ -73,13 +77,18 @@ final class McpClientHttpFactory {
         if (config != null && config.getTimeout() != null) {
             builder.requestTimeout(config.getTimeout());
         }
-        return builder.build();
+        return builder;
+    }
+
+    @EachBean(McpClient.SyncSpec.class)
+    @Bean(preDestroy = "close")
+    McpSyncClient mcpSyncClient(McpClient.SyncSpec spec) {
+        return spec.build();
     }
 
     @EachBean(HttpClientStreamableHttpTransport.class)
-    @Bean(preDestroy = "close")
-    @Singleton
-    McpAsyncClient mcpAysncClient(@NonNull HttpClientStreamableHttpTransport transport,
+    @Prototype
+    McpClient.AsyncSpec mcpAysncSpec(@NonNull HttpClientStreamableHttpTransport transport,
                                   @NonNull JsonSchemaValidator jsonSchemaValidator,
                                   @Parameter McpSchema.ClientCapabilities clientCapabilities,
                                   @Nullable @Parameter McpClientHttpConfiguration config) {
@@ -89,6 +98,13 @@ final class McpClientHttpFactory {
         if (config != null && config.getTimeout() != null) {
             builder.requestTimeout(config.getTimeout());
         }
-        return builder.build();
+        return builder;
+    }
+
+    @EachBean(McpClient.AsyncSpec.class)
+    @Bean(preDestroy = "close")
+    @Singleton
+    McpAsyncClient mcpAysncClient(McpClient.AsyncSpec spec) {
+        return spec.build();
     }
 }

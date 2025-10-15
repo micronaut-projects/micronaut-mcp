@@ -3,3 +3,7 @@ To use MCP Clients powered by the https://github.com/modelcontextprotocol/java-s
 dependency:micronaut-mcp-client-java-sdk[groupId=io.micronaut.mcp]
 
 Additionally, if you are building an <<serverJavaSdk, MCP Server>>, you can test it by injecting a bean of type `io.modelcontextprotocol.client.McpSyncClient` or `io.modelcontextprotocol.client.McpAsyncClient` in your tests. The MCP Client pointing to your MCP Server has a https://docs.micronaut.io/latest/guide/#qualifiers[name qualifier] with value `embeddedServer`.
+
+To customize client creation for your application's needs, define
+https://docs.micronaut.io/latest/api/io/micronaut/context/event/BeanCreatedEventListener.html[BeanCreatedEventListener]s
+for `HttpClientStreamableHttpTransport.Builder`, `McpClient.SyncSpec`, or `McpClient.AsyncSpec`.
