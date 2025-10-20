@@ -2257,6 +2257,11 @@ class  MyResourceTemplates {
 <div class="paragraph">
 <p>Additionally, if you are building an <a href="#serverJavaSdk">MCP Server</a>, you can test it by injecting a bean of type <code>io.modelcontextprotocol.client.McpSyncClient</code> or <code>io.modelcontextprotocol.client.McpAsyncClient</code> in your tests. The MCP Client pointing to your MCP Server has a <a href="https://docs.micronaut.io/latest/guide/#qualifiers">name qualifier</a> with value <code>embeddedServer</code>.</p>
 </div>
+<div class="paragraph">
+<p>To customize client creation for your application&#8217;s needs, define
+<a href="https://docs.micronaut.io/latest/api/io/micronaut/context/event/BeanCreatedEventListener.html">BeanCreatedEventListener</a>s
+for <code>HttpClientStreamableHttpTransport.Builder</code>, <code>McpClient.SyncSpec</code>, or <code>McpClient.AsyncSpec</code>.</p>
+</div>
 
 <h2 id="clientLangchain4j"><a class="anchor" href="#clientLangchain4j"></a>4.2 Langchain4j MCP Client</h2>
 
@@ -2289,6 +2294,11 @@ class  MyResourceTemplates {
 <div class="paragraph">
 <p>Additionally, if you are building an MCP Server, you can test it by injecting a bean of type <code>dev.langchain4j.mcp.client.McpClient</code> in your tests.
 The MCP Client pointing to your MCP Server has a name qualifier with value <code>embeddedServer</code>.</p>
+</div>
+<div class="paragraph">
+<p>To customize client creation for your application&#8217;s needs, define a
+<a href="https://docs.micronaut.io/latest/api/io/micronaut/context/event/BeanCreatedEventListener.html">BeanCreatedEventListener</a>
+for <code>StreamableHttpMcpTransport.Builder</code>.</p>
 </div>
 
 <h1 id="repository"><a class="anchor" href="#repository"></a>5 Repository</h1>
