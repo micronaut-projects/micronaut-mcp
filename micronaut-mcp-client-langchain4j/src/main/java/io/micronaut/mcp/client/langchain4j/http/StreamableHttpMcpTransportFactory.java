@@ -18,6 +18,7 @@ package io.micronaut.mcp.client.langchain4j.http;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import jakarta.inject.Singleton;
@@ -27,8 +28,8 @@ import jakarta.inject.Singleton;
 final class StreamableHttpMcpTransportFactory {
 
     @EachBean(McpClientHttpConfiguration.class)
-    @Singleton
-    StreamableHttpMcpTransport createStreamableHttpMcpTransport(McpClientHttpConfiguration config) {
+    @Prototype
+    StreamableHttpMcpTransport.Builder createStreamableHttpMcpTransportBuilder(McpClientHttpConfiguration config) {
         StreamableHttpMcpTransport.Builder builder = new StreamableHttpMcpTransport.Builder()
             .url(config.getUrl().toString());
         if (config.getTimeout() != null) {
@@ -36,6 +37,12 @@ final class StreamableHttpMcpTransportFactory {
         }
         builder.logRequests(config.isLogRequests());
         builder.logResponses(config.isLogResponses());
+        return builder;
+    }
+
+    @EachBean(StreamableHttpMcpTransport.Builder.class)
+    @Singleton
+    StreamableHttpMcpTransport createStreamableHttpMcpTransport(StreamableHttpMcpTransport.Builder builder) {
         return builder.build();
     }
 }
