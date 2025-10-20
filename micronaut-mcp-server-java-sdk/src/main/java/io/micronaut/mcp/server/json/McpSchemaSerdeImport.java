@@ -15,14 +15,11 @@
  */
 package io.micronaut.mcp.server.json;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.context.annotation.ClassImport;
 import io.micronaut.context.annotation.Mixin;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.serde.annotation.Serdeable;
-import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CompleteResult.CompleteCompletion;
 
 @ClassImport(classes = {
@@ -105,29 +102,4 @@ class McpSchemaSerdeImport {
 @Mixin(CompleteCompletion.class)
 class CompleteCompletionMixin {
 
-}
-
-@Mixin.Filter(removeAnnotations = {
-    "com.fasterxml.jackson.annotation.JsonTypeInfo",
-    "com.fasterxml.jackson.annotation.JsonSubTypes",
-    "io.micronaut.serde.config.annotation.SerdeConfig$SerError",
-    "io.micronaut.serde.config.annotation.SerdeConfig$SerSubtyped"
-})
-@Mixin(McpSchema.ResourceContents.class)
-@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
-class CorrectResourceContentsMixin {
-}
-
-@Mixin.Filter(removeAnnotations = {"com.fasterxml.jackson.annotation.JsonTypeInfo", "io.micronaut.serde.config.annotation.SerdeConfig$SerError"})
-@Mixin(McpSchema.TextResourceContents.class)
-@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
-class CorrectTextResourceContentsMixin {
-}
-
-@Mixin.Filter(removeAnnotations = {"com.fasterxml.jackson.annotation.JsonTypeInfo", "io.micronaut.serde.config.annotation.SerdeConfig$SerError"})
-@Mixin(McpSchema.BlobResourceContents.class)
-@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
-@JsonSubTypes({@JsonSubTypes.Type(value = McpSchema.TextResourceContents.class),
-    @JsonSubTypes.Type(value = McpSchema.BlobResourceContents.class)})
-class CorrectBlobResourceContentsMixin {
 }
