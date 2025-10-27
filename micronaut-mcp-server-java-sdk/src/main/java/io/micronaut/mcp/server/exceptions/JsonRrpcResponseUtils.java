@@ -32,9 +32,11 @@ import static io.modelcontextprotocol.spec.McpSchema.JSONRPC_VERSION;
 public final class JsonRrpcResponseUtils {
     private static final String HANDLER_FOR_REQUEST_TYPE_PROMPTS_LIST = "Missing handler for request type: prompts/list";
     private static final String HANDLER_FOR_REQUEST_TYPE_RESOURCES_LIST = "Missing handler for request type: resources/list";
+    private static final String HANDLER_FOR_REQUEST_TYPE_RESOURCES_TEMPLATES_LIST = "Missing handler for request type: resources/templates/list";
     private static final String HANDLER_FOR_REQUEST_TYPE_TOOLS_LIST = "Missing handler for request type: tools/list";
     private static final String METHOD_NOT_FOUND_PROMPTS_LIST = "Method not found: prompts/list";
     private static final String METHOD_NOT_FOUND_RESOURCES_LIST = "Method not found: resources/list";
+    private static final String METHOD_NOT_FOUND_RESOURCES_TEMPLATES_LIST = "Method not found: resources/templates/list";
     private static final String METHOD_NOT_FOUND_TOOLS_LIST = "Method not found: tools/list";
 
     private JsonRrpcResponseUtils() {
@@ -63,6 +65,12 @@ public final class JsonRrpcResponseUtils {
                 return new McpSchema.JSONRPCResponse(JSONRPC_VERSION,
                     id,
                     new McpSchema.ListResourcesResult(Collections.emptyList(), null), null);
+            }
+            case HANDLER_FOR_REQUEST_TYPE_RESOURCES_TEMPLATES_LIST -> {
+                Object id = jsonrpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest ? jsonrpcRequest.id() : null;
+                return new McpSchema.JSONRPCResponse(JSONRPC_VERSION,
+                    id,
+                    new McpSchema.ListResourceTemplatesResult(Collections.emptyList(), null), null);
             }
             case HANDLER_FOR_REQUEST_TYPE_TOOLS_LIST -> {
                 Object id = jsonrpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest ? jsonrpcRequest.id() : null;
@@ -101,6 +109,9 @@ public final class JsonRrpcResponseUtils {
             case METHOD_NOT_FOUND_RESOURCES_LIST -> new McpSchema.JSONRPCResponse(JSONRPC_VERSION,
                 jsonrpcResponse.id(),
                 new McpSchema.ListResourcesResult(Collections.emptyList(), null), null);
+            case METHOD_NOT_FOUND_RESOURCES_TEMPLATES_LIST -> new McpSchema.JSONRPCResponse(JSONRPC_VERSION,
+                jsonrpcResponse.id(),
+                new McpSchema.ListResourceTemplatesResult(Collections.emptyList(), null), null);
             case METHOD_NOT_FOUND_TOOLS_LIST -> new McpSchema.JSONRPCResponse(JSONRPC_VERSION,
                 jsonrpcResponse.id(),
                 new McpSchema.ListToolsResult(Collections.emptyList(), null), null);
