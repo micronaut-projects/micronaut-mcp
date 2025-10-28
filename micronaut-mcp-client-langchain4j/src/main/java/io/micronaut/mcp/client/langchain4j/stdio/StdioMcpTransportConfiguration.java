@@ -17,6 +17,9 @@ package io.micronaut.mcp.client.langchain4j.stdio;
 
 import java.util.List;
 
+/**
+ * Configuration for STDIO MCP Transport for Langchain4j MCP Client.
+ */
 public interface StdioMcpTransportConfiguration {
     String PREFIX = "langchain4j.mcp.client.transport.stdio";
     String PROPERTY_COMMANDS = PREFIX + ".commands";
