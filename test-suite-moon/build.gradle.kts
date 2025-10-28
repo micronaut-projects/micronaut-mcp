@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    id("io.micronaut.build.internal.java-base")
 }
 dependencies {
     implementation(projects.micronautMcpServerJavaSdk)
