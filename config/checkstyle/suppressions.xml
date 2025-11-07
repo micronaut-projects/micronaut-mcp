@@ -8,5 +8,8 @@
     <!-- <suppress checks="FileLength" -->
               <!-- files="DefaultBeanContext.java|BeanDefinitionWriter.java|DefaultHttpClient.java"/> -->
 
-    <suppress checks="MissingJavadocType" files=".*doc-examples.*" />
+    <suppress checks="MissingJavadocType" files=".*doc-examples.*" />   
+    <suppress
+        checks=".*"
+        files=".*[/\\]io[/\\]micronaut[/\\]mcp[/\\]server[/\\]stdio[/\\]StdioServerTransportProviderReplacement\.java"/>
 </suppressions>
