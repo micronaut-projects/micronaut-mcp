@@ -1,7 +1,7 @@
 package io.micronaut.mcp.server.stateless;
 
 import io.micronaut.http.HttpStatus;
-import io.micronaut.mcp.server.exceptions.JsonRrpcResponseUtils;
+import io.micronaut.http.HttpResponse;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
@@ -39,5 +39,13 @@ class McpControllerTest {
 
         HttpStatus actual = McpController.status(jsonRpcError);
         assertEquals(expected, actual);
+    }
+
+    @Test
+    void handleGetReturns405() {
+        McpController controller = new McpController(null, null);
+        HttpResponse<?> response = controller.handleGet().block();
+        assertNotNull(response);
+        assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatus());
     }
 }

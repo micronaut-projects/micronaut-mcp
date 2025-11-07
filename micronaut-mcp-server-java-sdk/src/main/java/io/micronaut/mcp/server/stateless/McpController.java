@@ -21,9 +21,12 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.Produces;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.mcp.server.exceptions.JsonRrpcResponseUtils;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
@@ -60,6 +63,13 @@ final class McpController {
                   McpTransportContextExtractor<HttpRequest<?>> contextExtractor) {
         this.mcpHandler = mcpHandler;
         this.contextExtractor = contextExtractor;
+    }
+
+    @SuppressWarnings("java:S3740")
+    @Get()
+    @Produces(MediaType.TEXT_EVENT_STREAM)
+    public Mono<HttpResponse<?>> handleGet() {
+        return Mono.just(HttpResponse.status(HttpStatus.METHOD_NOT_ALLOWED));
     }
 
     @SuppressWarnings("java:S3740")
