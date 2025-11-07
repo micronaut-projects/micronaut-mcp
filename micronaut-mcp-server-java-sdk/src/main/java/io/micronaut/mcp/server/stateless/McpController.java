@@ -68,7 +68,7 @@ final class McpController {
     @SuppressWarnings("java:S3740")
     @Get
     @Produces(MediaType.TEXT_EVENT_STREAM)
-    public Mono<HttpResponse<?>> handleGet() {
+    public HttpResponse<?> handleGet() {
         return Mono.just(HttpResponse.status(HttpStatus.METHOD_NOT_ALLOWED));
     }
 
