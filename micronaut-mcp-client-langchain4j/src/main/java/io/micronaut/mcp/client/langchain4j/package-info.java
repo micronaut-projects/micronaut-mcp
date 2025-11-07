@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 /**
- * Classes related with MCP Java SDK Client.
+ * Classes related with Langchain4J MCP Client.
  */
-package io.micronaut.mcp.client.javasdk;
+package io.micronaut.mcp.client.langchain4j;
