@@ -66,13 +66,6 @@ final class McpController {
     }
 
     @SuppressWarnings("java:S3740")
-    @Get
-    @Produces(MediaType.TEXT_EVENT_STREAM)
-    public HttpResponse<?> handleGet() {
-        return HttpResponse.status(HttpStatus.METHOD_NOT_ALLOWED);
-    }
-
-    @SuppressWarnings("java:S3740")
     @Post
     public Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body Map<String, Object> body) {
         McpTransportContext transportContext = contextExtractor.extract(request);

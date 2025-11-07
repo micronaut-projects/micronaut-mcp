@@ -40,12 +40,4 @@ class McpControllerTest {
         HttpStatus actual = McpController.status(jsonRpcError);
         assertEquals(expected, actual);
     }
-
-    @Test
-    void handleGetReturns405() {
-        McpController controller = new McpController(null, null);
-        HttpResponse<?> response = controller.handleGet();
-        assertNotNull(response);
-        assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatus());
-    }
 }
