@@ -14,4 +14,3 @@ io.micronaut.mcp.server.stdio
 io.micronaut.mcp.server.tools.fetch
 io.micronaut.mcp.server.tools.search
 io.modelcontextprotocol.server.http.tck
-io.modelcontextprotocol.server.http.tck.async
