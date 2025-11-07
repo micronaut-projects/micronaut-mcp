@@ -17,7 +17,6 @@
 
 [versions]
 micronaut = "4.10.8"
-micronaut-docs = "3.0.0"
 micronaut-platform = "4.10.1"
 micronaut-security = "4.15.0"
 micronaut-serde = "2.16.1"
@@ -25,9 +24,6 @@ micronaut-json-schema = "1.7.3"
 micronaut-logging = "1.7.1"
 micronaut-langchain4j = "1.3.0"
 micronaut-validation = "4.12.0"
-micronaut-test = "4.9.0"
-groovy = "4.0.27"
-spock = "2.3-groovy-4.0"
 managed-mcp-java-sdk = "0.14.1"
 jsonassert = "1.5.3"
 micronaut-gradle-plugin = "4.5.5"
