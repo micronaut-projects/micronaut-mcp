@@ -44,7 +44,7 @@ class McpControllerTest {
     @Test
     void handleGetReturns405() {
         McpController controller = new McpController(null, null);
-        HttpResponse<?> response = controller.handleGet().block();
+        HttpResponse<?> response = controller.handleGet();
         assertNotNull(response);
         assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatus());
     }
