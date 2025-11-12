@@ -24,7 +24,7 @@ class ToolAnnotationsEagerSingletonTest {
         "spec.name", "ToolToolAnnotationsEagerSingletonTest");
         EmbeddedServer server = assertDoesNotThrow(() ->
             ApplicationContext.builder(config)
-                //.eagerInitSingletons(true)
+                .eagerInitSingletons(true)
                 .run(EmbeddedServer.class)
         );
         HttpClient httpClient = server.getApplicationContext().createBean(HttpClient.class, server.getURL());
