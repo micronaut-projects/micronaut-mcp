@@ -45,9 +45,7 @@ final class McpServerBootstrap {
 
     @EventListener
     public void onStartupEvent(StartupEvent startupEvent) {
-        if (this.mcpServer == null) {
-            this.mcpServer = beanContext.getBean(beanTypeForConfiguration(mcpServerConfiguration));
-        }
+        this.mcpServer = beanContext.getBean(beanTypeForConfiguration(mcpServerConfiguration));
     }
 
     @EventListener
