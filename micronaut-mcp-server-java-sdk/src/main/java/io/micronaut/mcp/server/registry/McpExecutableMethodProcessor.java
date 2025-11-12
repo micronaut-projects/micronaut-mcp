@@ -18,6 +18,7 @@ package io.micronaut.mcp.server.registry;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.order.Ordered;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.annotations.McpPrimitive;
@@ -33,7 +34,7 @@ import jakarta.inject.Singleton;
 @Requires(beans = McpServerConfiguration.class)
 @Internal
 @Singleton
-final class McpExecutableMethodProcessor implements ExecutableMethodProcessor<McpPrimitive> {
+final class McpExecutableMethodProcessor implements ExecutableMethodProcessor<McpPrimitive>, Ordered {
 
     private final ToolRegistry toolRegistry;
     private final PromptRegistry promptRegistry;
@@ -71,4 +72,6 @@ final class McpExecutableMethodProcessor implements ExecutableMethodProcessor<Mc
             throw new IllegalStateException("Unknown method: " + method);
         }
     }
+
+
 }

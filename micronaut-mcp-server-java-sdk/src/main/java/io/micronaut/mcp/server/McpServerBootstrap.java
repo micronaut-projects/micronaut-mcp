@@ -15,8 +15,6 @@
  */
 package io.micronaut.mcp.server;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.ApplicationContextConfiguration;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ShutdownEvent;
@@ -39,13 +37,10 @@ final class McpServerBootstrap {
 
     private Object mcpServer;
 
-    McpServerBootstrap(ApplicationContext applicationContext,
+    McpServerBootstrap(BeanContext beanContext,
                        McpServerConfiguration mcpServerConfiguration) {
-        this.beanContext = applicationContext;
+        this.beanContext = beanContext;
         this.mcpServerConfiguration = mcpServerConfiguration;
-        if (applicationContext.getContextConfiguration().isEagerInitSingletons()) {
-            onStartupEvent(null);
-        }
     }
 
     @EventListener
