@@ -17,6 +17,7 @@ package io.micronaut.mcp.conf.client;
 
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.exceptions.DisabledBeanException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
@@ -37,7 +38,10 @@ final class McpClientHttpConfigurationEmbeddedServerFactory {
     @Singleton
     McpClientHttpConfiguration embeddedTransport(@NonNull EmbeddedServer embeddedServer,
                                                   @NonNull McpServerConfiguration mcpServerConfiguration) {
-        return McpClientHttpConfiguration.of(EMBEDDED_SERVER,
-            URI.create(embeddedServer.getURL().toString() + mcpServerConfiguration.getEndpoint()));
+        if (embeddedServer.isRunning()) {
+            return McpClientHttpConfiguration.of(EMBEDDED_SERVER,
+                URI.create(embeddedServer.getURL().toString() + mcpServerConfiguration.getEndpoint()));
+        }
+        throw new DisabledBeanException("EmbeddedServer not running");
     }
 }
