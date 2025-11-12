@@ -6,3 +6,5 @@ include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/sta
 ----
 
 NOTE: You need a prompt with the same name as the completion prompt. Moreover, the name of the prompt completion argument must match the name of the prompt argument.
+
+WARNING: Defining a prompt completion via an annotation currently does not work with https://docs.micronaut.io/latest/guide/#eagerInit[eager initialization of singletons].
