@@ -28,7 +28,7 @@ micronaut-validation = "4.12.0"
 micronaut-test = "4.9.0"
 groovy = "4.0.27"
 spock = "2.3-groovy-4.0"
-managed-mcp-java-sdk = "0.14.1"
+managed-mcp-java-sdk = "0.15.0"
 jsonassert = "1.5.3"
 micronaut-gradle-plugin = "4.5.5"
 
