@@ -17,7 +17,7 @@ package io.micronaut.mcp.server;
 
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.mcp.conf.server.McpServerInfoConfiguration;
 import io.micronaut.mcp.conf.server.PromptsConfiguration;

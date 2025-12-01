@@ -19,7 +19,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.io.ResourceLoader;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;

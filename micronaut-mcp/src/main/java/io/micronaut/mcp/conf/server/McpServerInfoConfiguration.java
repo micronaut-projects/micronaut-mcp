@@ -15,7 +15,7 @@
  */
 package io.micronaut.mcp.conf.server;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * MCP Server Info Configuration.

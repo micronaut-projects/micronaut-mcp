@@ -17,7 +17,7 @@ package io.micronaut.mcp.server.stateless.sync;
 
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.server.AbstractMcpServerFactory;
 import io.micronaut.mcp.conf.server.McpServerInfoConfiguration;
 import io.micronaut.mcp.server.registry.CompletionRegistry;

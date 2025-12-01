@@ -18,7 +18,7 @@ package io.micronaut.mcp.server.stdio;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.naming.Described;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.runtime.ApplicationConfiguration;
