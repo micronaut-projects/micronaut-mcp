@@ -16,7 +16,7 @@
 package io.micronaut.mcp.server.context;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.http.HttpAttributes;
 import io.micronaut.http.HttpHeaders;
 import io.modelcontextprotocol.common.McpTransportContext;

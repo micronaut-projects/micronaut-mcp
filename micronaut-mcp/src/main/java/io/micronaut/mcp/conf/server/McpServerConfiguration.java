@@ -15,7 +15,7 @@
  */
 package io.micronaut.mcp.conf.server;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.util.Toggleable;
 import io.micronaut.mcp.conf.Transport;
 
