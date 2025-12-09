@@ -9,7 +9,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -22,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Property(name = "moon.enabled", value = StringUtils.TRUE)
 @MicronautTest
 class MoonToolsHttpTest {
-    @Disabled
     @Test
     void invalidParamsCannotDeserialize(@Client("/") HttpClient httpClient) {
         BlockingHttpClient client = httpClient.toBlocking();
