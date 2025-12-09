@@ -3,7 +3,7 @@ package example.micronaut.moon.mcp;
 import example.micronaut.moon.MoonPhaseEmoji;
 import example.micronaut.moon.MoonPhaseRequest;
 import example.micronaut.moon.MoonPhasesService;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.mcp.annotations.Tool;
 import jakarta.inject.Singleton;
 import jakarta.validation.Valid;

@@ -15,7 +15,7 @@
  */
 package io.micronaut.mcp.server.registry;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 

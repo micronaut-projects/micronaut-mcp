@@ -1,6 +1,6 @@
 package io.micronaut.mcp.server.utils;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.io.ResourceLoader;
 import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotNull;
