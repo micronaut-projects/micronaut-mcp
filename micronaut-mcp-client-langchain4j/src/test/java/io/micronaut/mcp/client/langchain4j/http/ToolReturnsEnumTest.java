@@ -3,6 +3,7 @@ package io.micronaut.mcp.client.langchain4j.http;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.mcp.client.McpClient;
+import dev.langchain4j.service.tool.ToolExecutionResult;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.util.StringUtils;
@@ -30,8 +31,9 @@ class ToolReturnsEnumTest {
         List<String> toolNames = listToolsResult.stream().map(ToolSpecification::name).toList();
         assertTrue(toolNames.stream().anyMatch(name -> name.equals("sun-state")));
 
-        String text = assertDoesNotThrow(() -> client.executeTool(ToolExecutionRequest.builder()
+        ToolExecutionResult toolExecutionResult = assertDoesNotThrow(() -> client.executeTool(ToolExecutionRequest.builder()
             .name("sun-state").build()));
+        String text = toolExecutionResult.resultText();
         assertNotNull(text);
         assertEquals("TOTAL_ECLIPSE", text);
     }

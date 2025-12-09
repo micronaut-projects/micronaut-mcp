@@ -3,6 +3,7 @@ package io.micronaut.mcp.client.langchain4j.http;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.mcp.client.McpClient;
+import dev.langchain4j.service.tool.ToolExecutionResult;
 import example.micronaut.moon.MoonPhase;
 import example.micronaut.moon.MoonPhaseEmoji;
 import io.micronaut.context.annotation.Property;
@@ -36,8 +37,9 @@ class McpClientTest {
         assertTrue(toolNames.stream().anyMatch(name -> name.equals("moon-phase-at-date")));
 
         String arguments = jsonMapper.writeValueAsString(Map.of("date", "1982-10-28"));
-        String json = assertDoesNotThrow(() -> client.executeTool(ToolExecutionRequest.builder()
+        ToolExecutionResult toolExecutionResult = assertDoesNotThrow(() -> client.executeTool(ToolExecutionRequest.builder()
             .name("moon-phase-at-date").arguments(arguments).build()));
+        String json = toolExecutionResult.resultText();
         assertNotNull(json);
         MoonPhaseEmoji moonPhaseEmoji = jsonMapper.readValue(json, MoonPhaseEmoji.class);
         assertNotNull(moonPhaseEmoji);
