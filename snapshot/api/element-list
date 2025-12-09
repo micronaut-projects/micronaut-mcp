@@ -3,6 +3,7 @@ io.micronaut.mcp.client.langchain4j.stdio
 io.micronaut.mcp.conf
 io.micronaut.mcp.conf.client
 io.micronaut.mcp.conf.server
+io.micronaut.mcp.info
 io.micronaut.mcp.primitives.prompts
 io.micronaut.mcp.primitives.utils
 io.micronaut.mcp.server
@@ -14,3 +15,4 @@ io.micronaut.mcp.server.stdio
 io.micronaut.mcp.server.tools.fetch
 io.micronaut.mcp.server.tools.search
 io.modelcontextprotocol.server.http.tck
+io.modelcontextprotocol.server.http.tck.async
