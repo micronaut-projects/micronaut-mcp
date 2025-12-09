@@ -54,7 +54,7 @@ final class McpExecutableMethodProcessor implements ExecutableMethodProcessor<Mc
     }
 
     @Override
-    public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
+    public <B> void process(BeanDefinition<B> beanDefinition, ExecutableMethod<B, ?> method) {
         if (method.hasStereotype(Prompt.class)) {
             promptRegistry.addMethod(beanDefinition, method);
         } else if (method.hasStereotype(Tool.class)) {
