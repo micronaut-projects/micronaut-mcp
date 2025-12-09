@@ -45,8 +45,7 @@ abstract class AbstractMcpPrimitiveArgumentBinder<T> {
         this.conversionService = conversionService;
     }
 
-    @NonNull
-    public ArgumentBinder.BindingResult<T> bind(@NonNull ArgumentConversionContext<T> context,
+    public ArgumentBinder.@NonNull BindingResult<T> bind(@NonNull ArgumentConversionContext<T> context,
                                                 @NonNull Supplier<Map<String, Object>> mapSupplier,
                                                 @Nullable String argAnn,
                                                 @Nullable String member,
