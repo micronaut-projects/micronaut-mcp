@@ -58,6 +58,7 @@ import java.util.function.Function;
 
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_ARRAY;
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_BOOL;
+import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_NULL;
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_NUMBER;
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_OBJECT;
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_STRING;
@@ -365,24 +366,51 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     }
 
     private static String argumentType(Argument<?> argument) {
-        if (argument.isAssignableFrom(String.class)) {
-            return TYPE_STRING;
+        Class<?> type = wrapPrimitive(argument.getType());
+
+        // null
+        if (type == null || Void.class.equals(type)) {
+            return TYPE_NULL;
         }
 
-        if (argument.isArray() || argument.isContainerType()) {
-            return TYPE_ARRAY;
-        }
-
-        if (argument.isAssignableFrom(boolean.class)
-            || Boolean.class.isAssignableFrom(argument.getType())) {
+        // boolean
+        if (Boolean.class.equals(type)) {
             return TYPE_BOOL;
         }
 
-        if (argument.isPrimitive() || Number.class.isAssignableFrom(argument.getType())) {
+        // string
+        if (CharSequence.class.isAssignableFrom(type)
+            || Character.class.equals(type)
+            || type.isEnum()) {
+            return TYPE_STRING;
+        }
+
+        // number
+        if (Number.class.isAssignableFrom(type)) {
             return TYPE_NUMBER;
         }
 
+        // array
+        if (type.isArray() || Collection.class.isAssignableFrom(type)) {
+            return TYPE_ARRAY;
+        }
+
         return TYPE_OBJECT;
+    }
+
+    private static Class<?> wrapPrimitive(Class<?> type) {
+        if (!type.isPrimitive()) return type;
+        return switch (type.getName()) {
+            case "boolean" -> Boolean.class;
+            case "byte"    -> Byte.class;
+            case "short"   -> Short.class;
+            case "int"     -> Integer.class;
+            case "long"    -> Long.class;
+            case "float"   -> Float.class;
+            case "double"  -> Double.class;
+            case "char"    -> Character.class;
+            default        -> type;
+        };
     }
 
     private static boolean isArgumentRequired(Argument<?> argument) {
