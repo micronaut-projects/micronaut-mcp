@@ -56,6 +56,9 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_ARRAY;
+import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_BOOL;
+import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_NUMBER;
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_OBJECT;
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_STRING;
 
@@ -365,6 +368,20 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         if (argument.isAssignableFrom(String.class)) {
             return TYPE_STRING;
         }
+
+        if (argument.isArray() || argument.isContainerType()) {
+            return TYPE_ARRAY;
+        }
+
+        if (argument.isAssignableFrom(boolean.class)
+            || Boolean.class.isAssignableFrom(argument.getType())) {
+            return TYPE_BOOL;
+        }
+
+        if (argument.isPrimitive() || Number.class.isAssignableFrom(argument.getType())) {
+            return TYPE_NUMBER;
+        }
+
         return TYPE_OBJECT;
     }
 
