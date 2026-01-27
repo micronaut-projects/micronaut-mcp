@@ -14,7 +14,7 @@ dependencies {
     testImplementation(projects.testSuiteMoon)
 }
 micronautBuild {
-    testFramework = TestFramework.JUNIT5
+    testFramework = TestFramework.JUNIT6
 }
 tasks.withType<Test> {
     useJUnitPlatform()

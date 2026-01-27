@@ -9,7 +9,7 @@ dependencies {
     implementation(libs.jsonassert)
 }
 micronautBuild {
-    testFramework = TestFramework.JUNIT5
+    testFramework = TestFramework.JUNIT6
 }
 tasks.withType<Test> {
     useJUnitPlatform()

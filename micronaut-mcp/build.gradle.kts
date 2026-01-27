@@ -11,7 +11,7 @@ dependencies {
     testRuntimeOnly(mnLogging.logback.classic)
 }
 micronautBuild {
-    testFramework = TestFramework.JUNIT5
+    testFramework = TestFramework.JUNIT6
 }
 tasks.withType<Test> {
     useJUnitPlatform()
