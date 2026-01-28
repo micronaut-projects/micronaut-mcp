@@ -33,6 +33,8 @@ import io.modelcontextprotocol.spec.McpSchema.CompleteResult.CompleteCompletion;
     io.modelcontextprotocol.spec.McpSchema.ClientCapabilities.RootCapabilities.class,
     io.modelcontextprotocol.spec.McpSchema.ClientCapabilities.Sampling.class,
     io.modelcontextprotocol.spec.McpSchema.ClientCapabilities.Elicitation.class,
+    io.modelcontextprotocol.spec.McpSchema.ClientCapabilities.Elicitation.Form.class,
+    io.modelcontextprotocol.spec.McpSchema.ClientCapabilities.Elicitation.Url.class,
     io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.class,
     io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.CompletionCapabilities.class,
     io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.LoggingCapabilities.class,
