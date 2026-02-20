@@ -29,7 +29,7 @@ dependencies {
     testImplementation(mnTest.junit.jupiter.params)
 }
 micronautBuild {
-    testFramework = TestFramework.JUNIT5
+    testFramework = TestFramework.JUNIT6
 }
 tasks.withType<Test> {
     useJUnitPlatform()
