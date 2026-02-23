@@ -399,7 +399,10 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     }
 
     private static Class<?> wrapPrimitive(Class<?> type) {
-        if (!type.isPrimitive()) return type;
+        if (!type.isPrimitive()) {
+            return type;
+        }
+
         return switch (type.getName()) {
             case "boolean" -> Boolean.class;
             case "byte"    -> Byte.class;

@@ -44,7 +44,8 @@ public final class JsonRrpcResponseUtils {
 
     /**
      * If the MCP error is related to a listing request to a primitive, it returns an empty response for that primitive instead of an error.
-     * @param e MCP Error
+     *
+     * @param e              MCP Error
      * @param jsonrpcMessage JSON RPC Message
      * @return a JSON RPC Response
      */
@@ -85,6 +86,7 @@ public final class JsonRrpcResponseUtils {
 
     /**
      * If the JSONRPCResponse signals an error and the error is related to a listing request to a primitive, it returns an empty response for that primitive instead of an error.
+     *
      * @param jsonrpcResponse JSON RPC Response
      * @return a JSON RPC Response
      */
@@ -107,9 +109,10 @@ public final class JsonRrpcResponseUtils {
             case METHOD_NOT_FOUND_RESOURCES_LIST -> new McpSchema.JSONRPCResponse(JSONRPC_VERSION,
                 jsonrpcResponse.id(),
                 new McpSchema.ListResourcesResult(Collections.emptyList(), null), null);
-            case METHOD_NOT_FOUND_RESOURCES_TEMPLATES_LIST -> new McpSchema.JSONRPCResponse(JSONRPC_VERSION,
-                jsonrpcResponse.id(),
-                new McpSchema.ListResourceTemplatesResult(Collections.emptyList(), null), null);
+            case METHOD_NOT_FOUND_RESOURCES_TEMPLATES_LIST ->
+                new McpSchema.JSONRPCResponse(JSONRPC_VERSION,
+                    jsonrpcResponse.id(),
+                    new McpSchema.ListResourceTemplatesResult(Collections.emptyList(), null), null);
             case METHOD_NOT_FOUND_TOOLS_LIST -> new McpSchema.JSONRPCResponse(JSONRPC_VERSION,
                 jsonrpcResponse.id(),
                 new McpSchema.ListToolsResult(Collections.emptyList(), null), null);
@@ -118,7 +121,7 @@ public final class JsonRrpcResponseUtils {
     }
 
     static McpSchema.@NonNull JSONRPCResponse errorJsonrpcResponse(McpSchema.@NonNull JSONRPCMessage jsonrpcMessage,
-                                                          @NonNull McpError error) {
+                                                                   @NonNull McpError error) {
         McpSchema.JSONRPCResponse.JSONRPCError jsonrpcError = error.getJsonRpcError();
         if (jsonrpcError == null) {
             jsonrpcError = new McpSchema.JSONRPCResponse.JSONRPCError(McpSchema.ErrorCodes.INTERNAL_ERROR,

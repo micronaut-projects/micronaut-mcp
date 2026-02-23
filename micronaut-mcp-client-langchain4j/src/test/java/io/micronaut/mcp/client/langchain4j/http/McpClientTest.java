@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class McpClientTest {
     @Test
     void testInjectMcpClient(McpClient client, JsonMapper jsonMapper) throws IOException {
-        List<ToolSpecification> listToolsResult = assertDoesNotThrow(client::listTools);
+        List<ToolSpecification> listToolsResult = assertDoesNotThrow(() -> client.listTools());
         List<String> toolNames = listToolsResult.stream().map(ToolSpecification::name).toList();
         assertTrue(toolNames.stream().anyMatch(name -> name.equals("current-moon-phase")));
         assertTrue(toolNames.stream().anyMatch(name -> name.equals("moon-phase-at-date")));

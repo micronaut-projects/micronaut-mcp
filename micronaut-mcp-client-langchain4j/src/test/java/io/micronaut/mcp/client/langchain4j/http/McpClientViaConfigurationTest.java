@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class McpClientViaConfigurationTest {
 
     @Test
-    void mcplientViaConfigurationTest() {
+    void mcpClientViaConfigurationTest() {
         Map<String, Object> mcpServerConfig = Map.of(
             "moon.enabled", StringUtils.TRUE,
             "micronaut.mcp.server.info.version", "1.0.0",
@@ -33,7 +33,7 @@ class McpClientViaConfigurationTest {
             try (EmbeddedServer server = ApplicationContext.run(EmbeddedServer.class, serverConfig)) {
                 Assertions.assertTrue(server.getApplicationContext().containsBean(McpClientHttpConfiguration.class, Qualifiers.byName("remotemcpserver")));
                 McpClient client = server.getApplicationContext().getBean(McpClient.class, Qualifiers.byName("remotemcpserver"));
-                List<ToolSpecification> listToolsResult = assertDoesNotThrow(client::listTools);
+                List<ToolSpecification> listToolsResult = assertDoesNotThrow(() -> client.listTools());
                 List<String> toolNames = listToolsResult.stream().map(ToolSpecification::name).toList();
                 assertTrue(toolNames.stream().anyMatch(name -> name.equals("current-moon-phase")));
                 assertTrue(toolNames.stream().anyMatch(name -> name.equals("moon-phase-at-date")));
