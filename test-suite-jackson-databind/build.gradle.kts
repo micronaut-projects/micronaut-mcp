@@ -4,6 +4,7 @@ plugins {
 dependencies {
     implementation(mn.micronaut.jackson.databind)
     implementation(projects.micronautMcpServerJavaSdk)
+    implementation(platform(libs.micronaut.test))
     annotationProcessor(mnValidation.micronaut.validation.processor)
     implementation(mnValidation.micronaut.validation)
     annotationProcessor(mnJsonSchema.micronaut.json.schema.processor)

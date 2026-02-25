@@ -3,6 +3,7 @@ plugins {
 }
 dependencies {
     annotationProcessor(mnSerde.micronaut.serde.processor)
+    implementation(platform(libs.micronaut.test))
     implementation(mnSerde.micronaut.serde.jackson)
     implementation(projects.micronautMcpServerJavaSdk)
     testImplementation(projects.micronautMcpClientJavaSdk)

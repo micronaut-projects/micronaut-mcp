@@ -17,12 +17,12 @@
 
 [versions]
 micronaut = "5.0.0-M13"
-micronaut-platform = "4.10.1"
-micronaut-security = "4.17.1"
+micronaut-test = "5.0.0-M6"
+micronaut-platform = "4.10.8"
+micronaut-security = "5.0.0-M1"
 micronaut-serde = "3.0.0-M2"
 micronaut-json-schema = "1.7.4"
-micronaut-logging = "1.7.3"
-micronaut-langchain4j = "1.5.0"
+micronaut-langchain4j = "1.4.2"
 micronaut-validation = "5.0.0-M1"
 managed-mcp-java-sdk = "0.17.1"
 jsonassert = "1.5.3"
@@ -34,8 +34,8 @@ micronaut-security = { module = 'io.micronaut.security:micronaut-security-bom', 
 micronaut-json-schema = { module = 'io.micronaut.jsonschema:micronaut-json-schema-bom', version.ref = 'micronaut-json-schema' }
 micronaut-langchain4j = { module = 'io.micronaut.langchain4j:micronaut-langchain4j-bom', version.ref = 'micronaut-langchain4j' }
 micronaut-serde = { module = 'io.micronaut.serde:micronaut-serde-bom', version.ref = 'micronaut-serde' }
-micronaut-logging = { module = 'io.micronaut.logging:micronaut-logging-bom', version.ref = 'micronaut-logging' }
 micronaut-validation = { module = "io.micronaut.validation:micronaut-validation-bom", version.ref = "micronaut-validation" }
+micronaut-test = { module = 'io.micronaut.test:micronaut-test-bom' , version.ref = "micronaut-test" }
 junit-platform-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
 langchain4j-mcp = { module = "dev.langchain4j:langchain4j-mcp" }
 managed-mcp-java-sdk = { module = "io.modelcontextprotocol.sdk:mcp-core", version.ref = "managed-mcp-java-sdk" }
