@@ -4,5 +4,3 @@ The preferred way to define prompts is to annotate a method with api:mcp.annotat
 ----
 include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/prompts/Prompts.java[tags="imports,clazz",indent=0]
 ----
-
-WARNING: Defining a prompt via an annotation currently does not work with https://docs.micronaut.io/latest/guide/#eagerInit[eager initialization of singletons].

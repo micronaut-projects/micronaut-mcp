@@ -7,5 +7,3 @@ include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/sta
 
 By default, the method name is used as the tool name.
 You can override this by setting the `name` attribute of the `@Tool` annotation.
-
-WARNING: Defining a tool via an annotation currently does not work with https://docs.micronaut.io/latest/guide/#eagerInit[eager initialization of singletons].

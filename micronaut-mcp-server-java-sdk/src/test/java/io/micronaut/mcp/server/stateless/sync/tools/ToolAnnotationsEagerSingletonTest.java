@@ -17,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ToolAnnotationsEagerSingletonTest {
 
-    @Disabled("we need to process ExecutableMethodProcessor process first")
     @Test
     void toolAnnotationsTestWithEagerInitialization() {
         Map<String, Object> config = Map.of("micronaut.mcp.server.info.name", "mcp-server",

@@ -4,5 +4,3 @@ The preferred way to declare a resource is using a method annotated with api:mcp
 ----
 include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/resources/MyResourcesTemplates.java[tags="clazz",indent=0]
 ----
-
-WARNING: Defining a resource template via an annotation currently does not work with https://docs.micronaut.io/latest/guide/#eagerInit[eager initialization of singletons].
