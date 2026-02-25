@@ -1,11 +1,5 @@
 package io.micronaut.mcp.server.stateless.sync.tools.toolargparameters;
-/*
-//tag::fakepackage[]
-package example.micronaut;
 
-//end::fakepackage[]
- */
-//tag::imports[]
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.jsonschema.JsonSchema;
@@ -13,21 +7,14 @@ import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.ToolArg;
 import io.modelcontextprotocol.common.McpTransportContext;
 import jakarta.inject.Singleton;
-
 import java.util.List;
 
-//end::imports[]
-
 @Requires(property = "spec.name", value = "StatelessSyncToolsArgParametersTest")
-//tag::clazz[]
 @Singleton
 class Tools {
-
-    // Test Req Shema
     @JsonSchema
     @Introspected
     record TestReq(String a, String b) {
-
     }
 
     @Tool(name = "fenEvaluation", description = "Evaluate a chess position using a FEN string.")
@@ -45,4 +32,3 @@ class Tools {
         return "+0.0";
     }
 }
-//end::clazz[]

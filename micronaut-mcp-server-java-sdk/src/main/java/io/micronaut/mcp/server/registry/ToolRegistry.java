@@ -367,34 +367,23 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
 
     private static String argumentType(Argument<?> argument) {
         Class<?> type = wrapPrimitive(argument.getType());
-
-        // null
         if (type == null || Void.class.equals(type)) {
             return TYPE_NULL;
         }
-
-        // boolean
         if (Boolean.class.equals(type)) {
             return TYPE_BOOL;
         }
-
-        // string
         if (CharSequence.class.isAssignableFrom(type)
             || Character.class.equals(type)
             || type.isEnum()) {
             return TYPE_STRING;
         }
-
-        // number
         if (Number.class.isAssignableFrom(type)) {
             return TYPE_NUMBER;
         }
-
-        // array
         if (type.isArray() || Collection.class.isAssignableFrom(type)) {
             return TYPE_ARRAY;
         }
-
         return TYPE_OBJECT;
     }
 
@@ -402,7 +391,6 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         if (!type.isPrimitive()) {
             return type;
         }
-
         return switch (type.getName()) {
             case "boolean" -> Boolean.class;
             case "byte"    -> Byte.class;
