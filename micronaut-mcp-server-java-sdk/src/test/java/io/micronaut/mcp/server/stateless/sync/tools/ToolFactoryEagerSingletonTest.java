@@ -49,7 +49,7 @@ class ToolFactoryEagerSingletonTest {
                     .name("helloWorld")
                     .title("Hello World")
                     .annotations(new McpSchema.ToolAnnotations("Hello World", true, false, true, false, true))
-                .build()).callHandler((mcpTransportContext, callToolRequest) -> new McpSchema.CallToolResult("Hello, World!", false)).build();
+                .build()).callHandler((mcpTransportContext, callToolRequest) -> McpSchema.CallToolResult.builder().addTextContent("Hello, World!").isError(false).build()).build();
         }
     }
 }

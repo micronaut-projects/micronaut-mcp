@@ -204,7 +204,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                     if (LOG.isErrorEnabled()) {
                         LOG.error(e.getMessage(), e);
                     }
-                    return new McpSchema.CallToolResult(text, true);
+                    return McpSchema.CallToolResult.builder().addTextContent(text).isError(true).build();
                 }
             }
             if (toolOutputSchema(method).isPresent()) {
@@ -214,7 +214,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                     .isError(false)
                     .build();
             }
-            return new McpSchema.CallToolResult(text, false);
+            return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
         } catch (Exception ex) {
             throw mcpError(ex);
         }

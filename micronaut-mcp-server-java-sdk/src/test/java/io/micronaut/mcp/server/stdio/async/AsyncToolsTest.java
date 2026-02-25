@@ -94,7 +94,7 @@ class AsyncToolsTest {
                 .description("Evaluate a chess position using a FEN string.")
                 .inputSchema(inputSchema)
                 .build())
-                .callHandler((exchange, arguments) -> Mono.just(new McpSchema.CallToolResult("+0.12", false)))
+                .callHandler((exchange, arguments) -> Mono.just(McpSchema.CallToolResult.builder().addTextContent("+0.12").isError(false).build()))
                 .build();
         }
     }

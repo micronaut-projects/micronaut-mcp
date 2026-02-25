@@ -7,7 +7,6 @@ import io.micronaut.http.client.HttpClient;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Singleton;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
