@@ -127,7 +127,7 @@ public final class StdioServerTransportProviderReplacement implements McpServerT
 	@Override
 	public Mono<Void> notifyClients(String method, Object params) {
 		if (this.session == null) {
-			return Mono.error(new McpError("No session to close"));
+			return Mono.error(new McpError(new McpSchema.JSONRPCResponse.JSONRPCError(McpSchema.ErrorCodes.INTERNAL_ERROR, "No session to close", null)));
 		}
 		return this.session.sendNotification(method, params)
 			.doOnError(e -> logger.error("Failed to send notification: {}", e.getMessage()));

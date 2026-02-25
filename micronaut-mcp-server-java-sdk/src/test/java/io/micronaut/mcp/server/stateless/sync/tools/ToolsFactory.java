@@ -46,7 +46,7 @@ class ToolsFactory {
     private BiFunction<McpTransportContext, McpSchema.CallToolRequest, McpSchema.CallToolResult> callHandler() {
         return (exchange, req) -> {
             String content = evaluation(req.arguments().get("fen").toString());
-            return new McpSchema.CallToolResult(content, false);
+            return McpSchema.CallToolResult.builder().addTextContent(content).isError(false).build();
         };
     }
 
