@@ -10,10 +10,10 @@
           "type": "object",
           "properties": {
             "latitude": {
-              "type": "object"
+              "type": "number"
             },
             "longitude": {
-              "type": "object"
+              "type": "number"
             }
           },
           "required": [
