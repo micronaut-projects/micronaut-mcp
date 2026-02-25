@@ -10,3 +10,5 @@ Notes:
 - The `uri` attribute is required and must be unique for the resource.
 - By default, the method name is used as the resource `name`. You can override this by setting the `name` attribute of the `@Resource` annotation.
 - You can optionally provide `title`, `description` and `mimeType` (defaults to `text/plain`).
+
+WARNING: Defining a resource via an annotation currently does not work with https://docs.micronaut.io/latest/guide/#eagerInit[eager initialization of singletons].
