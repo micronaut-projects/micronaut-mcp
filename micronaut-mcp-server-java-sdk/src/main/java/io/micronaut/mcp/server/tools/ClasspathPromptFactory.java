@@ -19,7 +19,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.io.ResourceLoader;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
@@ -140,8 +140,7 @@ final class ClasspathPromptFactory {
                 List.of(new McpSchema.PromptMessage(McpSchema.Role.USER, new McpSchema.TextContent(StringInterpolator.interpolate(text, getPromptRequest.arguments())))));
     }
 
-    @NonNull
-    private McpSchema.Prompt prompt(@NonNull ClasspathPrompt classpathPrompt) {
+    private McpSchema.@NonNull Prompt prompt(@NonNull ClasspathPrompt classpathPrompt) {
         return new McpSchema.Prompt(classpathPrompt.getName(),
                 classpathPrompt.getTitle(),
                 classpathPrompt.getDescription(),
@@ -151,8 +150,7 @@ final class ClasspathPromptFactory {
                         .toList());
     }
 
-    @NonNull
-    private McpSchema.PromptArgument promptArgument(@NonNull PromptArgument arg) {
+    private McpSchema.@NonNull PromptArgument promptArgument(@NonNull PromptArgument arg) {
         return new McpSchema.PromptArgument(arg.getName(), arg.getTitle(), arg.getDescription(), arg.isRequired());
     }
 }

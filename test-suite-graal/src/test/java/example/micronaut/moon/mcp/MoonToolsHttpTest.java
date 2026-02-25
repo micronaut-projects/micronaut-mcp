@@ -7,15 +7,10 @@ import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
-import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;

@@ -1,7 +1,7 @@
 package io.micronaut.mcp.server.stateless.sync.tools.jsonschema.output;
 
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.jsonschema.JsonSchema;
 import jakarta.validation.constraints.NotBlank;
 

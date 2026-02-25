@@ -1,5 +1,5 @@
 plugins {
-    `java-library`
+    id("io.micronaut.build.internal.mcp-test-java")
 }
 dependencies {
     testAnnotationProcessor(mnSerde.micronaut.serde.processor)
@@ -7,20 +7,9 @@ dependencies {
     testImplementation(mn.micronaut.http.server.netty)
     testAnnotationProcessor(mnJsonSchema.micronaut.json.schema.processor)
     testImplementation(mnJsonSchema.micronaut.json.schema.annotations)
-
-    testAnnotationProcessor(mn.micronaut.inject.java)
-    testRuntimeOnly(mnLogging.logback.classic)
-
     testImplementation(projects.testSuiteMcpHttpTckCommon)
     testImplementation(projects.testSuiteMcpHttpTck)
     testImplementation(mnTest.junit.platform.suite.api)
-    // Add JUnit Jupiter API and engines
-    testImplementation(mnTest.junit.jupiter.api)
-    testRuntimeOnly(mnTest.junit.jupiter.engine)
     // Add JUnit Platform Suite engine to run @Suite tests
     testRuntimeOnly(libs.junit.platform.engine)
-    testImplementation("org.junit.platform:junit-platform-launcher")
-}
-tasks.withType<Test> {
-    useJUnitPlatform()
 }

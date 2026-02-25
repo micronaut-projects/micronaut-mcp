@@ -1,5 +1,5 @@
 plugins {
-    `java-library`
+    id("io.micronaut.build.internal.mcp-test-java")
 }
 dependencies {
     implementation(projects.micronautMcpServerJavaSdk)
@@ -10,8 +10,4 @@ dependencies {
     implementation(mnJsonSchema.micronaut.json.schema.annotations)
     annotationProcessor(mnSerde.micronaut.serde.processor)
     implementation(mnSerde.micronaut.serde.jackson)
-}
-java {
-    sourceCompatibility = JavaVersion.toVersion("17")
-    targetCompatibility = JavaVersion.toVersion("17")
 }

@@ -16,8 +16,8 @@
 package io.micronaut.mcp.server.exceptions;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 
@@ -49,8 +49,7 @@ public final class JsonRrpcResponseUtils {
      * @param jsonrpcMessage JSON RPC Message
      * @return a JSON RPC Response
      */
-    @NonNull
-    public static McpSchema.JSONRPCResponse jsonrpcResponse(@NonNull McpError e, @NonNull McpSchema.JSONRPCMessage jsonrpcMessage) {
+    public static McpSchema.@NonNull JSONRPCResponse jsonrpcResponse(@NonNull McpError e, McpSchema.@NonNull JSONRPCMessage jsonrpcMessage) {
         if (e.getMessage() == null) {
             return errorJsonrpcResponse(jsonrpcMessage, e);
         }
@@ -91,8 +90,7 @@ public final class JsonRrpcResponseUtils {
      * @param jsonrpcResponse JSON RPC Response
      * @return a JSON RPC Response
      */
-    @Nullable
-    public static McpSchema.JSONRPCMessage map(@Nullable McpSchema.JSONRPCResponse jsonrpcResponse) {
+    public static McpSchema.@Nullable JSONRPCMessage map(McpSchema.@Nullable JSONRPCResponse jsonrpcResponse) {
         if (jsonrpcResponse == null) {
             return null;
         }
@@ -122,9 +120,8 @@ public final class JsonRrpcResponseUtils {
         };
     }
 
-    @NonNull
-    static McpSchema.JSONRPCResponse errorJsonrpcResponse(@NonNull McpSchema.JSONRPCMessage jsonrpcMessage,
-                                                          @NonNull McpError error) {
+    static McpSchema.@NonNull JSONRPCResponse errorJsonrpcResponse(McpSchema.@NonNull JSONRPCMessage jsonrpcMessage,
+                                                                   @NonNull McpError error) {
         McpSchema.JSONRPCResponse.JSONRPCError jsonrpcError = error.getJsonRpcError();
         if (jsonrpcError == null) {
             jsonrpcError = new McpSchema.JSONRPCResponse.JSONRPCError(McpSchema.ErrorCodes.INTERNAL_ERROR,

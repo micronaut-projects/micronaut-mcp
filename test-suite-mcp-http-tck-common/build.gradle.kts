@@ -1,5 +1,5 @@
 plugins {
-    `java-library`
+    id("io.micronaut.build.internal.mcp-test-java")
 }
 dependencies {
     api(projects.micronautMcpServerJavaSdk)

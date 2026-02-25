@@ -1,6 +1,6 @@
 package io.modelcontextprotocol.server.http.tck.async;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.PromptArg;
 import io.modelcontextprotocol.spec.McpSchema;

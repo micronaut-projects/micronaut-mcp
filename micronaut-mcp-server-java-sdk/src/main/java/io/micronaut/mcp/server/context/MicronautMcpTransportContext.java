@@ -15,7 +15,7 @@
  */
 package io.micronaut.mcp.server.context;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.modelcontextprotocol.common.McpTransportContext;
 
 import java.security.Principal;

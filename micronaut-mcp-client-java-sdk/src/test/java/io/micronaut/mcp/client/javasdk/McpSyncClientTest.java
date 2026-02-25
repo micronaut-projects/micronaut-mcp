@@ -36,7 +36,7 @@ class McpSyncClientTest {
         assertTrue(callToolResult.content().get(0) instanceof McpSchema.TextContent);
         McpSchema.TextContent textContent = (McpSchema.TextContent) callToolResult.content().get(0);
         assertEquals("""
-    {"phase":"WAXING_GIBBOUS","emoji":"\\uD83C\\uDF14"}""", textContent.text());
+    {"phase":"WAXING_GIBBOUS","emoji":"🌔"}""", textContent.text());
         String structuredContentJson = jsonMapper.writeValueAsString(callToolResult.structuredContent());
         MoonPhaseEmoji moonPhaseEmoji = jsonMapper.readValue(structuredContentJson, MoonPhaseEmoji.class);
         assertNotNull(moonPhaseEmoji);

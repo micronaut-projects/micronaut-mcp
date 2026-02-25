@@ -16,8 +16,8 @@
 package io.micronaut.mcp.server.registry;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.bind.ArgumentBinder;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionError;
@@ -45,8 +45,7 @@ abstract class AbstractMcpPrimitiveArgumentBinder<T> {
         this.conversionService = conversionService;
     }
 
-    @NonNull
-    public ArgumentBinder.BindingResult<T> bind(@NonNull ArgumentConversionContext<T> context,
+    public ArgumentBinder.@NonNull BindingResult<T> bind(@NonNull ArgumentConversionContext<T> context,
                                                 @NonNull Supplier<Map<String, Object>> mapSupplier,
                                                 @Nullable String argAnn,
                                                 @Nullable String member,

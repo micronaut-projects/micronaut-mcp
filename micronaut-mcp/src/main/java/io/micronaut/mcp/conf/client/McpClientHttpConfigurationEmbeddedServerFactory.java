@@ -19,7 +19,7 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.DisabledBeanException;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Named;

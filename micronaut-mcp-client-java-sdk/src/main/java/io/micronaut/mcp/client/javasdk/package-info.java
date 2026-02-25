@@ -13,17 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.mcp.server.tools.fetch;
-
-import org.jspecify.annotations.NonNull;
-import io.micronaut.jsonschema.JsonSchema;
-import io.micronaut.serde.annotation.Serdeable;
-
 /**
- * Input of the fetch tool, which is used to retrieve the full contents of a search result document or item.
- * @param id search document unique identifier
+ * Classes related with MCP Java SDK Client.
  */
-@Serdeable
-@JsonSchema
-public record FetchRequest(@NonNull String id) {
-}
+package io.micronaut.mcp.client.javasdk;

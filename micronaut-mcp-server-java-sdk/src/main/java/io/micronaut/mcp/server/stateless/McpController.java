@@ -16,8 +16,8 @@
 package io.micronaut.mcp.server.stateless;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -100,7 +100,7 @@ final class McpController {
 
     @SuppressWarnings("java:S3740")
     @NonNull
-    private Mono<HttpResponse<?>> handleJsonRpcRequest(@NonNull McpSchema.JSONRPCRequest jsonrpcRequest,
+    private Mono<HttpResponse<?>> handleJsonRpcRequest(McpSchema.@NonNull JSONRPCRequest jsonrpcRequest,
                                                        @NonNull McpTransportContext transportContext) {
         Mono<HttpResponse<?>> mono = mcpHandler.handleRequest(transportContext, jsonrpcRequest)
             .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
@@ -110,8 +110,7 @@ final class McpController {
             .onErrorResume(throwable -> exceptionJsonRpcResponse(throwable, jsonrpcRequest));
     }
 
-    @Nullable
-    private McpSchema.JSONRPCMessage jsonRpcMessage(@NonNull Map<String, Object> body) {
+    private McpSchema.@Nullable JSONRPCMessage jsonRpcMessage(@NonNull Map<String, Object> body) {
         if (body.containsKey(KEY_METHOD) && body.containsKey(KEY_ID)) {
             return new McpSchema.JSONRPCRequest(body.get(KEY_JSONRPC).toString(), body.get(KEY_METHOD).toString(), body.get(KEY_ID), body.get(KEY_PARAMS));
         } else if (body.containsKey(KEY_METHOD) && !body.containsKey(KEY_ID)) {
@@ -121,7 +120,7 @@ final class McpController {
     }
 
     @NonNull
-    private static HttpStatus status(@Nullable McpSchema.JSONRPCResponse response) {
+    private static HttpStatus status(McpSchema.@Nullable JSONRPCResponse response) {
         if (response == null || response.error() == null) {
             return HttpStatus.OK;
         }
@@ -129,7 +128,7 @@ final class McpController {
     }
 
     @NonNull
-    static HttpStatus status(@NonNull McpSchema.JSONRPCResponse.JSONRPCError error) {
+    static HttpStatus status(McpSchema.JSONRPCResponse.@NonNull JSONRPCError error) {
         if (error.code() == McpSchema.ErrorCodes.PARSE_ERROR) {
             return HttpStatus.BAD_REQUEST;
         } else if (error.code() == McpSchema.ErrorCodes.INVALID_REQUEST) {

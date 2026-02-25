@@ -16,7 +16,7 @@
 package io.micronaut.mcp.server.tools.search;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.jsonschema.JsonSchema;
 import io.micronaut.serde.annotation.Serdeable;
 
