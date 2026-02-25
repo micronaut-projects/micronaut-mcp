@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ToolReturnsEnumTest {
     @Test
     void testInjectMcpSyncClient(McpClient client) {
-        List<ToolSpecification> listToolsResult = assertDoesNotThrow(client::listTools);
+        List<ToolSpecification> listToolsResult = assertDoesNotThrow(() -> client.listTools());
         List<String> toolNames = listToolsResult.stream().map(ToolSpecification::name).toList();
         assertTrue(toolNames.stream().anyMatch(name -> name.equals("sun-state")));
 
