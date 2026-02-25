@@ -992,6 +992,18 @@ class Tools {
 <p>By default, the method name is used as the tool name.
 You can override this by setting the <code>name</code> attribute of the <code>@Tool</code> annotation.</p>
 </div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Defining a tool via an annotation currently does not work with <a href="https://docs.micronaut.io/latest/guide/#eagerInit">eager initialization of singletons</a>.
+</td>
+</tr>
+</table>
+</div>
 
 <h2 id="toolAnnotationsHints"><a class="anchor" href="#toolAnnotationsHints"></a>3.7.1.4.1 Tool Hints</h2>
 
@@ -1434,6 +1446,18 @@ class Prompts {
 }</code></pre>
 </div>
 </div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Defining a prompt via an annotation currently does not work with <a href="https://docs.micronaut.io/latest/guide/#eagerInit">eager initialization of singletons</a>.
+</td>
+</tr>
+</table>
+</div>
 
 <h2 id="promptAnnotationParameter"><a class="anchor" href="#promptAnnotationParameter"></a>3.7.2.3.1 Prompt Annotation Method Parameters</h2>
 
@@ -1645,6 +1669,18 @@ class Resources {
 </li>
 </ul>
 </div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Defining a resource via an annotation currently does not work with <a href="https://docs.micronaut.io/latest/guide/#eagerInit">eager initialization of singletons</a>.
+</td>
+</tr>
+</table>
+</div>
 
 <h2 id="resourceAnnotationParameter"><a class="anchor" href="#resourceAnnotationParameter"></a>3.7.3.2.1 Resource Annotation Method Parameters</h2>
 
@@ -1841,6 +1877,18 @@ class MyResources {
 }</code></pre>
 </div>
 </div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Defining a resource template via an annotation currently does not work with <a href="https://docs.micronaut.io/latest/guide/#eagerInit">eager initialization of singletons</a>.
+</td>
+</tr>
+</table>
+</div>
 
 <h2 id="resourceTemplateAnnotationParameter"><a class="anchor" href="#resourceTemplateAnnotationParameter"></a>3.7.3.4.1.1 Resource Annotation Method Parameters</h2>
 
@@ -2008,6 +2056,18 @@ class MyPromptsCompletions {
 </td>
 <td class="content">
 You need a prompt with the same name as the completion prompt. Moreover, the name of the prompt completion argument must match the name of the prompt argument.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Defining a prompt completion via an annotation currently does not work with <a href="https://docs.micronaut.io/latest/guide/#eagerInit">eager initialization of singletons</a>.
 </td>
 </tr>
 </table>
