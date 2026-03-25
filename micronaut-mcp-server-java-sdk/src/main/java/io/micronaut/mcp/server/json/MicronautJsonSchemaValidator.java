@@ -15,7 +15,7 @@
  */
 package io.micronaut.mcp.server.json;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.jsonschema.validation.JsonSchemaValidator;
@@ -60,7 +60,7 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
             String jsonStructuredOutput = jsonMapper.writeValueAsString(structuredContent);
 
             return ValidationResponse.asValid(jsonStructuredOutput.toString());
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             if (LOG.isErrorEnabled()) {
                 LOG.error("Error parsing schema: {}", e);
             }
