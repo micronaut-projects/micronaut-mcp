@@ -15,7 +15,7 @@
  */
 package io.micronaut.mcp.server.exceptions;
 
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import tools.jackson.databind.exc.InvalidFormatException;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.modelcontextprotocol.spec.McpError;
