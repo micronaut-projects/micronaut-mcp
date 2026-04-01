@@ -47,7 +47,7 @@ class InvalidFormatExceptionMcpErrorMapper implements McpErrorExceptionMapper<In
     private static String conciseMessage(InvalidFormatException e) {
         String path = e.getPath() == null || e.getPath().isEmpty() ? "" :
             e.getPath().stream()
-                .map(ref -> ref.getFieldName() != null ? ref.getFieldName() : ("[" + ref.getIndex() + "]"))
+                .map(ref -> ref.getPropertyName() != null ? ref.getPropertyName() : ("[" + ref.getIndex() + "]"))
                 .collect(Collectors.joining("."));
         String value = String.valueOf(e.getValue());
         if (!path.isEmpty()) {
