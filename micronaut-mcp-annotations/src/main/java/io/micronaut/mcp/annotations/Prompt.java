@@ -46,7 +46,7 @@ public @interface Prompt {
     String name() default ELEMENT_NAME;
 
     /**
-     * A human-readable name for this prompt.
+     * @return A human-readable name for this prompt.
      */
     String title() default "";
 
