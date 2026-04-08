@@ -19,6 +19,9 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.serde.annotation.SerdeImport;
 import io.modelcontextprotocol.spec.McpSchema;
 
+/**
+ * Serde imports for MCP JDK classes.
+ */
 @SerdeImport(McpSchema.SetLevelRequest.class)
 @SerdeImport(McpSchema.LoggingLevel.class)
 @Internal
