@@ -83,7 +83,6 @@ public final class JsonRrpcResponseUtils {
         return errorJsonrpcResponse(jsonrpcMessage, e);
     }
 
-
     /**
      * If the JSONRPCResponse signals an error and the error is related to a listing request to a primitive, it returns an empty response for that primitive instead of an error.
      *
