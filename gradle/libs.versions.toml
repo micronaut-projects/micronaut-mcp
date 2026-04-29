@@ -26,7 +26,7 @@ micronaut-langchain4j = "2.0.0-M1"
 micronaut-validation = "5.0.0-M2"
 managed-mcp-java-sdk = "1.1.2"
 jsonassert = "1.5.3"
-micronaut-gradle-plugin = "4.6.2"
+micronaut-gradle-plugin = "5.0.0-M1"
 
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
