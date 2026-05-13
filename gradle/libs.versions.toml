@@ -18,7 +18,7 @@
 [versions]
 micronaut = "5.0.0"
 micronaut-test = "5.0.0-M8"
-micronaut-platform = "5.0.0-M2"
+micronaut-platform = "5.0.0-RC1"
 micronaut-security = "5.0.0-M2"
 micronaut-serde = "3.0.0-RC2"
 micronaut-json-schema = "2.0.0-RC1"
