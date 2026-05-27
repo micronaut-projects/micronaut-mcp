@@ -210,7 +210,7 @@ public final class JsonRpcMessages {
     public static final String EXPECTED_TOOLS_CALL_OBJECT_RETURN = "{\"jsonrpc\":\"2.0\",\"id\":4,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"fen\\\":\\\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\\\",\\\"evaluation\\\":\\\"+0.12\\\"}\"}],\"isError\":false,\"structuredContent\":{\"evaluation\":\"+0.12\",\"fen\":\"r1bqk2r/ppp2ppp/2n5/1BbpP3/3Nn3/8/PPP2PPP/RNBQK2R w KQkq - 1 8\"}}}";
 
     public static final String EXPECTED_TOOLS_LIST_WITH_TOOL_ARGS = """
-        {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"tetWrLong":{"type":"number"},"fenList":{"type":"array"},"testReq":{"type":"object"},"tetBol":{"type":"bool"},"tetLong":{"type":"number"},"fen":{"type":"string"},"tetWrBol":{"type":"bool"}},"required":["fen","fenList","tetBol","tetWrBol","tetLong","tetWrLong","testReq"]}}]}}""";
+        {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"tetWrLong":{"type":"number"},"fenList":{"type":"array"},"testReq":{"type":"object"},"tetBol":{"type":"boolean"},"tetLong":{"type":"number"},"fen":{"type":"string"},"tetWrBol":{"type":"boolean"}},"required":["fen","fenList","tetBol","tetWrBol","tetLong","tetWrLong","testReq"]}}]}}""";
 
     public static final String EXPECTED_TOOLS_LIST = """
         {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"fen":{"type":"string"}},"required":["fen"]}}]}}""";
