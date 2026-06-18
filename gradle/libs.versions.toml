@@ -16,17 +16,17 @@
 # a managed version (a version which alias starts with "managed-"
 
 [versions]
-micronaut = "5.0.0"
-micronaut-test = "5.0.0"
+micronaut = "5.1.1"
+micronaut-test = "5.0.1"
 micronaut-platform = "5.0.0-RC1"
-micronaut-security = "5.0.0"
+micronaut-security = "5.1.0"
 micronaut-serde = "3.0.0"
-micronaut-json-schema = "2.0.0"
-micronaut-langchain4j = "2.0.0"
+micronaut-json-schema = "2.0.1"
+micronaut-langchain4j = "2.0.1"
 micronaut-validation = "5.0.0"
 managed-mcp-java-sdk = "1.1.2"
 jsonassert = "1.5.3"
-micronaut-gradle-plugin = "5.0.0-M1"
+micronaut-gradle-plugin = "5.0.0"
 
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
