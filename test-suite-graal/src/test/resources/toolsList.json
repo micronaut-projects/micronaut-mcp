@@ -26,13 +26,16 @@
         "name": "getAlerts",
         "description": "Get weather alerts for a US state",
         "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "title": "GetAlertInput",
           "type": "object",
           "properties": {
             "state": {
               "description": "Two-letter US state code (e.g. CA, NY)",
               "type": "string"
             }
-          }
+          },
+          "$id": "http://localhost:8080/schemas/get-alert-input.schema.json"
         }
       }
     ]

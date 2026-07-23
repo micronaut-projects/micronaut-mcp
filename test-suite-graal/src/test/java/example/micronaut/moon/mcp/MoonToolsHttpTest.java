@@ -9,6 +9,8 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.json.JSONException;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -25,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class MoonToolsHttpTest {
 
     @Test
-    void invalidParamsCannotDeserialize(@Client("/") HttpClient httpClient) {
+    void invalidParamsCannotDeserialize(@Client("/") HttpClient httpClient) throws JSONException {
         BlockingHttpClient client = httpClient.toBlocking();
         final String toolsCallJson = """
             {
@@ -43,14 +45,10 @@ class MoonToolsHttpTest {
               "id": 0
             }
             """;
-        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () ->
-            client.retrieve(createRequest(toolsCallJson), McpSchema.JSONRPCResponse.class));
-        Optional<McpSchema.JSONRPCResponse> jsonrpcResponseOptional = ex.getResponse().getBody(McpSchema.JSONRPCResponse.class);
-        assertTrue(jsonrpcResponseOptional.isPresent());
-        McpSchema.JSONRPCResponse json = jsonrpcResponseOptional.get();
-        assertNotNull(json.error());
-        assertEquals(-32602, json.error().code());
-        assertEquals("Required argument [MoonPhaseRequest moonPhaseRequest] not specified", json.error().message());
+        String response = assertDoesNotThrow(() -> client.retrieve(createRequest(toolsCallJson)));
+        JSONAssert.assertEquals("""
+            {"jsonrpc":"2.0","id":0,"result":{"content":[{"type":"text","text":"Tool (moon-phase-at-date) input validation failed: Validation failed: structuredContent does not match tool outputSchema. Validation errors: [ValidationMessageAdapter{message=/date: does not match the date pattern must be a valid RFC 3339 full-date}]"}],"isError":true}}
+            """, response, true);
     }
 
     @Test
