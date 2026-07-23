@@ -26,7 +26,7 @@ final class JsonSchemaUtils {
     public static final String TYPE_NUMBER = "number";
     public static final String TYPE_OBJECT = "object";
     public static final String TYPE_ARRAY = "array";
-    public static final String TYPE_BOOL = "bool";
+    public static final String TYPE_BOOL = "boolean";
     public static final String TYPE_NULL = "null";
 
     private JsonSchemaUtils() {
