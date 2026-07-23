@@ -143,12 +143,12 @@ public final class JsonRpcMessages {
     public static final String PONG = """
         {"jsonrpc":"2.0","result":{},"id":"123"}""";
 
-    public static final String EXPECTED_INITIALIZATION_2024_WITH_LOGGING = """
+    public static final String EXPECTED_INITIALIZATION_2025_WITH_LOGGING = """
             {
               "jsonrpc":"2.0",
               "id":0,
               "result": {
-                "protocolVersion":"2024-11-05",
+                "protocolVersion":"2025-06-18",
                  "capabilities": {"logging":{}},
                  "serverInfo": {
                    "name": "mcp-server",
@@ -156,12 +156,12 @@ public final class JsonRpcMessages {
                  }
                }
             }""";
-    public static final String EXPECTED_INITIALIZATION_2024 = """
+    public static final String EXPECTED_INITIALIZATION_2025 = """
             {
               "jsonrpc":"2.0",
               "id":0,
               "result": {
-                "protocolVersion":"2024-11-05",
+                "protocolVersion":"2025-06-18",
                  "capabilities": {},
                  "serverInfo": {
                    "name": "mcp-server",
@@ -216,10 +216,10 @@ public final class JsonRpcMessages {
         {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"fen":{"type":"string"}},"required":["fen"]}}]}}""";
 
     public static final String EXPECTED_TOOLS_LIST_WITH_DESCRIPTION = """
-        {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"fen":{"description":"A Chess position in Forsyth–Edwards Notation","type":"string"}}}}]}}""";
+        {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"FenEvaluationRequest","type":"object","properties":{"fen":{"description":"A Chess position in Forsyth–Edwards Notation","type":"string"}},"$id":"http://localhost:8080/schemas/fen-evaluation-request.schema.json"}}]}}""";
 
     public static final String EXPECTED_TOOLS_LIST_WITH_INPUT_AND_OUTPUT_SCHEMA = """
-        {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"type":"object","properties":{"fen":{"description":"A Chess position in Forsyth–Edwards Notation","type":"string"}}},"outputSchema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"FenEvaluationResponse","type":"object","properties":{"evaluation":{"type":"string","minLength":1},"fen":{"type":"string","minLength":1}},"required":["fen","evaluation"],"$id":"http://localhost:8080/schemas/fen-evaluation-response.schema.json"}}]}}""";
+        {"jsonrpc":"2.0","id":3,"result":{"tools":[{"name":"fenEvaluation","description":"Evaluate a chess position using a FEN string.","inputSchema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"FenEvaluationRequest","type":"object","properties":{"fen":{"description":"A Chess position in Forsyth–Edwards Notation","type":"string"}},"$id":"http://localhost:8080/schemas/fen-evaluation-request.schema.json"},"outputSchema":{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"FenEvaluationResponse","type":"object","properties":{"evaluation":{"type":"string","minLength":1},"fen":{"type":"string","minLength":1}},"required":["fen","evaluation"],"$id":"http://localhost:8080/schemas/fen-evaluation-response.schema.json"}}]}}""";
 
     public static final String TOOLS_LIST = """
         {"jsonrpc":"2.0","id":3,"method":"tools/list","params":{"_meta":{"progressToken":3}}}""";

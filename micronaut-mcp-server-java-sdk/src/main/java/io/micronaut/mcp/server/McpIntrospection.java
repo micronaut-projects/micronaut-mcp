@@ -24,6 +24,9 @@ import io.modelcontextprotocol.spec.McpSchema;
  */
 @SerdeImport(McpSchema.SetLevelRequest.class)
 @SerdeImport(McpSchema.LoggingLevel.class)
+@SerdeImport(McpSchema.Icon.class)
+@SerdeImport(McpSchema.CompleteReference.class)
+@SerdeImport(McpSchema.TextContent.class)
 @Internal
 public class McpIntrospection {
 }

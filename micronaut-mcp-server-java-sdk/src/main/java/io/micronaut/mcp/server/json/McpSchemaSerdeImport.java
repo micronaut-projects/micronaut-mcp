@@ -87,7 +87,6 @@ import io.modelcontextprotocol.spec.McpSchema.CompleteResult.CompleteCompletion;
     io.modelcontextprotocol.spec.McpSchema.CompleteResult.class,
     CompleteCompletion.class,
     io.modelcontextprotocol.spec.McpSchema.Content.class,
-    io.modelcontextprotocol.spec.McpSchema.TextContent.class,
     io.modelcontextprotocol.spec.McpSchema.ImageContent.class,
     io.modelcontextprotocol.spec.McpSchema.AudioContent.class,
     io.modelcontextprotocol.spec.McpSchema.EmbeddedResource.class,

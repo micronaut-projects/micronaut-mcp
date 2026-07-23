@@ -44,6 +44,8 @@ public class ToolsTest {
                 "title": "Weather Information Provider",
                 "description": "Get current weather information for a location",
                 "inputSchema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "title": "GetWeatherInput",
                   "type": "object",
                   "properties": {
                     "location": {
@@ -51,7 +53,8 @@ public class ToolsTest {
                       "description": "City name or zip code"
                     }
                   },
-                  "required": ["location"]
+                  "required": ["location"],
+                  "$id": "http://localhost:8080/schemas/get-weather-input.schema.json"
                 }
               }
             ]
