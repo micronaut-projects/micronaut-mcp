@@ -2,16 +2,18 @@ A https://modelcontextprotocol.io/specification/2025-06-18/server/tools#tool[too
 
 You can leverage https://micronaut-projects.github.io/micronaut-json-schema/latest/guide/[Micronaut JSON Schema] to generate a JSON Schema at compilation and use it as your tool output JSON Schema.
 
+[.lang-java.lang-kotlin.lang-groovy]
 For example, you can use a Java record to define your tool output:
 
-[source, java]
-----
-include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/jsonschema/output/FenEvaluationResponse.java[indent=0]
-----
+[.lang-python]
+For example, you can use a dataclass to define your tool output:
 
+snippet::io.micronaut.mcp.docs.tools.jsonschema.output.FenEvaluationResponse[project-base="test-suite-docs", tags="imports,clazz"]
+
+[.lang-java.lang-kotlin.lang-groovy]
 Then, use the Java record as the method return type:
 
-[source, java]
-----
-include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/jsonschema/output/Tools.java[tags="fakepackage,imports,clazz",indent=0]
-----
+[.lang-python]
+Then, use the dataclass as the method return type:
+
+snippet::io.micronaut.mcp.docs.tools.jsonschema.output.Tools[project-base="test-suite-docs", tags="fakepackage,imports,clazz"]
