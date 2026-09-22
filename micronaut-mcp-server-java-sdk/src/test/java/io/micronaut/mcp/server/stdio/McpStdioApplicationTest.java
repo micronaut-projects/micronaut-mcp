@@ -22,4 +22,22 @@ class McpStdioApplicationTest {
             assertDoesNotThrow(app::close);
         }
     }
+
+    @Test
+    void testStdioApplicationIsSelectedByTransport() {
+        try (ApplicationContext ctx = ApplicationContext.run(Map.of(
+            McpServerConfiguration.PROPERTY_TRANSPORT,
+            McpServerConfiguration.TRANSPORT_STDIO))) {
+            assertTrue(ctx.containsBean(McpStdioApplication.class));
+        }
+    }
+
+    @Test
+    void testStdioApplicationIsNotSelectedForHttpTransport() {
+        try (ApplicationContext ctx = ApplicationContext.run(Map.of(
+            McpServerConfiguration.PROPERTY_TRANSPORT,
+            McpServerConfiguration.TRANSPORT_HTTP))) {
+            assertFalse(ctx.containsBean(McpStdioApplication.class));
+        }
+    }
 }

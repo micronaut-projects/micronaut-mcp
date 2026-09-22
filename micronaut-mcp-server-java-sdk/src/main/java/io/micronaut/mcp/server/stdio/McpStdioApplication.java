@@ -29,10 +29,10 @@ import io.micronaut.runtime.exceptions.ApplicationStartupException;
 import jakarta.inject.Singleton;
 
 /**
- * An alternative {@link EmbeddedApplication} that gets activated for MCP Server using stdio transport when no other application is present.
+ * An alternative {@link EmbeddedApplication} that gets activated for MCP Server using stdio transport.
  */
 @Singleton
-@Requires(missingBeans = EmbeddedApplication.class)
+@Requires(property = McpServerConfiguration.PROPERTY_TRANSPORT, value = McpServerConfiguration.TRANSPORT_STDIO)
 @Internal
 final class McpStdioApplication implements EmbeddedApplication<McpStdioApplication>, Described {
 
@@ -106,4 +106,3 @@ final class McpStdioApplication implements EmbeddedApplication<McpStdioApplicati
         return mcpServerConfiguration.getTransport() + " " + (mcpServerConfiguration.isReactive() ? "async" : "sync");
     }
 }
-
