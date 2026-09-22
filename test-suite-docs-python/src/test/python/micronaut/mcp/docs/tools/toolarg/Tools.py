@@ -1,15 +1,11 @@
 # tag::imports[]
 from typing import Annotated
 
+from io.modelcontextprotocol.common import McpTransportContext
 from jakarta.inject import Singleton
 from micronaut.context.annotation import Requires
 from micronaut.mcp.annotations import Tool, ToolArg
 # end::imports[]
-
-try:
-    from io.modelcontextprotocol.common import McpTransportContext
-except ImportError:  # TODO(python): packages under `io.` other than `io.micronaut` cannot be imported at runtime
-    from modelcontextprotocol.common import McpTransportContext
 
 
 @Requires(property="spec.name", value="ToolArgToolsTest")

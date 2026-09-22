@@ -1,17 +1,11 @@
 # tag::imports[]
-from jakarta.inject import Singleton
-from micronaut.context.annotation import Factory, Requires
-
 from .PgnLoader import PgnLoader
 from .ResourcesFactory import PGN_MIME_TYPE, read_resource_result
+from io.modelcontextprotocol.server import McpStatelessServerFeatures
+from io.modelcontextprotocol.spec import McpSchema
+from jakarta.inject import Singleton
+from micronaut.context.annotation import Factory, Requires
 # end::imports[]
-
-try:
-    from io.modelcontextprotocol.server import McpStatelessServerFeatures
-    from io.modelcontextprotocol.spec import McpSchema
-except ImportError:  # TODO(python): packages under `io.` other than `io.micronaut` cannot be imported at runtime
-    from modelcontextprotocol.server import McpStatelessServerFeatures
-    from modelcontextprotocol.spec import McpSchema
 
 
 @Requires(property="spec.name", value="ResourcesFactoryTest")

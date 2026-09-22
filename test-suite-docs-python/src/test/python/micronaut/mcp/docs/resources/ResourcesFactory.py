@@ -1,4 +1,6 @@
 # tag::imports[]
+from io.modelcontextprotocol.server import McpStatelessServerFeatures
+from io.modelcontextprotocol.spec import McpSchema
 from jakarta.inject import Singleton
 from java.util import ArrayList
 from micronaut.context.annotation import Context, EachBean, Factory, Requires
@@ -9,12 +11,6 @@ from .PgnFile import PgnFile
 from .PgnLoader import PgnLoader
 # end::imports[]
 
-try:
-    from io.modelcontextprotocol.server import McpStatelessServerFeatures
-    from io.modelcontextprotocol.spec import McpSchema
-except ImportError:  # TODO(python): packages under `io.` other than `io.micronaut` cannot be imported at runtime
-    from modelcontextprotocol.server import McpStatelessServerFeatures
-    from modelcontextprotocol.spec import McpSchema
 
 # tag::clazz[]
 PGN_MIME_TYPE = "application/x-chess-pgn"

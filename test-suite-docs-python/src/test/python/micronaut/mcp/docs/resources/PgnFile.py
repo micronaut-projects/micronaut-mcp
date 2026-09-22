@@ -1,13 +1,12 @@
 from typing import Annotated
 
 from micronaut.context.annotation import EachProperty, Parameter, Requires
+from micronaut.core.naming import Named
 
 
-# TODO(python): the Java class implements `io.micronaut.core.naming.Named`; a Python class with a `name` attribute cannot
-# implement it (the generated property accessor and the bridged interface method are both named `getName()`)
 @Requires(property="spec.name", value="ResourcesFactoryTest")
 @EachProperty("pgn")
-class PgnFile:
+class PgnFile(Named):
     """Configuration of a PGN file: ``pgn.<name>.path`` and ``pgn.<name>.round``."""
 
     path: str | None = None

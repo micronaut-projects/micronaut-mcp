@@ -6,6 +6,7 @@ from micronaut.context.annotation import Property
 from micronaut.http import HttpRequest
 from micronaut.http.client import HttpClient
 from micronaut.http.client.annotation import Client
+from micronaut.mcp.server.tools.search import SearchTool
 from micronaut.mcp.docs.JsonRpcMessages import EXPECTED_SEARCH_TOOL_CALL, SEARCH_TOOL_CALL, TOOLS_LIST
 from micronaut.test.extensions.junit5.annotation import MicronautTest
 from org.junit.jupiter.api import Test
@@ -16,10 +17,12 @@ from org.junit.jupiter.api import Test
 @MicronautTest
 class MicronautModulesSearchTest:
     client: Annotated[HttpClient, Inject, Client("/")]
+    tool: Annotated[SearchTool, Inject]
 
     @Test
     def search_tool(self) -> None:
-        # the default name, title and description of `SearchTool` are read by the server from the bean
+        assert self.tool.getName() == "search"
+        assert self.tool.getTitle() == "Search"
         tools = str(self.client.toBlocking().retrieve(HttpRequest.POST("/mcp", TOOLS_LIST)))
         assert '"name":"search"' in tools, tools
         assert '"title":"Search"' in tools, tools

@@ -1,4 +1,5 @@
 # tag::imports[]
+from io.modelcontextprotocol.spec import McpError, McpSchema
 from jakarta.inject import Singleton
 from micronaut.context.annotation import Requires
 from micronaut.mcp.annotations import ResourceTemplate
@@ -6,10 +7,6 @@ from micronaut.mcp.annotations import ResourceTemplate
 from .PgnLoader import PgnLoader
 # end::imports[]
 
-try:
-    from io.modelcontextprotocol.spec import McpError, McpSchema
-except ImportError:  # TODO(python): packages under `io.` other than `io.micronaut` cannot be imported at runtime
-    from modelcontextprotocol.spec import McpError, McpSchema
 
 # tag::clazz[]
 PGN_MIME_TYPE = "application/x-chess-pgn"
