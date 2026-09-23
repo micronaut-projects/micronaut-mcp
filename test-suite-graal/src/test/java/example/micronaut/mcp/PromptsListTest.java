@@ -14,6 +14,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
@@ -29,14 +30,15 @@ class PromptsListTest {
     @Test
     void promptsList(@Client("/") HttpClient httpClient) {
         BlockingHttpClient client = httpClient.toBlocking();
-        HttpResponse<String> rsp = assertDoesNotThrow(() -> client.exchange(HttpRequest.POST("/mcp", """
+        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(HttpRequest.POST("/mcp", """
                 {"jsonrpc":"2.0","id":2,"method":"prompts/list","params":{}}"""), String.class));
-        assertEquals(rsp.getStatus(), HttpStatus.OK);
+        HttpResponse<?> rsp = ex.getResponse();
+        assertEquals(rsp.getStatus(), HttpStatus.BAD_REQUEST);
         Optional<String> jsonOptional = rsp.getBody(String.class);
         assertTrue(jsonOptional.isPresent());
         String json = jsonOptional.get();
         String expected = """
-            {"jsonrpc":"2.0","id":2,"result":{"prompts":[]}}""";
+            {"jsonrpc":"2.0","id":2,"error":{"code":-32601,"message":"Method not found: prompts/list"}}""";
         assertEquals(expected, json);
     }
 }
