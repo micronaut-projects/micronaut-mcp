@@ -1,9 +1,6 @@
 The method parameter names will be automatically used as the tool argument names, unless you use the api:mcp.annotations.ToolArg[] annotation to differentiate the tool argument name from the method parameter name.
 
-[source, java]
-----
-include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/tools/toolarg/Tools.java[tags="fakepackage,imports,clazz",indent=0]
-----
+snippet::io.micronaut.mcp.docs.tools.toolarg.Tools[project-base="test-suite-docs", tags="fakepackage,imports,clazz"]
 
 In a method annotated with `@Tool` you can bind parameters with types:
 

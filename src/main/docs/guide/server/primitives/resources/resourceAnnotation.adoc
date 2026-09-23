@@ -1,9 +1,6 @@
 The preferred way to declare a resource is using a method annotated with api:mcp.annotations.Resource[] in a `@Singleton` bean.
 
-[source, java]
-----
-include::micronaut-mcp-server-java-sdk/src/test/java/io/micronaut/mcp/server/stateless/sync/resources/Resources.java[tags="fakepackage,imports,clazz",indent=0]
-----
+snippet::io.micronaut.mcp.docs.resources.Resources[project-base="test-suite-docs", tags="fakepackage,imports,clazz"]
 
 Notes:
 
