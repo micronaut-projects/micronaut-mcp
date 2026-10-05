@@ -125,7 +125,9 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         if (exceptionMapper != null) {
             return mapException(exceptionMapper, ex);
         }
-        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).build();
+        // The SDK requires a message
+        String message = ex.getMessage() != null && !ex.getMessage().isBlank() ? ex.getMessage() : ex.getClass().getSimpleName();
+        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(message).build();
     }
 
     @Nullable

@@ -39,6 +39,7 @@ import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -191,7 +192,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return m.invokeAsync(() -> invoke(m, mcpTransportContext, callToolRequest))
             .map(result -> toCallToolResult(m, structuredOutput, result))
             .switchIfEmpty(Mono.fromSupplier(() -> toCallToolResult(m, structuredOutput, null)))
-            .onErrorMap(Exception.class::isInstance, ex -> mcpError((Exception) ex));
+            .onErrorResume(Exception.class::isInstance, ex -> ex instanceof McpError mcpError ? Mono.error(mcpError) : Mono.just(toolExecutionError((Exception) ex)));
     }
 
     private <B> McpSchema.CallToolResult callToolToResult(Method<B> m,
@@ -200,9 +201,27 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                                                           McpSchema.CallToolRequest callToolRequest) {
         try {
             return toCallToolResult(m, structuredOutput, m.await(invoke(m, mcpTransportContext, callToolRequest)));
+        } catch (McpError ex) {
+            throw ex;
         } catch (Exception ex) {
-            throw mcpError(ex);
+            return toolExecutionError(ex);
         }
+    }
+
+    /**
+     * A tool that fails, including when its arguments cannot be bound or are not valid, produces a tool execution error,
+     * which the model can see and correct, rather than a protocol error. A tool that throws an {@link McpError} chooses a
+     * protocol error.
+     *
+     * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/server/tools#error-handling">Tool error handling</a>
+     */
+    private McpSchema.CallToolResult toolExecutionError(Exception ex) {
+        McpError mapped = mcpError(ex);
+        String message = mapped.getJsonRpcError() != null ? mapped.getJsonRpcError().message() : null;
+        if (message == null || message.isBlank()) {
+            message = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
+        }
+        return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
     }
 
     private <B> @Nullable Object invoke(Method<B> m, Object mcpTransportContext, McpSchema.CallToolRequest callToolRequest) {

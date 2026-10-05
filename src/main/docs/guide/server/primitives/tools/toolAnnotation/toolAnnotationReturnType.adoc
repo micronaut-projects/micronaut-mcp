@@ -12,3 +12,7 @@ How the methods are invoked depends on `micronaut.mcp.server.reactive`:
 
 - When it is `false` (the default), the HTTP endpoint handles requests on the blocking executor, which uses virtual threads where they are available. Methods run on that thread, can block, and see the current request through `ServerRequestContext`. The server waits for asynchronous return values.
 - When it is `true`, methods run on the thread that received the request, which must not block. Annotate a method with `@ExecuteOn` to run it on another executor, for example `@ExecuteOn(TaskExecutors.BLOCKING)`.
+
+== Errors
+
+When a tool method throws, including when its arguments cannot be bound or fail bean validation, the call returns a result with `isError` set to `true` and the error message as text. This is a https://modelcontextprotocol.io/specification/2025-11-25/server/tools#error-handling[tool execution error]: the model sees it and can correct the call. To answer with a JSON-RPC protocol error instead, throw an `io.modelcontextprotocol.spec.McpError`; its code and message are kept.
