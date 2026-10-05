@@ -16,6 +16,16 @@ class UriTemplateReadResourceRequestTest {
     }
 
     @Test
+    void variablesArePercentDecoded() {
+        assertEquals(Map.of("title", "A Tale of Two Cities"),
+            UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/A%20Tale%20of%20Two%20Cities"));
+        assertEquals(Map.of("title", "C++ in 100% detail"),
+            UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/C%2B%2B%20in%20100%25%20detail"));
+        assertEquals(Map.of("title", "Café"),
+            UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/Caf%C3%A9"));
+    }
+
+    @Test
     void requestsMatchedAgainstACompiledTemplate() {
         UriMatchTemplate template = UriMatchTemplate.of("pgn://round/{round}/pgn");
         McpSchema.ReadResourceRequest round14 = new McpSchema.ReadResourceRequest("pgn://round/14/pgn");

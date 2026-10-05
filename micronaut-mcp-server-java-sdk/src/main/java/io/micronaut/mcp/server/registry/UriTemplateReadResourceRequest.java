@@ -16,10 +16,13 @@
 package io.micronaut.mcp.server.registry;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.http.uri.UriMatchInfo;
 import io.micronaut.http.uri.UriMatchTemplate;
 import io.modelcontextprotocol.spec.McpSchema;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -59,7 +62,19 @@ record UriTemplateReadResourceRequest(
         if (matchOptional.isEmpty()) {
             return Collections.emptyMap();
         }
-        UriMatchInfo match = matchOptional.get();
-        return match.getVariableValues();
+        Map<String, Object> variables = matchOptional.get().getVariableValues();
+        Map<String, Object> decoded = CollectionUtils.newLinkedHashMap(variables.size());
+        variables.forEach((name, value) -> decoded.put(name, value instanceof String s ? decode(s) : value));
+        return decoded;
+    }
+
+    /**
+     * Percent-decodes a URI component. Unlike form decoding, a {@code +} stays a {@code +}.
+     */
+    private static String decode(String value) {
+        if (value.indexOf('%') < 0) {
+            return value;
+        }
+        return URLDecoder.decode(value.replace("+", "%2B"), StandardCharsets.UTF_8);
     }
 }
