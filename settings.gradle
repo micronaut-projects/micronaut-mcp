@@ -39,3 +39,33 @@ micronautBuild {
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-langchain4j")
 }
+
+// Micronaut core 5.3.0-SNAPSHOT comes from Maven local, where a core checkout publishes it with
+// publishToMavenLocal, or from the Central snapshots repository. Only io.micronaut snapshots are resolved
+// from them. Projects that declare their own repositories replace the settings ones, so they are added to
+// each project too. Remove once the build moves to a core 5.3 release.
+def micronautSnapshotRepositories = { RepositoryHandler repositories ->
+    repositories.mavenLocal {
+        content {
+            includeVersionByRegex('io\\.micronaut(\\..*)?', '.*', '.*-SNAPSHOT')
+        }
+    }
+    repositories.maven {
+        url = uri('https://central.sonatype.com/repository/maven-snapshots/')
+        mavenContent {
+            snapshotsOnly()
+        }
+        content {
+            includeGroupByRegex('io\\.micronaut(\\..*)?')
+        }
+    }
+}
+dependencyResolutionManagement {
+    micronautSnapshotRepositories(repositories)
+    repositories {
+        mavenCentral()
+    }
+}
+gradle.beforeProject { project ->
+    micronautSnapshotRepositories(project.repositories)
+}
