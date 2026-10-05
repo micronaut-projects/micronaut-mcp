@@ -281,6 +281,8 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             toolBuilder.inputSchema(inputSchema(method, ToolRegistry::toolArgumentName, ToolRegistry::toolArgDescription));
         }
         toolOutputSchema(method).ifPresent(schema -> toolBuilder.outputSchema(mcpJsonMapper, schema));
+        toolBuilder.icons(icons(method));
+        toolBuilder.meta(meta(method));
         return toolBuilder.build();
     }
 

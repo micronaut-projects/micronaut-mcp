@@ -1,0 +1,21 @@
+Methods annotated with `@Tool`, `@Prompt`, `@Resource` or `@ResourceTemplate` can declare icons with `@Icon` and `_meta` entries with `@Meta`. Both annotations are repeatable:
+
+[source,java]
+----
+@Tool
+@Icon(src = "https://example.com/sun.svg", mimeType = "image/svg+xml", sizes = "any")
+@Meta(key = "com.example/category", value = "weather")
+String forecast(String city) {
+    return "sunny";
+}
+----
+
+`@Resource` and `@ResourceTemplate` also accept the resource annotations of the specification: the intended `audience` (`Audience.USER`, `Audience.ASSISTANT`) and a `priority` between 0 and 1. `@Resource` accepts the `size` of the content in bytes.
+
+[source,java]
+----
+@Resource(uri = "weather://stations", size = 42, audience = Audience.ASSISTANT, priority = 0.5)
+String stations() {
+    return "KSEA";
+}
+----

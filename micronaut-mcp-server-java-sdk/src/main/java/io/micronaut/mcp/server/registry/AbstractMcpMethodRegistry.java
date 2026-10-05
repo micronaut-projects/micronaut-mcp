@@ -19,6 +19,11 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.mcp.annotations.Audience;
+import io.micronaut.mcp.annotations.Icon;
+import io.micronaut.mcp.annotations.Meta;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -39,6 +44,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -170,6 +177,59 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             return returnType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
         }
         return returnType.asArgument();
+    }
+
+    /**
+     * @param method The method
+     * @return The icons declared with {@link Icon}, or {@code null} when there are none
+     */
+    protected static @Nullable List<McpSchema.Icon> icons(ExecutableMethod<?, ?> method) {
+        List<AnnotationValue<Icon>> values = method.getAnnotationValuesByType(Icon.class);
+        if (values.isEmpty()) {
+            return null;
+        }
+        List<McpSchema.Icon> icons = new ArrayList<>(values.size());
+        for (AnnotationValue<Icon> value : values) {
+            String[] sizes = value.stringValues("sizes");
+            icons.add(new McpSchema.Icon(
+                value.stringValue("src").orElseThrow(),
+                value.stringValue("mimeType").filter(StringUtils::isNotEmpty).orElse(null),
+                sizes.length == 0 ? null : List.of(sizes),
+                value.stringValue("theme").filter(StringUtils::isNotEmpty).orElse(null)));
+        }
+        return icons;
+    }
+
+    /**
+     * @param method The method
+     * @return The {@code _meta} entries declared with {@link Meta}, or {@code null} when there are none
+     */
+    protected static @Nullable Map<String, Object> meta(ExecutableMethod<?, ?> method) {
+        List<AnnotationValue<Meta>> values = method.getAnnotationValuesByType(Meta.class);
+        if (values.isEmpty()) {
+            return null;
+        }
+        Map<String, Object> meta = new LinkedHashMap<>(values.size());
+        for (AnnotationValue<Meta> value : values) {
+            meta.put(value.stringValue("key").orElseThrow(), value.stringValue().orElse(""));
+        }
+        return meta;
+    }
+
+    /**
+     * @param annotation A resource or resource template annotation
+     * @return The resource annotations it declares, or {@code null} when it declares none
+     */
+    protected static McpSchema.@Nullable Annotations resourceAnnotations(AnnotationValue<?> annotation) {
+        Audience[] audience = annotation.enumValues("audience", Audience.class);
+        double priority = annotation.doubleValue("priority").orElse(-1);
+        if (audience.length == 0 && priority < 0) {
+            return null;
+        }
+        List<McpSchema.Role> roles = audience.length == 0 ? null : Arrays.stream(audience)
+            .map(a -> a == Audience.USER ? McpSchema.Role.USER : McpSchema.Role.ASSISTANT)
+            .toList();
+        return new McpSchema.Annotations(roles, priority < 0 ? null : priority);
     }
 
     @SuppressWarnings("unchecked")

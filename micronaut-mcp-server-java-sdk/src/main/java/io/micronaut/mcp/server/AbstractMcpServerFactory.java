@@ -59,6 +59,21 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
     protected abstract List<T> getTools(ToolRegistry toolRegistry);
 
     /**
+     * The server information sent in the response to {@code initialize}.
+     *
+     * @param configuration The server information configuration
+     * @return The server implementation
+     * @since 2.2.0
+     */
+    protected static McpSchema.Implementation serverInfo(McpServerInfoConfiguration configuration) {
+        List<McpSchema.Icon> icons = configuration.getIcons().isEmpty() ? null : configuration.getIcons().stream()
+            .map(src -> new McpSchema.Icon(src, null, null, null))
+            .toList();
+        return new McpSchema.Implementation(configuration.getName(), configuration.getTitle(), configuration.getVersion(),
+            configuration.getDescription(), icons, configuration.getWebsiteUrl());
+    }
+
+    /**
      * Retrieves a list of prompts from the provided {@link PromptRegistry}.
      *
      * @param promptRegistry the registry of prompts from which to retrieve the prompts

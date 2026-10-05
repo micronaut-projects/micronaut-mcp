@@ -118,7 +118,8 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         String title = method.stringValue(ResourceTemplate.class, TITLE_PROPERTY).orElse(null);
         String description = method.stringValue(ResourceTemplate.class, DESCRIPTION_PROPERTY).orElse(null);
         String mimeType = method.stringValue(ResourceTemplate.class, MIME_TYPE_PROPERTY).orElse(ResourceTemplate.DEFAULT_MIME_TYPE);
-        return new McpSchema.ResourceTemplate(uri, name, title, description, mimeType, null, null);
+        McpSchema.Annotations annotations = resourceAnnotations(method.getAnnotation(ResourceTemplate.class));
+        return new McpSchema.ResourceTemplate(uri, name, title, description, mimeType, annotations, meta(method), icons(method));
     }
 
     private <B> BiFunction<McpSyncServerExchange, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> syncHandler(

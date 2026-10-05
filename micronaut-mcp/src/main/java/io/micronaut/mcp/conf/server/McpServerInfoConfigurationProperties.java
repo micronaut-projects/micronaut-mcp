@@ -18,6 +18,10 @@ package io.micronaut.mcp.conf.server;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 @Requires(property = McpServerInfoConfiguration.PROPERTY_NAME)
 @Requires(property = McpServerInfoConfiguration.PROPERTY_VERSION)
@@ -27,6 +31,11 @@ final class McpServerInfoConfigurationProperties implements McpServerInfoConfigu
 
     private String name;
     private String version;
+    private @Nullable String title;
+    private @Nullable String description;
+    private @Nullable String websiteUrl;
+    private List<String> icons = List.of();
+    private @Nullable String instructions;
 
     @Override
     public String getName() {
@@ -44,5 +53,65 @@ final class McpServerInfoConfigurationProperties implements McpServerInfoConfigu
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    @Override
+    public @Nullable String getTitle() {
+        return title;
+    }
+
+    /**
+     * @param title A human-readable title of the server, for display
+     */
+    public void setTitle(@Nullable String title) {
+        this.title = title;
+    }
+
+    @Override
+    public @Nullable String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description A description of the server
+     */
+    public void setDescription(@Nullable String description) {
+        this.description = description;
+    }
+
+    @Override
+    public @Nullable String getWebsiteUrl() {
+        return websiteUrl;
+    }
+
+    /**
+     * @param websiteUrl The URL of the website of the server
+     */
+    public void setWebsiteUrl(@Nullable String websiteUrl) {
+        this.websiteUrl = websiteUrl;
+    }
+
+    @Override
+    public @NonNull List<String> getIcons() {
+        return icons;
+    }
+
+    /**
+     * @param icons The URIs of the icons of the server: HTTPS URLs or {@code data:} URIs
+     */
+    public void setIcons(@Nullable List<String> icons) {
+        this.icons = icons != null ? icons : List.of();
+    }
+
+    @Override
+    public @Nullable String getInstructions() {
+        return instructions;
+    }
+
+    /**
+     * @param instructions Instructions describing how to use the server and its features, which clients may add to the model's prompt
+     */
+    public void setInstructions(@Nullable String instructions) {
+        this.instructions = instructions;
     }
 }

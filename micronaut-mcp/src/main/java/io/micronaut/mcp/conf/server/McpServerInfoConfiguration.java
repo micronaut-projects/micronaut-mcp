@@ -16,6 +16,9 @@
 package io.micronaut.mcp.conf.server;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * MCP Server Info Configuration.
@@ -50,4 +53,44 @@ public interface McpServerInfoConfiguration {
      */
     @NonNull
     String getVersion();
+
+    /**
+     * @return A human-readable title of the server, for display
+     * @since 2.2.0
+     */
+    default @Nullable String getTitle() {
+        return null;
+    }
+
+    /**
+     * @return A description of the server
+     * @since 2.2.0
+     */
+    default @Nullable String getDescription() {
+        return null;
+    }
+
+    /**
+     * @return The URL of the website of the server
+     * @since 2.2.0
+     */
+    default @Nullable String getWebsiteUrl() {
+        return null;
+    }
+
+    /**
+     * @return The URIs of the icons of the server: HTTPS URLs or {@code data:} URIs
+     * @since 2.2.0
+     */
+    default @NonNull List<String> getIcons() {
+        return List.of();
+    }
+
+    /**
+     * @return Instructions describing how to use the server and its features, which clients may add to the model's prompt
+     * @since 2.2.0
+     */
+    default @Nullable String getInstructions() {
+        return null;
+    }
 }
