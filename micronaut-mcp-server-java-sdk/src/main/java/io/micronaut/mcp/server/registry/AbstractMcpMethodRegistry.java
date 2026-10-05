@@ -20,6 +20,13 @@ import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.type.ReturnType;
+import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.scheduling.annotation.ExecuteOn;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
@@ -36,6 +43,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 
 import io.micronaut.inject.BeanDefinition;
 
@@ -144,6 +155,21 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         return null;
     }
 
+    /**
+     * The type of the value a method produces: the method return type, or its first type argument when the method returns
+     * a reactive type or a {@link CompletionStage}.
+     *
+     * @param method The method
+     * @return The result argument
+     */
+    protected static Argument<?> resultArgument(ExecutableMethod<?, ?> method) {
+        ReturnType<?> returnType = method.getReturnType();
+        if (returnType.isAsyncOrReactive()) {
+            return returnType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+        }
+        return returnType.asArgument();
+    }
+
     @SuppressWarnings("unchecked")
     private static <T extends Exception> McpError mapException(McpErrorExceptionMapper<? extends Throwable> mapper, T ex) {
         return ((McpErrorExceptionMapper<T>) mapper).map(ex);
@@ -161,7 +187,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         private final ExecutableMethod<B, Object> method;
         private final Argument<?>[] boundArguments;
         private final int[] boundIndexes;
+        private final Argument<?> resultArgument;
+        private final @Nullable String executorName;
         private volatile @Nullable B singleton;
+        private volatile @Nullable Scheduler scheduler;
 
         Method(BeanContext beanContext,
                BeanDefinition<B> beanDefinition,
@@ -170,6 +199,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             this.beanContext = beanContext;
             this.beanDefinition = beanDefinition;
             this.method = method;
+            this.resultArgument = AbstractMcpMethodRegistry.resultArgument(method);
+            this.executorName = method.stringValue(ExecuteOn.class).orElse(null);
             List<Argument<?>> arguments = new ArrayList<>();
             List<Integer> indexes = new ArrayList<>();
             for (Argument<?> argument : method.getArguments()) {
@@ -215,6 +246,73 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                 singleton = bean;
             }
             return bean;
+        }
+
+        /**
+         * @return The type of the value the method produces, unwrapped from a reactive type or a {@link CompletionStage}.
+         */
+        public Argument<?> resultArgument() {
+            return resultArgument;
+        }
+
+        /**
+         * Waits for the value of a reactive type or a {@link CompletionStage} returned by the method. Used by the synchronous
+         * servers, which invoke methods on a thread that may block.
+         *
+         * @param result The value the method returned
+         * @return The value it produced
+         */
+        public @Nullable Object await(@Nullable Object result) {
+            if (result instanceof Publisher<?> publisher) {
+                return Mono.from(publisher).block();
+            }
+            if (result instanceof CompletionStage<?> stage) {
+                try {
+                    return stage.toCompletableFuture().join();
+                } catch (CompletionException e) {
+                    if (e.getCause() instanceof RuntimeException cause) {
+                        throw cause;
+                    }
+                    throw e;
+                }
+            }
+            return result;
+        }
+
+        /**
+         * Invokes the method when the returned publisher is subscribed to, on the executor named by {@link ExecuteOn} if
+         * the method declares one, and adapts a reactive type or a {@link CompletionStage} it returns.
+         *
+         * @param invocation The invocation of the method
+         * @return A publisher of the value the method produced, empty when it produced none
+         */
+        public Mono<Object> invokeAsync(Supplier<@Nullable Object> invocation) {
+            Mono<Object> result = Mono.defer(() -> toMono(invocation.get()));
+            Scheduler executor = scheduler();
+            return executor != null ? result.subscribeOn(executor) : result;
+        }
+
+        @SuppressWarnings("unchecked")
+        private static Mono<Object> toMono(@Nullable Object result) {
+            if (result instanceof Publisher<?> publisher) {
+                return Mono.from((Publisher<Object>) publisher);
+            }
+            if (result instanceof CompletionStage<?> stage) {
+                return Mono.fromCompletionStage((CompletionStage<Object>) stage);
+            }
+            return Mono.justOrEmpty(result);
+        }
+
+        private @Nullable Scheduler scheduler() {
+            if (executorName == null) {
+                return null;
+            }
+            Scheduler executor = scheduler;
+            if (executor == null) {
+                executor = Schedulers.fromExecutorService(beanContext.getBean(ExecutorService.class, Qualifiers.byName(executorName)));
+                scheduler = executor;
+            }
+            return executor;
         }
 
         /**

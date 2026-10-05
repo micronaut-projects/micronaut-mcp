@@ -22,6 +22,7 @@ import io.micronaut.core.bind.BoundExecutable;
 import io.micronaut.core.bind.DefaultExecutableBinder;
 import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.annotations.PromptCompletion;
 import io.micronaut.mcp.annotations.ResourceCompletion;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
@@ -115,7 +116,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.CompleteRequest, Mono<McpSchema.CompleteResult>> asyncHandler(
         Method<B> m
     ) {
-        return (exchange, request) -> Mono.just(invokeAndMap(m, exchange, request));
+        return (exchange, request) -> invokeAndMapAsync(m, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.CompleteRequest, McpSchema.CompleteResult> statelessSyncHandler(
@@ -127,19 +128,37 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     private <B> BiFunction<McpTransportContext, McpSchema.CompleteRequest, Mono<McpSchema.CompleteResult>> statelessAsyncHandler(
         Method<B> m
     ) {
-        return (ctx, request) -> Mono.just(invokeAndMap(m, ctx, request));
+        return (ctx, request) -> invokeAndMapAsync(m, ctx, request);
     }
 
     private <B> McpSchema.CompleteResult invokeAndMap(Method<B> m,
                                                       Object mcpTransportContext,
                                                       McpSchema.CompleteRequest request) {
+        return map(m, request, m.await(invoke(m, mcpTransportContext, request)));
+    }
+
+    private <B> Mono<McpSchema.CompleteResult> invokeAndMapAsync(Method<B> m,
+                                                                 Object mcpTransportContext,
+                                                                 McpSchema.CompleteRequest request) {
+        return m.invokeAsync(() -> invoke(m, mcpTransportContext, request))
+            .map(result -> map(m, request, result))
+            .switchIfEmpty(Mono.fromSupplier(() -> map(m, request, null)));
+    }
+
+    private <B> @Nullable Object invoke(Method<B> m,
+                                        Object mcpTransportContext,
+                                        McpSchema.CompleteRequest request) {
         ExecutableMethod<B, Object> method = m.method();
         B bean = m.bean();
 
         ExecutableBinder<McpSchema.CompleteRequest> executableBinder = new DefaultExecutableBinder<>(
             m.preBound(mcpTransportContext, request, request.argument()));
         BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, request);
-        Object result = executable.invoke(bean);
+        return executable.invoke(bean);
+    }
+
+    private <B> McpSchema.CompleteResult map(Method<B> m, McpSchema.CompleteRequest request, @Nullable Object result) {
+        ExecutableMethod<B, Object> method = m.method();
         if (result instanceof McpSchema.CompleteResult r) {
             return r;
         }

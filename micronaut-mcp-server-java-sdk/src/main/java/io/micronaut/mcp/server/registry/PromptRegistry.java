@@ -25,6 +25,7 @@ import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.core.type.Argument;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.PromptArg;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
@@ -111,7 +112,7 @@ public final class PromptRegistry
 
     private <B> BiFunction<McpTransportContext, McpSchema.GetPromptRequest, Mono<McpSchema.GetPromptResult>> reactivePromptHandler(Method<B> m) {
         return (mcpTransportContext, promptRequest)
-            -> Mono.just(promptResult(m, mcpTransportContext, promptRequest));
+            -> promptResultAsync(m, mcpTransportContext, promptRequest);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.GetPromptRequest, McpSchema.GetPromptResult> promptHandler(Method<B> m) {
@@ -126,22 +127,39 @@ public final class PromptRegistry
 
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.GetPromptRequest, Mono<McpSchema.GetPromptResult>> asyncPromptHandler(Method<B> m) {
         return (mcpTransportContext, promptRequest)
-            -> Mono.just(promptResult(m, mcpTransportContext, promptRequest));
+            -> promptResultAsync(m, mcpTransportContext, promptRequest);
     }
 
     private <B> McpSchema.GetPromptResult promptResult(Method<B> m,
                                                        Object mcpTransportContext,
                                                        McpSchema.GetPromptRequest promptRequest) {
+        return map(m, promptRequest, m.await(invoke(m, mcpTransportContext, promptRequest)));
+    }
+
+    private <B> Mono<McpSchema.GetPromptResult> promptResultAsync(Method<B> m,
+                                                                  Object mcpTransportContext,
+                                                                  McpSchema.GetPromptRequest promptRequest) {
+        return m.invokeAsync(() -> invoke(m, mcpTransportContext, promptRequest))
+            .map(result -> map(m, promptRequest, result))
+            .switchIfEmpty(Mono.fromSupplier(() -> map(m, promptRequest, null)));
+    }
+
+    private <B> @Nullable Object invoke(Method<B> m,
+                                        Object mcpTransportContext,
+                                        McpSchema.GetPromptRequest promptRequest) {
         ExecutableMethod<B, Object> method = m.method();
         B bean = m.bean();
         ExecutableBinder<McpSchema.GetPromptRequest> executableBinder = new DefaultExecutableBinder<>(
             m.preBound(mcpTransportContext, promptRequest));
         BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, promptRequest);
-        Object result = executable.invoke(bean);
+        return executable.invoke(bean);
+    }
+
+    private <B> McpSchema.GetPromptResult map(Method<B> m, McpSchema.GetPromptRequest promptRequest, @Nullable Object result) {
         if (result instanceof McpSchema.GetPromptResult promptResult) {
             return promptResult;
         }
-        if (method.getReturnType().getType().isAssignableFrom(String.class)) {
+        if (result != null && m.resultArgument().getType().isAssignableFrom(String.class)) {
             McpSchema.TextContent assistantContent = new McpSchema.TextContent(result.toString());
             McpSchema.PromptMessage assistantMessage = new McpSchema.PromptMessage(McpSchema.Role.ASSISTANT, assistantContent);
             //TODO is it possible to get the description from the javadoc @return of the method

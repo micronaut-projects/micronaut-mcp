@@ -82,6 +82,8 @@ final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpSe
                                                                        List<McpStatelessServerFeatures.SyncResourceSpecification> resources,
                                                                        List<McpStatelessServerFeatures.SyncResourceTemplateSpecification> resourceTemplates) {
         McpServer.StatelessSyncSpecification spec = McpServer.sync(transport)
+            // The blocking controller already runs on the blocking executor, so primitives are invoked on its thread
+            .immediateExecution(true)
             .jsonMapper(jsonMapper)
             .jsonSchemaValidator(jsonSchemaValidator)
             .tools(tools)
