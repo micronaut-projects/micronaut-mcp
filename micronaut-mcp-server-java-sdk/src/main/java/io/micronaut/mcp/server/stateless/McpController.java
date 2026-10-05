@@ -24,8 +24,12 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.json.JsonMapper;
+import io.micronaut.json.tree.JsonNode;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.mcp.server.exceptions.JsonRrpcResponseUtils;
+import io.micronaut.mcp.server.json.MicronautMcpJsonMapper;
+import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
@@ -35,6 +39,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -52,19 +59,28 @@ final class McpController {
     private static final String KEY_ID = "id";
     private static final String KEY_JSONRPC = "jsonrpc";
     private static final String KEY_PARAMS = "params";
+    // JSON-RPC answers a message that is not a valid request with a null id, which the SDK response type does not allow
+    private static final Map<String, Object> INVALID_REQUEST = invalidRequest();
 
     private final McpStatelessServerHandler mcpHandler;
     private final McpTransportContextExtractor<HttpRequest<?>> contextExtractor;
+    private final JsonMapper jsonMapper;
+    private final boolean passJsonTrees;
 
     McpController(McpStatelessServerHandler mcpHandler,
-                  McpTransportContextExtractor<HttpRequest<?>> contextExtractor) {
+                  McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
+                  JsonMapper jsonMapper,
+                  McpJsonMapper mcpJsonMapper) {
         this.mcpHandler = mcpHandler;
         this.contextExtractor = contextExtractor;
+        this.jsonMapper = jsonMapper;
+        // The Micronaut MCP JSON mapper converts the parsed parameters directly; any other mapper gets them as a Map
+        this.passJsonTrees = mcpJsonMapper instanceof MicronautMcpJsonMapper;
     }
 
     @SuppressWarnings("java:S3740")
     @Post
-    public Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body Map<String, Object> body) {
+    public Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body JsonNode body) {
         McpTransportContext transportContext = contextExtractor.extract(request);
         McpSchema.JSONRPCMessage jsonRpcMessage = jsonRpcMessage(body);
         if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
@@ -72,7 +88,7 @@ final class McpController {
         } else if (jsonRpcMessage instanceof McpSchema.JSONRPCNotification notification) {
             return handleJsonRpcNotification(notification, transportContext);
         }
-        return Mono.just(HttpResponse.badRequest(mcpError(McpSchema.ErrorCodes.INVALID_REQUEST, "The server accepts either requests or notifications")));
+        return Mono.just(HttpResponse.badRequest(INVALID_REQUEST));
     }
 
     @SuppressWarnings("java:S3740")
@@ -110,13 +126,55 @@ final class McpController {
             .onErrorResume(throwable -> exceptionJsonRpcResponse(throwable, jsonrpcRequest));
     }
 
-    private McpSchema.@Nullable JSONRPCMessage jsonRpcMessage(@NonNull Map<String, Object> body) {
-        if (body.containsKey(KEY_METHOD) && body.containsKey(KEY_ID)) {
-            return new McpSchema.JSONRPCRequest(body.get(KEY_JSONRPC).toString(), body.get(KEY_METHOD).toString(), body.get(KEY_ID), body.get(KEY_PARAMS));
-        } else if (body.containsKey(KEY_METHOD) && !body.containsKey(KEY_ID)) {
-            return new McpSchema.JSONRPCNotification(body.get(KEY_JSONRPC).toString(), body.get(KEY_METHOD).toString(), body.get(KEY_PARAMS));
+    private McpSchema.@Nullable JSONRPCMessage jsonRpcMessage(@Nullable JsonNode body) {
+        if (body == null || !body.isObject()) {
+            return null;
         }
-        return null;
+        JsonNode jsonrpc = body.get(KEY_JSONRPC);
+        JsonNode method = body.get(KEY_METHOD);
+        if (jsonrpc == null || !jsonrpc.isString() || method == null || !method.isString()) {
+            return null;
+        }
+        Object params = params(body.get(KEY_PARAMS));
+        JsonNode id = body.get(KEY_ID);
+        if (id == null) {
+            return new McpSchema.JSONRPCNotification(jsonrpc.getStringValue(), method.getStringValue(), params);
+        }
+        return new McpSchema.JSONRPCRequest(jsonrpc.getStringValue(), method.getStringValue(), id(id), params);
+    }
+
+    private @Nullable Object params(@Nullable JsonNode params) {
+        if (params == null || params.isNull()) {
+            return null;
+        }
+        if (passJsonTrees) {
+            return params;
+        }
+        try {
+            return jsonMapper.readValueFromTree(params, Object.class);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Invalid JSON-RPC params", e);
+        }
+    }
+
+    private static @Nullable Object id(JsonNode id) {
+        if (id.isString()) {
+            return id.getStringValue();
+        }
+        if (id.isNumber()) {
+            return id.getNumberValue();
+        }
+        return id.isNull() ? null : id.getValue();
+    }
+
+    private static Map<String, Object> invalidRequest() {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put(KEY_JSONRPC, McpSchema.JSONRPC_VERSION);
+        response.put(KEY_ID, null);
+        response.put("error", Map.of(
+            "code", McpSchema.ErrorCodes.INVALID_REQUEST,
+            "message", "The server accepts either JSON-RPC requests or notifications"));
+        return Collections.unmodifiableMap(response);
     }
 
     @NonNull

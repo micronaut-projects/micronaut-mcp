@@ -28,7 +28,7 @@ import java.io.IOException;
  * An implementation of {@link McpJsonMapper} that uses Micronaut's {@link JsonMapper} for JSON serialization and deserialization.
  */
 @Internal
-final class MicronautMcpJsonMapper implements McpJsonMapper {
+public final class MicronautMcpJsonMapper implements McpJsonMapper {
     private final JsonMapper jsonMapper;
 
     MicronautMcpJsonMapper(JsonMapper jsonMapper) {
@@ -58,7 +58,7 @@ final class MicronautMcpJsonMapper implements McpJsonMapper {
     @Override
     public <T> T convertValue(Object fromValue, Class<T> type) {
         try {
-            JsonNode jsonNode = jsonMapper.writeValueToTree(fromValue);
+            JsonNode jsonNode = toTree(fromValue);
             return jsonMapper.readValueFromTree(jsonNode, type);
         } catch (IOException e) {
             throw new IllegalArgumentException("Error converting value", e);
@@ -68,7 +68,7 @@ final class MicronautMcpJsonMapper implements McpJsonMapper {
     @Override
     public <T> T convertValue(Object fromValue, TypeRef<T> type) {
         try {
-            JsonNode jsonNode = jsonMapper.writeValueToTree(fromValue);
+            JsonNode jsonNode = toTree(fromValue);
             return jsonMapper.readValueFromTree(jsonNode, toArgument(type));
         } catch (IOException e) {
             throw new IllegalArgumentException("Error converting value", e);
@@ -83,6 +83,11 @@ final class MicronautMcpJsonMapper implements McpJsonMapper {
     @Override
     public byte[] writeValueAsBytes(Object value) throws IOException {
         return jsonMapper.writeValueAsBytes(value);
+    }
+
+    private JsonNode toTree(Object value) throws IOException {
+        // The HTTP transport passes the request parameters as the tree it parsed the request into
+        return value instanceof JsonNode jsonNode ? jsonNode : jsonMapper.writeValueToTree(value);
     }
 
     @SuppressWarnings("unchecked")
