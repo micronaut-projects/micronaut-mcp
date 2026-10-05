@@ -59,6 +59,27 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
     protected abstract List<T> getTools(ToolRegistry toolRegistry);
 
     /**
+     * Whether the server can send notifications to clients outside the response to a request, such as list changes and
+     * resource updates. A stateless server cannot, so it does not advertise them even when they are configured.
+     *
+     * @return Whether the server sends notifications
+     * @since 2.2.0
+     */
+    protected boolean sendsNotifications() {
+        return true;
+    }
+
+    private static McpSchema.ServerCapabilities withoutNotifications(McpSchema.ServerCapabilities capabilities) {
+        return new McpSchema.ServerCapabilities(
+            capabilities.completions(),
+            capabilities.experimental(),
+            capabilities.logging(),
+            capabilities.prompts() != null ? new McpSchema.ServerCapabilities.PromptCapabilities(false) : null,
+            capabilities.resources() != null ? new McpSchema.ServerCapabilities.ResourceCapabilities(false, false) : null,
+            capabilities.tools() != null ? new McpSchema.ServerCapabilities.ToolCapabilities(false) : null);
+    }
+
+    /**
      * The server information sent in the response to {@code initialize}.
      *
      * @param configuration The server information configuration
@@ -193,7 +214,11 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
         if (!allCompletions.isEmpty()) {
             capabilitiesBuilder.completions();
         }
-        return createMcpServerSpec(transport, jsonMapper, jsonSchemaValidator, configuration, capabilitiesProvider.get(), allTools, allCompletions, allPrompts, allResources, allResourceTemplates);
+        McpSchema.ServerCapabilities capabilities = capabilitiesProvider.get();
+        if (!sendsNotifications()) {
+            capabilities = withoutNotifications(capabilities);
+        }
+        return createMcpServerSpec(transport, jsonMapper, jsonSchemaValidator, configuration, capabilities, allTools, allCompletions, allPrompts, allResources, allResourceTemplates);
     }
 
 }

@@ -1,0 +1,26 @@
+Tools, prompts and resources can also be added and removed while the server runs, through the MCP Java SDK server bean of the configured transport and mode: `McpSyncServer` or `McpAsyncServer` for STDIO, and `McpStatelessSyncServer` or `McpStatelessAsyncServer` for HTTP.
+
+[source,java]
+----
+@Singleton
+class Plugins {
+    private final McpStatelessSyncServer server;
+
+    Plugins(McpStatelessSyncServer server) {
+        this.server = server;
+    }
+
+    void install(String name) {
+        server.addTool(McpStatelessServerFeatures.SyncToolSpecification.builder()
+            .tool(McpSchema.Tool.builder().name(name).inputSchema(Map.of("type", "object")).build())
+            .callHandler((context, request) -> McpSchema.CallToolResult.builder().addTextContent("installed").build())
+            .build());
+    }
+
+    void uninstall(String name) {
+        server.removeTool(name);
+    }
+}
+----
+
+Over STDIO, when `micronaut.mcp.server.tools.list-changed` (or the `prompts` or `resources` equivalent) is `true`, the server notifies the client that the list changed. The stateless HTTP transport cannot send notifications outside the response to a request, so it never advertises list changes or resource subscriptions, whatever the configuration: clients see the changes the next time they list the primitives.
