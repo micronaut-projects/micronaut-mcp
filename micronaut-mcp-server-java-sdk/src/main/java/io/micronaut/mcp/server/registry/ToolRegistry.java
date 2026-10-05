@@ -28,7 +28,6 @@ import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.jsonschema.JsonSchema;
@@ -73,6 +72,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public static final boolean DEFAULT_OPEN_WORLD_HINT_VALUE = true;
     public static final boolean DEFAULT_RETURN_DIRECT_VALUE = false;
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
+    private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.CallToolRequest.class};
     private static final List<Class<?>> BINDABLE_PARAMETER_TYPES = List.of(McpTransportContext.class,
         McpSchema.CallToolRequest.class);
     private static final Argument<Map<String, Object>> STRUCTURED_CONTENT_ARGUMENT = Argument.mapOf(String.class, Object.class);
@@ -112,13 +112,18 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     }
 
     @Override
+    protected Class<?>[] boundParameterTypes() {
+        return BOUND_PARAMETER_TYPES;
+    }
+
+    @Override
     public List<McpServerFeatures.SyncToolSpecification> getSyncSpecs() {
         return drainMethods()
             .map(toolMethod -> {
                 McpSchema.Tool tool = tool(toolMethod.method());
                 return McpServerFeatures.SyncToolSpecification.builder()
                     .tool(tool)
-                    .callHandler(provideSyncCallHandler(toolMethod.beanDefinition(), toolMethod.method(), hasOutputSchema(tool)))
+                    .callHandler(provideSyncCallHandler(toolMethod, hasOutputSchema(tool)))
                     .build();
             })
             .toList();
@@ -131,7 +136,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                 McpSchema.Tool tool = tool(toolMethod.method());
                 return McpServerFeatures.AsyncToolSpecification.builder()
                     .tool(tool)
-                    .callHandler(provideReactiveCallHandler(toolMethod.beanDefinition(), toolMethod.method(), hasOutputSchema(tool)))
+                    .callHandler(provideReactiveCallHandler(toolMethod, hasOutputSchema(tool)))
                     .build();
             })
             .toList();
@@ -144,7 +149,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                 McpSchema.Tool tool = tool(toolMethod.method());
                 return McpStatelessServerFeatures.SyncToolSpecification.builder()
                     .tool(tool)
-                    .callHandler(provideSyncCallHandler(toolMethod.beanDefinition(), toolMethod.method(), hasOutputSchema(tool)))
+                    .callHandler(provideSyncCallHandler(toolMethod, hasOutputSchema(tool)))
                     .build();
             })
             .toList();
@@ -157,59 +162,48 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                 McpSchema.Tool tool = tool(toolMethod.method());
                 return McpStatelessServerFeatures.AsyncToolSpecification.builder()
                     .tool(tool)
-                    .callHandler(provideReactiveCallHandler(toolMethod.beanDefinition(), toolMethod.method(), hasOutputSchema(tool)))
+                    .callHandler(provideReactiveCallHandler(toolMethod, hasOutputSchema(tool)))
                     .build();
             })
             .toList();
-    }
-
-    @Override
-    public boolean isNotEmpty() {
-        return CollectionUtils.isNotEmpty(getAsyncSpecs()) ||
-            CollectionUtils.isNotEmpty(getSyncSpecs()) ||
-            CollectionUtils.isNotEmpty(getStatelessAsyncSpecs()) ||
-            CollectionUtils.isNotEmpty(getStatelessSyncSpecs());
     }
 
     private static boolean hasOutputSchema(McpSchema.Tool tool) {
         return CollectionUtils.isNotEmpty(tool.outputSchema());
     }
 
-    private <B, C> BiFunction<C, McpSchema.CallToolRequest, McpSchema.CallToolResult> provideSyncCallHandler(BeanDefinition<B> beanDefinition,
-                                                                                                             ExecutableMethod<B, Object> method,
+    private <B, C> BiFunction<C, McpSchema.CallToolRequest, McpSchema.CallToolResult> provideSyncCallHandler(Method<B> m,
                                                                                                              boolean structuredOutput) {
         return (mcpTransportContext, callToolRequest)
-            -> callToolToResult(beanDefinition, method, structuredOutput, mcpTransportContext, callToolRequest);
+            -> callToolToResult(m, structuredOutput, mcpTransportContext, callToolRequest);
     }
 
-    private <B, C> BiFunction<C, McpSchema.CallToolRequest, Mono<McpSchema.CallToolResult>> provideReactiveCallHandler(BeanDefinition<B> beanDefinition,
-                                                                                                                       ExecutableMethod<B, Object> method,
+    private <B, C> BiFunction<C, McpSchema.CallToolRequest, Mono<McpSchema.CallToolResult>> provideReactiveCallHandler(Method<B> m,
                                                                                                                        boolean structuredOutput) {
         return (mcpTransportContext, callToolRequest)
-            -> reactiveCallToolToResult(beanDefinition, method, structuredOutput, mcpTransportContext, callToolRequest);
+            -> reactiveCallToolToResult(m, structuredOutput, mcpTransportContext, callToolRequest);
     }
 
-    private <B> Mono<McpSchema.CallToolResult> reactiveCallToolToResult(BeanDefinition<B> beanDefinition,
-                                                                        ExecutableMethod<B, Object> method,
+    private <B> Mono<McpSchema.CallToolResult> reactiveCallToolToResult(Method<B> m,
                                                                         boolean structuredOutput,
                                                                         Object mcpTransportContext,
                                                                         McpSchema.CallToolRequest callToolRequest) {
-        McpSchema.CallToolResult result = callToolToResult(beanDefinition, method, structuredOutput, mcpTransportContext, callToolRequest);
+        McpSchema.CallToolResult result = callToolToResult(m, structuredOutput, mcpTransportContext, callToolRequest);
         if (result == null) {
             return Mono.empty();
         }
         return Mono.just(result);
     }
 
-    private <B> McpSchema.CallToolResult callToolToResult(BeanDefinition<B> beanDefinition,
-                                                          ExecutableMethod<B, Object> method,
+    private <B> McpSchema.CallToolResult callToolToResult(Method<B> m,
                                                           boolean structuredOutput,
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
+        ExecutableMethod<B, Object> method = m.method();
         Argument<?> returnClass = method.getReturnType().asArgument();
-        B bean = beanContext.getBean(beanDefinition);
+        B bean = m.bean();
         ExecutableBinder<McpSchema.CallToolRequest> executableBinder = new DefaultExecutableBinder<>(
-            prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), callToolRequest)));
+            m.preBound(mcpTransportContext, callToolRequest));
         try {
             BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, callToolRequest);
             Object result = executable.invoke(bean);

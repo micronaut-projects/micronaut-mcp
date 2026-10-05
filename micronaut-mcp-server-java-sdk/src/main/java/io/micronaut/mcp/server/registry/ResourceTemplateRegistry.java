@@ -23,7 +23,7 @@ import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.core.bind.BoundExecutable;
 import io.micronaut.core.bind.DefaultExecutableBinder;
 import io.micronaut.core.bind.ExecutableBinder;
-import io.micronaut.inject.BeanDefinition;
+import io.micronaut.http.uri.UriMatchTemplate;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
@@ -53,6 +53,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
     McpStatelessServerFeatures.SyncResourceTemplateSpecification,
     McpStatelessServerFeatures.AsyncResourceTemplateSpecification> {
 
+    private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.ReadResourceRequest.class};
     private final ArgumentBinderRegistry<UriTemplateReadResourceRequest> argumentBinderRegistry;
 
     ResourceTemplateRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
@@ -63,11 +64,16 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
     }
 
     @Override
+    protected Class<?>[] boundParameterTypes() {
+        return BOUND_PARAMETER_TYPES;
+    }
+
+    @Override
     public List<McpServerFeatures.SyncResourceTemplateSpecification> getSyncSpecs() {
         return drainMethods()
             .map(m -> new McpServerFeatures.SyncResourceTemplateSpecification(
                 toResourceTemplate(m.method()),
-                syncHandler(m.beanDefinition(), m.method())
+                syncHandler(m)
             ))
             .toList();
     }
@@ -77,7 +83,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         return drainMethods()
             .map(m -> new McpServerFeatures.AsyncResourceTemplateSpecification(
                 toResourceTemplate(m.method()),
-                asyncHandler(m.beanDefinition(), m.method())
+                asyncHandler(m)
             ))
             .toList();
     }
@@ -87,7 +93,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         return drainMethods()
             .map(m -> new McpStatelessServerFeatures.SyncResourceTemplateSpecification(
                 toResourceTemplate(m.method()),
-                statelessSyncHandler(m.beanDefinition(), m.method())
+                statelessSyncHandler(m)
             ))
             .toList();
     }
@@ -97,17 +103,9 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         return drainMethods()
             .map(m -> new McpStatelessServerFeatures.AsyncResourceTemplateSpecification(
                 toResourceTemplate(m.method()),
-                statelessAsyncHandler(m.beanDefinition(), m.method())
+                statelessAsyncHandler(m)
             ))
             .toList();
-    }
-
-    @Override
-    public boolean isNotEmpty() {
-        return !getSyncSpecs().isEmpty()
-            || !getAsyncSpecs().isEmpty()
-            || !getStatelessSyncSpecs().isEmpty()
-            || !getStatelessAsyncSpecs().isEmpty();
     }
 
     private static <B> McpSchema.ResourceTemplate toResourceTemplate(ExecutableMethod<B, Object> method) {
@@ -123,46 +121,50 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
     }
 
     private <B> BiFunction<McpSyncServerExchange, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> syncHandler(
-        BeanDefinition<B> beanDefinition,
-        ExecutableMethod<B, Object> method
+        Method<B> m
     ) {
-        return (exchange, request) -> invokeAndMap(beanDefinition, method, exchange, request);
+        UriMatchTemplate uriTemplate = uriMatchTemplate(m.method());
+        return (exchange, request) -> invokeAndMap(m, uriTemplate, exchange, request);
     }
 
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> asyncHandler(
-        BeanDefinition<B> beanDefinition,
-        ExecutableMethod<B, Object> method
+        Method<B> m
     ) {
-        return (exchange, request) -> Mono.just(invokeAndMap(beanDefinition, method, exchange, request));
+        UriMatchTemplate uriTemplate = uriMatchTemplate(m.method());
+        return (exchange, request) -> Mono.just(invokeAndMap(m, uriTemplate, exchange, request));
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> statelessSyncHandler(
-        BeanDefinition<B> beanDefinition,
-        ExecutableMethod<B, Object> method
+        Method<B> m
     ) {
-        return (ctx, request) -> invokeAndMap(beanDefinition, method, ctx, request);
+        UriMatchTemplate uriTemplate = uriMatchTemplate(m.method());
+        return (ctx, request) -> invokeAndMap(m, uriTemplate, ctx, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> statelessAsyncHandler(
-        BeanDefinition<B> beanDefinition,
-        ExecutableMethod<B, Object> method
+        Method<B> m
     ) {
-        return (ctx, request) -> Mono.just(invokeAndMap(beanDefinition, method, ctx, request));
+        UriMatchTemplate uriTemplate = uriMatchTemplate(m.method());
+        return (ctx, request) -> Mono.just(invokeAndMap(m, uriTemplate, ctx, request));
     }
 
-    private <B> McpSchema.ReadResourceResult invokeAndMap(BeanDefinition<B> beanDefinition,
-                                                          ExecutableMethod<B, Object> method,
+    private static UriMatchTemplate uriMatchTemplate(ExecutableMethod<?, ?> method) {
+        String uriTemplate = method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY)
+            .orElseThrow(() -> new ConfigurationException("Missing required member uriTemplate in @ResourceTemplate annotation"));
+        return UriMatchTemplate.of(uriTemplate);
+    }
+
+    private <B> McpSchema.ReadResourceResult invokeAndMap(Method<B> m,
+                                                          UriMatchTemplate uriTemplate,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
-        B bean = beanContext.getBean(beanDefinition);
+        ExecutableMethod<B, Object> method = m.method();
+        B bean = m.bean();
 
         ExecutableBinder<UriTemplateReadResourceRequest> executableBinder = new DefaultExecutableBinder<>(
-            prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), request)));
+            m.preBound(mcpTransportContext, request));
 
-        String uriTemplate = method.getAnnotation(ResourceTemplate.class)
-            .stringValue(URI_TEMPLATE_PROPERTY)
-            .orElseThrow(() -> new ConfigurationException("Missing required member uriTemplate in @ResourceTemplate annotation"));
-        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, new UriTemplateReadResourceRequest(uriTemplate, request));
+        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request));
         Object result = executable.invoke(bean);
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
