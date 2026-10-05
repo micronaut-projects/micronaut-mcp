@@ -37,6 +37,7 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
     private boolean logRequests;
     private boolean logResponses;
     private Map<String, String> headers = Map.of();
+    private boolean propagateAuthorization;
     private @Nullable Duration initializationTimeout;
     private @Nullable Duration requestTimeout;
 
@@ -125,6 +126,20 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
      */
     public void setHeaders(@Nullable Map<String, String> headers) {
         this.headers = headers != null ? headers : Map.of();
+    }
+
+    @Override
+    public boolean isPropagateAuthorization() {
+        return propagateAuthorization;
+    }
+
+    /**
+     * Whether to send the {@code Authorization} header of the HTTP request the server is handling to the MCP server. Default value {@code false}.
+     *
+     * @param propagateAuthorization Whether to propagate the {@code Authorization} header
+     */
+    public void setPropagateAuthorization(boolean propagateAuthorization) {
+        this.propagateAuthorization = propagateAuthorization;
     }
 
     @Override

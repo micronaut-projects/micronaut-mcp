@@ -44,3 +44,20 @@ The MCP Client pointing to your MCP Server has a name qualifier with value `embe
 To customize client creation further, define a
 https://docs.micronaut.io/latest/api/io/micronaut/context/event/BeanCreatedEventListener.html[BeanCreatedEventListener]
 for `DefaultMcpClient.Builder`, `StreamableHttpMcpTransport.Builder` or `StdioMcpTransport.Builder`.
+
+== Authorization
+
+To call MCP servers on behalf of the user, set `propagate-authorization` on an HTTP connection: the `Authorization` header of the HTTP request the application is handling, such as the user's bearer token, is sent to the MCP server.
+
+[configuration]
+----
+micronaut:
+  mcp:
+    client:
+      http:
+        weather:
+          url: https://weather.example.com/mcp
+          propagate-authorization: true
+----
+
+To compute headers for each request otherwise, for example to send an OAuth access token that is refreshed, declare a bean of type `io.micronaut.mcp.conf.client.McpClientHeadersProvider`. Both apply to the LangChain4j and the Java SDK clients, and are evaluated on the thread that calls the client: call it from the thread handling the request for the `Authorization` header to be propagated.

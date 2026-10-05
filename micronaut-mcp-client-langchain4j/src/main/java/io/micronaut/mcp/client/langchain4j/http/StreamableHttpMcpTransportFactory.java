@@ -20,12 +20,22 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
+import dev.langchain4j.mcp.client.McpHeadersSupplier;
+import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
+import io.micronaut.mcp.conf.client.McpClientRequestHeaders;
 import jakarta.inject.Singleton;
+
+import java.util.List;
 
 @Factory
 @Internal
 final class StreamableHttpMcpTransportFactory {
+    private final List<McpClientHeadersProvider> headersProviders;
+
+    StreamableHttpMcpTransportFactory(List<McpClientHeadersProvider> headersProviders) {
+        this.headersProviders = headersProviders;
+    }
 
     @EachBean(McpClientHttpConfiguration.class)
     @Prototype
@@ -37,7 +47,10 @@ final class StreamableHttpMcpTransportFactory {
         }
         builder.logRequests(config.isLogRequests());
         builder.logResponses(config.isLogResponses());
-        if (!config.getHeaders().isEmpty()) {
+        if (McpClientRequestHeaders.isDynamic(config, headersProviders)) {
+            // Computed for each request, on the thread that calls the client
+            builder.customHeaders((McpHeadersSupplier) context -> McpClientRequestHeaders.headers(config, headersProviders));
+        } else if (!config.getHeaders().isEmpty()) {
             builder.customHeaders(config.getHeaders());
         }
         return builder;

@@ -23,11 +23,14 @@ import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
+import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
+import io.micronaut.mcp.conf.client.McpClientRequestHeaders;
 import io.micronaut.mcp.conf.client.McpClientStdioConfiguration;
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
+import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.client.transport.ServerParameters;
 import io.modelcontextprotocol.client.transport.StdioClientTransport;
@@ -44,6 +47,7 @@ import reactor.core.scheduler.Schedulers;
 import java.net.http.HttpRequest;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Creates the transport of each connection, Streamable HTTP or STDIO, and a synchronous and an asynchronous MCP client
@@ -52,6 +56,7 @@ import java.util.List;
 @Factory
 @Internal
 final class McpClientFactory {
+    private static final String HEADERS = McpClientFactory.class.getName() + ".headers";
     private final McpJsonMapper mcpJsonMapper;
     private final BeanContext beanContext;
     private final @Nullable McpSamplingHandler samplingHandler;
@@ -59,6 +64,7 @@ final class McpClientFactory {
     private final List<McpLoggingHandler> loggingHandlers;
     private final List<McpProgressHandler> progressHandlers;
     private final List<McpListChangedListener> listChangedListeners;
+    private final List<McpClientHeadersProvider> headersProviders;
 
     McpClientFactory(McpJsonMapper mcpJsonMapper,
                      BeanContext beanContext,
@@ -66,7 +72,9 @@ final class McpClientFactory {
                      @Nullable McpElicitationHandler elicitationHandler,
                      List<McpLoggingHandler> loggingHandlers,
                      List<McpProgressHandler> progressHandlers,
-                     List<McpListChangedListener> listChangedListeners) {
+                     List<McpListChangedListener> listChangedListeners,
+                     List<McpClientHeadersProvider> headersProviders) {
+        this.headersProviders = headersProviders;
         this.mcpJsonMapper = mcpJsonMapper;
         this.beanContext = beanContext;
         this.samplingHandler = samplingHandler;
@@ -86,6 +94,15 @@ final class McpClientFactory {
             HttpRequest.Builder request = HttpRequest.newBuilder();
             configuration.getHeaders().forEach(request::header);
             builder.requestBuilder(request);
+        }
+        if (McpClientRequestHeaders.isDynamic(configuration, headersProviders)) {
+            // The synchronous client computes the headers in its transport context provider, on the thread that calls it;
+            // for the asynchronous client they are computed here
+            builder.httpRequestCustomizer((request, method, endpoint, body, context) -> {
+                Object headers = context.get(HEADERS);
+                Map<?, ?> values = headers instanceof Map<?, ?> map ? map : McpClientRequestHeaders.headers(configuration, headersProviders);
+                values.forEach((name, value) -> request.setHeader(name.toString(), value.toString()));
+            });
         }
         return builder;
     }
@@ -118,6 +135,9 @@ final class McpClientFactory {
         McpClient.SyncSpec spec = McpClient.sync(transport(name))
             .jsonSchemaValidator(jsonSchemaValidator)
             .capabilities(capabilities());
+        if (configuration instanceof McpClientHttpConfiguration http && McpClientRequestHeaders.isDynamic(http, headersProviders)) {
+            spec.transportContextProvider(() -> McpTransportContext.create(Map.of(HEADERS, McpClientRequestHeaders.headers(http, headersProviders))));
+        }
         Duration requestTimeout = requestTimeout(configuration);
         if (requestTimeout != null) {
             spec.requestTimeout(requestTimeout);
