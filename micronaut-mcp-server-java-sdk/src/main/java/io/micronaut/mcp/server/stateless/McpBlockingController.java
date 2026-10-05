@@ -32,6 +32,7 @@ import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
 import org.jspecify.annotations.Nullable;
+import reactor.core.publisher.Mono;
 
 /**
  * The MCP endpoint of a synchronous server. Requests are handled on the blocking executor, which runs on virtual threads
@@ -54,7 +55,9 @@ final class McpBlockingController extends McpController {
 
     @SuppressWarnings("java:S3740")
     @Post
-    @Nullable HttpResponse<?> handlePost(HttpRequest<?> request, @Body @Nullable JsonNode body) {
-        return handle(request, body).block();
+    Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable JsonNode body) {
+        // Subscribed to on the blocking thread, where the server invokes the primitive; a response upgraded to a
+        // stream is written while the primitive still runs
+        return handle(request, body);
     }
 }

@@ -1,0 +1,22 @@
+Declare a parameter of type `McpRequestContext` in a tool, prompt, resource or completion method to report progress, send log messages to the client, or check whether the client stopped waiting:
+
+[source,java]
+----
+@Tool
+String importCatalog(int pages, McpRequestContext context) {
+    for (int page = 1; page <= pages; page++) {
+        importPage(page);
+        context.progress(page, (double) pages, "Imported page " + page); // <1>
+    }
+    context.log(McpSchema.LoggingLevel.INFO, "catalog", "Imported " + pages + " pages"); // <2>
+    return "done";
+}
+----
+<1> Sends a https://modelcontextprotocol.io/specification/2025-11-25/basic/utilities/progress[progress notification], if the client asked for progress with a progress token.
+<2> Sends a https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/logging[log message].
+
+The parameter is not part of the tool's input schema or of the prompt's arguments.
+
+Over the HTTP transport, the response to a request whose client accepts both `application/json` and `text/event-stream` becomes an event stream as soon as the method sends a notification: each notification is sent as an event while the method runs, followed by the result. A request that sends no notification, or whose client only accepts JSON, is answered with JSON.
+
+`elicit` and `sample` send requests to the client, which only the STDIO transport supports: over the stateless HTTP transport they throw `UnsupportedOperationException`.

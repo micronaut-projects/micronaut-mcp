@@ -18,12 +18,15 @@ package io.micronaut.mcp.server.stateless;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.json.tree.JsonNode;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
+import io.micronaut.mcp.server.context.McpNotificationEmitter;
 import io.micronaut.mcp.server.exceptions.JsonRrpcResponseUtils;
 import io.micronaut.mcp.server.json.MicronautMcpJsonMapper;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -88,6 +91,13 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
         McpTransportContext transportContext = contextExtractor.extract(request);
         McpSchema.JSONRPCMessage jsonRpcMessage = jsonRpcMessage(body);
         if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
+            if (acceptsEventStream(request)) {
+                return Mono.create(sink -> {
+                    StreamingJsonRpcResponse response = new StreamingJsonRpcResponse(sink);
+                    request.setAttribute(McpNotificationEmitter.ATTRIBUTE, response);
+                    handleJsonRpcRequest(jsonrpcRequest, transportContext).subscribe(response::complete, response::fail);
+                });
+            }
             return handleJsonRpcRequest(jsonrpcRequest, transportContext);
         } else if (jsonRpcMessage instanceof McpSchema.JSONRPCNotification notification) {
             return handleJsonRpcNotification(notification, transportContext);
@@ -169,6 +179,15 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
             return id.getNumberValue();
         }
         return id.isNull() ? null : id.getValue();
+    }
+
+    private static boolean acceptsEventStream(HttpRequest<?> request) {
+        for (String accept : request.getHeaders().getAll(HttpHeaders.ACCEPT)) {
+            if (accept.contains(MediaType.TEXT_EVENT_STREAM)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Map<String, Object> invalidRequest() {

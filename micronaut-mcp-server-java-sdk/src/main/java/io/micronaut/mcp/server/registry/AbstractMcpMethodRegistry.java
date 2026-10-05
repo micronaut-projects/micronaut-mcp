@@ -34,6 +34,8 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.mcp.server.context.DefaultMcpRequestContext;
+import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
@@ -244,6 +246,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @param <B> The type of the bean.
      */
     protected static final class Method<B> {
+        private static final int REQUEST_CONTEXT = -1;
         private final BeanContext beanContext;
         private final BeanDefinition<B> beanDefinition;
         private final ExecutableMethod<B, Object> method;
@@ -267,6 +270,11 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             List<Integer> indexes = new ArrayList<>();
             for (Argument<?> argument : method.getArguments()) {
                 Class<?> type = argument.getType();
+                if (type == McpRequestContext.class) {
+                    arguments.add(argument);
+                    indexes.add(REQUEST_CONTEXT);
+                    continue;
+                }
                 for (int i = 0; i < boundParameterTypes.length; i++) {
                     Class<?> boundType = boundParameterTypes[i];
                     // A parameter declared as a subtype of a bound type is bound when the value is an instance of it
@@ -391,7 +399,12 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             Map<Argument<?>, Object> preBound = CollectionUtils.newHashMap(boundArguments.length);
             for (int i = 0; i < boundArguments.length; i++) {
                 int index = boundIndexes[i];
-                Object value = index == 0 ? resolveMcpTransportContext(context) : values[index - 1];
+                Object value;
+                if (index == REQUEST_CONTEXT) {
+                    value = DefaultMcpRequestContext.of(context, values[0]);
+                } else {
+                    value = index == 0 ? resolveMcpTransportContext(context) : values[index - 1];
+                }
                 Argument<?> argument = boundArguments[i];
                 if (argument.getType().isInstance(value)) {
                     preBound.put(argument, value);

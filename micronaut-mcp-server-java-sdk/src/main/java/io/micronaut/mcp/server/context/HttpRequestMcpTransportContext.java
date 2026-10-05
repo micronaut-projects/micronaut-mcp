@@ -61,6 +61,13 @@ final class HttpRequestMcpTransportContext implements MicronautMcpTransportConte
         };
     }
 
+    /**
+     * @return The emitter of the notifications of the request, when its response can be upgraded to a stream
+     */
+    @Nullable McpNotificationEmitter emitter() {
+        return request.getAttribute(McpNotificationEmitter.ATTRIBUTE, McpNotificationEmitter.class).orElse(null);
+    }
+
     @Override
     public @Nullable Locale locale() {
         Object value = locale;
