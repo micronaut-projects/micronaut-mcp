@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,23 +17,52 @@ package io.micronaut.mcp.client.langchain4j;
 
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
+import dev.langchain4j.mcp.client.McpClientListener;
+import dev.langchain4j.mcp.client.logging.McpLogMessageHandler;
 import dev.langchain4j.mcp.client.transport.McpTransport;
+import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
+import java.util.List;
+
+/**
+ * Creates an {@link McpClient} for each connection, over the transport of the connection.
+ */
 @Internal
 @Factory
 final class McpClientFactory {
 
-    @EachBean(McpTransport.class)
+    @EachBean(McpClientConnectionConfiguration.class)
     @Prototype
-    DefaultMcpClient.Builder crateMcpClientBuilder(McpTransport transport) {
-        return new DefaultMcpClient.Builder()
-            .transport(transport);
+    DefaultMcpClient.Builder crateMcpClientBuilder(McpClientConnectionConfiguration configuration,
+                                                   BeanContext beanContext,
+                                                   List<McpClientListener> listeners,
+                                                   @Nullable McpLogMessageHandler logMessageHandler) {
+        DefaultMcpClient.Builder builder = new DefaultMcpClient.Builder()
+            .transport(beanContext.getBean(McpTransport.class, Qualifiers.byName(configuration.getName())))
+            // The key identifies the client, for example in tool name mappers and filters
+            .key(configuration.getName())
+            .addListeners(listeners);
+        if (configuration.getInitializationTimeout() != null) {
+            builder.initializationTimeout(configuration.getInitializationTimeout());
+        }
+        if (configuration.getRequestTimeout() != null) {
+            builder.toolExecutionTimeout(configuration.getRequestTimeout())
+                .resourcesTimeout(configuration.getRequestTimeout())
+                .promptsTimeout(configuration.getRequestTimeout());
+        }
+        if (logMessageHandler != null) {
+            builder.logHandler(logMessageHandler);
+        }
+        return builder;
     }
 
     @EachBean(DefaultMcpClient.Builder.class)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 /**
- * Classes related with Langchain4J MCP Client and Streamable HTTP transport.
+ * Health of the MCP clients.
  */
-@Configuration
-package io.micronaut.mcp.client.langchain4j.http;
-import io.micronaut.context.annotation.Configuration;
+package io.micronaut.mcp.client.langchain4j.health;

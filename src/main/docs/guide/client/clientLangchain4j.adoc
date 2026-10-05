@@ -2,9 +2,45 @@ To use an https://docs.langchain4j.dev/tutorials/mcp#mcp-client[MCP Client power
 
 dependency:micronaut-mcp-client-langchain4j[groupId=io.micronaut.mcp]
 
-Additionally, if you are building an MCP Server, you can test it by injecting a bean of type `dev.langchain4j.mcp.client.McpClient` in your tests.
+Declare a named connection for each MCP server, over Streamable HTTP or STDIO. Connections of both transports can be used together:
+
+[configuration]
+----
+micronaut:
+  mcp:
+    client:
+      http:
+        weather:
+          url: https://weather.example.com/mcp
+          headers:
+            Authorization: Bearer ${WEATHER_TOKEN}
+          request-timeout: 30s
+      stdio:
+        files:
+          command:
+            - npx
+            - -y
+            - "@modelcontextprotocol/server-filesystem"
+            - /tmp
+          environment:
+            DEBUG: "false"
+----
+
+For each connection there is a `dev.langchain4j.mcp.client.McpClient` bean, qualified by the name of the connection, which is also the key of the client. A `dev.langchain4j.mcp.McpToolProvider` bean provides the tools of every client to LangChain4j AI services, and a `McpToolProvider` bean qualified by the name of a connection provides only the tools of that client.
+
+Declare beans of these types to customize the clients and the tool providers:
+
+- `io.micronaut.mcp.client.langchain4j.McpToolFilter` selects the tools that the tool providers provide.
+- `io.micronaut.mcp.client.langchain4j.McpToolNameMapper` names them, for example to prefix them with the client key so that the tools of different servers cannot clash.
+- `dev.langchain4j.mcp.client.McpClientListener` and `dev.langchain4j.mcp.client.logging.McpLogMessageHandler` are registered with every client.
+
+With Micronaut Management, the `mcp` health indicator pings every server; disable it with `endpoints.health.mcp.enabled=false`.
+
+The `langchain4j.mcp.client.transport.stdio.commands` property is deprecated: it declares a STDIO connection named `stdio`.
+
+If you are building an MCP Server, you can test it by injecting a bean of type `dev.langchain4j.mcp.client.McpClient` in your tests.
 The MCP Client pointing to your MCP Server has a name qualifier with value `embeddedServer`.
 
-To customize client creation for your application's needs, define a
+To customize client creation further, define a
 https://docs.micronaut.io/latest/api/io/micronaut/context/event/BeanCreatedEventListener.html[BeanCreatedEventListener]
-for `StreamableHttpMcpTransport.Builder`.
+for `DefaultMcpClient.Builder`, `StreamableHttpMcpTransport.Builder` or `StdioMcpTransport.Builder`.

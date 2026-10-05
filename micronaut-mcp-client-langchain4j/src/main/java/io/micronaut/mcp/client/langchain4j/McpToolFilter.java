@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.micronaut.mcp.client.langchain4j;
+
+import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.mcp.client.McpClient;
+
+import java.util.function.BiPredicate;
+
 /**
- * Classes related with Langchain4J MCP Client and Streamable HTTP transport.
+ * Selects the tools of the MCP clients that the {@link dev.langchain4j.mcp.McpToolProvider} beans provide. Declare a bean
+ * of this type to filter them.
+ *
+ * @since 2.2.0
  */
-@Configuration
-package io.micronaut.mcp.client.langchain4j.http;
-import io.micronaut.context.annotation.Configuration;
+@FunctionalInterface
+public interface McpToolFilter extends BiPredicate<McpClient, ToolSpecification> {
+}

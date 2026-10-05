@@ -23,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Map;
 
 /**
  * {@link EachProperty} implementation of {@link McpClientHttpConfiguration}.
@@ -35,6 +36,9 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
     private Duration timeout;
     private boolean logRequests;
     private boolean logResponses;
+    private Map<String, String> headers = Map.of();
+    private @Nullable Duration initializationTimeout;
+    private @Nullable Duration requestTimeout;
 
     /**
      * Constructor.
@@ -109,5 +113,41 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
      */
     public void setLogResponses(boolean logResponses) {
         this.logResponses = logResponses;
+    }
+
+    @Override
+    public @NonNull Map<String, String> getHeaders() {
+        return headers;
+    }
+
+    /**
+     * @param headers The headers sent with every request, such as {@code Authorization}
+     */
+    public void setHeaders(@Nullable Map<String, String> headers) {
+        this.headers = headers != null ? headers : Map.of();
+    }
+
+    @Override
+    public @Nullable Duration getInitializationTimeout() {
+        return initializationTimeout;
+    }
+
+    /**
+     * @param initializationTimeout How long to wait for the server to answer the initialization
+     */
+    public void setInitializationTimeout(@Nullable Duration initializationTimeout) {
+        this.initializationTimeout = initializationTimeout;
+    }
+
+    @Override
+    public @Nullable Duration getRequestTimeout() {
+        return requestTimeout;
+    }
+
+    /**
+     * @param requestTimeout How long to wait for the server to answer a request, such as a tool call
+     */
+    public void setRequestTimeout(@Nullable Duration requestTimeout) {
+        this.requestTimeout = requestTimeout;
     }
 }

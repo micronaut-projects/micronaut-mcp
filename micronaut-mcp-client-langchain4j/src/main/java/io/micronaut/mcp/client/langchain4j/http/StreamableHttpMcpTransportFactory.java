@@ -37,6 +37,9 @@ final class StreamableHttpMcpTransportFactory {
         }
         builder.logRequests(config.isLogRequests());
         builder.logResponses(config.isLogResponses());
+        if (!config.getHeaders().isEmpty()) {
+            builder.customHeaders(config.getHeaders());
+        }
         return builder;
     }
 
