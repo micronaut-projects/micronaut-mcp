@@ -43,8 +43,9 @@ final class McpReactiveController extends McpController {
     McpReactiveController(McpStatelessServerHandler mcpHandler,
                           McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
                           JsonMapper jsonMapper,
-                          McpJsonMapper mcpJsonMapper) {
-        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper);
+                          McpJsonMapper mcpJsonMapper,
+                          McpRequestValidator requestValidator) {
+        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper, requestValidator);
     }
 
     @SuppressWarnings("java:S3740")
