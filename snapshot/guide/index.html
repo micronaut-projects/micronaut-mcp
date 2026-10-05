@@ -464,7 +464,12 @@ micronaut.mcp.server.info.version=1.0.0</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">micronaut = {mcp = {server = {transport = "STDIO", info = {name = "pgn-resources", version = "1.0.0"}}}}</code></pre>
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.mcp.server]
+transport = "STDIO"
+
+[micronaut.mcp.server.info]
+name = "pgn-resources"
+version = "1.0.0"</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -553,7 +558,12 @@ micronaut.mcp.server.info.version=1.0.0</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">micronaut = {mcp = {server = {transport = "HTTP", info = {name = "pgn-resources", version = "1.0.0"}}}}</code></pre>
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.mcp.server]
+transport = "HTTP"
+
+[micronaut.mcp.server.info]
+name = "pgn-resources"
+version = "1.0.0"</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
