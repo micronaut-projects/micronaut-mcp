@@ -51,15 +51,15 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
             throw new IllegalArgumentException("Structured content must not be null");
         }
         try {
-            Set<? extends ValidationMessage> validationResult = validator.validate(structuredContent, schema);
+            // Serialized once: the validator takes a String as JSON, and the SDK reuses the JSON as text content
+            String jsonStructuredOutput = jsonMapper.writeValueAsString(structuredContent);
+            Set<? extends ValidationMessage> validationResult = validator.validate(jsonStructuredOutput, schema);
             if (CollectionUtils.isNotEmpty(validationResult)) {
                 return ValidationResponse
                     .asInvalid("Validation failed: structuredContent does not match tool outputSchema. "
                         + "Validation errors: " + validationResult);
             }
-            String jsonStructuredOutput = jsonMapper.writeValueAsString(structuredContent);
-
-            return ValidationResponse.asValid(jsonStructuredOutput.toString());
+            return ValidationResponse.asValid(jsonStructuredOutput);
         } catch (JacksonException e) {
             if (LOG.isErrorEnabled()) {
                 LOG.error("Error parsing schema: {}", e);
