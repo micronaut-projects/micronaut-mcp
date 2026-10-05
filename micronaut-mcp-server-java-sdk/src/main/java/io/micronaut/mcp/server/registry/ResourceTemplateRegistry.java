@@ -160,16 +160,16 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                           UriMatchTemplate uriTemplate,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
-        return map(m, request, m.await(invoke(m, uriTemplate, mcpTransportContext, request)));
+        return observed(McpSchema.METHOD_RESOURCES_READ, uriTemplate.toString(), () -> map(m, request, m.await(invoke(m, uriTemplate, mcpTransportContext, request))));
     }
 
     private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
                                                                      UriMatchTemplate uriTemplate,
                                                                      Object mcpTransportContext,
                                                                      McpSchema.ReadResourceRequest request) {
-        return m.invokeAsync(() -> invoke(m, uriTemplate, mcpTransportContext, request))
+        return observedAsync(McpSchema.METHOD_RESOURCES_READ, uriTemplate.toString(), () -> m.invokeAsync(() -> invoke(m, uriTemplate, mcpTransportContext, request))
             .map(result -> map(m, request, result))
-            .switchIfEmpty(Mono.fromSupplier(() -> map(m, request, null)));
+            .switchIfEmpty(Mono.fromSupplier(() -> map(m, request, null))));
     }
 
     private <B> @Nullable Object invoke(Method<B> m,

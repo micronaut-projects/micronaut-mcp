@@ -36,6 +36,7 @@ import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.ToolArg;
 import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
+import io.micronaut.mcp.server.observability.McpServerObserver;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -190,23 +191,29 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                                                                         boolean structuredOutput,
                                                                         Object mcpTransportContext,
                                                                         McpSchema.CallToolRequest callToolRequest) {
-        return m.invokeAsync(() -> invoke(m, mcpTransportContext, callToolRequest))
+        return observedAsync(McpSchema.METHOD_TOOLS_CALL, callToolRequest.name(), () -> m.invokeAsync(() -> invoke(m, mcpTransportContext, callToolRequest))
             .map(result -> toCallToolResult(m, structuredOutput, result))
             .switchIfEmpty(Mono.fromSupplier(() -> toCallToolResult(m, structuredOutput, null)))
-            .onErrorResume(Exception.class::isInstance, ex -> ex instanceof McpError mcpError ? Mono.error(mcpError) : Mono.just(toolExecutionError((Exception) ex)));
+            .onErrorResume(Exception.class::isInstance, ex -> ex instanceof McpError mcpError ? Mono.error(mcpError) : Mono.just(toolExecutionError((Exception) ex))), ToolRegistry::errorType);
     }
 
     private <B> McpSchema.CallToolResult callToolToResult(Method<B> m,
                                                           boolean structuredOutput,
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
-        try {
-            return toCallToolResult(m, structuredOutput, m.await(invoke(m, mcpTransportContext, callToolRequest)));
-        } catch (McpError ex) {
-            throw ex;
-        } catch (Exception ex) {
-            return toolExecutionError(ex);
-        }
+        return observed(McpSchema.METHOD_TOOLS_CALL, callToolRequest.name(), () -> {
+            try {
+                return toCallToolResult(m, structuredOutput, m.await(invoke(m, mcpTransportContext, callToolRequest)));
+            } catch (McpError ex) {
+                throw ex;
+            } catch (Exception ex) {
+                return toolExecutionError(ex);
+            }
+        }, ToolRegistry::errorType);
+    }
+
+    private static @Nullable String errorType(McpSchema.CallToolResult result) {
+        return Boolean.TRUE.equals(result.isError()) ? McpServerObserver.TOOL_ERROR : null;
     }
 
     /**

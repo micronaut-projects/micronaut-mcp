@@ -134,15 +134,15 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     private <B> McpSchema.ReadResourceResult invokeAndMap(Method<B> m,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
-        return map(m, request, m.await(invoke(m, mcpTransportContext, request)));
+        return observed(McpSchema.METHOD_RESOURCES_READ, request.uri(), () -> map(m, request, m.await(invoke(m, mcpTransportContext, request))));
     }
 
     private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
                                                                      Object mcpTransportContext,
                                                                      McpSchema.ReadResourceRequest request) {
-        return m.invokeAsync(() -> invoke(m, mcpTransportContext, request))
+        return observedAsync(McpSchema.METHOD_RESOURCES_READ, request.uri(), () -> m.invokeAsync(() -> invoke(m, mcpTransportContext, request))
             .map(result -> map(m, request, result))
-            .switchIfEmpty(Mono.fromSupplier(() -> map(m, request, null)));
+            .switchIfEmpty(Mono.fromSupplier(() -> map(m, request, null))));
     }
 
     private <B> @Nullable Object invoke(Method<B> m,

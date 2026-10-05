@@ -39,6 +39,7 @@ micronautBuild {
     importMicronautCatalog("micronaut-json-schema")
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-langchain4j")
+    importMicronautCatalog("micronaut-micrometer")
 }
 
 // Micronaut core 5.3.0-SNAPSHOT comes from Maven local, where a core checkout publishes it with

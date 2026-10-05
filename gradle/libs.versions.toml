@@ -23,6 +23,7 @@ micronaut-security = "5.4.0"
 micronaut-serde = "3.2.4"
 micronaut-json-schema = "2.3.2-SNAPSHOT"
 micronaut-langchain4j = "2.3.0"
+micronaut-micrometer = "6.1.0"
 micronaut-validation = "5.2.1"
 managed-mcp-java-sdk = "2.0.1"
 jsonassert = "1.5.3"
@@ -34,6 +35,7 @@ micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'mi
 micronaut-security = { module = 'io.micronaut.security:micronaut-security-bom', version.ref = 'micronaut-security' }
 micronaut-json-schema = { module = 'io.micronaut.jsonschema:micronaut-json-schema-bom', version.ref = 'micronaut-json-schema' }
 micronaut-langchain4j = { module = 'io.micronaut.langchain4j:micronaut-langchain4j-bom', version.ref = 'micronaut-langchain4j' }
+micronaut-micrometer = { module = 'io.micronaut.micrometer:micronaut-micrometer-bom', version.ref = 'micronaut-micrometer' }
 micronaut-serde = { module = 'io.micronaut.serde:micronaut-serde-bom', version.ref = 'micronaut-serde' }
 micronaut-validation = { module = "io.micronaut.validation:micronaut-validation-bom", version.ref = "micronaut-validation" }
 micronaut-test = { module = 'io.micronaut.test:micronaut-test-bom' , version.ref = "micronaut-test" }

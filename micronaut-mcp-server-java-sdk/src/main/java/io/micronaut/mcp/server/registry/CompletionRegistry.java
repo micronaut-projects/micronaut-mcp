@@ -134,15 +134,15 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     private <B> McpSchema.CompleteResult invokeAndMap(Method<B> m,
                                                       Object mcpTransportContext,
                                                       McpSchema.CompleteRequest request) {
-        return map(m, request, m.await(invoke(m, mcpTransportContext, request)));
+        return observed(McpSchema.METHOD_COMPLETION_COMPLETE, completionName(request), () -> map(m, request, m.await(invoke(m, mcpTransportContext, request))));
     }
 
     private <B> Mono<McpSchema.CompleteResult> invokeAndMapAsync(Method<B> m,
                                                                  Object mcpTransportContext,
                                                                  McpSchema.CompleteRequest request) {
-        return m.invokeAsync(() -> invoke(m, mcpTransportContext, request))
+        return observedAsync(McpSchema.METHOD_COMPLETION_COMPLETE, completionName(request), () -> m.invokeAsync(() -> invoke(m, mcpTransportContext, request))
             .map(result -> map(m, request, result))
-            .switchIfEmpty(Mono.fromSupplier(() -> map(m, request, null)));
+            .switchIfEmpty(Mono.fromSupplier(() -> map(m, request, null))));
     }
 
     private <B> @Nullable Object invoke(Method<B> m,
@@ -171,6 +171,16 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
             }
         }
         return completeResult(Collections.emptyList());
+    }
+
+    private static String completionName(McpSchema.CompleteRequest request) {
+        if (request.ref() instanceof McpSchema.PromptReference prompt) {
+            return prompt.name();
+        }
+        if (request.ref() instanceof McpSchema.ResourceReference resource) {
+            return resource.uri();
+        }
+        return String.valueOf(request.ref());
     }
 
     private static McpSchema.CompleteResult completeResult(List<String> values) {

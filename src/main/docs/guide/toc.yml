@@ -18,6 +18,7 @@ server:
   testingYourMcpServer: Testing your MCP Server
   context: MCP Transport Context
   requestContext: MCP Request Context
+  observability: Observability
   security: Security
   primitives:
     title: Primitives

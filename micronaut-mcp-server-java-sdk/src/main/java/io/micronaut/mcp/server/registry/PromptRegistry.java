@@ -134,15 +134,15 @@ public final class PromptRegistry
     private <B> McpSchema.GetPromptResult promptResult(Method<B> m,
                                                        Object mcpTransportContext,
                                                        McpSchema.GetPromptRequest promptRequest) {
-        return map(m, promptRequest, m.await(invoke(m, mcpTransportContext, promptRequest)));
+        return observed(McpSchema.METHOD_PROMPT_GET, promptRequest.name(), () -> map(m, promptRequest, m.await(invoke(m, mcpTransportContext, promptRequest))));
     }
 
     private <B> Mono<McpSchema.GetPromptResult> promptResultAsync(Method<B> m,
                                                                   Object mcpTransportContext,
                                                                   McpSchema.GetPromptRequest promptRequest) {
-        return m.invokeAsync(() -> invoke(m, mcpTransportContext, promptRequest))
+        return observedAsync(McpSchema.METHOD_PROMPT_GET, promptRequest.name(), () -> m.invokeAsync(() -> invoke(m, mcpTransportContext, promptRequest))
             .map(result -> map(m, promptRequest, result))
-            .switchIfEmpty(Mono.fromSupplier(() -> map(m, promptRequest, null)));
+            .switchIfEmpty(Mono.fromSupplier(() -> map(m, promptRequest, null))));
     }
 
     private <B> @Nullable Object invoke(Method<B> m,
