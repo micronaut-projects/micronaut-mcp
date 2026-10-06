@@ -216,11 +216,8 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
      * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/server/tools#error-handling">Tool error handling</a>
      */
     private McpSchema.CallToolResult toolExecutionError(Exception ex) {
-        McpError mapped = mcpError(ex);
-        String message = mapped.getJsonRpcError() != null ? mapped.getJsonRpcError().message() : null;
-        if (message == null || message.isBlank()) {
-            message = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
-        }
+        // The message of an MCP error is that of its JSON-RPC error, which is never empty
+        String message = mcpError(ex).getMessage();
         return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
     }
 
