@@ -38,6 +38,7 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
     private boolean logResponses;
     private Map<String, String> headers = Map.of();
     private boolean propagateAuthorization;
+    private boolean propagateAnyAuthorizationScheme;
     private @Nullable Duration initializationTimeout;
     private @Nullable Duration requestTimeout;
     private boolean autoHealthCheck = true;
@@ -141,6 +142,21 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
      */
     public void setPropagateAuthorization(boolean propagateAuthorization) {
         this.propagateAuthorization = propagateAuthorization;
+    }
+
+    @Override
+    public boolean isPropagateAnyAuthorizationScheme() {
+        return propagateAnyAuthorizationScheme;
+    }
+
+    /**
+     * Whether to propagate the {@code Authorization} header whatever its scheme, instead of only bearer tokens. Default
+     * value {@code false}.
+     *
+     * @param propagateAnyAuthorizationScheme Whether to propagate any authorization scheme
+     */
+    public void setPropagateAnyAuthorizationScheme(boolean propagateAnyAuthorizationScheme) {
+        this.propagateAnyAuthorizationScheme = propagateAnyAuthorizationScheme;
     }
 
     @Override

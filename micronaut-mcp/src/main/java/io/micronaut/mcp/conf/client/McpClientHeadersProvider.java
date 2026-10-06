@@ -21,8 +21,17 @@ import java.util.Map;
 
 /**
  * Provides headers for the requests MCP clients send over HTTP, computed for each request, for example to send an OAuth
- * access token that is refreshed. Every bean of this type is asked, on the thread that calls the client, in addition to
- * the static {@link McpClientHttpConfiguration#getHeaders() headers} of the connection.
+ * access token that is refreshed, or a token exchanged for one whose audience is the MCP server. Every bean of this type
+ * that {@link #supports(McpClientHttpConfiguration) supports} a connection is asked, on the thread that calls the client,
+ * in addition to the static {@link McpClientHttpConfiguration#getHeaders() headers} of the connection, which its headers
+ * override.
+ *
+ * <p>A provider applies to every connection unless it overrides {@link #supports(McpClientHttpConfiguration)}: check the
+ * connection, so that a token meant for one MCP server is not sent to the others.</p>
+ *
+ * <p>A provider must also handle there being no HTTP request the application is handling, for example when the client
+ * initializes or pings the server, or answers a request of the server such as sampling, which it does on threads other
+ * than the one that called it.</p>
  *
  * @since 2.2.0
  */
@@ -35,4 +44,12 @@ public interface McpClientHeadersProvider {
      */
     @NonNull
     Map<String, String> headers(@NonNull McpClientHttpConfiguration connection);
+
+    /**
+     * @param connection The connection
+     * @return Whether this provider provides headers for the requests sent over the connection
+     */
+    default boolean supports(@NonNull McpClientHttpConfiguration connection) {
+        return true;
+    }
 }

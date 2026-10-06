@@ -23,6 +23,7 @@ import jakarta.inject.Singleton;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 
@@ -52,6 +53,10 @@ final class McpAsyncClientCloser implements BeanPreDestroyEventListener<McpAsync
      * @param client The client
      */
     static void close(McpAsyncClient client) {
+        if (Schedulers.isInNonBlockingThread()) {
+            client.close();
+            return;
+        }
         try {
             client.closeGracefully().block(CLOSE_TIMEOUT);
         } catch (RuntimeException e) {
