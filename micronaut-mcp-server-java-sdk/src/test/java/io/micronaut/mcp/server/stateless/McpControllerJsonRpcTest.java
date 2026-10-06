@@ -30,8 +30,9 @@ class McpControllerJsonRpcTest {
     @Test
     void aMessageWithoutJsonRpcVersionIsABadRequest(@Client("/") HttpClient httpClient) {
         BlockingHttpClient client = httpClient.toBlocking();
-        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(HttpRequest.POST("/mcp", """
-            {"method": "tools/list", "id": 1}"""), String.class));
+        HttpRequest<String> request = HttpRequest.POST("/mcp", """
+            {"method": "tools/list", "id": 1}""");
+        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
         assertEquals(-32600, ex.getResponse().getBody(java.util.Map.class).map(m -> ((Number) ((java.util.Map<?, ?>) m.get("error")).get("code")).intValue()).orElse(0));
     }
@@ -39,9 +40,38 @@ class McpControllerJsonRpcTest {
     @Test
     void aBodyThatIsNotAnObjectIsABadRequest(@Client("/") HttpClient httpClient) {
         BlockingHttpClient client = httpClient.toBlocking();
-        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(HttpRequest.POST("/mcp", """
-            [{"jsonrpc": "2.0", "method": "tools/list", "id": 1}]"""), String.class));
+        HttpRequest<String> request = HttpRequest.POST("/mcp", """
+            [{"jsonrpc": "2.0", "method": "tools/list", "id": 1}]""");
+        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+    }
+
+    @Test
+    void aMessageWithAnInvalidVersionMethodOrIdIsABadRequest(@Client("/") HttpClient httpClient) {
+        BlockingHttpClient client = httpClient.toBlocking();
+        for (String body : new String[] {
+            """
+            {"jsonrpc": 2, "method": "tools/list", "id": 1}""",
+            """
+            {"jsonrpc": "2.0", "method": 1, "id": 1}""",
+            """
+            {"jsonrpc": "2.0", "id": 1}""",
+            """
+            {"jsonrpc": "2.0", "id": true, "method": "ping"}"""}) {
+            HttpRequest<String> request = HttpRequest.POST("/mcp", body);
+            HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        }
+    }
+
+    @Test
+    void nullParamsAreAccepted(@Client("/") HttpClient httpClient) throws JSONException {
+        BlockingHttpClient client = httpClient.toBlocking();
+        HttpResponse<String> response = client.exchange(HttpRequest.POST("/mcp", """
+            {"jsonrpc": "2.0", "id": 7, "method": "ping", "params": null}"""), String.class);
+        assertEquals(HttpStatus.OK, response.getStatus());
+        JSONAssert.assertEquals("""
+            {"jsonrpc": "2.0", "id": 7, "result": {}}""", response.body(), true);
     }
 
     @Test
