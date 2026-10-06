@@ -11,6 +11,7 @@ import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.mcp.annotations.Prompt;
+import io.micronaut.mcp.annotations.Resource;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
@@ -91,6 +92,18 @@ class RequestContextStreamingTest {
     }
 
     @Test
+    void promptsAndResourcesStreamTheirNotifications() {
+        List<String> prompt = data(post(ACCEPT_BOTH, """
+            {"jsonrpc": "2.0", "id": 14, "method": "prompts/get", "params": {"name": "explain", "arguments": {"topic": "mcp"}}}""").body());
+        assertEquals(2, prompt.size(), String.valueOf(prompt));
+        assertTrue(prompt.get(0).contains("explaining mcp"), prompt.get(0));
+        List<String> resource = data(post(ACCEPT_BOTH, """
+            {"jsonrpc": "2.0", "id": 15, "method": "resources/read", "params": {"uri": "catalog://status"}}""").body());
+        assertEquals(2, resource.size(), String.valueOf(resource));
+        assertTrue(resource.get(0).contains("reading the status") && resource.get(1).contains("\"text\":\"ok\""), String.valueOf(resource));
+    }
+
+    @Test
     void theRequestContextIsNotPartOfTheInputSchemaOrPromptArguments() {
         String tools = post(MediaType.APPLICATION_JSON, """
             {"jsonrpc": "2.0", "id": 11, "method": "tools/list", "params": {}}""").body();
@@ -165,8 +178,15 @@ class RequestContextStreamingTest {
             return "quiet";
         }
 
+        @Resource(uri = "catalog://status")
+        String status(McpRequestContext context) {
+            context.log(McpSchema.LoggingLevel.INFO, "reading the status");
+            return "ok";
+        }
+
         @Prompt
         String explain(String topic, McpRequestContext context, MicronautMcpTransportContext transport) {
+            context.log(McpSchema.LoggingLevel.INFO, "explaining " + topic);
             return "Explain " + topic;
         }
     }
