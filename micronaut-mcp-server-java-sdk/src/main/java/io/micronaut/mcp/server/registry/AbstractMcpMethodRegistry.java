@@ -397,7 +397,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             }
             PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
             return Mono.defer(() -> {
-                try (PropagatedContext.Scope _ = propagatedContext.propagate()) {
+                try (var _ = propagatedContext.propagate()) {
                     return invokeNow(invocation, mapper, errorHandler);
                 }
             }).subscribeOn(scheduler);
