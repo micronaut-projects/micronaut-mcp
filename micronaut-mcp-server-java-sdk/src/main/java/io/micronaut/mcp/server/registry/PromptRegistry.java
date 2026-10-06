@@ -19,9 +19,6 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
-import io.micronaut.core.bind.BoundExecutable;
-import io.micronaut.core.bind.DefaultExecutableBinder;
-import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.core.type.Argument;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
@@ -133,11 +130,7 @@ public final class PromptRegistry
                                                        Object mcpTransportContext,
                                                        McpSchema.GetPromptRequest promptRequest) {
         ExecutableMethod<B, Object> method = m.method();
-        B bean = m.bean();
-        ExecutableBinder<McpSchema.GetPromptRequest> executableBinder = new DefaultExecutableBinder<>(
-            m.preBound(mcpTransportContext, promptRequest));
-        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, promptRequest);
-        Object result = executable.invoke(bean);
+        Object result = m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest);
         if (result instanceof McpSchema.GetPromptResult promptResult) {
             return promptResult;
         }

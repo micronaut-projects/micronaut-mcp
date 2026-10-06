@@ -19,9 +19,6 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
-import io.micronaut.core.bind.BoundExecutable;
-import io.micronaut.core.bind.DefaultExecutableBinder;
-import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.annotations.Resource;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
@@ -134,12 +131,7 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
         ExecutableMethod<B, Object> method = m.method();
-        B bean = m.bean();
-
-        ExecutableBinder<McpSchema.ReadResourceRequest> executableBinder = new DefaultExecutableBinder<>(
-            m.preBound(mcpTransportContext, request));
-        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, request);
-        Object result = executable.invoke(bean);
+        Object result = m.invoke(argumentBinderRegistry, request, mcpTransportContext, request);
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
         }
