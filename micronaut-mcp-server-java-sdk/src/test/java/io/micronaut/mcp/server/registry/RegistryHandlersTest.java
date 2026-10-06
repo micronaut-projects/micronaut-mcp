@@ -136,7 +136,7 @@ class RegistryHandlersTest {
         try {
             // a protocol error, or a tool execution error
             return Boolean.TRUE.equals(call.get().isError());
-        } catch (McpError e) {
+        } catch (McpError _) {
             return true;
         }
     }
