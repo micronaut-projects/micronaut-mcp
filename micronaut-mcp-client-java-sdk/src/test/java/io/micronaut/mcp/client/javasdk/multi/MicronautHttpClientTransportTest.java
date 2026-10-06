@@ -64,7 +64,8 @@ class MicronautHttpClientTransportTest implements TestPropertyProvider {
     @Test
     void jsonRpcErrorsAnsweredWithAnErrorStatusReachTheClient() {
         client.initialize();
-        McpError error = assertThrows(McpError.class, () -> client.callTool(new McpSchema.CallToolRequest("protocolError", Map.of())));
+        McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("protocolError", Map.of());
+        McpError error = assertThrows(McpError.class, () -> client.callTool(request));
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
     }
 

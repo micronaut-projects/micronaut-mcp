@@ -56,8 +56,8 @@ class MicronautHttpClientTransportTest implements TestPropertyProvider {
 
     @Test
     void protocolErrorsReachTheClient() {
-        RuntimeException error = assertThrows(RuntimeException.class,
-            () -> client.executeTool(ToolExecutionRequest.builder().name("protocolError").arguments("{}").build()));
+        ToolExecutionRequest request = ToolExecutionRequest.builder().name("protocolError").arguments("{}").build();
+        RuntimeException error = assertThrows(RuntimeException.class, () -> client.executeTool(request));
         assertTrue(String.valueOf(error.getMessage()).contains("bad"), String.valueOf(error));
     }
 

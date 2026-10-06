@@ -87,7 +87,7 @@ public final class MicronautMcpHttpExchange {
             metadata.addDeclaredAnnotation(Client.class.getName(), Map.of(AnnotationMetadata.VALUE_MEMBER, url.getScheme() + "://" + url.getRawAuthority()));
             this.uri = url.toString();
         }
-        this.client = (StreamingHttpClient) registry.getStreamingHttpClient(metadata);
+        this.client = registry.getStreamingHttpClient(metadata);
     }
 
     /**
@@ -182,8 +182,7 @@ public final class MicronautMcpHttpExchange {
 
         List<String> finish() {
             if (eventStream) {
-                List<String> messages = events("\n\n");
-                return messages;
+                return events("\n\n");
             }
             String json = body.toString(StandardCharsets.UTF_8);
             return json.isBlank() ? List.of() : List.of(json);
@@ -196,25 +195,28 @@ public final class MicronautMcpHttpExchange {
                 if (c == '\n') {
                     String complete = line.toString();
                     line.setLength(0);
-                    if (complete.endsWith("\r")) {
-                        complete = complete.substring(0, complete.length() - 1);
-                    }
-                    if (complete.isEmpty()) {
-                        if (!data.isEmpty()) {
-                            messages.add(data.toString());
-                            data.setLength(0);
-                        }
-                    } else if (complete.startsWith("data:")) {
-                        if (!data.isEmpty()) {
-                            data.append('\n');
-                        }
-                        data.append(complete.startsWith("data: ") ? complete.substring(6) : complete.substring(5));
-                    }
+                    int end = complete.endsWith("\r") ? complete.length() - 1 : complete.length();
+                    field(complete.substring(0, end), messages);
                 } else {
                     line.append(c);
                 }
             }
             return messages;
+        }
+
+        private void field(String field, List<String> messages) {
+            if (field.isEmpty()) {
+                // A blank line dispatches the event
+                if (!data.isEmpty()) {
+                    messages.add(data.toString());
+                    data.setLength(0);
+                }
+            } else if (field.startsWith("data:")) {
+                if (!data.isEmpty()) {
+                    data.append('\n');
+                }
+                data.append(field, field.startsWith("data: ") ? 6 : 5, field.length());
+            }
         }
     }
 }

@@ -27,6 +27,7 @@ import io.micronaut.mcp.client.http.MicronautMcpHttpExchange;
 import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A LangChain4j MCP transport over Streamable HTTP, on the Micronaut HTTP client.
@@ -34,8 +35,8 @@ import java.util.concurrent.CompletableFuture;
 @Internal
 final class MicronautStreamableHttpMcpTransport implements McpTransport {
     private final MicronautMcpHttpExchange exchange;
-    private volatile @Nullable McpOperationHandler operationHandler;
-    private volatile @Nullable Runnable onFailure;
+    private final AtomicReference<McpOperationHandler> operationHandler = new AtomicReference<>();
+    private final AtomicReference<Runnable> onFailure = new AtomicReference<>();
     private volatile boolean modernProtocol;
     private volatile @Nullable String protocolVersion;
 
@@ -45,7 +46,7 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
 
     @Override
     public void start(McpOperationHandler messageHandler) {
-        this.operationHandler = messageHandler;
+        operationHandler.set(messageHandler);
     }
 
     @Override
@@ -94,7 +95,7 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
     }
 
     private CompletableFuture<String> execute(McpCallContext context) {
-        McpOperationHandler handler = operationHandler;
+        McpOperationHandler handler = operationHandler.get();
         if (handler == null) {
             return CompletableFuture.failedFuture(new IllegalStateException("The transport is not started"));
         }
@@ -108,7 +109,7 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
             handler::onMessage,
             error -> {
                 future.completeExceptionally(error);
-                Runnable failure = onFailure;
+                Runnable failure = onFailure.get();
                 if (failure != null) {
                     failure.run();
                 }
@@ -132,7 +133,7 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
 
     @Override
     public void onFailure(Runnable actionOnFailure) {
-        this.onFailure = actionOnFailure;
+        onFailure.set(actionOnFailure);
     }
 
     @Override

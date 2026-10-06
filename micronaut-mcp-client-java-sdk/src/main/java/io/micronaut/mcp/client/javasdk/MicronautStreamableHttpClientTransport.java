@@ -27,6 +27,7 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
@@ -39,16 +40,19 @@ final class MicronautStreamableHttpClientTransport implements McpClientTransport
 
     private final MicronautMcpHttpExchange exchange;
     private final McpJsonMapper jsonMapper;
-    private volatile Function<Mono<McpSchema.JSONRPCMessage>, Mono<McpSchema.JSONRPCMessage>> handler = Function.identity();
+    private final AtomicReference<Function<Mono<McpSchema.JSONRPCMessage>, Mono<McpSchema.JSONRPCMessage>>> handler =
+        new AtomicReference<>(Function.identity());
 
     MicronautStreamableHttpClientTransport(MicronautMcpHttpExchange exchange, McpJsonMapper jsonMapper) {
         this.exchange = exchange;
         this.jsonMapper = jsonMapper;
     }
 
+    // The signature is that of the SDK interface
+    @SuppressWarnings("java:S4276")
     @Override
     public Mono<Void> connect(Function<Mono<McpSchema.JSONRPCMessage>, Mono<McpSchema.JSONRPCMessage>> handler) {
-        this.handler = handler;
+        this.handler.set(handler);
         return Mono.empty();
     }
 
@@ -80,7 +84,7 @@ final class MicronautStreamableHttpClientTransport implements McpClientTransport
             exchange.setProtocolVersion(version);
         }
         // The client session answers requests of the server, such as sampling, by sending a message itself
-        return handler.apply(Mono.just(message)).then();
+        return handler.get().apply(Mono.just(message)).then();
     }
 
     @Override
