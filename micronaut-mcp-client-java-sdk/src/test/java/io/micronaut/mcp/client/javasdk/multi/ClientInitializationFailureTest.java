@@ -82,12 +82,12 @@ class ClientInitializationFailureTest implements TestPropertyProvider {
         try {
             process.onExit().get(10, TimeUnit.SECONDS);
             return false;
-        } catch (TimeoutException e) {
+        } catch (TimeoutException _) {
             return true;
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
             return true;
-        } catch (ExecutionException e) {
+        } catch (ExecutionException _) {
             return false;
         }
     }

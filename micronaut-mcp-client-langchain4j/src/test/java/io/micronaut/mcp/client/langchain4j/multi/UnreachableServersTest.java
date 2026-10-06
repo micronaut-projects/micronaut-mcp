@@ -53,6 +53,9 @@ class UnreachableServersTest implements TestPropertyProvider {
         properties.put("micronaut.mcp.client.http.unreachable.url", "http://localhost:" + freePort() + "/mcp");
         properties.put("micronaut.mcp.client.http.unreachable.initialization-timeout", "2s");
         properties.put("micronaut.mcp.client.http.unreachable.auto-health-check", "false");
+        properties.put("micronaut.mcp.client.http.unreachable.headers.X-Test", "test");
+        // Shorter than the initialization timeout of the clients
+        properties.put("endpoints.health.mcp.timeout", "1s");
         List<String> command = List.of(ProcessHandle.current().info().command().orElse("java"),
             "-cp", System.getProperty("java.class.path"), HangingServer.class.getName());
         for (int i = 0; i < command.size(); i++) {
@@ -81,7 +84,9 @@ class UnreachableServersTest implements TestPropertyProvider {
         Map<?, ?> details = assertInstanceOf(Map.class, mcp.getDetails());
         assertEquals("UP", details.get("embeddedServer"));
         assertEquals("DOWN", assertInstanceOf(Map.class, details.get("unreachable")).get("status"));
-        assertEquals("DOWN", assertInstanceOf(Map.class, details.get("hanging")).get("status"));
+        Map<?, ?> hanging = assertInstanceOf(Map.class, details.get("hanging"));
+        assertEquals("DOWN", hanging.get("status"));
+        assertEquals("No answer within PT1S", hanging.get("error"));
         assertFalse(hangingServerRunning(), "The process of a client that could not be created is stopped");
     }
 
@@ -96,12 +101,12 @@ class UnreachableServersTest implements TestPropertyProvider {
         try {
             process.onExit().get(10, TimeUnit.SECONDS);
             return false;
-        } catch (TimeoutException e) {
+        } catch (TimeoutException _) {
             return true;
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
             return true;
-        } catch (ExecutionException e) {
+        } catch (ExecutionException _) {
             return false;
         }
     }

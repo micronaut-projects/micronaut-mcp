@@ -83,7 +83,7 @@ final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String,
 
     @Override
     protected Map<String, Object> getHealthInformation() {
-        Map<String, CompletableFuture<Object>> checks = new LinkedHashMap<>(connections.size());
+        Map<String, CompletableFuture<Object>> checks = LinkedHashMap.newLinkedHashMap(connections.size());
         for (McpClientConnectionConfiguration connection : connections) {
             String name = connection.getName();
             checks.put(name, CompletableFuture.supplyAsync(() -> check(name), blockingExecutor)
@@ -91,7 +91,7 @@ final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String,
                 .exceptionally(this::down));
         }
         CompletableFuture.allOf(checks.values().toArray(CompletableFuture[]::new)).join();
-        Map<String, Object> details = new LinkedHashMap<>(checks.size());
+        Map<String, Object> details = LinkedHashMap.newLinkedHashMap(checks.size());
         HealthStatus status = HealthStatus.UP;
         for (Map.Entry<String, CompletableFuture<Object>> check : checks.entrySet()) {
             Object detail = check.getValue().join();
