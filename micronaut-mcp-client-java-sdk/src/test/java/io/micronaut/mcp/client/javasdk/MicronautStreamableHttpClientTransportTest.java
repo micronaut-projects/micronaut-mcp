@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import static io.micronaut.mcp.client.javasdk.CraftedMcpServer.SESSION_ID;
 import static io.micronaut.mcp.client.javasdk.CraftedMcpServer.body;
@@ -348,10 +350,6 @@ class MicronautStreamableHttpClientTransportTest implements TestPropertyProvider
     }
 
     private static void pauseLongerThanTheReconnectDelay() {
-        try {
-            Thread.sleep(1_500);
-        } catch (InterruptedException _) {
-            Thread.currentThread().interrupt();
-        }
+        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1_500));
     }
 }

@@ -216,11 +216,6 @@ public final class MicronautMcpHttpExchange {
         return Flux.error(e);
     }
 
-    private IllegalStateException tooLarge() {
-        return new IllegalStateException("A message of the MCP server " + configuration.getName() + " exceeds the maximum size of "
-            + maxMessageSize + " bytes, set by max-message-size");
-    }
-
     /**
      * Decodes the body of one response, chunk by chunk. The lines of an event stream are split on their bytes, and each
      * is decoded once complete, so that a character split across chunks is decoded whole. When the request only accepts
@@ -329,6 +324,11 @@ public final class MicronautMcpHttpExchange {
                     throw tooLarge();
                 }
             }
+        }
+
+        private IllegalStateException tooLarge() {
+            return new IllegalStateException("A message of the MCP server " + configuration.getName() + " exceeds the maximum size of "
+                + maxMessageSize + " bytes, set by max-message-size");
         }
     }
 }

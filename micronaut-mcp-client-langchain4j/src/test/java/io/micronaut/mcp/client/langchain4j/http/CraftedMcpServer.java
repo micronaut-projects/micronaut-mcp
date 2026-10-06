@@ -12,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.concurrent.locks.LockSupport;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -179,11 +180,8 @@ final class CraftedMcpServer implements AutoCloseable {
     }
 
     private static void pause(Duration duration) {
-        try {
-            Thread.sleep(duration);
-        } catch (InterruptedException _) {
-            Thread.currentThread().interrupt();
-        }
+        // Delays the response, as a slow server would
+        LockSupport.parkNanos(duration.toNanos());
     }
 
     @FunctionalInterface

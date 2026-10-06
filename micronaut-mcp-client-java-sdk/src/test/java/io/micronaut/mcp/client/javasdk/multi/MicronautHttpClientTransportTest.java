@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -158,8 +159,9 @@ class MicronautHttpClientTransportTest implements TestPropertyProvider {
         }
 
         @Tool
-        String slow() throws InterruptedException {
-            Thread.sleep(11_000);
+        String slow() {
+            // Longer than the default read timeout of the HTTP client
+            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(11));
             return "slow";
         }
 

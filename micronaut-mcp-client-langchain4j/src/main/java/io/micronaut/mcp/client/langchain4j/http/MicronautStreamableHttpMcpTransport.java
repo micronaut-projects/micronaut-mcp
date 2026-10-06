@@ -188,7 +188,10 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
                 // An error the server could not relate to the request, for example about the session, which the
                 // operation handler would discard: it fails the request instead
                 JsonNode error = node.get("error");
-                future.completeExceptionally(new McpException(error.path("code").asInt(), error.path("message").asText(), error.get("data")));
+                int code = error.path("code").asInt();
+                String text = error.path("message").asText();
+                JsonNode data = error.get("data");
+                future.completeExceptionally(data == null ? new McpException(code, text) : McpException.withErrorData(code, text, data.toString()));
                 return;
             }
         }

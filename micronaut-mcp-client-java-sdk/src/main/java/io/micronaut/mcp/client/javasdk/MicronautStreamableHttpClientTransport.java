@@ -123,13 +123,12 @@ final class MicronautStreamableHttpClientTransport implements McpClientTransport
         } catch (IOException e) {
             return Mono.error(e);
         }
-        if (message instanceof McpSchema.JSONRPCResponse response) {
-            if (response.result() instanceof Map<?, ?> result
-                && result.get("protocolVersion") instanceof String version
-                && result.containsKey("serverInfo")) {
-                // The response to initialize: later requests carry the negotiated version
-                exchange.setProtocolVersion(version);
-            }
+        if (message instanceof McpSchema.JSONRPCResponse response
+            && response.result() instanceof Map<?, ?> result
+            && result.get("protocolVersion") instanceof String version
+            && result.containsKey("serverInfo")) {
+            // The response to initialize: later requests carry the negotiated version
+            exchange.setProtocolVersion(version);
         }
         // The client session answers requests of the server, such as sampling, by sending a message itself
         return handler.get().apply(Mono.just(message)).then();
