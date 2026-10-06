@@ -89,7 +89,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected final List<Method<Object>> methods = new ArrayList<>();
     protected final BeanContext beanContext;
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
-    private volatile @Nullable Set<String> notifyingNames;
+    private final AtomicReference<Set<String>> notifyingNames = new AtomicReference<>();
     private final Map<Class<? extends Throwable>, Optional<McpErrorExceptionMapper<? extends Throwable>>> classToExceptionMapper = new ConcurrentHashMap<>();
 
     AbstractMcpMethodRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
@@ -136,14 +136,14 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @return Whether the primitive declares an {@link McpRequestContext} parameter, so it may send notifications while it runs
      */
     public final boolean mayNotify(String name) {
-        Set<String> names = notifyingNames;
+        Set<String> names = notifyingNames.get();
         if (names == null) {
             names = methods.stream()
                 .filter(m -> Arrays.stream(m.method().getArguments()).anyMatch(a -> a.getType() == McpRequestContext.class))
                 .map(m -> primitiveName(m.method()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toUnmodifiableSet());
-            notifyingNames = names;
+            notifyingNames.set(names);
         }
         return names.contains(name);
     }
