@@ -17,31 +17,42 @@ package io.micronaut.mcp.server.registry;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.mcp.annotations.Audience;
 import io.micronaut.mcp.annotations.Icon;
 import io.micronaut.mcp.annotations.Meta;
+import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.bind.ArgumentBinder;
+import io.micronaut.core.bind.ArgumentBinderRegistry;
+import io.micronaut.core.bind.exceptions.UnsatisfiedArgumentException;
+import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.convert.ConversionError;
+import io.micronaut.core.convert.exceptions.ConversionErrorException;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.ReturnType;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import io.micronaut.scheduling.annotation.ExecuteOn;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
-import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,15 +60,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
 import java.util.concurrent.atomic.AtomicReference;
-
-import io.micronaut.inject.BeanDefinition;
-
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
@@ -80,6 +91,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected static final String URI_TEMPLATE_PROPERTY = "uriTemplate";
     protected static final String MEMBER_NAME = "name";
     protected static final String MEMBER_TITLE = "title";
+    private static final double UNSET_PRIORITY = -1;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMcpMethodRegistry.class);
     protected final List<Method<Object>> methods = new ArrayList<>();
     protected final BeanContext beanContext;
@@ -101,14 +113,26 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected abstract Class<?>[] boundParameterTypes();
 
     /**
+     * Whether a method returning a reactive type that may emit several values has its values collected into a {@link List}.
+     * Registries that do not collect reject such methods when they are added.
+     *
+     * @param method The method
+     * @return Whether the values are collected
+     */
+    protected boolean collectsValues(ExecutableMethod<?, ?> method) {
+        return false;
+    }
+
+    /**
      * Adds a new method to the registry by associating it with a given bean definition.
      *
      * @param beanDefinition the bean definition that declares or provides the method
      * @param method         the executable method to be added to the registry
+     * @throws IllegalStateException If the method returns a reactive type that may emit several values and the registry does not collect them
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public final void addMethod(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
-        methods.add(new Method(beanContext, beanDefinition, method, boundParameterTypes()));
+        methods.add(new Method(beanContext, beanDefinition, method, boundParameterTypes(), collectsValues(method)));
     }
 
     /**
@@ -125,21 +149,46 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         return !methods.isEmpty();
     }
 
-    protected McpError mcpError(Exception ex) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(ex.getMessage(), ex);
+    /**
+     * Maps a failure to the protocol error sent to the client: an {@link McpError} is returned unchanged, other exceptions
+     * are mapped by the matching {@link McpErrorExceptionMapper}, or become an internal error.
+     *
+     * @param throwable The failure
+     * @return The protocol error
+     */
+    protected McpError mcpError(Throwable throwable) {
+        if (throwable instanceof McpError mcpError) {
+            return mcpError;
         }
-        McpErrorExceptionMapper<? extends Throwable> exceptionMapper = getExceptionMapper(ex.getClass());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(throwable.getMessage(), throwable);
+        }
+        McpErrorExceptionMapper<? extends Throwable> exceptionMapper = getExceptionMapper(throwable.getClass());
         if (exceptionMapper != null) {
-            return mapException(exceptionMapper, ex);
+            return mapException(exceptionMapper, throwable);
         }
         // The SDK requires a message
-        String message = ex.getMessage() != null && !ex.getMessage().isBlank() ? ex.getMessage() : ex.getClass().getSimpleName();
+        String message = throwable.getMessage() != null && !throwable.getMessage().isBlank() ? throwable.getMessage() : throwable.getClass().getSimpleName();
         return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(message).build();
     }
 
+    /**
+     * An error handler for {@link Method#call} and {@link Method#callAsync} that fails with the protocol error of the failure.
+     *
+     * @param throwable The failure
+     * @param <R> The result type
+     * @return Never returns
+     */
+    protected final <R> R failWithMcpError(Throwable throwable) {
+        throw mcpError(throwable);
+    }
+
+    /**
+     * @param exceptionClass The class of a failure
+     * @return The mapper of the failure, if any
+     */
     @Nullable
-    private McpErrorExceptionMapper<? extends Throwable> getExceptionMapper(@NonNull Class<? extends Throwable> exceptionClass) {
+    protected final McpErrorExceptionMapper<? extends Throwable> getExceptionMapper(@NonNull Class<? extends Throwable> exceptionClass) {
         // Misses are cached too, so exceptions without a mapper do not scan the mappers again
         return classToExceptionMapper.computeIfAbsent(exceptionClass, aClass -> {
             for (McpErrorExceptionMapper<?> exceptionMapper : exceptionMappers) {
@@ -158,12 +207,13 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @param method The method
      * @return The result argument
      */
-    protected static Argument<?> resultArgument(ExecutableMethod<?, ?> method) {
+    @SuppressWarnings("unchecked")
+    protected static Argument<Object> resultArgument(ExecutableMethod<?, ?> method) {
         ReturnType<?> returnType = method.getReturnType();
         if (returnType.isAsyncOrReactive()) {
-            return returnType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+            return (Argument<Object>) returnType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
         }
-        return returnType.asArgument();
+        return (Argument<Object>) returnType.asArgument();
     }
 
     /**
@@ -180,7 +230,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             String[] sizes = value.stringValues("sizes");
             icons.add(new McpSchema.Icon(
                 value.stringValue("src").orElseThrow(),
-                value.stringValue("mimeType").filter(StringUtils::isNotEmpty).orElse(null),
+                value.stringValue(MIME_TYPE_PROPERTY).filter(StringUtils::isNotEmpty).orElse(null),
                 sizes.length == 0 ? null : List.of(sizes),
                 value.stringValue("theme").filter(StringUtils::isNotEmpty).orElse(null)));
         }
@@ -196,7 +246,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         if (values.isEmpty()) {
             return null;
         }
-        Map<String, Object> meta = new LinkedHashMap<>(values.size());
+        Map<String, Object> meta = LinkedHashMap.newLinkedHashMap(values.size());
         for (AnnotationValue<Meta> value : values) {
             meta.put(value.stringValue("key").orElseThrow(), value.stringValue().orElse(""));
         }
@@ -206,66 +256,114 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     /**
      * @param annotation A resource or resource template annotation
      * @return The resource annotations it declares, or {@code null} when it declares none
+     * @throws IllegalStateException If the priority is set and is not between 0 and 1
      */
     protected static McpSchema.@Nullable Annotations resourceAnnotations(AnnotationValue<?> annotation) {
         Audience[] audience = annotation.enumValues("audience", Audience.class);
-        double priority = annotation.doubleValue("priority").orElse(-1);
-        if (audience.length == 0 && priority < 0) {
+        double priority = annotation.doubleValue("priority").orElse(UNSET_PRIORITY);
+        boolean hasPriority = Double.compare(priority, UNSET_PRIORITY) != 0;
+        // NaN fails the range check too
+        if (hasPriority && !(priority >= 0 && priority <= 1)) {
+            String resource = annotation.stringValue(URI_PROPERTY).or(() -> annotation.stringValue(URI_TEMPLATE_PROPERTY)).orElse("");
+            throw new IllegalStateException("The priority of resource " + resource + " is " + priority + ", but it must be between 0 and 1");
+        }
+        if (audience.length == 0 && !hasPriority) {
             return null;
         }
-        List<McpSchema.Role> roles = audience.length == 0 ? null : Arrays.stream(audience)
-            .map(a -> a == Audience.USER ? McpSchema.Role.USER : McpSchema.Role.ASSISTANT)
-            .toList();
-        return new McpSchema.Annotations(roles, priority < 0 ? null : priority);
+        List<McpSchema.Role> roles = null;
+        if (audience.length > 0) {
+            roles = Arrays.stream(audience).map(AbstractMcpMethodRegistry::role).toList();
+        }
+        return new McpSchema.Annotations(roles, hasPriority ? priority : null);
     }
 
+    private static McpSchema.Role role(Audience audience) {
+        return audience == Audience.USER ? McpSchema.Role.USER : McpSchema.Role.ASSISTANT;
+    }
+
+    /**
+     * @param mapper The mapper
+     * @param ex The failure to map
+     * @param <T> The failure type
+     * @return The error the mapper maps the failure to
+     */
     @SuppressWarnings("unchecked")
-    private static <T extends Exception> McpError mapException(McpErrorExceptionMapper<? extends Throwable> mapper, T ex) {
+    protected static <T extends Throwable> McpError mapException(McpErrorExceptionMapper<? extends Throwable> mapper, T ex) {
         return ((McpErrorExceptionMapper<T>) mapper).map(ex);
     }
 
     /**
      * A method associated with a bean definition. What every invocation needs, other than the request, is resolved once:
-     * the method parameters that receive the transport context or the request, and the bean when it is a singleton.
+     * the method parameters that receive the transport context or the request, the argument binders of the other
+     * parameters, the executor named by {@link ExecuteOn}, and the bean when it is a singleton.
      *
      * @param <B> The type of the bean.
      */
     protected static final class Method<B> {
+        private static final int NOT_BOUND = -1;
         private final BeanContext beanContext;
         private final BeanDefinition<B> beanDefinition;
         private final ExecutableMethod<B, Object> executableMethod;
-        private final Argument<?>[] boundArguments;
+        private final Argument<?>[] arguments;
+        /**
+         * For each parameter, the index of the value it receives without an argument binder (0 is the transport
+         * context, then the values in the order of {@link #boundParameterTypes()}), or {@link #NOT_BOUND}.
+         */
         private final int[] boundIndexes;
-        private final Argument<?> resultArgument;
-        private final @Nullable String executorName;
+        private final boolean collectsValues;
+        private final @Nullable ExecutorService executor;
+        private final @Nullable Scheduler scheduler;
         private final AtomicReference<B> singleton = new AtomicReference<>();
-        private final AtomicReference<Scheduler> scheduler = new AtomicReference<>();
+        /**
+         * The argument binders by parameter, resolved on the first invocation, because binders for JSON schema types
+         * are registered when the specifications are built. Concurrent first invocations resolve the same binders.
+         */
+        private ArgumentBinder<?, ?> @Nullable [] binders;
 
         Method(BeanContext beanContext,
                BeanDefinition<B> beanDefinition,
                ExecutableMethod<B, Object> method,
-               Class<?>[] boundParameterTypes) {
+               Class<?>[] boundParameterTypes,
+               boolean collectsValues) {
             this.beanContext = beanContext;
             this.beanDefinition = beanDefinition;
             this.executableMethod = method;
-            this.resultArgument = AbstractMcpMethodRegistry.resultArgument(method);
-            this.executorName = method.stringValue(ExecuteOn.class).orElse(null);
-            List<Argument<?>> arguments = new ArrayList<>();
-            List<Integer> indexes = new ArrayList<>();
-            for (Argument<?> argument : method.getArguments()) {
-                Class<?> type = argument.getType();
+            this.arguments = method.getArguments();
+            this.boundIndexes = new int[arguments.length];
+            for (int a = 0; a < arguments.length; a++) {
+                Class<?> type = arguments[a].getType();
+                boundIndexes[a] = NOT_BOUND;
                 for (int i = 0; i < boundParameterTypes.length; i++) {
                     Class<?> boundType = boundParameterTypes[i];
                     // A parameter declared as a subtype of a bound type is bound when the value is an instance of it
                     if (type.isAssignableFrom(boundType) || boundType.isAssignableFrom(type)) {
-                        arguments.add(argument);
-                        indexes.add(i);
+                        boundIndexes[a] = i;
                         break;
                     }
                 }
             }
-            this.boundArguments = arguments.toArray(Argument[]::new);
-            this.boundIndexes = indexes.stream().mapToInt(Integer::intValue).toArray();
+            this.collectsValues = collectsValues(method, collectsValues);
+            // Resolved here, so that an unknown executor fails the startup rather than every invocation
+            String executorName = method.stringValue(ExecuteOn.class).orElse(null);
+            this.executor = executorName != null ? beanContext.getBean(ExecutorService.class, Qualifiers.byName(executorName)) : null;
+            this.scheduler = executor != null ? Schedulers.fromExecutorService(executor) : null;
+        }
+
+        private static boolean collectsValues(ExecutableMethod<?, ?> method, boolean collectsValues) {
+            ReturnType<?> returnType = method.getReturnType();
+            if (!returnType.isReactive() || returnType.isSingleResult()) {
+                return false;
+            }
+            if (collectsValues) {
+                return true;
+            }
+            // A plain Publisher is expected to emit at most one value, which is checked when it is subscribed to
+            if (returnType.getType() != Publisher.class) {
+                throw new IllegalStateException("MCP method " + method.getDeclaringType().getName() + "." + method.getMethodName()
+                    + " returns " + returnType.getType().getSimpleName() + ", which may emit several values, but it must produce a single value."
+                    + " Return a single value reactive type, such as Mono, or a CompletableFuture, or annotate the method with @SingleResult.");
+            }
+            return false;
         }
 
         /**
@@ -283,7 +381,19 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
 
         /**
-         * @return The bean to invoke the method on. A singleton is looked up once.
+         * @param argumentIndex The index of a method parameter
+         * @return Whether the parameter receives the transport context, the request or another value bound without an argument binder
+         */
+        public boolean isBound(int argumentIndex) {
+            return boundIndexes[argumentIndex] != NOT_BOUND;
+        }
+
+        /**
+         * The bean to invoke the method on. A singleton is looked up once and kept, so a singleton that is destroyed
+         * or refreshed in the bean context afterwards (with {@code destroyBean} or {@code refreshBean}) is still the
+         * instance that is invoked.
+         *
+         * @return The bean to invoke the method on
          */
         public B bean() {
             if (!beanDefinition.isSingleton()) {
@@ -312,93 +422,202 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
 
         /**
-         * @return The type of the value the method produces, unwrapped from a reactive type or a {@link CompletionStage}.
-         */
-        public Argument<?> resultArgument() {
-            return resultArgument;
-        }
-
-        /**
-         * Waits for the value of a reactive type or a {@link CompletionStage} returned by the method. Used by the synchronous
-         * servers, which invoke methods on a thread that may block.
-         *
-         * @param result The value the method returned
-         * @return The value it produced
-         */
-        public @Nullable Object await(@Nullable Object result) {
-            if (result instanceof Publisher<?> publisher) {
-                return Mono.from(publisher).block();
-            }
-            if (result instanceof CompletionStage<?> stage) {
-                try {
-                    return stage.toCompletableFuture().join();
-                } catch (CompletionException e) {
-                    if (e.getCause() instanceof RuntimeException cause) {
-                        throw cause;
-                    }
-                    throw e;
-                }
-            }
-            return result;
-        }
-
-        /**
-         * Invokes the method when the returned publisher is subscribed to, on the executor named by {@link ExecuteOn} if
-         * the method declares one, and adapts a reactive type or a {@link CompletionStage} it returns.
+         * Invokes the method for a synchronous server, which calls it on a thread that may block, and maps the value it
+         * produced. The method runs on the executor named by {@link ExecuteOn} if it declares one, and a reactive type or
+         * a {@link CompletionStage} it returns is waited for.
          *
          * @param invocation The invocation of the method
-         * @return A publisher of the value the method produced, empty when it produced none
+         * @param context The transport context or the server exchange
+         * @param mapper Maps the value the method produced, {@code null} when it produced none
+         * @param errorHandler Maps a failure to a result, or throws the error to fail with
+         * @param <R> The result type
+         * @return The result
          */
-        public Mono<Object> invokeAsync(Supplier<@Nullable Object> invocation) {
-            Mono<Object> result = Mono.defer(() -> toMono(invocation.get()));
-            Scheduler executor = scheduler();
-            return executor != null ? result.subscribeOn(executor) : result;
+        public <R> R call(Supplier<@Nullable Object> invocation,
+                          @Nullable Object context,
+                          Function<@Nullable Object, R> mapper,
+                          Function<Throwable, R> errorHandler) {
+            try {
+                Object value;
+                if (executor == null) {
+                    value = await(invocation.get(), context);
+                } else {
+                    Supplier<@Nullable Object> task = () -> await(invocation.get(), context);
+                    value = CompletableFuture.supplyAsync(PropagatedContext.wrapCurrent(task), executor).join();
+                }
+                return mapper.apply(value);
+            } catch (Exception e) {
+                return errorHandler.apply(unwrap(e));
+            }
+        }
+
+        /**
+         * Invokes the method for a reactive server and maps the value it produced. A method that declares an executor with
+         * {@link ExecuteOn} is invoked on it when the result is subscribed to; otherwise it is invoked right away and a plain
+         * value is mapped without any reactive operator.
+         *
+         * @param invocation The invocation of the method
+         * @param mapper Maps the value the method produced, {@code null} when it produced none
+         * @param errorHandler Maps a failure to a result, or throws the error to fail with
+         * @param <R> The result type
+         * @return A publisher of the result
+         */
+        public <R> Mono<R> callAsync(Supplier<@Nullable Object> invocation,
+                                     Function<@Nullable Object, R> mapper,
+                                     Function<Throwable, R> errorHandler) {
+            if (scheduler == null) {
+                return invokeNow(invocation, mapper, errorHandler);
+            }
+            PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
+            return Mono.defer(() -> {
+                try (PropagatedContext.Scope _ = propagatedContext.propagate()) {
+                    return invokeNow(invocation, mapper, errorHandler);
+                }
+            }).subscribeOn(scheduler);
+        }
+
+        private <R> Mono<R> invokeNow(Supplier<@Nullable Object> invocation,
+                                      Function<@Nullable Object, R> mapper,
+                                      Function<Throwable, R> errorHandler) {
+            Object result;
+            try {
+                result = invocation.get();
+                if (!isDeferred(result)) {
+                    return Mono.just(mapper.apply(result));
+                }
+            } catch (Exception e) {
+                return handle(errorHandler, e);
+            }
+            return toMono(result)
+                .map(mapper)
+                .switchIfEmpty(Mono.fromSupplier(() -> mapper.apply(null)))
+                .onErrorResume(e -> handle(errorHandler, e));
+        }
+
+        private static <R> Mono<R> handle(Function<Throwable, R> errorHandler, Throwable error) {
+            try {
+                return Mono.just(errorHandler.apply(unwrap(error)));
+            } catch (RuntimeException e) {
+                return Mono.error(e);
+            }
+        }
+
+        private static boolean isDeferred(@Nullable Object result) {
+            return result instanceof Publisher<?> || result instanceof CompletionStage<?> || Publishers.isConvertibleToPublisher(result);
+        }
+
+        /**
+         * Waits for the value of a reactive type or a {@link CompletionStage}. A reactive type is subscribed to with the
+         * transport context in its Reactor context, as it is on a reactive server.
+         */
+        private @Nullable Object await(@Nullable Object result, @Nullable Object context) {
+            if (result instanceof CompletionStage<?> stage) {
+                return stage.toCompletableFuture().join();
+            }
+            if (!isDeferred(result)) {
+                return result;
+            }
+            Mono<Object> mono = toMono(result);
+            McpTransportContext transportContext = resolveMcpTransportContext(context);
+            if (transportContext != null) {
+                mono = mono.contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext));
+            }
+            return mono.block();
         }
 
         @SuppressWarnings("unchecked")
-        private static Mono<Object> toMono(@Nullable Object result) {
-            if (result instanceof Publisher<?> publisher) {
-                return Mono.from((Publisher<Object>) publisher);
-            }
+        private Mono<Object> toMono(Object result) {
             if (result instanceof CompletionStage<?> stage) {
                 return Mono.fromCompletionStage((CompletionStage<Object>) stage);
             }
-            return Mono.justOrEmpty(result);
+            Publisher<Object> publisher = result instanceof Publisher<?> p
+                ? (Publisher<Object>) p
+                : Publishers.convertToPublisher(beanContext.getConversionService(), result);
+            if (collectsValues) {
+                return Flux.from(publisher).collectList().map(Object.class::cast);
+            }
+            if (publisher instanceof Mono<Object> mono) {
+                return mono;
+            }
+            // Fails rather than silently dropping values when a publisher emits more than one
+            return Flux.from(publisher).singleOrEmpty();
         }
 
-        private @Nullable Scheduler scheduler() {
-            if (executorName == null) {
-                return null;
+        private static Throwable unwrap(Throwable throwable) {
+            Throwable error = Exceptions.unwrap(throwable);
+            while ((error instanceof CompletionException || error instanceof ExecutionException) && error.getCause() != null) {
+                error = Exceptions.unwrap(error.getCause());
             }
-            Scheduler executor = scheduler.get();
-            if (executor == null) {
-                executor = Schedulers.fromExecutorService(beanContext.getBean(ExecutorService.class, Qualifiers.byName(executorName)));
-                scheduler.set(executor);
-            }
-            return executor;
+            return error;
         }
 
         /**
-         * The values bound to method parameters without an argument binder.
+         * Binds the method parameters and invokes the method. A parameter receives its bound value when the value is an
+         * instance of the parameter type, otherwise it is bound by the argument binder like the other parameters,
+         * with the same semantics as {@link io.micronaut.core.bind.DefaultExecutableBinder}.
          *
+         * @param registry The argument binder registry
+         * @param source The source of the argument binders
          * @param context The transport context or the server exchange
          * @param values The request and any other values, in the order of {@link #boundParameterTypes()} after the context
-         * @return The pre-bound values by argument
+         * @param <S> The source type
+         * @return The result of the method
+         * @throws UnsatisfiedArgumentException If a required parameter cannot be bound
+         * @throws ConversionErrorException If the value of a required parameter cannot be converted
          */
-        public Map<Argument<?>, Object> preBound(@Nullable Object context, Object... values) {
-            if (boundArguments.length == 0) {
-                return Map.of();
+        public <S> @Nullable Object invoke(ArgumentBinderRegistry<S> registry, S source, @Nullable Object context, Object... values) {
+            if (arguments.length == 0) {
+                return executableMethod.invoke(bean());
             }
-            Map<Argument<?>, Object> preBound = CollectionUtils.newHashMap(boundArguments.length);
-            for (int i = 0; i < boundArguments.length; i++) {
+            ArgumentBinder<?, ?>[] argumentBinders = binders(registry);
+            Object[] argumentValues = new Object[arguments.length];
+            for (int i = 0; i < arguments.length; i++) {
+                Argument<?> argument = arguments[i];
                 int index = boundIndexes[i];
-                Object value = index == 0 ? resolveMcpTransportContext(context) : values[index - 1];
-                Argument<?> argument = boundArguments[i];
-                if (argument.getType().isInstance(value)) {
-                    preBound.put(argument, value);
+                if (index != NOT_BOUND) {
+                    Object value = index == 0 ? resolveMcpTransportContext(context) : values[index - 1];
+                    if (argument.getType().isInstance(value)) {
+                        argumentValues[i] = value;
+                        continue;
+                    }
                 }
+                argumentValues[i] = bind(argument, argumentBinders[i], source);
             }
-            return preBound;
+            return executableMethod.invoke(bean(), argumentValues);
+        }
+
+        @SuppressWarnings("unchecked")
+        private <S> ArgumentBinder<?, ?>[] binders(ArgumentBinderRegistry<S> registry) {
+            ArgumentBinder<?, ?>[] resolved = binders;
+            if (resolved == null) {
+                resolved = new ArgumentBinder<?, ?>[arguments.length];
+                for (int i = 0; i < arguments.length; i++) {
+                    resolved[i] = registry.findArgumentBinder((Argument<Object>) arguments[i]).orElse(null);
+                }
+                binders = resolved;
+            }
+            return resolved;
+        }
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Nullable
+        private static <S> Object bind(Argument<?> argument, @Nullable ArgumentBinder<?, ?> binder, S source) {
+            if (binder == null) {
+                throw new UnsatisfiedArgumentException(argument);
+            }
+            ArgumentConversionContext conversionContext = ConversionContext.of(argument);
+            ArgumentBinder.BindingResult<?> bindingResult = ((ArgumentBinder) binder).bind(conversionContext, source);
+            if (bindingResult.isPresentAndSatisfied()) {
+                return bindingResult.get();
+            }
+            if (argument.isNullable()) {
+                return null;
+            }
+            Optional<ConversionError> lastError = conversionContext.getLastError();
+            if (lastError.isPresent()) {
+                throw new ConversionErrorException(argument, lastError.get());
+            }
+            throw new UnsatisfiedArgumentException(argument);
         }
     }
 }

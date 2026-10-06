@@ -20,9 +20,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
-import io.micronaut.core.bind.BoundExecutable;
-import io.micronaut.core.bind.DefaultExecutableBinder;
-import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.http.uri.UriMatchTemplate;
 import io.micronaut.inject.ExecutableMethod;
 import org.jspecify.annotations.Nullable;
@@ -160,30 +157,16 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                           UriMatchTemplate uriTemplate,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
-        return map(m, request, m.await(invoke(m, uriTemplate, mcpTransportContext, request)));
+        return m.call(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
+            mcpTransportContext, result -> map(m, request, result), this::failWithMcpError);
     }
 
     private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
                                                                      UriMatchTemplate uriTemplate,
                                                                      Object mcpTransportContext,
                                                                      McpSchema.ReadResourceRequest request) {
-        return m.invokeAsync(() -> invoke(m, uriTemplate, mcpTransportContext, request))
-            .map(result -> map(m, request, result))
-            .switchIfEmpty(Mono.fromSupplier(() -> map(m, request, null)));
-    }
-
-    private <B> @Nullable Object invoke(Method<B> m,
-                                        UriMatchTemplate uriTemplate,
-                                        Object mcpTransportContext,
-                                        McpSchema.ReadResourceRequest request) {
-        ExecutableMethod<B, Object> method = m.method();
-        B bean = m.bean();
-
-        ExecutableBinder<UriTemplateReadResourceRequest> executableBinder = new DefaultExecutableBinder<>(
-            m.preBound(mcpTransportContext, request));
-
-        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request));
-        return executable.invoke(bean);
+        return m.callAsync(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
+            result -> map(m, request, result), this::failWithMcpError);
     }
 
     private <B> McpSchema.ReadResourceResult map(Method<B> m, McpSchema.ReadResourceRequest request, @Nullable Object result) {

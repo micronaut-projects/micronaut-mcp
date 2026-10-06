@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "spec.name", value = "BlockingExecutionModelTest")
+@Property(name = "execution-model.tools", value = "true")
 @MicronautTest
 class BlockingExecutionModelTest {
 
@@ -42,6 +43,11 @@ class BlockingExecutionModelTest {
     @Test
     void toolsRunOffTheEventLoopWithTheRequestInScope() throws IOException {
         assertEquals("false true", text(callTool(httpClient, jsonMapper, "where")));
+    }
+
+    @Test
+    void executionModel() throws IOException {
+        ExecutionModelAssertions.assertExecutionModel(httpClient, jsonMapper);
     }
 
     @Test
