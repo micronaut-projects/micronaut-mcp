@@ -20,9 +20,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
-import io.micronaut.core.bind.BoundExecutable;
-import io.micronaut.core.bind.DefaultExecutableBinder;
-import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.http.uri.UriMatchTemplate;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
@@ -159,13 +156,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
         ExecutableMethod<B, Object> method = m.method();
-        B bean = m.bean();
-
-        ExecutableBinder<UriTemplateReadResourceRequest> executableBinder = new DefaultExecutableBinder<>(
-            m.preBound(mcpTransportContext, request));
-
-        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request));
-        Object result = executable.invoke(bean);
+        Object result = m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request);
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
         }

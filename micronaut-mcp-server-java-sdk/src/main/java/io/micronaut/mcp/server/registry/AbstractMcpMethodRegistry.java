@@ -19,8 +19,14 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import io.micronaut.core.bind.ArgumentBinder;
+import io.micronaut.core.bind.ArgumentBinderRegistry;
+import io.micronaut.core.bind.exceptions.UnsatisfiedArgumentException;
+import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.convert.ConversionError;
+import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.modelcontextprotocol.common.McpTransportContext;
@@ -140,17 +146,28 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
 
     /**
      * A method associated with a bean definition. What every invocation needs, other than the request, is resolved once:
-     * the method parameters that receive the transport context or the request, and the bean when it is a singleton.
+     * the method parameters that receive the transport context or the request, the argument binders of the other
+     * parameters, and the bean when it is a singleton.
      *
      * @param <B> The type of the bean.
      */
     protected static final class Method<B> {
+        private static final int NOT_BOUND = -1;
         private final BeanContext beanContext;
         private final BeanDefinition<B> beanDefinition;
         private final ExecutableMethod<B, Object> executableMethod;
-        private final Argument<?>[] boundArguments;
+        private final Argument<?>[] arguments;
+        /**
+         * For each parameter, the index of the value it receives without an argument binder (0 is the transport
+         * context, then the values in the order of {@link #boundParameterTypes()}), or {@link #NOT_BOUND}.
+         */
         private final int[] boundIndexes;
         private final AtomicReference<B> singleton = new AtomicReference<>();
+        /**
+         * The argument binders by parameter, resolved on the first invocation, because binders for JSON schema types
+         * are registered when the specifications are built. Concurrent first invocations resolve the same binders.
+         */
+        private ArgumentBinder<?, ?> @Nullable [] binders;
 
         Method(BeanContext beanContext,
                BeanDefinition<B> beanDefinition,
@@ -159,22 +176,28 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             this.beanContext = beanContext;
             this.beanDefinition = beanDefinition;
             this.executableMethod = method;
-            List<Argument<?>> arguments = new ArrayList<>();
-            List<Integer> indexes = new ArrayList<>();
-            for (Argument<?> argument : method.getArguments()) {
-                Class<?> type = argument.getType();
+            this.arguments = method.getArguments();
+            this.boundIndexes = new int[arguments.length];
+            for (int a = 0; a < arguments.length; a++) {
+                Class<?> type = arguments[a].getType();
+                boundIndexes[a] = NOT_BOUND;
                 for (int i = 0; i < boundParameterTypes.length; i++) {
                     Class<?> boundType = boundParameterTypes[i];
                     // A parameter declared as a subtype of a bound type is bound when the value is an instance of it
                     if (type.isAssignableFrom(boundType) || boundType.isAssignableFrom(type)) {
-                        arguments.add(argument);
-                        indexes.add(i);
+                        boundIndexes[a] = i;
                         break;
                     }
                 }
             }
-            this.boundArguments = arguments.toArray(Argument[]::new);
-            this.boundIndexes = indexes.stream().mapToInt(Integer::intValue).toArray();
+        }
+
+        /**
+         * @param argumentIndex The index of a method parameter
+         * @return Whether the parameter receives the transport context, the request or another value bound without an argument binder
+         */
+        public boolean isBound(int argumentIndex) {
+            return boundIndexes[argumentIndex] != NOT_BOUND;
         }
 
         /**
@@ -192,7 +215,11 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
 
         /**
-         * @return The bean to invoke the method on. A singleton is looked up once.
+         * The bean to invoke the method on. A singleton is looked up once and kept, so a singleton that is destroyed
+         * or refreshed in the bean context afterwards (with {@code destroyBean} or {@code refreshBean}) is still the
+         * instance that is invoked.
+         *
+         * @return The bean to invoke the method on
          */
         public B bean() {
             if (!beanDefinition.isSingleton()) {
@@ -221,26 +248,72 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
 
         /**
-         * The values bound to method parameters without an argument binder.
+         * Binds the method parameters and invokes the method. A parameter receives its bound value when the value is an
+         * instance of the parameter type, otherwise it is bound by the argument binder like the other parameters,
+         * with the same semantics as {@link io.micronaut.core.bind.DefaultExecutableBinder}.
          *
+         * @param registry The argument binder registry
+         * @param source The source of the argument binders
          * @param context The transport context or the server exchange
          * @param values The request and any other values, in the order of {@link #boundParameterTypes()} after the context
-         * @return The pre-bound values by argument
+         * @param <S> The source type
+         * @return The result of the method
+         * @throws UnsatisfiedArgumentException If a required parameter cannot be bound
+         * @throws ConversionErrorException If the value of a required parameter cannot be converted
          */
-        public Map<Argument<?>, Object> preBound(@Nullable Object context, Object... values) {
-            if (boundArguments.length == 0) {
-                return Map.of();
+        public <S> @Nullable Object invoke(ArgumentBinderRegistry<S> registry, S source, @Nullable Object context, Object... values) {
+            if (arguments.length == 0) {
+                return executableMethod.invoke(bean());
             }
-            Map<Argument<?>, Object> preBound = CollectionUtils.newHashMap(boundArguments.length);
-            for (int i = 0; i < boundArguments.length; i++) {
+            ArgumentBinder<?, ?>[] argumentBinders = binders(registry);
+            Object[] argumentValues = new Object[arguments.length];
+            for (int i = 0; i < arguments.length; i++) {
+                Argument<?> argument = arguments[i];
                 int index = boundIndexes[i];
-                Object value = index == 0 ? resolveMcpTransportContext(context) : values[index - 1];
-                Argument<?> argument = boundArguments[i];
-                if (argument.getType().isInstance(value)) {
-                    preBound.put(argument, value);
+                if (index != NOT_BOUND) {
+                    Object value = index == 0 ? resolveMcpTransportContext(context) : values[index - 1];
+                    if (argument.getType().isInstance(value)) {
+                        argumentValues[i] = value;
+                        continue;
+                    }
                 }
+                argumentValues[i] = bind(argument, argumentBinders[i], source);
             }
-            return preBound;
+            return executableMethod.invoke(bean(), argumentValues);
+        }
+
+        @SuppressWarnings("unchecked")
+        private <S> ArgumentBinder<?, ?>[] binders(ArgumentBinderRegistry<S> registry) {
+            ArgumentBinder<?, ?>[] resolved = binders;
+            if (resolved == null) {
+                resolved = new ArgumentBinder<?, ?>[arguments.length];
+                for (int i = 0; i < arguments.length; i++) {
+                    resolved[i] = registry.findArgumentBinder((Argument<Object>) arguments[i]).orElse(null);
+                }
+                binders = resolved;
+            }
+            return resolved;
+        }
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Nullable
+        private static <S> Object bind(Argument<?> argument, @Nullable ArgumentBinder<?, ?> binder, S source) {
+            if (binder == null) {
+                throw new UnsatisfiedArgumentException(argument);
+            }
+            ArgumentConversionContext conversionContext = ConversionContext.of(argument);
+            ArgumentBinder.BindingResult<?> bindingResult = ((ArgumentBinder) binder).bind(conversionContext, source);
+            if (bindingResult.isPresentAndSatisfied()) {
+                return bindingResult.get();
+            }
+            if (argument.isNullable()) {
+                return null;
+            }
+            Optional<ConversionError> lastError = conversionContext.getLastError();
+            if (lastError.isPresent()) {
+                throw new ConversionErrorException(argument, lastError.get());
+            }
+            throw new UnsatisfiedArgumentException(argument);
         }
     }
 }

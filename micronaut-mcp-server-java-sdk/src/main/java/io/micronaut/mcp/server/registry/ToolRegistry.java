@@ -22,9 +22,6 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
-import io.micronaut.core.bind.BoundExecutable;
-import io.micronaut.core.bind.DefaultExecutableBinder;
-import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
@@ -73,8 +70,6 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public static final boolean DEFAULT_RETURN_DIRECT_VALUE = false;
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
     private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.CallToolRequest.class};
-    private static final List<Class<?>> BINDABLE_PARAMETER_TYPES = List.of(McpTransportContext.class,
-        McpSchema.CallToolRequest.class);
     private static final String MEMBER_ANNOTATIONS = "annotations";
     private static final String MEMBER_READ_ONLY_HINT = "readOnlyHint";
     private static final String MEMBER_DESTRUCTIVE_HINT = "destructiveHint";
@@ -119,7 +114,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public List<McpServerFeatures.SyncToolSpecification> getSyncSpecs() {
         return drainMethods()
             .map(toolMethod -> {
-                McpSchema.Tool tool = tool(toolMethod.method());
+                McpSchema.Tool tool = tool(toolMethod);
                 return McpServerFeatures.SyncToolSpecification.builder()
                     .tool(tool)
                     .callHandler(provideSyncCallHandler(toolMethod, hasOutputSchema(tool)))
@@ -132,7 +127,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public List<McpServerFeatures.AsyncToolSpecification> getAsyncSpecs() {
         return drainMethods()
             .map(toolMethod -> {
-                McpSchema.Tool tool = tool(toolMethod.method());
+                McpSchema.Tool tool = tool(toolMethod);
                 return McpServerFeatures.AsyncToolSpecification.builder()
                     .tool(tool)
                     .callHandler(provideReactiveCallHandler(toolMethod, hasOutputSchema(tool)))
@@ -145,7 +140,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public List<McpStatelessServerFeatures.SyncToolSpecification> getStatelessSyncSpecs() {
         return drainMethods()
             .map(toolMethod -> {
-                McpSchema.Tool tool = tool(toolMethod.method());
+                McpSchema.Tool tool = tool(toolMethod);
                 return McpStatelessServerFeatures.SyncToolSpecification.builder()
                     .tool(tool)
                     .callHandler(provideSyncCallHandler(toolMethod, hasOutputSchema(tool)))
@@ -158,7 +153,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public List<McpStatelessServerFeatures.AsyncToolSpecification> getStatelessAsyncSpecs() {
         return drainMethods()
             .map(toolMethod -> {
-                McpSchema.Tool tool = tool(toolMethod.method());
+                McpSchema.Tool tool = tool(toolMethod);
                 return McpStatelessServerFeatures.AsyncToolSpecification.builder()
                     .tool(tool)
                     .callHandler(provideReactiveCallHandler(toolMethod, hasOutputSchema(tool)))
@@ -200,12 +195,8 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                                                           McpSchema.CallToolRequest callToolRequest) {
         ExecutableMethod<B, Object> method = m.method();
         Argument<?> returnClass = method.getReturnType().asArgument();
-        B bean = m.bean();
-        ExecutableBinder<McpSchema.CallToolRequest> executableBinder = new DefaultExecutableBinder<>(
-            m.preBound(mcpTransportContext, callToolRequest));
         try {
-            BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, callToolRequest);
-            Object result = executable.invoke(bean);
+            Object result = m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest);
             String text = "";
             if (returnClass.isAssignableFrom(McpSchema.CallToolResult.class)) {
                 return (McpSchema.CallToolResult) result;
@@ -241,7 +232,8 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         }
     }
 
-    private <B> McpSchema.Tool tool(ExecutableMethod<B, Object> method) {
+    private <B> McpSchema.Tool tool(Method<B> toolMethod) {
+        ExecutableMethod<B, Object> method = toolMethod.method();
         McpSchema.Tool.Builder toolBuilder = McpSchema.Tool.builder()
             .name(toolName(method));
         toolTitle(method).ifPresent(toolBuilder::title);
@@ -254,7 +246,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             jsonSchemaArgumentOptional.ifPresent(argument ->
                 argumentBinderRegistry.addArgumentBinder(new JsonMapperTypedCallToRequestArgumentBinder(argument.getType(), jsonMapper)));
         } else {
-            toolBuilder.inputSchema(inputSchema(method, ToolRegistry::toolArgumentName, ToolRegistry::toolArgDescription));
+            toolBuilder.inputSchema(inputSchema(toolMethod, ToolRegistry::toolArgumentName, ToolRegistry::toolArgDescription));
         }
         toolOutputSchema(method).ifPresent(schema -> toolBuilder.outputSchema(mcpJsonMapper, schema));
         return toolBuilder.build();
@@ -349,15 +341,14 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(argumentClass);
     }
 
-    private <B> McpSchema.JsonSchema inputSchema(ExecutableMethod<B, Object> method,
+    private <B> McpSchema.JsonSchema inputSchema(Method<B> toolMethod,
                                                  Function<Argument<?>, String> propertyNameFunction,
                                                  Function<Argument<?>, String> argumentDescription) {
-        Collection<Integer> boundArgumentsPositions = boundArgumentsPositions(method).values();
-        Argument<?>[] arguments = method.getArguments();
+        Argument<?>[] arguments = toolMethod.method().getArguments();
         Map<String, Object> properties = CollectionUtils.newHashMap(arguments.length);
         List<String> requiredProperties = new ArrayList<>(arguments.length);
         for (int i = 0; i < arguments.length; i++) {
-            if (boundArgumentsPositions.contains(i)) {
+            if (toolMethod.isBound(i)) {
                 continue;
             }
             Argument<?> argument = arguments[i];
@@ -368,22 +359,6 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             }
         }
         return new McpSchema.JsonSchema(TYPE_OBJECT, properties, requiredProperties, null, null, null);
-    }
-
-    @NonNull
-    private <B> LinkedHashMap<Class<?>, Integer> boundArgumentsPositions(@NonNull ExecutableMethod<B, Object> method) {
-        LinkedHashMap<Class<?>, Integer> result = new LinkedHashMap<>();
-        Argument<?>[] arguments = method.getArguments();
-        for (int i = 0; i < arguments.length; i++) {
-            Argument<?> argument = arguments[i];
-            for (Class<?> bindinableParameterType : BINDABLE_PARAMETER_TYPES) {
-                if (bindinableParameterType.isAssignableFrom(argument.getType())) {
-                    result.put(bindinableParameterType, i);
-                    break;
-                }
-            }
-        }
-        return result;
     }
 
     private static String argumentType(Argument<?> argument) {
