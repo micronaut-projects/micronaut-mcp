@@ -182,7 +182,16 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
         return new McpSchema.ResourceReference(uri);
     }
 
-    private static <B> McpSchema.PromptReference toPromptReference(ExecutableMethod<B, Object> method) {
+    @Override
+    protected @Nullable String primitiveName(ExecutableMethod<?, ?> method) {
+        // A completion request designates the prompt by its name, or the resource by its URI
+        if (method.hasAnnotation(PromptCompletion.class)) {
+            return toPromptReference(method).name();
+        }
+        return method.stringValue(ResourceCompletion.class, URI_PROPERTY).orElse(null);
+    }
+
+    private static McpSchema.PromptReference toPromptReference(ExecutableMethod<?, ?> method) {
         String name = method.stringValue(PromptCompletion.class, NAME_PROPERTY).orElse(PromptCompletion.ELEMENT_NAME);
         if (PromptCompletion.ELEMENT_NAME.equals(name)) {
             name = method.getName();
