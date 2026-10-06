@@ -23,7 +23,10 @@ class CatalogTools {
     }
 //end::clazz[]
 
+    private final List<Integer> importedPages = []
+
     private void importPage(int page) {
+        importedPages << page
     }
 //tag::clazz[]
 }

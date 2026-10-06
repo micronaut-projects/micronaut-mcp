@@ -1,5 +1,8 @@
 package io.micronaut.mcp.docs.context;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.micronaut.context.annotation.Requires;
 //tag::imports[]
 import io.micronaut.mcp.annotations.Tool;
@@ -23,7 +26,10 @@ class CatalogTools {
     }
 //end::clazz[]
 
+    private final List<Integer> importedPages = new ArrayList<>();
+
     private void importPage(int page) {
+        importedPages.add(page);
     }
 //tag::clazz[]
 }
