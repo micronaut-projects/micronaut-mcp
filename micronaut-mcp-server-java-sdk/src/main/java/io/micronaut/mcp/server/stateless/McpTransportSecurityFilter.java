@@ -71,6 +71,8 @@ final class McpTransportSecurityFilter {
      * @param request The request
      * @return The response rejecting the request, or {@code null} when it is valid
      */
+    // The rejection body is a JSON-RPC error map, so the response body type is a wildcard
+    @SuppressWarnings("java:S1452")
     @RequestFilter
     @Nullable HttpResponse<?> filter(HttpRequest<?> request) {
         HttpHeaders headers = request.getHeaders();
