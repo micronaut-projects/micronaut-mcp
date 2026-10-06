@@ -131,15 +131,15 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     private <B> McpSchema.ReadResourceResult invokeAndMap(Method<B> m,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
-        return m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
-            mcpTransportContext, result -> map(m, request, result), this::failWithMcpError);
+        return observed(McpSchema.METHOD_RESOURCES_READ, request.uri(), () -> m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
+            mcpTransportContext, result -> map(m, request, result), this::failWithMcpError));
     }
 
     private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
                                                                      Object mcpTransportContext,
                                                                      McpSchema.ReadResourceRequest request) {
-        return m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
-            result -> map(m, request, result), this::failWithMcpError);
+        return observedAsync(McpSchema.METHOD_RESOURCES_READ, request.uri(), () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
+            result -> map(m, request, result), this::failWithMcpError));
     }
 
     private <B> McpSchema.ReadResourceResult map(Method<B> m, McpSchema.ReadResourceRequest request, @Nullable Object result) {

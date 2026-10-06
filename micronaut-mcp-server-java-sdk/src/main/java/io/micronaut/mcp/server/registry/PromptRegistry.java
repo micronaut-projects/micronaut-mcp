@@ -131,15 +131,15 @@ public final class PromptRegistry
     private <B> McpSchema.GetPromptResult promptResult(Method<B> m,
                                                        Object mcpTransportContext,
                                                        McpSchema.GetPromptRequest promptRequest) {
-        return m.call(() -> m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest),
-            mcpTransportContext, PromptRegistry::map, this::failWithMcpError);
+        return observed(McpSchema.METHOD_PROMPT_GET, promptRequest.name(), () -> m.call(() -> m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest),
+            mcpTransportContext, PromptRegistry::map, this::failWithMcpError));
     }
 
     private <B> Mono<McpSchema.GetPromptResult> promptResultAsync(Method<B> m,
                                                                   Object mcpTransportContext,
                                                                   McpSchema.GetPromptRequest promptRequest) {
-        return m.callAsync(() -> m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest),
-            PromptRegistry::map, this::failWithMcpError);
+        return observedAsync(McpSchema.METHOD_PROMPT_GET, promptRequest.name(), () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest),
+            PromptRegistry::map, this::failWithMcpError));
     }
 
     private static McpSchema.GetPromptResult map(@Nullable Object result) {
