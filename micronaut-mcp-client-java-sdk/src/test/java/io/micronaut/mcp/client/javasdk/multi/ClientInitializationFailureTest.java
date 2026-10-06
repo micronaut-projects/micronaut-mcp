@@ -11,6 +11,7 @@ import io.micronaut.mcp.client.javasdk.McpClientTool;
 import io.micronaut.mcp.client.javasdk.McpClientTools;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.test.support.TestPropertyProvider;
+import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -63,6 +64,13 @@ class ClientInitializationFailureTest implements TestPropertyProvider {
         assertThrows(BeanInstantiationException.class, () -> beanContext.getBean(McpSyncClient.class, hanging));
         assertFalse(hangingServerRunning(), "The process of a client that failed to initialize is stopped");
         assertThrows(BeanInstantiationException.class, () -> beanContext.getBean(McpSyncClient.class, hanging));
+        assertFalse(hangingServerRunning(), "The process of a client that failed to initialize is stopped");
+    }
+
+    @Test
+    void anAsynchronousClientThatFailsToInitializeIsClosed() {
+        Qualifier<McpAsyncClient> hanging = Qualifiers.byName("hanging");
+        assertThrows(BeanInstantiationException.class, () -> beanContext.getBean(McpAsyncClient.class, hanging));
         assertFalse(hangingServerRunning(), "The process of a client that failed to initialize is stopped");
     }
 
