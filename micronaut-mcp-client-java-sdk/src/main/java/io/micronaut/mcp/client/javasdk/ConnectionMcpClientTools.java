@@ -15,7 +15,9 @@
  */
 package io.micronaut.mcp.client.javasdk;
 
+import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.jspecify.annotations.Nullable;
@@ -24,42 +26,45 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The tools of the server of one connection.
+ * The tools of the server of one connection. The tools are listed once, then cached until the server notifies that they
+ * changed.
  */
 @Internal
 final class ConnectionMcpClientTools implements McpClientTools {
     private final String client;
-    private final McpSyncClient mcpClient;
+    private final BeanContext beanContext;
+    private final McpConnectionClients connectionClients;
     private final @Nullable McpClientToolFilter filter;
     private final @Nullable McpClientToolNameMapper nameMapper;
 
     ConnectionMcpClientTools(String client,
-                             McpSyncClient mcpClient,
+                             BeanContext beanContext,
+                             McpConnectionClients connectionClients,
                              @Nullable McpClientToolFilter filter,
                              @Nullable McpClientToolNameMapper nameMapper) {
         this.client = client;
-        this.mcpClient = mcpClient;
+        this.beanContext = beanContext;
+        this.connectionClients = connectionClients;
         this.filter = filter;
         this.nameMapper = nameMapper;
     }
 
     @Override
     public List<McpClientTool> tools() {
-        if (!mcpClient.isInitialized()) {
-            mcpClient.initialize();
+        // The client is initialized when it is created, which is attempted again on the next call if it fails
+        McpSyncClient mcpClient = beanContext.getBean(McpSyncClient.class, Qualifiers.byName(client));
+        List<McpSchema.Tool> serverTools = connectionClients.tools(client);
+        if (serverTools == null) {
+            // Lists every page of tools
+            serverTools = connectionClients.toolsListed(client, mcpClient.listTools().tools());
         }
-        List<McpClientTool> tools = new ArrayList<>();
-        String cursor = null;
-        do {
-            McpSchema.ListToolsResult page = cursor == null ? mcpClient.listTools() : mcpClient.listTools(cursor);
-            for (McpSchema.Tool tool : page.tools()) {
-                if (filter == null || filter.test(client, tool)) {
-                    String name = nameMapper != null ? nameMapper.apply(client, tool) : tool.name();
-                    tools.add(new McpClientTool(name, client, tool, mcpClient));
-                }
+        List<McpClientTool> tools = new ArrayList<>(serverTools.size());
+        for (McpSchema.Tool tool : serverTools) {
+            if (filter == null || filter.test(client, tool)) {
+                String name = nameMapper != null ? nameMapper.apply(client, tool) : tool.name();
+                tools.add(new McpClientTool(name, client, tool, mcpClient));
             }
-            cursor = page.nextCursor();
-        } while (cursor != null);
+        }
         return tools;
     }
 }

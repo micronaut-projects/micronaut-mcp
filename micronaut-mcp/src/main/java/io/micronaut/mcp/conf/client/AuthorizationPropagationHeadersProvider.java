@@ -26,20 +26,26 @@ import java.util.Map;
 
 /**
  * Sends the {@code Authorization} header of the HTTP request the server is handling to the MCP servers of the
- * connections that {@link McpClientHttpConfiguration#isPropagateAuthorization() propagate} it.
+ * connections that {@link McpClientHttpConfiguration#isPropagateAuthorization() propagate} it. Only bearer tokens are
+ * propagated, unless the connection {@link McpClientHttpConfiguration#isPropagateAnyAuthorizationScheme() propagates any
+ * scheme}.
  */
 @Singleton
 @Internal
 @Requires(classes = ServerRequestContext.class)
 final class AuthorizationPropagationHeadersProvider implements McpClientHeadersProvider {
+    private static final String BEARER = "Bearer ";
+
+    @Override
+    public boolean supports(@NonNull McpClientHttpConfiguration connection) {
+        return connection.isPropagateAuthorization();
+    }
 
     @Override
     public @NonNull Map<String, String> headers(@NonNull McpClientHttpConfiguration connection) {
-        if (!connection.isPropagateAuthorization()) {
-            return Map.of();
-        }
         return ServerRequestContext.currentRequest()
             .flatMap(request -> request.getHeaders().getAuthorization())
+            .filter(authorization -> connection.isPropagateAnyAuthorizationScheme() || authorization.regionMatches(true, 0, BEARER, 0, BEARER.length()))
             .map(authorization -> Map.of(HttpHeaders.AUTHORIZATION, authorization))
             .orElse(Map.of());
     }

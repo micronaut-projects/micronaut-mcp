@@ -16,6 +16,8 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.test.support.TestPropertyProvider;
+import io.micronaut.mcp.client.javasdk.McpClientTransportHeaders;
+import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Inject;
@@ -23,6 +25,8 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
@@ -48,7 +52,10 @@ class HeaderPropagationTest implements TestPropertyProvider {
             "micronaut.server.port", String.valueOf(port),
             "micronaut.mcp.client.http.self.url", "http://localhost:" + port + "/mcp",
             "micronaut.mcp.client.http.self.propagate-authorization", "true",
-            "micronaut.mcp.client.http.self.headers.X-Static", "static");
+            "micronaut.mcp.client.http.self.headers.X-Static", "static",
+            "micronaut.mcp.client.http.selfasync.url", "http://localhost:" + port + "/mcp",
+            "micronaut.mcp.client.http.selfasync.propagate-authorization", "true",
+            "micronaut.mcp.client.http.selfasync.headers.X-Static", "static-async");
     }
 
     @Test
@@ -57,13 +64,33 @@ class HeaderPropagationTest implements TestPropertyProvider {
         assertEquals("Bearer user-token | acme | static", seen);
     }
 
+    @Test
+    void theAsynchronousClientPropagatesTheAuthorizationOfTheReactiveRequest() {
+        String seen = httpClient.toBlocking().retrieve(HttpRequest.GET("/proxy-async").bearerAuth("async-token"));
+        assertEquals("Bearer async-token | acme | static-async", seen);
+    }
+
+    @Test
+    void theAsynchronousClientSendsTheHeadersOfTheReactorContext() {
+        String seen = httpClient.toBlocking().retrieve(HttpRequest.GET("/proxy-async-explicit"));
+        assertEquals("Bearer explicit | null | static-async", seen);
+    }
+
+    @Test
+    void basicCredentialsAreNotPropagatedByDefault() {
+        String seen = httpClient.toBlocking().retrieve(HttpRequest.GET("/proxy").basicAuth("user", "secret"));
+        assertEquals("null | acme | static", seen);
+    }
+
     @Requires(property = "spec.name", value = "HeaderPropagationTest")
     @Controller
     static class ProxyController {
         private final McpSyncClient client;
+        private final McpAsyncClient asyncClient;
 
-        ProxyController(@Named("self") McpSyncClient client) {
+        ProxyController(@Named("self") McpSyncClient client, @Named("selfasync") McpAsyncClient asyncClient) {
             this.client = client;
+            this.asyncClient = asyncClient;
         }
 
         @Get("/proxy")
@@ -74,6 +101,19 @@ class HeaderPropagationTest implements TestPropertyProvider {
             }
             McpSchema.CallToolResult result = client.callTool(new McpSchema.CallToolRequest("headers", Map.of()));
             return ((McpSchema.TextContent) result.content().getFirst()).text();
+        }
+
+        @Get("/proxy-async")
+        Mono<String> proxyAsync() {
+            return asyncClient.callTool(new McpSchema.CallToolRequest("headers", Map.of()))
+                .map(result -> ((McpSchema.TextContent) result.content().getFirst()).text());
+        }
+
+        @Get("/proxy-async-explicit")
+        Mono<String> proxyAsyncExplicit() {
+            return asyncClient.callTool(new McpSchema.CallToolRequest("headers", Map.of()))
+                .map(result -> ((McpSchema.TextContent) result.content().getFirst()).text())
+                .contextWrite(context -> McpClientTransportHeaders.withHeaders(context, Map.of("Authorization", "Bearer explicit")));
         }
     }
 

@@ -40,4 +40,16 @@ public interface McpClientConnectionConfiguration extends Named {
     default @Nullable Duration getRequestTimeout() {
         return null;
     }
+
+    /**
+     * Whether the client checks periodically that the server is reachable, and reconnects when it is not. Only used by
+     * the LangChain4j client. For STDIO connections, a reconnection starts a new server process, so consider disabling
+     * it for servers that are slow to start or that cannot run twice.
+     *
+     * @return Whether the client checks the server periodically
+     * @since 2.2.0
+     */
+    default boolean isAutoHealthCheck() {
+        return true;
+    }
 }

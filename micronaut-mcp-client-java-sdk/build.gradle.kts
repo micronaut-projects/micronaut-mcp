@@ -8,6 +8,7 @@ dependencies {
     compileOnly(projects.micronautMcpServerJavaSdk)
     api(libs.managed.mcp.java.sdk)
     api(projects.micronautMcp)
+    implementation(mn.micronaut.core.reactive)
     testAnnotationProcessor(mn.micronaut.inject.java)
     testAnnotationProcessor(mnSerde.micronaut.serde.processor)
     testImplementation(mnSerde.micronaut.serde.jackson)

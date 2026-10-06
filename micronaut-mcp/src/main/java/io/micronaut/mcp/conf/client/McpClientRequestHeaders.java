@@ -36,7 +36,7 @@ public final class McpClientRequestHeaders {
      * @return Whether the headers of the requests of the connection must be computed for each request
      */
     public static boolean isDynamic(@NonNull McpClientHttpConfiguration connection, @NonNull List<McpClientHeadersProvider> providers) {
-        return connection.isPropagateAuthorization() || providers.stream().anyMatch(p -> !(p instanceof AuthorizationPropagationHeadersProvider));
+        return connection.isPropagateAuthorization() || providers.stream().anyMatch(p -> !(p instanceof AuthorizationPropagationHeadersProvider) && p.supports(connection));
     }
 
     /**
@@ -47,7 +47,9 @@ public final class McpClientRequestHeaders {
     public static @NonNull Map<String, String> headers(@NonNull McpClientHttpConfiguration connection, @NonNull List<McpClientHeadersProvider> providers) {
         Map<String, String> headers = new LinkedHashMap<>(connection.getHeaders());
         for (McpClientHeadersProvider provider : providers) {
-            headers.putAll(provider.headers(connection));
+            if (provider.supports(connection)) {
+                headers.putAll(provider.headers(connection));
+            }
         }
         return headers;
     }

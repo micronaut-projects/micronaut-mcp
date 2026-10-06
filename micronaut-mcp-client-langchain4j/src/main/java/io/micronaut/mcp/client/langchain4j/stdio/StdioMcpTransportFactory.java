@@ -16,7 +16,6 @@
 package io.micronaut.mcp.client.langchain4j.stdio;
 
 import dev.langchain4j.mcp.client.transport.stdio.StdioMcpTransport;
-import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
@@ -84,9 +83,9 @@ class StdioMcpTransportFactory {
         return builder;
     }
 
+    // A new transport for each client, which owns and closes it
     @EachBean(StdioMcpTransport.Builder.class)
-    @Bean(preDestroy = "close")
-    @Singleton
+    @Prototype
     StdioMcpTransport createStdioMcpTransport(StdioMcpTransport.Builder builder) {
         return builder.build();
     }

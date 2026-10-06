@@ -90,6 +90,15 @@ public interface McpClientHttpConfiguration extends McpClientConnectionConfigura
         return null;
     }
 
+    /**
+     * @return Whether to {@link #isPropagateAuthorization() propagate} the {@code Authorization} header whatever its
+     * scheme, for example Basic credentials, instead of only bearer tokens
+     * @since 2.2.0
+     */
+    default boolean isPropagateAnyAuthorizationScheme() {
+        return false;
+    }
+
     @NonNull
     static McpClientHttpConfiguration of(@NonNull String name,
                                            @NonNull URI url) {

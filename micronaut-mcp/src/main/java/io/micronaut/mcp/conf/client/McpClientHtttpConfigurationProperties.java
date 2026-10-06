@@ -40,8 +40,10 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
     private boolean propagateAuthorization;
     private McpHttpClientType httpClient = McpHttpClientType.JDK;
     private @Nullable String serviceId;
+    private boolean propagateAnyAuthorizationScheme;
     private @Nullable Duration initializationTimeout;
     private @Nullable Duration requestTimeout;
+    private boolean autoHealthCheck = true;
 
     /**
      * Constructor.
@@ -171,6 +173,21 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
     }
 
     @Override
+    public boolean isPropagateAnyAuthorizationScheme() {
+        return propagateAnyAuthorizationScheme;
+    }
+
+    /**
+     * Whether to propagate the {@code Authorization} header whatever its scheme, instead of only bearer tokens. Default
+     * value {@code false}.
+     *
+     * @param propagateAnyAuthorizationScheme Whether to propagate any authorization scheme
+     */
+    public void setPropagateAnyAuthorizationScheme(boolean propagateAnyAuthorizationScheme) {
+        this.propagateAnyAuthorizationScheme = propagateAnyAuthorizationScheme;
+    }
+
+    @Override
     public @Nullable Duration getInitializationTimeout() {
         return initializationTimeout;
     }
@@ -192,5 +209,20 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
      */
     public void setRequestTimeout(@Nullable Duration requestTimeout) {
         this.requestTimeout = requestTimeout;
+    }
+
+    @Override
+    public boolean isAutoHealthCheck() {
+        return autoHealthCheck;
+    }
+
+    /**
+     * Whether the LangChain4j client checks periodically that the server is reachable, and reconnects when it is not.
+     * Default value {@code true}.
+     *
+     * @param autoHealthCheck Whether to check the server periodically
+     */
+    public void setAutoHealthCheck(boolean autoHealthCheck) {
+        this.autoHealthCheck = autoHealthCheck;
     }
 }

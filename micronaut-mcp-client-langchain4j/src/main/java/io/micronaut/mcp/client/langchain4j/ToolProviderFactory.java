@@ -17,11 +17,13 @@ package io.micronaut.mcp.client.langchain4j;
 
 import dev.langchain4j.mcp.McpToolProvider;
 import dev.langchain4j.mcp.client.McpClient;
+import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
@@ -43,7 +45,12 @@ final class ToolProviderFactory {
 
     @Prototype
     @Primary
-    McpToolProvider.Builder toolProviderBuilder(List<McpClient> clients) {
+    McpToolProvider.Builder toolProviderBuilder(List<McpClientConnectionConfiguration> connections, BeanContext beanContext) {
+        // The clients are resolved when the tools are provided, so that a server that cannot be reached is skipped
+        // instead of failing the creation of the tool provider
+        List<McpClient> clients = connections.stream()
+            .<McpClient>map(connection -> new ConnectionMcpClient(connection.getName(), beanContext))
+            .toList();
         return builder(clients);
     }
 
