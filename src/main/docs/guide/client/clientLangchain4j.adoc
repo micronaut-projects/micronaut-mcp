@@ -77,7 +77,7 @@ The headers of the user are only known while the application handles their reque
 
 == Micronaut HTTP Client
 
-By default the clients send their requests with the JDK HTTP client. Set `http-client` to `MICRONAUT` on an HTTP connection to use the Micronaut HTTP client instead, with the `micronaut-http-client` dependency: the client filters of the application apply, and `service-id` names the `micronaut.http.services` entry that configures the client, for example its SSL, proxy or timeouts.
+By default the clients send their requests with the JDK HTTP client. Set `http-client` to `MICRONAUT` on an HTTP connection to use the Micronaut HTTP client instead, with the `micronaut-http-client` dependency: the client filters of the application apply, and `service-id` names the `micronaut.http.services` entry that configures the client, for example its SSL, proxy or timeouts. When that entry sets no `url`, the requests go to the host of the `url` of the connection. Without `service-id`, the default client configuration applies, with the `request-timeout` of the connection, or its `timeout`, as the read timeout.
 
 [configuration]
 ----
@@ -95,4 +95,8 @@ micronaut:
         read-timeout: 60s
 ----
 
-This applies to the LangChain4j and the Java SDK clients. Responses streamed as server-sent events are read as they arrive.
+This applies to the LangChain4j and the Java SDK clients. Responses streamed as server-sent events are read as they arrive. A message of the server larger than `max-message-size` (default `16MB`) fails the request. The Java SDK client listens to the stream of the messages the server sends on its own, such as the notifications that its tools changed, reconnecting when it ends; as the LangChain4j HTTP transport, the LangChain4j client does not.
+
+WARNING: The client filters of the application apply to the requests sent to MCP servers, including third-party ones. Restrict the filters that add credentials, for example with `@ClientFilter(serviceId = ...)` or path patterns, so that they do not reach MCP servers they are not meant for.
+
+WARNING: The responses are read on the event loop of the Micronaut HTTP client, which by default is shared with the HTTP server. Never call a blocking client API, such as the LangChain4j client or the Java SDK `McpSyncClient`, on an event loop: it would wait for a response that the blocked event loop cannot read. Call them from a thread that may block, for example with `@ExecuteOn(TaskExecutors.BLOCKING)`, or use the asynchronous Java SDK client. The messages are parsed, and the handlers called, on the blocking executor.

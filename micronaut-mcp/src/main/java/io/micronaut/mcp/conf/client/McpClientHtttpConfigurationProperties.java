@@ -18,6 +18,7 @@ package io.micronaut.mcp.conf.client;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.convert.format.ReadableBytes;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -40,6 +41,7 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
     private boolean propagateAuthorization;
     private McpHttpClientType httpClient = McpHttpClientType.JDK;
     private @Nullable String serviceId;
+    private long maxMessageSize = 16L * 1024 * 1024;
     private boolean propagateAnyAuthorizationScheme;
     private @Nullable Duration initializationTimeout;
     private @Nullable Duration requestTimeout;
@@ -156,6 +158,21 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
      */
     public void setServiceId(@Nullable String serviceId) {
         this.serviceId = serviceId;
+    }
+
+    @Override
+    public long getMaxMessageSize() {
+        return maxMessageSize;
+    }
+
+    /**
+     * The maximum size of a message of the server that the Micronaut HTTP client buffers, such as {@code 16MB}. Default
+     * value 16 MiB.
+     *
+     * @param maxMessageSize The maximum size, in bytes
+     */
+    public void setMaxMessageSize(@ReadableBytes long maxMessageSize) {
+        this.maxMessageSize = maxMessageSize;
     }
 
     @Override

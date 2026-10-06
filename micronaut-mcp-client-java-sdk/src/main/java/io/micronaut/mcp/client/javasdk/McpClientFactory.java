@@ -21,8 +21,6 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.async.propagation.ReactorPropagation;
-import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
@@ -35,7 +33,6 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.client.transport.ServerParameters;
 import io.modelcontextprotocol.client.transport.StdioClientTransport;
@@ -52,14 +49,10 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.context.ContextView;
 
 import java.net.http.HttpRequest;
 import java.time.Duration;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -126,30 +119,10 @@ final class McpClientFactory {
         // The synchronous client computes the headers in its transport context provider, on the thread that calls it. For
         // the asynchronous client, they are computed here, in the Micronaut context propagated by the subscriber
         builder.asyncHttpRequestCustomizer((request, method, endpoint, body, context) -> Mono.deferContextual(reactorContext -> {
-            headers(configuration, context, reactorContext).forEach((name, value) -> request.setHeader(name.toString(), value.toString()));
+            TransportHeaders.headers(configuration, headersProviders, context, reactorContext).forEach(request::setHeader);
             return Mono.just(request);
         }));
         return builder;
-    }
-
-    private Map<?, ?> headers(McpClientHttpConfiguration configuration, McpTransportContext context, ContextView reactorContext) {
-        if (context.get(McpClientTransportHeaders.HEADERS) instanceof Map<?, ?> supplied) {
-            Map<Object, Object> headers = new LinkedHashMap<>(configuration.getHeaders());
-            headers.putAll(supplied);
-            return headers;
-        }
-        if (!McpClientRequestHeaders.isDynamic(configuration, headersProviders)) {
-            return configuration.getHeaders();
-        }
-        // Without a propagated context, for example for the answers to the requests of the server, the headers providers
-        // run without the HTTP request the application is handling
-        Optional<PropagatedContext> propagatedContext = ReactorPropagation.findPropagatedContext(reactorContext);
-        if (propagatedContext.isPresent()) {
-            try (PropagatedContext.Scope ignored = propagatedContext.get().propagate()) {
-                return McpClientRequestHeaders.headers(configuration, headersProviders);
-            }
-        }
-        return McpClientRequestHeaders.headers(configuration, headersProviders);
     }
 
     @EachBean(HttpClientStreamableHttpTransport.Builder.class)

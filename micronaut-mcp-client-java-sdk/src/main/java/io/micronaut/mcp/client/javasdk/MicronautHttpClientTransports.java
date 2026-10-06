@@ -18,8 +18,7 @@ package io.micronaut.mcp.client.javasdk;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.http.client.StreamingHttpClient;
-import io.micronaut.http.client.StreamingHttpClientRegistry;
-import io.micronaut.mcp.client.http.MicronautMcpHttpExchange;
+import io.micronaut.mcp.client.http.MicronautMcpHttpClients;
 import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -35,19 +34,19 @@ import java.util.List;
 @Internal
 @Requires(classes = StreamingHttpClient.class)
 final class MicronautHttpClientTransports {
-    private final StreamingHttpClientRegistry<?> registry;
+    private final MicronautMcpHttpClients clients;
     private final McpJsonMapper jsonMapper;
     private final List<McpClientHeadersProvider> headersProviders;
 
-    MicronautHttpClientTransports(StreamingHttpClientRegistry<?> registry,
+    MicronautHttpClientTransports(MicronautMcpHttpClients clients,
                                   McpJsonMapper jsonMapper,
                                   List<McpClientHeadersProvider> headersProviders) {
-        this.registry = registry;
+        this.clients = clients;
         this.jsonMapper = jsonMapper;
         this.headersProviders = headersProviders;
     }
 
     McpClientTransport create(McpClientHttpConfiguration configuration) {
-        return new MicronautStreamableHttpClientTransport(new MicronautMcpHttpExchange(registry, configuration, headersProviders), jsonMapper);
+        return new MicronautStreamableHttpClientTransport(clients.exchange(configuration), configuration, headersProviders, jsonMapper);
     }
 }

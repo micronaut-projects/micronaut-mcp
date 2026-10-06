@@ -19,13 +19,9 @@ import dev.langchain4j.mcp.client.transport.McpTransport;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.http.client.StreamingHttpClient;
-import io.micronaut.http.client.StreamingHttpClientRegistry;
-import io.micronaut.mcp.client.http.MicronautMcpHttpExchange;
-import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
+import io.micronaut.mcp.client.http.MicronautMcpHttpClients;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import jakarta.inject.Singleton;
-
-import java.util.List;
 
 /**
  * Creates the transports of the HTTP connections that use the Micronaut HTTP client.
@@ -34,12 +30,10 @@ import java.util.List;
 @Internal
 @Requires(classes = StreamingHttpClient.class)
 public final class MicronautHttpClientTransports {
-    private final StreamingHttpClientRegistry<?> registry;
-    private final List<McpClientHeadersProvider> headersProviders;
+    private final MicronautMcpHttpClients clients;
 
-    MicronautHttpClientTransports(StreamingHttpClientRegistry<?> registry, List<McpClientHeadersProvider> headersProviders) {
-        this.registry = registry;
-        this.headersProviders = headersProviders;
+    MicronautHttpClientTransports(MicronautMcpHttpClients clients) {
+        this.clients = clients;
     }
 
     /**
@@ -47,6 +41,6 @@ public final class MicronautHttpClientTransports {
      * @return The transport of the connection
      */
     public McpTransport create(McpClientHttpConfiguration configuration) {
-        return new MicronautStreamableHttpMcpTransport(new MicronautMcpHttpExchange(registry, configuration, headersProviders));
+        return new MicronautStreamableHttpMcpTransport(clients.exchange(configuration));
     }
 }

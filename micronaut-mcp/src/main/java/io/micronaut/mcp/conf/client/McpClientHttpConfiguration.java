@@ -91,6 +91,15 @@ public interface McpClientHttpConfiguration extends McpClientConnectionConfigura
     }
 
     /**
+     * @return The maximum size, in bytes, of a message of the server that the client buffers: a JSON response, an event of
+     * a stream, or an error. Only used with {@link McpHttpClientType#MICRONAUT}. Default value 16 MiB.
+     * @since 2.2.0
+     */
+    default long getMaxMessageSize() {
+        return 16L * 1024 * 1024;
+    }
+
+    /**
      * @return Whether to {@link #isPropagateAuthorization() propagate} the {@code Authorization} header whatever its
      * scheme, for example Basic credentials, instead of only bearer tokens
      * @since 2.2.0
