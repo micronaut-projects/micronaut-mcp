@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * MCP {@link io.modelcontextprotocol.json.schema.JsonSchemaValidator} backed by Micronaut JSON Schema Validator {@link JsonSchemaValidator}.
@@ -67,9 +68,10 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
             String jsonStructuredOutput = jsonMapper.writeValueAsString(structuredContent);
             Set<? extends ValidationMessage> validationResult = validator.validate(jsonStructuredOutput, schemaJson(schema));
             if (CollectionUtils.isNotEmpty(validationResult)) {
-                return ValidationResponse
-                    .asInvalid("Validation failed: structuredContent does not match tool outputSchema. "
-                        + "Validation errors: " + validationResult);
+                // Used for tool inputs and outputs: the SDK prefixes the message with what was validated
+                return ValidationResponse.asInvalid(validationResult.stream()
+                    .map(ValidationMessage::getMessage)
+                    .collect(Collectors.joining("; ")));
             }
             return ValidationResponse.asValid(jsonStructuredOutput);
         } catch (JacksonException e) {
