@@ -3,6 +3,8 @@ package example.micronaut.security;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.HttpClient;
@@ -45,8 +47,9 @@ class SecuredMcpServerTest {
 
     @Test
     void anUnauthenticatedCallIsChallengedWithTheProtectedResourceMetadata() {
-        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class,
-            () -> httpClient.toBlocking().exchange(whoami()));
+        BlockingHttpClient client = httpClient.toBlocking();
+        MutableHttpRequest<String> request = whoami();
+        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request));
         assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatus());
         String challenge = ex.getResponse().getHeaders().get("WWW-Authenticate");
         assertTrue(challenge != null && challenge.startsWith("Bearer") && challenge.contains("resource_metadata=")
@@ -54,7 +57,7 @@ class SecuredMcpServerTest {
     }
 
     @Test
-    void theProtectedResourceMetadataNamesTheMcpEndpoint() throws JSONException {
+    void theProtectedResourceMetadataNamesTheMcpEndpoint() {
         String metadata = httpClient.toBlocking().retrieve("/.well-known/oauth-protected-resource/mcp");
         assertTrue(metadata.contains("\"resource\""), metadata);
         assertTrue(metadata.contains("/mcp\""), metadata);
@@ -69,7 +72,7 @@ class SecuredMcpServerTest {
             {"result": {"content": [{"type": "text", "text": "alice"}], "isError": false}}""", response.body(), JSONCompareMode.LENIENT);
     }
 
-    private static io.micronaut.http.MutableHttpRequest<String> whoami() {
+    private static MutableHttpRequest<String> whoami() {
         return HttpRequest.POST("/mcp", """
             {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "whoami", "arguments": {}}}""");
     }

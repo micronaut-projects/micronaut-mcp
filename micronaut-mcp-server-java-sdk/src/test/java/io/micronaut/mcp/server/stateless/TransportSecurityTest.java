@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
