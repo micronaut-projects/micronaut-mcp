@@ -623,22 +623,24 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             ArgumentBinder<?, ?>[] argumentBinders = binders(registry);
             Object[] argumentValues = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
-                Argument<?> argument = arguments[i];
-                int index = boundIndexes[i];
-                if (index == REQUEST_CONTEXT) {
-                    argumentValues[i] = DefaultMcpRequestContext.of(context, values[0]);
-                    continue;
-                }
-                if (index != NOT_BOUND) {
-                    Object value = index == 0 ? resolveMcpTransportContext(context) : values[index - 1];
-                    if (argument.getType().isInstance(value)) {
-                        argumentValues[i] = value;
-                        continue;
-                    }
-                }
-                argumentValues[i] = bind(argument, argumentBinders[i], source);
+                argumentValues[i] = argumentValue(i, argumentBinders[i], source, context, values);
             }
             return executableMethod.invoke(bean(), argumentValues);
+        }
+
+        private <S> @Nullable Object argumentValue(int i, @Nullable ArgumentBinder<?, ?> binder, S source, @Nullable Object context, Object[] values) {
+            Argument<?> argument = arguments[i];
+            int index = boundIndexes[i];
+            if (index == REQUEST_CONTEXT) {
+                return DefaultMcpRequestContext.of(context, values[0]);
+            }
+            if (index != NOT_BOUND) {
+                Object value = index == 0 ? resolveMcpTransportContext(context) : values[index - 1];
+                if (argument.getType().isInstance(value)) {
+                    return value;
+                }
+            }
+            return bind(argument, binder, source);
         }
 
         @SuppressWarnings("unchecked")
