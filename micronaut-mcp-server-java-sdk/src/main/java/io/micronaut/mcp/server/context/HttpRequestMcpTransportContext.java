@@ -25,11 +25,16 @@ import org.jspecify.annotations.Nullable;
 
 import java.security.Principal;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A {@link MicronautMcpTransportContext} backed by the HTTP request. Each value is read from the request when it is first
  * asked for, so requests whose handlers never read the host, the locale or the principal do not pay for resolving them.
+ *
+ * <p>Only the headers and the attributes of the request are read, never its body, so a context that a primitive keeps
+ * and reads after the response is written still sees the values of its request.</p>
+ *
+ * <p>The resolved values are memoized in plain fields: concurrent first reads may resolve a value twice, which is
+ * harmless because the resolution has no side effects and always gives the same value.</p>
  */
 @Internal
 final class HttpRequestMcpTransportContext implements MicronautMcpTransportContext {
@@ -38,8 +43,9 @@ final class HttpRequestMcpTransportContext implements MicronautMcpTransportConte
     private final HttpRequest<?> request;
     private final HttpHostResolver hostResolver;
     private final LocaleResolver<HttpRequest<?>> localeResolver;
-    private final AtomicReference<Object> host = new AtomicReference<>(UNRESOLVED);
-    private final AtomicReference<Object> locale = new AtomicReference<>(UNRESOLVED);
+    private @Nullable Object host = UNRESOLVED;
+    private @Nullable Object locale = UNRESOLVED;
+    private @Nullable Object principal = UNRESOLVED;
 
     HttpRequestMcpTransportContext(HttpRequest<?> request,
                                    HttpHostResolver hostResolver,
@@ -64,27 +70,32 @@ final class HttpRequestMcpTransportContext implements MicronautMcpTransportConte
 
     @Override
     public @Nullable Locale locale() {
-        Object value = locale.get();
+        Object value = locale;
         if (value == UNRESOLVED) {
             value = localeResolver.resolve(request).orElse(null);
-            locale.set(value);
+            locale = value;
         }
         return (Locale) value;
     }
 
     @Override
     public @Nullable String host() {
-        Object value = host.get();
+        Object value = host;
         if (value == UNRESOLVED) {
             value = hostResolver.resolve(request);
-            host.set(value);
+            host = value;
         }
         return (String) value;
     }
 
     @Override
     public @Nullable Principal principal() {
-        return request.getUserPrincipal().orElse(null);
+        Object value = principal;
+        if (value == UNRESOLVED) {
+            value = request.getUserPrincipal().orElse(null);
+            principal = value;
+        }
+        return (Principal) value;
     }
 
     @Override
