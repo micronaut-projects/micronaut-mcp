@@ -17,7 +17,6 @@ package io.micronaut.mcp.server.context;
 
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
-import io.micronaut.http.HttpAttributes;
 import io.micronaut.http.HttpHeaders;
 import io.modelcontextprotocol.common.McpTransportContext;
 
@@ -26,6 +25,11 @@ import java.util.Locale;
 
 @Internal
 final class MicronautMcpTransportContextAdapter implements MicronautMcpTransportContext {
+    /**
+     * The key of the authenticated principal, the name of the request attribute Micronaut Security stores it in.
+     */
+    static final String PRINCIPAL_KEY = "micronaut.AUTHENTICATION";
+
     private final McpTransportContext delegate;
 
     MicronautMcpTransportContextAdapter(McpTransportContext context) {
@@ -56,7 +60,7 @@ final class MicronautMcpTransportContextAdapter implements MicronautMcpTransport
     @Nullable
     @Override
     public Principal principal() {
-        Object obj = get(HttpAttributes.PRINCIPAL.toString());
+        Object obj = get(PRINCIPAL_KEY);
         if (obj instanceof Principal principal) {
             return principal;
         }
