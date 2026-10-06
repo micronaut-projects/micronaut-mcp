@@ -163,13 +163,28 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         Set<String> names = notifyingNames.get();
         if (names == null) {
             names = methods.stream()
-                .filter(m -> Arrays.stream(m.method().getArguments()).anyMatch(a -> a.getType() == McpRequestContext.class))
+                .filter(m -> declaresRequestContext(m.method()))
                 .map(m -> primitiveName(m.method()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toUnmodifiableSet());
             notifyingNames.set(names);
         }
         return names.contains(name);
+    }
+
+    /**
+     * @return Whether a method of the registry declares an {@link McpRequestContext} parameter, so it may send log message notifications
+     */
+    public final boolean hasNotifyingMethods() {
+        return methods.stream().anyMatch(m -> declaresRequestContext(m.method()));
+    }
+
+    /**
+     * @param method A method
+     * @return Whether the method declares an {@link McpRequestContext} parameter, so it may send notifications while it runs
+     */
+    protected static boolean declaresRequestContext(ExecutableMethod<?, ?> method) {
+        return Arrays.stream(method.getArguments()).anyMatch(a -> a.getType() == McpRequestContext.class);
     }
 
     /**
