@@ -18,11 +18,9 @@ package io.micronaut.mcp.server.stateless;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.json.tree.JsonNode;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
@@ -67,14 +65,11 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
     private final McpTransportContextExtractor<HttpRequest<?>> contextExtractor;
     private final JsonMapper jsonMapper;
     private final boolean passJsonTrees;
-    private final McpRequestValidator requestValidator;
 
     McpController(McpStatelessServerHandler mcpHandler,
                   McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
                   JsonMapper jsonMapper,
-                  McpJsonMapper mcpJsonMapper,
-                  McpRequestValidator requestValidator) {
-        this.requestValidator = requestValidator;
+                  McpJsonMapper mcpJsonMapper) {
         this.mcpHandler = mcpHandler;
         this.contextExtractor = contextExtractor;
         this.jsonMapper = jsonMapper;
@@ -82,20 +77,25 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
         this.passJsonTrees = mcpJsonMapper instanceof MicronautMcpJsonMapper;
     }
 
+    /**
+     * @param request The request
+     * @param body The body of the request
+     * @param streaming Whether the response may become an event stream of the notifications of the request, as {@link McpStreamingPolicy} decides
+     * @return The response
+     */
     @SuppressWarnings("java:S3740")
-    final Mono<HttpResponse<?>> handle(HttpRequest<?> request, @Nullable JsonNode body) {
-        HttpResponse<?> rejection = requestValidator.reject(request);
-        if (rejection != null) {
-            return Mono.just(rejection);
-        }
+    final Mono<HttpResponse<?>> handle(HttpRequest<?> request, @Nullable JsonNode body, boolean streaming) {
         McpTransportContext transportContext = contextExtractor.extract(request);
         McpSchema.JSONRPCMessage jsonRpcMessage = jsonRpcMessage(body);
         if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
-            if (acceptsEventStream(request)) {
+            if (streaming) {
                 return Mono.create(sink -> {
-                    StreamingJsonRpcResponse response = new StreamingJsonRpcResponse(sink);
+                    StreamingJsonRpcResponse response = new StreamingJsonRpcResponse(sink, jsonrpcRequest);
                     request.setAttribute(McpNotificationEmitter.ATTRIBUTE, response);
-                    handleJsonRpcRequest(jsonrpcRequest, transportContext).subscribe(response::complete, response::fail);
+                    response.subscription(handleJsonRpcRequest(jsonrpcRequest, transportContext)
+                        // The Reactor context of the route, with the propagated context, reaches the primitive
+                        .contextWrite(sink.contextView())
+                        .subscribe(response::complete, response::fail, response::completeEmpty));
                 });
             }
             return handleJsonRpcRequest(jsonrpcRequest, transportContext);
@@ -177,15 +177,6 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
 
     private static Object id(JsonNode id) {
         return id.isString() ? id.getStringValue() : id.getNumberValue();
-    }
-
-    static boolean acceptsEventStream(HttpRequest<?> request) {
-        for (String accept : request.getHeaders().getAll(HttpHeaders.ACCEPT)) {
-            if (accept.contains(MediaType.TEXT_EVENT_STREAM)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static Map<String, Object> invalidRequest() {

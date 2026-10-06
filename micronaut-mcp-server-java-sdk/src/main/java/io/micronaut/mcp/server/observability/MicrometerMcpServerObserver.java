@@ -23,6 +23,9 @@ import io.micronaut.core.util.StringUtils;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Records the duration of MCP server operations with Micrometer, following the OpenTelemetry semantic conventions for
  * MCP: a timer named {@value #METER_NAME}, tagged with the JSON-RPC method, the primitive name and the error type.
@@ -47,6 +50,10 @@ final class MicrometerMcpServerObserver implements McpServerObserver {
     private static final String NO_ERROR = "none";
 
     private final MeterRegistry meterRegistry;
+    /**
+     * The timers by tags. The server only invokes registered primitives, so the names, and with them the timers, are bounded.
+     */
+    private final Map<TimerKey, Timer> timers = new ConcurrentHashMap<>();
 
     MicrometerMcpServerObserver(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
@@ -55,15 +62,29 @@ final class MicrometerMcpServerObserver implements McpServerObserver {
     @Override
     public Observation start(String method, String name) {
         Timer.Sample sample = Timer.start(meterRegistry);
-        return errorType -> sample.stop(Timer.builder(METER_NAME)
+        return errorType -> sample.stop(timers.computeIfAbsent(new TimerKey(method, name, errorType(errorType)), this::timer));
+    }
+
+    private Timer timer(TimerKey key) {
+        return Timer.builder(METER_NAME)
             .description("The duration of MCP server operations")
-            .tag(TAG_METHOD, method)
-            .tag(TAG_NAME, name)
-            .tag(TAG_ERROR_TYPE, errorType(errorType))
-            .register(meterRegistry));
+            .tag(TAG_METHOD, key.method())
+            .tag(TAG_NAME, key.name())
+            .tag(TAG_ERROR_TYPE, key.errorType())
+            .register(meterRegistry);
     }
 
     private static String errorType(@Nullable String errorType) {
         return errorType != null ? errorType : NO_ERROR;
+    }
+
+    /**
+     * The tags of a timer.
+     *
+     * @param method The JSON-RPC method
+     * @param name The name of the primitive
+     * @param errorType The error type
+     */
+    private record TimerKey(String method, String name, String errorType) {
     }
 }
