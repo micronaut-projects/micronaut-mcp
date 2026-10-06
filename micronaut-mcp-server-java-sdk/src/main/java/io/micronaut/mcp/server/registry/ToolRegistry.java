@@ -326,6 +326,11 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             .orElse(null);
     }
 
+    @Override
+    protected String primitiveName(ExecutableMethod<?, ?> method) {
+        return toolName(method);
+    }
+
     private static String toolName(ExecutableMethod<?, ?> method) {
         String name = method.stringValue(Tool.class, "name").orElse(Tool.ELEMENT_NAME);
         if (name.equals(Tool.ELEMENT_NAME)) {

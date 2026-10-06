@@ -224,6 +224,11 @@ public final class PromptRegistry
         return method.stringValue(Prompt.class, MEMBER_DESCRIPTION);
     }
 
+    @Override
+    protected String primitiveName(ExecutableMethod<?, ?> method) {
+        return promptName(method);
+    }
+
     private static String promptName(ExecutableMethod<?, ?> method) {
         String name = method.stringValue(Prompt.class, MEMBER_NAME).orElse(Prompt.ELEMENT_NAME);
         if (name.equals(Prompt.ELEMENT_NAME)) {
