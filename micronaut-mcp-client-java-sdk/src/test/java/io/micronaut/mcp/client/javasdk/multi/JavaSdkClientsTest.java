@@ -36,6 +36,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -98,7 +99,7 @@ class JavaSdkClientsTest implements TestPropertyProvider {
     @Test
     void theSamplingHandlerAnswersTheServer() {
         localClient.initialize();
-        assertTrue(localClient.getClientCapabilities().sampling() != null);
+        assertNotNull(localClient.getClientCapabilities().sampling());
         McpSchema.CallToolResult result = localClient.callTool(new McpSchema.CallToolRequest("haiku", Map.of()));
         assertEquals("The model wrote: An old silent pond (from local)", text(result));
     }
