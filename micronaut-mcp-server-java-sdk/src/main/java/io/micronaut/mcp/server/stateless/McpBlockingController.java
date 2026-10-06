@@ -26,6 +26,16 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.json.tree.JsonNode;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
+import io.micronaut.mcp.server.registry.PromptRegistry;
+import io.micronaut.mcp.server.registry.ResourceRegistry;
+import io.micronaut.mcp.server.registry.ToolRegistry;
+import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.inject.Named;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
+
+import java.util.concurrent.ExecutorService;
+import java.util.function.Predicate;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -44,20 +54,58 @@ import reactor.core.publisher.Mono;
 @ExecuteOn(TaskExecutors.BLOCKING)
 @Internal
 final class McpBlockingController extends McpController {
+    private final ToolRegistry toolRegistry;
+    private final PromptRegistry promptRegistry;
+    private final ResourceRegistry resourceRegistry;
+    private final Scheduler blockingScheduler;
 
     McpBlockingController(McpStatelessServerHandler mcpHandler,
                           McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
                           JsonMapper jsonMapper,
                           McpJsonMapper mcpJsonMapper,
-                          McpRequestValidator requestValidator) {
+                          McpRequestValidator requestValidator,
+                          ToolRegistry toolRegistry,
+                          PromptRegistry promptRegistry,
+                          ResourceRegistry resourceRegistry,
+                          @Named(TaskExecutors.BLOCKING) ExecutorService blockingExecutor) {
         super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper, requestValidator);
+        this.toolRegistry = toolRegistry;
+        this.promptRegistry = promptRegistry;
+        this.resourceRegistry = resourceRegistry;
+        this.blockingScheduler = Schedulers.fromExecutorService(blockingExecutor);
     }
 
     @SuppressWarnings("java:S3740")
     @Post
     Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable JsonNode body) {
-        // Subscribed to on the blocking thread, where the server invokes the primitive; a response upgraded to a
-        // stream is written while the primitive still runs
-        return handle(request, body);
+        Mono<HttpResponse<?>> response = handle(request, body);
+        if (mayStream(request, body)) {
+            // The server writes a response only once the subscription to it returns, so a primitive that may stream
+            // runs on another thread of the blocking executor, for its notifications to be written while it runs
+            return response.subscribeOn(blockingScheduler);
+        }
+        // Subscribed to on this blocking thread, where the server invokes the primitive
+        return response;
+    }
+
+    private boolean mayStream(HttpRequest<?> request, @Nullable JsonNode body) {
+        if (body == null || !body.isObject() || !acceptsEventStream(request)) {
+            return false;
+        }
+        JsonNode method = body.get("method");
+        JsonNode params = body.get("params");
+        if (method == null || !method.isString() || params == null || !params.isObject()) {
+            return false;
+        }
+        return switch (method.getStringValue()) {
+            case McpSchema.METHOD_TOOLS_CALL -> mayNotify(toolRegistry::mayNotify, params.get("name"));
+            case McpSchema.METHOD_PROMPT_GET -> mayNotify(promptRegistry::mayNotify, params.get("name"));
+            case McpSchema.METHOD_RESOURCES_READ -> mayNotify(resourceRegistry::mayNotify, params.get("uri"));
+            default -> false;
+        };
+    }
+
+    private static boolean mayNotify(Predicate<String> mayNotify, @Nullable JsonNode name) {
+        return name != null && name.isString() && mayNotify.test(name.getStringValue());
     }
 }

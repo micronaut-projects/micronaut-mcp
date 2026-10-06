@@ -33,6 +33,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
+// Without HTTP server filters, which change how the server subscribes to the response
+@Property(name = "micronaut.security.enabled", value = "false")
+@Property(name = "micronaut.metrics.enabled", value = "false")
 @Property(name = "spec.name", value = "RequestContextStreamingTest")
 @MicronautTest
 class RequestContextStreamingTest {
