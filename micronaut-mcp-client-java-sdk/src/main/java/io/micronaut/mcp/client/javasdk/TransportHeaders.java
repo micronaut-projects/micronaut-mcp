@@ -64,7 +64,7 @@ final class TransportHeaders {
         // run without the HTTP request the application is handling
         Optional<PropagatedContext> propagatedContext = ReactorPropagation.findPropagatedContext(reactorContext);
         if (propagatedContext.isPresent()) {
-            try (PropagatedContext.Scope ignored = propagatedContext.get().propagate()) {
+            try (PropagatedContext.Scope _ = propagatedContext.get().propagate()) {
                 return McpClientRequestHeaders.headers(configuration, headersProviders);
             }
         }

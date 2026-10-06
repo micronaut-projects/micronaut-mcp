@@ -77,6 +77,7 @@ final class McpClientFactory {
     private final McpConnectionClients connectionClients;
     private final Scheduler blockingScheduler;
 
+    @SuppressWarnings({"java:S107", "ParameterNumber"})
     McpClientFactory(McpJsonMapper mcpJsonMapper,
                      BeanContext beanContext,
                      @Nullable McpSamplingHandler samplingHandler,
