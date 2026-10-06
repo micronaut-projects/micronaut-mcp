@@ -3,6 +3,7 @@ package io.micronaut.mcp.server.stateless;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.client.HttpClient;
+import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
@@ -31,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "micronaut.mcp.server.reactive", value = "true")
 @Property(name = "spec.name", value = "ReactiveExecutionModelTest")
+@Property(name = "execution-model.tools", value = "true")
 @MicronautTest
 class ReactiveExecutionModelTest {
 
@@ -44,7 +46,12 @@ class ReactiveExecutionModelTest {
     @Test
     void toolsRunWhereTheyDeclare() throws IOException {
         assertEquals("true", text(callTool(httpClient, jsonMapper, "eventLoop")));
-        assertEquals("false", text(callTool(httpClient, jsonMapper, "blocking")));
+        assertEquals("false true", text(callTool(httpClient, jsonMapper, "blocking")));
+    }
+
+    @Test
+    void executionModel() throws IOException {
+        ExecutionModelAssertions.assertExecutionModel(httpClient, jsonMapper);
     }
 
     @Test
@@ -71,7 +78,7 @@ class ReactiveExecutionModelTest {
         @Tool
         @ExecuteOn(TaskExecutors.BLOCKING)
         String blocking() {
-            return String.valueOf(ExecutionModelSupport.onEventLoop());
+            return ExecutionModelSupport.onEventLoop() + " " + ServerRequestContext.currentRequest().isPresent();
         }
 
         @Tool

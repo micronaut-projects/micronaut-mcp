@@ -37,16 +37,31 @@ public interface TransportSecurityConfiguration {
     boolean DEFAULT_ENABLED = true;
 
     /**
+     * Whether loopback origins are allowed by default.
+     */
+    boolean DEFAULT_ALLOW_LOOPBACK_ORIGINS = true;
+
+    /**
      * @return Whether the {@code Origin} and {@code MCP-Protocol-Version} request headers are validated. A request with
      * an {@code Origin} that is not allowed is answered with 403, and one with an unsupported protocol version with 400.
      */
     boolean isEnabled();
 
     /**
-     * @return The origins allowed besides loopback origins ({@code localhost}, {@code 127.0.0.1} and {@code [::1]} on any
-     * port), such as {@code https://app.example.com}. {@code *} allows every origin. Requests without an {@code Origin}
-     * header, which browsers always send, are allowed.
+     * @return The origins allowed besides loopback origins, such as {@code https://app.example.com}. {@code *} allows
+     * every origin. Requests without an {@code Origin} header, which browsers always send, are allowed.
      */
     @NonNull
     List<String> getAllowedOrigins();
+
+    /**
+     * Whether loopback origins ({@code localhost}, {@code 127.0.0.1} and {@code [::1]}, with any scheme and port) are
+     * allowed, so that local tools such as the MCP Inspector can connect. A server reachable from other hosts can
+     * disable it, so that pages served by other local applications cannot call it.
+     *
+     * @return Whether loopback origins are allowed
+     */
+    default boolean isAllowLoopbackOrigins() {
+        return DEFAULT_ALLOW_LOOPBACK_ORIGINS;
+    }
 }

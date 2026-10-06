@@ -7,11 +7,14 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.mcp.annotations.Prompt;
+import io.micronaut.mcp.annotations.PromptCompletion;
 import io.micronaut.mcp.annotations.Resource;
+import io.micronaut.mcp.annotations.ResourceTemplate;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
@@ -104,6 +107,42 @@ class RequestContextStreamingTest {
     }
 
     @Test
+    void resourceTemplatesAndCompletionsStreamTheirNotifications() {
+        List<String> item = data(post(ACCEPT_BOTH, """
+            {"jsonrpc": "2.0", "id": 16, "method": "resources/read", "params": {"uri": "catalog://items/42"}}""").body());
+        assertEquals(2, item.size(), String.valueOf(item));
+        assertTrue(item.get(0).contains("reading item 42") && item.get(1).contains("\"text\":\"item 42\""), String.valueOf(item));
+        List<String> completion = data(post(ACCEPT_BOTH, """
+            {"jsonrpc": "2.0", "id": 17, "method": "completion/complete",
+             "params": {"ref": {"type": "ref/prompt", "name": "explain"}, "argument": {"name": "topic", "value": "m"}}}""").body());
+        assertEquals(2, completion.size(), String.valueOf(completion));
+        assertTrue(completion.get(0).contains("completing topics") && completion.get(1).contains("\"mcp\""), String.valueOf(completion));
+    }
+
+    @Test
+    void theRequestIsInScopeOfAStreamingPrimitive() {
+        List<String> events = data(post(ACCEPT_BOTH, """
+            {"jsonrpc": "2.0", "id": 18, "method": "tools/call", "params": {"name": "requestInScope", "arguments": {}}}""").body());
+        assertEquals(2, events.size(), String.valueOf(events));
+        assertTrue(events.get(1).contains("\"text\":\"true\""), events.get(1));
+    }
+
+    @Test
+    void anEventStreamWithAZeroQualityGetsJson() {
+        HttpResponse<String> response = post("application/json, text/event-stream;q=0", """
+            {"jsonrpc": "2.0", "id": 19, "method": "tools/call", "params": {"name": "importCatalog", "arguments": {"pages": 1}}}""");
+        assertTrue(response.getContentType().map(MediaType.APPLICATION_JSON_TYPE::matches).orElse(false));
+    }
+
+    @Test
+    void theLoggingCapabilityIsAdvertised() {
+        String initialize = post(MediaType.APPLICATION_JSON, """
+            {"jsonrpc": "2.0", "id": 20, "method": "initialize",
+             "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "test", "version": "1"}}}""").body();
+        assertTrue(initialize.contains("\"logging\":{}"), initialize);
+    }
+
+    @Test
     void theRequestContextIsNotPartOfTheInputSchemaOrPromptArguments() {
         String tools = post(MediaType.APPLICATION_JSON, """
             {"jsonrpc": "2.0", "id": 11, "method": "tools/list", "params": {}}""").body();
@@ -182,6 +221,24 @@ class RequestContextStreamingTest {
         String status(McpRequestContext context) {
             context.log(McpSchema.LoggingLevel.INFO, "reading the status");
             return "ok";
+        }
+
+        @ResourceTemplate(uriTemplate = "catalog://items/{id}")
+        String item(String id, McpRequestContext context) {
+            context.log(McpSchema.LoggingLevel.INFO, "reading item " + id);
+            return "item " + id;
+        }
+
+        @PromptCompletion(name = "explain")
+        List<String> topics(McpRequestContext context) {
+            context.log(McpSchema.LoggingLevel.INFO, "completing topics");
+            return List.of("mcp");
+        }
+
+        @Tool
+        String requestInScope(McpRequestContext context) {
+            context.log(McpSchema.LoggingLevel.INFO, "checking the request");
+            return String.valueOf(ServerRequestContext.currentRequest().isPresent());
         }
 
         @Prompt

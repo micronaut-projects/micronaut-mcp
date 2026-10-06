@@ -19,9 +19,6 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
-import io.micronaut.core.bind.BoundExecutable;
-import io.micronaut.core.bind.DefaultExecutableBinder;
-import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.core.type.Argument;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
@@ -134,34 +131,23 @@ public final class PromptRegistry
     private <B> McpSchema.GetPromptResult promptResult(Method<B> m,
                                                        Object mcpTransportContext,
                                                        McpSchema.GetPromptRequest promptRequest) {
-        return observed(McpSchema.METHOD_PROMPT_GET, promptRequest.name(), () -> map(m, promptRequest, m.await(invoke(m, mcpTransportContext, promptRequest))));
+        return observed(McpSchema.METHOD_PROMPT_GET, promptRequest.name(), () -> m.call(() -> m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest),
+            mcpTransportContext, PromptRegistry::map, this::failWithMcpError));
     }
 
     private <B> Mono<McpSchema.GetPromptResult> promptResultAsync(Method<B> m,
                                                                   Object mcpTransportContext,
                                                                   McpSchema.GetPromptRequest promptRequest) {
-        return observedAsync(McpSchema.METHOD_PROMPT_GET, promptRequest.name(), () -> m.invokeAsync(() -> invoke(m, mcpTransportContext, promptRequest))
-            .map(result -> map(m, promptRequest, result))
-            .switchIfEmpty(Mono.fromSupplier(() -> map(m, promptRequest, null))));
+        return observedAsync(McpSchema.METHOD_PROMPT_GET, promptRequest.name(), () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest),
+            PromptRegistry::map, this::failWithMcpError));
     }
 
-    private <B> @Nullable Object invoke(Method<B> m,
-                                        Object mcpTransportContext,
-                                        McpSchema.GetPromptRequest promptRequest) {
-        ExecutableMethod<B, Object> method = m.method();
-        B bean = m.bean();
-        ExecutableBinder<McpSchema.GetPromptRequest> executableBinder = new DefaultExecutableBinder<>(
-            m.preBound(mcpTransportContext, promptRequest));
-        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, promptRequest);
-        return executable.invoke(bean);
-    }
-
-    private <B> McpSchema.GetPromptResult map(Method<B> m, McpSchema.GetPromptRequest promptRequest, @Nullable Object result) {
+    private static McpSchema.GetPromptResult map(@Nullable Object result) {
         if (result instanceof McpSchema.GetPromptResult promptResult) {
             return promptResult;
         }
-        if (result != null && m.resultArgument().getType().isAssignableFrom(String.class)) {
-            McpSchema.TextContent assistantContent = new McpSchema.TextContent(result.toString());
+        if (result instanceof CharSequence text) {
+            McpSchema.TextContent assistantContent = new McpSchema.TextContent(text.toString());
             McpSchema.PromptMessage assistantMessage = new McpSchema.PromptMessage(McpSchema.Role.ASSISTANT, assistantContent);
             //TODO is it possible to get the description from the javadoc @return of the method
             String description = null;
