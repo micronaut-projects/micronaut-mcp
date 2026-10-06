@@ -64,14 +64,11 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
     private final McpTransportContextExtractor<HttpRequest<?>> contextExtractor;
     private final JsonMapper jsonMapper;
     private final boolean passJsonTrees;
-    private final McpRequestValidator requestValidator;
 
     McpController(McpStatelessServerHandler mcpHandler,
                   McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
                   JsonMapper jsonMapper,
-                  McpJsonMapper mcpJsonMapper,
-                  McpRequestValidator requestValidator) {
-        this.requestValidator = requestValidator;
+                  McpJsonMapper mcpJsonMapper) {
         this.mcpHandler = mcpHandler;
         this.contextExtractor = contextExtractor;
         this.jsonMapper = jsonMapper;
@@ -81,10 +78,6 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
 
     @SuppressWarnings("java:S3740")
     final Mono<HttpResponse<?>> handle(HttpRequest<?> request, @Nullable JsonNode body) {
-        HttpResponse<?> rejection = requestValidator.reject(request);
-        if (rejection != null) {
-            return Mono.just(rejection);
-        }
         McpTransportContext transportContext = contextExtractor.extract(request);
         McpSchema.JSONRPCMessage jsonRpcMessage = jsonRpcMessage(body);
         if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {

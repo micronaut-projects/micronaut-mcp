@@ -47,9 +47,8 @@ final class McpBlockingController extends McpController {
     McpBlockingController(McpStatelessServerHandler mcpHandler,
                           McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
                           JsonMapper jsonMapper,
-                          McpJsonMapper mcpJsonMapper,
-                          McpRequestValidator requestValidator) {
-        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper, requestValidator);
+                          McpJsonMapper mcpJsonMapper) {
+        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper);
     }
 
     // The route returns a JSON-RPC response or an error body, so the response body type is a wildcard
