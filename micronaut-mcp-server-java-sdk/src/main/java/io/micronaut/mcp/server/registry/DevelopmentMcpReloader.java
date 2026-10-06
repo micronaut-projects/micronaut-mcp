@@ -73,7 +73,8 @@ import java.util.function.Function;
  *
  * <p>The specifications are built by registries created for the change and dropped after it, from the methods the
  * change carries, as the registries of the context built them at startup. It holds the context only: what was
- * registered is read from the change, so nothing of a generation is kept here.</p>
+ * registered is read from the change, so nothing of a generation is kept here. The registries of the context, which
+ * the server was built from, are emptied at each change, so that they keep no method of a retired generation.</p>
  *
  * @author graemerocher
  * @since 2.2.0
@@ -114,17 +115,18 @@ final class DevelopmentMcpReloader {
         }
         List<Object> servers = servers();
         if (servers.isEmpty()) {
-            // not built yet: it is built from the current methods when it is
+            // not built yet: it is built from the registries of the context, which the context feeds what is added
             return;
         }
         if (hasCompletion(change.removed()) || hasCompletion(change.added())) {
             LOG.info("An MCP completion changed: the server cannot add or remove completions, a restart applies it");
         }
-        // registries of their own, so that each holds the methods of one side of the change only
-        Registries removed = registries(change.removed());
-        Registries added = registries(change.added());
         for (Object server : servers) {
             LOG.debug("Updating the primitives of the MCP server {}", server);
+            // registries of their own, for each server and each side of the change, so that each builds the
+            // specifications of the methods of that side only
+            Registries removed = registries(change.removed());
+            Registries added = registries(change.added());
             if (server instanceof McpSyncServer sync) {
                 apply(sync, removed, added);
             } else if (server instanceof McpAsyncServer async) {
@@ -134,6 +136,27 @@ final class DevelopmentMcpReloader {
             } else if (server instanceof McpStatelessAsyncServer statelessAsync) {
                 apply(statelessAsync, removed, added);
             }
+        }
+        forgetMethods();
+    }
+
+    /**
+     * Empties the registries of the context once their server is built. They are read when the server is built, at
+     * startup, and never again, but the context still feeds them the methods a change adds, as it feeds every
+     * {@link io.micronaut.context.processor.ExecutableMethodProcessor} written before watches: emptied at each change,
+     * they hold no method of a generation a later reload retires.
+     */
+    private void forgetMethods() {
+        forgetMethods(ToolRegistry.class);
+        forgetMethods(PromptRegistry.class);
+        forgetMethods(ResourceRegistry.class);
+        forgetMethods(ResourceTemplateRegistry.class);
+        forgetMethods(CompletionRegistry.class);
+    }
+
+    private <R extends AbstractMcpMethodRegistry<?, ?, ?, ?>> void forgetMethods(Class<R> type) {
+        for (BeanRegistration<R> registration : beanContext.getActiveBeanRegistrations(type)) {
+            registration.bean().methods.clear();
         }
     }
 

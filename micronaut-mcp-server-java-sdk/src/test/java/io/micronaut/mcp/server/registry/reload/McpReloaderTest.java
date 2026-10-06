@@ -12,6 +12,9 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.Resource;
 import io.micronaut.mcp.annotations.Tool;
+import io.micronaut.mcp.server.registry.PromptRegistry;
+import io.micronaut.mcp.server.registry.ResourceRegistry;
+import io.micronaut.mcp.server.registry.ToolRegistry;
 import io.micronaut.runtime.context.scope.refresh.ConfigurationRefresher;
 import io.micronaut.runtime.context.scope.refresh.RefreshResult;
 import io.micronaut.runtime.server.EmbeddedServer;
@@ -26,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,10 +77,15 @@ class McpReloaderTest {
         assertTrue(server.listPrompts().stream().anyMatch(p -> p.name().equals("extra-prompt")));
         assertTrue(server.listResources().stream().anyMatch(r -> r.uri().equals("reload://extra")));
         assertTrue(transport.notifications.containsAll(List.of(TOOLS_CHANGED, PROMPTS_CHANGED, RESOURCES_CHANGED)));
+
+        // the registries of the context, which the context also feeds what is added, keep none of it
+        assertTrue(registeredMethods(context.getBean(ToolRegistry.class)).isEmpty());
+        assertTrue(registeredMethods(context.getBean(PromptRegistry.class)).isEmpty());
+        assertTrue(registeredMethods(context.getBean(ResourceRegistry.class)).isEmpty());
     }
 
     @Test
-    void aRemovedToolIsNoLongerListedAndARedefinedOneIsListedOnce() {
+    void aRemovedToolIsNoLongerListedAndARedefinedOneIsListedOnce() throws ReflectiveOperationException {
         context = start(true, "STDIO");
         McpSyncServer server = context.getBean(McpSyncServer.class);
         RecordingTransport transport = context.getBean(RecordingTransport.class);
@@ -93,6 +102,7 @@ class McpReloaderTest {
 
         assertFalse(toolNames(server).contains("hello"));
         assertTrue(transport.notifications.contains(TOOLS_CHANGED));
+        assertTrue(registeredMethods(context.getBean(ToolRegistry.class)).isEmpty());
     }
 
     @Test
@@ -159,6 +169,12 @@ class McpReloaderTest {
         // created first: it compares the next refresh against the configuration as it is now
         started.getBean(ConfigurationRefresher.class);
         return started;
+    }
+
+    private static List<?> registeredMethods(Object registry) throws ReflectiveOperationException {
+        Field methods = registry.getClass().getSuperclass().getDeclaredField("methods");
+        methods.setAccessible(true);
+        return (List<?>) methods.get(registry);
     }
 
     private DefaultBeanContext definitions() {
