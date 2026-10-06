@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.format.MapFormat;
+import io.micronaut.core.convert.format.ReadableBytes;
 import io.micronaut.core.naming.conventions.StringConvention;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -39,6 +40,9 @@ final class McpClientHttpConfigurationProperties extends AbstractMcpClientConnec
     private boolean logResponses;
     private Map<String, String> headers = Map.of();
     private boolean propagateAuthorization;
+    private McpHttpClientType httpClient = McpHttpClientType.JDK;
+    private @Nullable String serviceId;
+    private long maxMessageSize = 16L * 1024 * 1024;
     private boolean propagateAnyAuthorizationScheme;
 
     /**
@@ -117,6 +121,47 @@ final class McpClientHttpConfigurationProperties extends AbstractMcpClientConnec
      */
     public void setHeaders(@MapFormat(transformation = MapFormat.MapTransformation.FLAT, keyFormat = StringConvention.RAW) @Nullable Map<String, String> headers) {
         this.headers = headers != null ? headers : Map.of();
+    }
+
+    @Override
+    public @NonNull McpHttpClientType getHttpClient() {
+        return httpClient;
+    }
+
+    /**
+     * The HTTP client to send the requests with. Default value {@code JDK}.
+     *
+     * @param httpClient The HTTP client
+     */
+    public void setHttpClient(@NonNull McpHttpClientType httpClient) {
+        this.httpClient = httpClient;
+    }
+
+    @Override
+    public @Nullable String getServiceId() {
+        return serviceId;
+    }
+
+    /**
+     * @param serviceId The id of the {@code micronaut.http.services} entry that configures the Micronaut HTTP client
+     */
+    public void setServiceId(@Nullable String serviceId) {
+        this.serviceId = serviceId;
+    }
+
+    @Override
+    public long getMaxMessageSize() {
+        return maxMessageSize;
+    }
+
+    /**
+     * The maximum size of a message of the server that the Micronaut HTTP client buffers, such as {@code 16MB}. Default
+     * value 16 MiB.
+     *
+     * @param maxMessageSize The maximum size, in bytes
+     */
+    public void setMaxMessageSize(@ReadableBytes long maxMessageSize) {
+        this.maxMessageSize = maxMessageSize;
     }
 
     @Override

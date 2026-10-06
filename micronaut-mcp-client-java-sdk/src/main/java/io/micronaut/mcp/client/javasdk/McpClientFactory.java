@@ -21,19 +21,18 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.async.propagation.ReactorPropagation;
-import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.micronaut.mcp.conf.client.McpClientRequestHeaders;
 import io.micronaut.mcp.conf.client.McpClientStdioConfiguration;
+import io.micronaut.mcp.conf.client.McpHttpClientType;
+import io.micronaut.context.exceptions.DisabledBeanException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.client.transport.ServerParameters;
 import io.modelcontextprotocol.client.transport.StdioClientTransport;
@@ -50,14 +49,10 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.context.ContextView;
 
 import java.net.http.HttpRequest;
 import java.time.Duration;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -78,6 +73,7 @@ final class McpClientFactory {
     private final List<McpProgressHandler> progressHandlers;
     private final List<McpListChangedListener> listChangedListeners;
     private final List<McpClientHeadersProvider> headersProviders;
+    private final @Nullable MicronautHttpClientTransports micronautTransports;
     private final McpConnectionClients connectionClients;
     private final Scheduler blockingScheduler;
 
@@ -90,8 +86,10 @@ final class McpClientFactory {
                      List<McpProgressHandler> progressHandlers,
                      List<McpListChangedListener> listChangedListeners,
                      List<McpClientHeadersProvider> headersProviders,
+                     @Nullable MicronautHttpClientTransports micronautTransports,
                      McpConnectionClients connectionClients,
                      @Named(TaskExecutors.BLOCKING) ExecutorService blockingExecutor) {
+        this.micronautTransports = micronautTransports;
         this.headersProviders = headersProviders;
         this.mcpJsonMapper = mcpJsonMapper;
         this.beanContext = beanContext;
@@ -108,6 +106,9 @@ final class McpClientFactory {
     @EachBean(McpClientHttpConfiguration.class)
     @Prototype
     HttpClientStreamableHttpTransport.Builder transportBuilder(McpClientHttpConfiguration configuration) {
+        if (configuration.getHttpClient() == McpHttpClientType.MICRONAUT) {
+            throw new DisabledBeanException("The connection " + configuration.getName() + " uses the Micronaut HTTP client");
+        }
         HttpClientStreamableHttpTransport.Builder builder = HttpClientStreamableHttpTransport
             .builder(configuration.getUrl().toString())
             .jsonMapper(mcpJsonMapper);
@@ -119,30 +120,10 @@ final class McpClientFactory {
         // The synchronous client computes the headers in its transport context provider, on the thread that calls it. For
         // the asynchronous client, they are computed here, in the Micronaut context propagated by the subscriber
         builder.asyncHttpRequestCustomizer((request, method, endpoint, body, context) -> Mono.deferContextual(reactorContext -> {
-            headers(configuration, context, reactorContext).forEach((name, value) -> request.setHeader(name.toString(), value.toString()));
+            TransportHeaders.headers(configuration, headersProviders, context, reactorContext).forEach(request::setHeader);
             return Mono.just(request);
         }));
         return builder;
-    }
-
-    private Map<?, ?> headers(McpClientHttpConfiguration configuration, McpTransportContext context, ContextView reactorContext) {
-        if (context.get(McpClientTransportHeaders.HEADERS) instanceof Map<?, ?> supplied) {
-            Map<Object, Object> headers = new LinkedHashMap<>(configuration.getHeaders());
-            headers.putAll(supplied);
-            return headers;
-        }
-        if (!McpClientRequestHeaders.isDynamic(configuration, headersProviders)) {
-            return configuration.getHeaders();
-        }
-        // Without a propagated context, for example for the answers to the requests of the server, the headers providers
-        // run without the HTTP request the application is handling
-        Optional<PropagatedContext> propagatedContext = ReactorPropagation.findPropagatedContext(reactorContext);
-        if (propagatedContext.isPresent()) {
-            try (var _ = propagatedContext.get().propagate()) {
-                return McpClientRequestHeaders.headers(configuration, headersProviders);
-            }
-        }
-        return McpClientRequestHeaders.headers(configuration, headersProviders);
     }
 
     @EachBean(HttpClientStreamableHttpTransport.Builder.class)
@@ -170,7 +151,7 @@ final class McpClientFactory {
     McpClient.SyncSpec mcpClientSyncSpec(@NonNull McpClientConnectionConfiguration configuration,
                                          @NonNull JsonSchemaValidator jsonSchemaValidator) {
         String name = configuration.getName();
-        McpClient.SyncSpec spec = McpClient.sync(transport(name))
+        McpClient.SyncSpec spec = McpClient.sync(transport(configuration))
             .jsonSchemaValidator(jsonSchemaValidator)
             .capabilities(capabilities())
             // The server lists its tools again when they change, which refreshes the cache of McpClientTools
@@ -236,7 +217,7 @@ final class McpClientFactory {
     McpClient.AsyncSpec mcpAysncSpec(@NonNull McpClientConnectionConfiguration configuration,
                                      @NonNull JsonSchemaValidator jsonSchemaValidator) {
         String name = configuration.getName();
-        McpClient.AsyncSpec spec = McpClient.async(transport(name))
+        McpClient.AsyncSpec spec = McpClient.async(transport(configuration))
             .jsonSchemaValidator(jsonSchemaValidator)
             .capabilities(capabilities());
         Duration requestTimeout = requestTimeout(configuration);
@@ -302,8 +283,14 @@ final class McpClientFactory {
         }
     }
 
-    private McpClientTransport transport(String name) {
-        return beanContext.getBean(McpClientTransport.class, Qualifiers.byName(name));
+    private McpClientTransport transport(McpClientConnectionConfiguration configuration) {
+        if (configuration instanceof McpClientHttpConfiguration http && http.getHttpClient() == McpHttpClientType.MICRONAUT) {
+            if (micronautTransports == null) {
+                throw new IllegalStateException("The MCP connection " + http.getName() + " uses the Micronaut HTTP client, add the micronaut-http-client dependency");
+            }
+            return micronautTransports.create(http);
+        }
+        return beanContext.getBean(McpClientTransport.class, Qualifiers.byName(configuration.getName()));
     }
 
     private McpSchema.ClientCapabilities capabilities() {
