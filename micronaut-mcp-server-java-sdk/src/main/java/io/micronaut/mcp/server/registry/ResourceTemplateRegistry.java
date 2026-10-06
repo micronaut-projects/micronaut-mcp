@@ -20,7 +20,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
-import io.micronaut.http.uri.UriMatchTemplate;
 import io.micronaut.inject.ExecutableMethod;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
@@ -114,7 +113,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         }
         String title = method.stringValue(ResourceTemplate.class, TITLE_PROPERTY).orElse(null);
         String description = method.stringValue(ResourceTemplate.class, DESCRIPTION_PROPERTY).orElse(null);
-        String mimeType = method.stringValue(ResourceTemplate.class, MIME_TYPE_PROPERTY).orElse(ResourceTemplate.DEFAULT_MIME_TYPE);
+        String mimeType = mimeType(method);
         McpSchema.Annotations annotations = resourceAnnotations(method.getAnnotation(ResourceTemplate.class));
         return new McpSchema.ResourceTemplate(uri, name, title, description, mimeType, annotations, meta(method), icons(method));
     }
@@ -122,61 +121,68 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
     private <B> BiFunction<McpSyncServerExchange, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> syncHandler(
         Method<B> m
     ) {
-        UriMatchTemplate uriTemplate = uriMatchTemplate(m.method());
-        return (exchange, request) -> invokeAndMap(m, uriTemplate, exchange, request);
+        UriTemplateReadResourceRequest.Template uriTemplate = uriTemplate(m.method());
+        String mimeType = mimeType(m.method());
+        return (exchange, request) -> invokeAndMap(m, uriTemplate, mimeType, exchange, request);
     }
 
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> asyncHandler(
         Method<B> m
     ) {
-        UriMatchTemplate uriTemplate = uriMatchTemplate(m.method());
-        return (exchange, request) -> invokeAndMapAsync(m, uriTemplate, exchange, request);
+        UriTemplateReadResourceRequest.Template uriTemplate = uriTemplate(m.method());
+        String mimeType = mimeType(m.method());
+        return (exchange, request) -> invokeAndMapAsync(m, uriTemplate, mimeType, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> statelessSyncHandler(
         Method<B> m
     ) {
-        UriMatchTemplate uriTemplate = uriMatchTemplate(m.method());
-        return (ctx, request) -> invokeAndMap(m, uriTemplate, ctx, request);
+        UriTemplateReadResourceRequest.Template uriTemplate = uriTemplate(m.method());
+        String mimeType = mimeType(m.method());
+        return (ctx, request) -> invokeAndMap(m, uriTemplate, mimeType, ctx, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> statelessAsyncHandler(
         Method<B> m
     ) {
-        UriMatchTemplate uriTemplate = uriMatchTemplate(m.method());
-        return (ctx, request) -> invokeAndMapAsync(m, uriTemplate, ctx, request);
+        UriTemplateReadResourceRequest.Template uriTemplate = uriTemplate(m.method());
+        String mimeType = mimeType(m.method());
+        return (ctx, request) -> invokeAndMapAsync(m, uriTemplate, mimeType, ctx, request);
     }
 
-    private static UriMatchTemplate uriMatchTemplate(ExecutableMethod<?, ?> method) {
+    private static UriTemplateReadResourceRequest.Template uriTemplate(ExecutableMethod<?, ?> method) {
         String uriTemplate = method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY)
             .orElseThrow(() -> new ConfigurationException("Missing required member uriTemplate in @ResourceTemplate annotation"));
-        return UriMatchTemplate.of(uriTemplate);
+        return UriTemplateReadResourceRequest.Template.compile(uriTemplate);
+    }
+
+    private static String mimeType(ExecutableMethod<?, ?> method) {
+        return method.stringValue(ResourceTemplate.class, MIME_TYPE_PROPERTY).orElse(ResourceTemplate.DEFAULT_MIME_TYPE);
     }
 
     private <B> McpSchema.ReadResourceResult invokeAndMap(Method<B> m,
-                                                          UriMatchTemplate uriTemplate,
+                                                          UriTemplateReadResourceRequest.Template uriTemplate,
+                                                          String mimeType,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
         return m.call(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
-            mcpTransportContext, result -> map(m, request, result), this::failWithMcpError);
+            mcpTransportContext, result -> map(mimeType, request, result), this::failWithMcpError);
     }
 
     private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
-                                                                     UriMatchTemplate uriTemplate,
+                                                                     UriTemplateReadResourceRequest.Template uriTemplate,
+                                                                     String mimeType,
                                                                      Object mcpTransportContext,
                                                                      McpSchema.ReadResourceRequest request) {
         return m.callAsync(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
-            result -> map(m, request, result), this::failWithMcpError);
+            result -> map(mimeType, request, result), this::failWithMcpError);
     }
 
-    private <B> McpSchema.ReadResourceResult map(Method<B> m, McpSchema.ReadResourceRequest request, @Nullable Object result) {
-        ExecutableMethod<B, Object> method = m.method();
+    private static McpSchema.ReadResourceResult map(String mimeType, McpSchema.ReadResourceRequest request, @Nullable Object result) {
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
         }
         if (result instanceof String s) {
-            String mimeType = method.stringValue(ResourceTemplate.class, MIME_TYPE_PROPERTY)
-                .orElse(ResourceTemplate.DEFAULT_MIME_TYPE);
             McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(request.uri(), mimeType, s);
             return new McpSchema.ReadResourceResult(List.of(contents));
         }
