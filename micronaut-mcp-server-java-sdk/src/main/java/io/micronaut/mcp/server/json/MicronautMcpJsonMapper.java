@@ -28,7 +28,7 @@ import java.io.IOException;
  * An implementation of {@link McpJsonMapper} that uses Micronaut's {@link JsonMapper} for JSON serialization and deserialization.
  */
 @Internal
-final class MicronautMcpJsonMapper implements McpJsonMapper {
+public final class MicronautMcpJsonMapper implements McpJsonMapper {
     private final JsonMapper jsonMapper;
 
     MicronautMcpJsonMapper(JsonMapper jsonMapper) {
