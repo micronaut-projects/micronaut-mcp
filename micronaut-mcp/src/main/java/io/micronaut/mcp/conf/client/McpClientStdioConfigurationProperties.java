@@ -18,10 +18,11 @@ package io.micronaut.mcp.conf.client;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.convert.format.MapFormat;
+import io.micronaut.core.naming.conventions.StringConvention;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -30,22 +31,13 @@ import java.util.Map;
  */
 @EachProperty(McpClientStdioConfiguration.PREFIX)
 @Internal
-final class McpClientStdioConfigurationProperties implements McpClientStdioConfiguration {
-    private final String name;
+final class McpClientStdioConfigurationProperties extends AbstractMcpClientConnectionConfigurationProperties implements McpClientStdioConfiguration {
     private List<String> command = List.of();
     private Map<String, String> environment = Map.of();
     private boolean logEvents;
-    private @Nullable Duration initializationTimeout;
-    private @Nullable Duration requestTimeout;
-    private boolean autoHealthCheck = true;
 
     McpClientStdioConfigurationProperties(@Parameter String name) {
-        this.name = name;
-    }
-
-    @Override
-    public @NonNull String getName() {
-        return name;
+        super(name);
     }
 
     @Override
@@ -68,7 +60,7 @@ final class McpClientStdioConfigurationProperties implements McpClientStdioConfi
     /**
      * @param environment The environment variables of the server process, in addition to those of this process
      */
-    public void setEnvironment(@Nullable Map<String, String> environment) {
+    public void setEnvironment(@MapFormat(transformation = MapFormat.MapTransformation.FLAT, keyFormat = StringConvention.RAW) @Nullable Map<String, String> environment) {
         this.environment = environment != null ? environment : Map.of();
     }
 
@@ -84,44 +76,5 @@ final class McpClientStdioConfigurationProperties implements McpClientStdioConfi
      */
     public void setLogEvents(boolean logEvents) {
         this.logEvents = logEvents;
-    }
-
-    @Override
-    public @Nullable Duration getInitializationTimeout() {
-        return initializationTimeout;
-    }
-
-    /**
-     * @param initializationTimeout How long to wait for the server to answer the initialization
-     */
-    public void setInitializationTimeout(@Nullable Duration initializationTimeout) {
-        this.initializationTimeout = initializationTimeout;
-    }
-
-    @Override
-    public @Nullable Duration getRequestTimeout() {
-        return requestTimeout;
-    }
-
-    /**
-     * @param requestTimeout How long to wait for the server to answer a request, such as a tool call
-     */
-    public void setRequestTimeout(@Nullable Duration requestTimeout) {
-        this.requestTimeout = requestTimeout;
-    }
-
-    @Override
-    public boolean isAutoHealthCheck() {
-        return autoHealthCheck;
-    }
-
-    /**
-     * Whether the LangChain4j client checks periodically that the server is reachable, and reconnects when it is not.
-     * Default value {@code true}.
-     *
-     * @param autoHealthCheck Whether to check the server periodically
-     */
-    public void setAutoHealthCheck(boolean autoHealthCheck) {
-        this.autoHealthCheck = autoHealthCheck;
     }
 }

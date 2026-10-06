@@ -44,6 +44,8 @@ class StdioMcpTransportFactory {
      * @param configuration The deprecated configuration
      * @return The STDIO connection
      */
+    // Bridges the deprecated configuration, until it is removed
+    @SuppressWarnings({"removal", "java:S5738"})
     @Named(LEGACY_NAME)
     @Singleton
     @Requires(bean = StdioMcpTransportConfiguration.class)
