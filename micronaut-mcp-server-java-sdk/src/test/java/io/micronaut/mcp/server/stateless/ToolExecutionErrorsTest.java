@@ -4,6 +4,7 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -55,8 +56,10 @@ class ToolExecutionErrorsTest {
 
     @Test
     void anMcpErrorIsAProtocolError() throws IOException {
-        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> httpClient.toBlocking().exchange(HttpRequest.POST("/mcp", """
-            {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "protocolError", "arguments": {}}}"""), String.class));
+        BlockingHttpClient client = httpClient.toBlocking();
+        HttpRequest<String> request = HttpRequest.POST("/mcp", """
+            {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "protocolError", "arguments": {}}}""");
+        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
         Map<String, Object> body = jsonMapper.readValue(ex.getResponse().getBody(String.class).orElseThrow(), Argument.mapOf(String.class, Object.class));
         @SuppressWarnings("unchecked")
         Map<String, Object> error = (Map<String, Object>) body.get("error");
