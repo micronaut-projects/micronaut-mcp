@@ -84,13 +84,6 @@ public final class MicronautMcpHttpClients {
         return new MicronautMcpHttpExchange(endpoint.client(), endpoint.uri(), configuration, headersProviders, scheduler);
     }
 
-    /**
-     * @return The scheduler of the blocking executor, which the transports call the clients on
-     */
-    public Scheduler scheduler() {
-        return scheduler;
-    }
-
     private Endpoint endpoint(McpClientHttpConfiguration configuration) {
         URI url = configuration.getUrl();
         String path = url.getRawPath() + (url.getRawQuery() != null ? "?" + url.getRawQuery() : "");

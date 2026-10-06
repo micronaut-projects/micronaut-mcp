@@ -107,13 +107,6 @@ public final class MicronautMcpHttpExchange {
     }
 
     /**
-     * @return Whether the server started a session
-     */
-    public boolean hasSession() {
-        return sessionId.get() != null;
-    }
-
-    /**
      * Computes the headers of a request on the calling thread: the static headers of the connection, and those of the
      * headers providers.
      *
@@ -142,23 +135,21 @@ public final class MicronautMcpHttpExchange {
         if (initialize) {
             sessionId.set(null);
         }
-        return exchange(request, session);
+        return exchange(request, session, true);
     }
 
     /**
      * Opens the stream of the messages the server sends on its own, such as requests and notifications.
      *
      * @param headers The headers of the request
-     * @return The messages of the stream, empty if the server does not offer one. Fails with
-     * {@link McpHttpSessionNotFoundException} when the server no longer knows the session.
+     * @return The messages of the stream. Fails with {@link McpHttpSessionNotFoundException} when the server no longer knows
+     * the session, and with an {@link HttpClientResponseException} of status 405 when the server does not offer a stream.
      */
     public Flux<String> listen(Map<String, String> headers) {
         MutableHttpRequest<?> request = HttpRequest.GET(uri).header(HttpHeaders.ACCEPT, MediaType.TEXT_EVENT_STREAM);
         headers.forEach(request::header);
         String session = sessionHeaders(request);
-        return exchange(request, session)
-            .onErrorResume(e -> e instanceof HttpClientResponseException response && response.getStatus() == HttpStatus.METHOD_NOT_ALLOWED,
-                e -> Flux.empty());
+        return exchange(request, session, false);
     }
 
     private @Nullable String sessionHeaders(MutableHttpRequest<?> request) {
@@ -174,14 +165,19 @@ public final class MicronautMcpHttpExchange {
         return null;
     }
 
-    private Flux<String> exchange(MutableHttpRequest<?> request, @Nullable String session) {
+    private Flux<String> exchange(MutableHttpRequest<?> request, @Nullable String session, boolean errorMessages) {
         return Flux.defer(() -> {
-            ResponseDecoder decoder = new ResponseDecoder();
+            ResponseDecoder decoder = new ResponseDecoder(splitsLines(request));
             return Flux.from(client.exchangeStream(request, ERROR_TYPE))
                 .concatMapIterable(decoder::chunk)
                 .concatWith(Flux.defer(() -> Flux.fromIterable(decoder.finish())));
-        }).onErrorResume(HttpClientResponseException.class, e -> errorBody(e, session))
+        }).onErrorResume(HttpClientResponseException.class, e -> errorBody(e, session, errorMessages))
             .publishOn(scheduler);
+    }
+
+    private static boolean splitsLines(MutableHttpRequest<?> request) {
+        // As the Micronaut HTTP client, which splits the event stream of a request that only accepts one into lines
+        return MediaType.TEXT_EVENT_STREAM.equalsIgnoreCase(request.getHeaders().get(HttpHeaders.ACCEPT));
     }
 
     /**
@@ -203,11 +199,14 @@ public final class MicronautMcpHttpExchange {
             .onErrorResume(e -> Mono.empty());
     }
 
-    private Flux<String> errorBody(HttpClientResponseException e, @Nullable String session) {
+    private Flux<String> errorBody(HttpClientResponseException e, @Nullable String session, boolean errorMessages) {
         if (e.getStatus() == HttpStatus.NOT_FOUND && session != null) {
             // The server no longer knows the session: forget it, so that the client initializes a new one
             sessionId.compareAndSet(session, null);
             return Flux.error(new McpHttpSessionNotFoundException(session, "The MCP server " + configuration.getName() + " no longer knows the session " + session, e));
+        }
+        if (!errorMessages) {
+            return Flux.error(e);
         }
         // A JSON-RPC error answered with an error status is still a message for the client
         String body = e.getResponse().getBody(String.class).orElse(null);
@@ -224,14 +223,21 @@ public final class MicronautMcpHttpExchange {
 
     /**
      * Decodes the body of one response, chunk by chunk. The lines of an event stream are split on their bytes, and each
-     * is decoded once complete, so that a character split across chunks is decoded whole.
+     * is decoded once complete, so that a character split across chunks is decoded whole. When the request only accepts
+     * an event stream, the Micronaut HTTP client splits the stream into lines itself, without their line ends, and each
+     * chunk is a line.
      */
     private final class ResponseDecoder {
+        private final boolean splitLines;
         private final ByteArrayOutputStream body = new ByteArrayOutputStream();
         private final ByteArrayOutputStream line = new ByteArrayOutputStream();
         private final StringBuilder data = new StringBuilder();
         private boolean first = true;
         private boolean eventStream;
+
+        ResponseDecoder(boolean splitLines) {
+            this.splitLines = splitLines;
+        }
 
         List<String> chunk(HttpResponse<ByteBuffer<?>> response) {
             if (first) {
@@ -253,6 +259,11 @@ public final class MicronautMcpHttpExchange {
                 }
                 body.writeBytes(bytes);
                 return List.of();
+            }
+            if (splitLines) {
+                List<String> messages = new ArrayList<>(1);
+                field(decodeLine(bytes, 0, bytes.length), messages);
+                return messages;
             }
             return events(bytes);
         }

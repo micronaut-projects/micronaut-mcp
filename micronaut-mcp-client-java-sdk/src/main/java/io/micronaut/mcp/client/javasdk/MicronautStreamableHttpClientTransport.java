@@ -55,6 +55,8 @@ final class MicronautStreamableHttpClientTransport implements McpClientTransport
         ProtocolVersions.MCP_2025_06_18, ProtocolVersions.MCP_2025_11_25);
     private static final Duration RECONNECT_DELAY = Duration.ofSeconds(1);
     private static final Duration MAX_RECONNECT_DELAY = Duration.ofSeconds(30);
+    private static final TypeRef<Map<String, Object>> MAP_TYPE = new TypeRef<>() {
+    };
 
     private final MicronautMcpHttpExchange exchange;
     private final McpClientHttpConfiguration configuration;
@@ -113,17 +115,15 @@ final class MicronautStreamableHttpClientTransport implements McpClientTransport
     private Mono<Void> receive(String json, @Nullable Object requestId) {
         McpSchema.JSONRPCMessage message;
         try {
+            McpError unrelated = requestId != null && json.contains("\"error\"") ? unrelatedError(json, requestId) : null;
+            if (unrelated != null) {
+                return Mono.error(unrelated);
+            }
             message = McpSchema.deserializeJsonRpcMessage(jsonMapper, json);
         } catch (IOException e) {
             return Mono.error(e);
         }
         if (message instanceof McpSchema.JSONRPCResponse response) {
-            if (response.error() != null && requestId != null
-                && (response.id() == null || !requestId.toString().equals(response.id().toString()))) {
-                // An error the server could not relate to the request, for example about the session, which the client
-                // session would discard: it fails the request instead
-                return Mono.error(new McpError(response.error()));
-            }
             if (response.result() instanceof Map<?, ?> result
                 && result.get("protocolVersion") instanceof String version
                 && result.containsKey("serverInfo")) {
@@ -133,6 +133,19 @@ final class MicronautStreamableHttpClientTransport implements McpClientTransport
         }
         // The client session answers requests of the server, such as sampling, by sending a message itself
         return handler.get().apply(Mono.just(message)).then();
+    }
+
+    /**
+     * An error the server could not relate to the request, for example about the session, which the client session would
+     * discard, and the SDK does not read without id: it fails the request instead.
+     */
+    private @Nullable McpError unrelatedError(String json, Object requestId) throws IOException {
+        Map<String, Object> response = jsonMapper.readValue(json, MAP_TYPE);
+        Object error = response.get("error");
+        if (error == null || requestId.toString().equals(String.valueOf(response.get("id")))) {
+            return null;
+        }
+        return new McpError(jsonMapper.convertValue(error, McpSchema.JSONRPCResponse.JSONRPCError.class));
     }
 
     private void listen() {
