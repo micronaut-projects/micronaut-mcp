@@ -173,6 +173,11 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
         return new McpSchema.ReadResourceResult(List.of());
     }
 
+    @Override
+    protected String primitiveName(ExecutableMethod<?, ?> method) {
+        return method.stringValue(Resource.class, URI_PROPERTY).orElse(null);
+    }
+
     private static <B> McpSchema.Resource toResource(ExecutableMethod<B, Object> method) {
         String uri = method.stringValue(Resource.class, URI_PROPERTY).orElseThrow();
         String name = method.stringValue(Resource.class, NAME_PROPERTY).orElse(Resource.ELEMENT_NAME);
