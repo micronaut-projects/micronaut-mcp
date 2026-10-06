@@ -22,11 +22,16 @@ import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
-import io.modelcontextprotocol.client.McpSyncClient;
+import io.micronaut.scheduling.TaskExecutors;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Creates the {@link McpClientTools} of each connection, and the primary one of every connection.
@@ -34,12 +39,19 @@ import java.util.List;
 @Factory
 @Internal
 final class McpClientToolsFactory {
+    private static final Logger LOG = LoggerFactory.getLogger(McpClientToolsFactory.class);
+
     private final BeanContext beanContext;
+    private final McpConnectionClients connectionClients;
     private final @Nullable McpClientToolFilter filter;
     private final @Nullable McpClientToolNameMapper nameMapper;
 
-    McpClientToolsFactory(BeanContext beanContext, @Nullable McpClientToolFilter filter, @Nullable McpClientToolNameMapper nameMapper) {
+    McpClientToolsFactory(BeanContext beanContext,
+                          McpConnectionClients connectionClients,
+                          @Nullable McpClientToolFilter filter,
+                          @Nullable McpClientToolNameMapper nameMapper) {
         this.beanContext = beanContext;
+        this.connectionClients = connectionClients;
         this.filter = filter;
         this.nameMapper = nameMapper;
     }
@@ -47,16 +59,29 @@ final class McpClientToolsFactory {
     @EachBean(McpClientConnectionConfiguration.class)
     @Singleton
     McpClientTools connectionTools(McpClientConnectionConfiguration configuration) {
-        McpSyncClient client = beanContext.getBean(McpSyncClient.class, Qualifiers.byName(configuration.getName()));
-        return new ConnectionMcpClientTools(configuration.getName(), client, filter, nameMapper);
+        return new ConnectionMcpClientTools(configuration.getName(), beanContext, connectionClients, filter, nameMapper);
     }
 
     @Primary
     @Singleton
-    McpClientTools allTools(List<McpClientConnectionConfiguration> connections) {
-        List<McpClientTools> tools = connections.stream()
-            .map(c -> beanContext.getBean(McpClientTools.class, Qualifiers.byName(c.getName())))
-            .toList();
-        return () -> tools.stream().flatMap(t -> t.tools().stream()).toList();
+    McpClientTools allTools(List<McpClientConnectionConfiguration> connections,
+                            @Named(TaskExecutors.BLOCKING) ExecutorService blockingExecutor) {
+        List<String> names = connections.stream().map(McpClientConnectionConfiguration::getName).toList();
+        return () -> {
+            // The servers are asked concurrently, and those that cannot be reached are skipped
+            List<CompletableFuture<List<McpClientTool>>> tools = names.stream()
+                .map(name -> CompletableFuture.supplyAsync(() -> toolsOf(name), blockingExecutor))
+                .toList();
+            return tools.stream().flatMap(t -> t.join().stream()).toList();
+        };
+    }
+
+    private List<McpClientTool> toolsOf(String name) {
+        try {
+            return beanContext.getBean(McpClientTools.class, Qualifiers.byName(name)).tools();
+        } catch (RuntimeException e) {
+            LOG.warn("Failed to list the tools of the MCP connection {}", name, e);
+            return List.of();
+        }
     }
 }

@@ -27,6 +27,7 @@ import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.micronaut.mcp.conf.client.McpClientRequestHeaders;
 import io.micronaut.mcp.conf.client.McpClientStdioConfiguration;
+import io.micronaut.scheduling.TaskExecutors;
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
@@ -38,24 +39,32 @@ import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 import java.net.http.HttpRequest;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /**
- * Creates the transport of each connection, Streamable HTTP or STDIO, and a synchronous and an asynchronous MCP client
- * for each connection, which call the handler beans of the application.
+ * Creates the transport of each connection, Streamable HTTP or STDIO, and a synchronous or an asynchronous MCP client
+ * for each connection, which call the handler beans of the application. A connection has either kind of client, not
+ * both, since each client opens its own session over its own transport. The clients are initialized when they are
+ * created, and a client that fails to initialize is closed, with its transport, so that the next attempt starts afresh.
  */
 @Factory
 @Internal
 final class McpClientFactory {
+    private static final Logger LOG = LoggerFactory.getLogger(McpClientFactory.class);
     private static final String HEADERS = McpClientFactory.class.getName() + ".headers";
     private final McpJsonMapper mcpJsonMapper;
     private final BeanContext beanContext;
@@ -65,6 +74,8 @@ final class McpClientFactory {
     private final List<McpProgressHandler> progressHandlers;
     private final List<McpListChangedListener> listChangedListeners;
     private final List<McpClientHeadersProvider> headersProviders;
+    private final McpConnectionClients connectionClients;
+    private final Scheduler blockingScheduler;
 
     McpClientFactory(McpJsonMapper mcpJsonMapper,
                      BeanContext beanContext,
@@ -73,7 +84,9 @@ final class McpClientFactory {
                      List<McpLoggingHandler> loggingHandlers,
                      List<McpProgressHandler> progressHandlers,
                      List<McpListChangedListener> listChangedListeners,
-                     List<McpClientHeadersProvider> headersProviders) {
+                     List<McpClientHeadersProvider> headersProviders,
+                     McpConnectionClients connectionClients,
+                     @Named(TaskExecutors.BLOCKING) ExecutorService blockingExecutor) {
         this.headersProviders = headersProviders;
         this.mcpJsonMapper = mcpJsonMapper;
         this.beanContext = beanContext;
@@ -82,6 +95,9 @@ final class McpClientFactory {
         this.loggingHandlers = loggingHandlers;
         this.progressHandlers = progressHandlers;
         this.listChangedListeners = listChangedListeners;
+        this.connectionClients = connectionClients;
+        // The handlers of the application may block, so the asynchronous client calls them on the blocking executor
+        this.blockingScheduler = Schedulers.fromExecutorService(blockingExecutor, "mcp-client");
     }
 
     @EachBean(McpClientHttpConfiguration.class)
@@ -134,7 +150,9 @@ final class McpClientFactory {
         String name = configuration.getName();
         McpClient.SyncSpec spec = McpClient.sync(transport(name))
             .jsonSchemaValidator(jsonSchemaValidator)
-            .capabilities(capabilities());
+            .capabilities(capabilities())
+            // The server lists its tools again when they change, which refreshes the cache of McpClientTools
+            .toolsChangeConsumer(tools -> connectionClients.toolsChanged(name, tools));
         if (configuration instanceof McpClientHttpConfiguration http && McpClientRequestHeaders.isDynamic(http, headersProviders)) {
             spec.transportContextProvider(() -> McpTransportContext.create(Map.of(HEADERS, McpClientRequestHeaders.headers(http, headersProviders))));
         }
@@ -167,10 +185,24 @@ final class McpClientFactory {
         return spec;
     }
 
-    @EachBean(McpClient.SyncSpec.class)
-    @Bean(preDestroy = "close")
-    McpSyncClient mcpSyncClient(McpClient.SyncSpec spec) {
-        return spec.build();
+    @EachBean(McpClientConnectionConfiguration.class)
+    @Bean(preDestroy = "closeGracefully")
+    @Singleton
+    McpSyncClient mcpSyncClient(McpClientConnectionConfiguration configuration) {
+        String name = configuration.getName();
+        connectionClients.claim(name, McpSyncClient.class);
+        McpSyncClient client = null;
+        try {
+            client = beanContext.getBean(McpClient.SyncSpec.class, Qualifiers.byName(name)).build();
+            client.initialize();
+            return client;
+        } catch (RuntimeException e) {
+            connectionClients.release(name, McpSyncClient.class);
+            if (client != null) {
+                closeQuietly(name, client::closeGracefully);
+            }
+            throw e;
+        }
     }
 
     @EachBean(McpClientConnectionConfiguration.class)
@@ -191,31 +223,54 @@ final class McpClientFactory {
         // The handlers are synchronous, so the asynchronous client calls them on threads that may block
         McpSamplingHandler sampling = samplingHandler;
         if (sampling != null) {
-            spec.sampling(request -> Mono.fromCallable(() -> sampling.sample(name, request)).subscribeOn(Schedulers.boundedElastic()));
+            spec.sampling(request -> Mono.fromCallable(() -> sampling.sample(name, request)).subscribeOn(blockingScheduler));
         }
         McpElicitationHandler elicitation = elicitationHandler;
         if (elicitation != null) {
-            spec.elicitation(request -> Mono.fromCallable(() -> elicitation.elicit(name, request)).subscribeOn(Schedulers.boundedElastic()));
+            spec.elicitation(request -> Mono.fromCallable(() -> elicitation.elicit(name, request)).subscribeOn(blockingScheduler));
         }
         for (McpLoggingHandler handler : loggingHandlers) {
-            spec.loggingConsumer(notification -> Mono.fromRunnable(() -> handler.log(name, notification)));
+            spec.loggingConsumer(notification -> Mono.<Void>fromRunnable(() -> handler.log(name, notification)).subscribeOn(blockingScheduler));
         }
         for (McpProgressHandler handler : progressHandlers) {
-            spec.progressConsumer(notification -> Mono.fromRunnable(() -> handler.progress(name, notification)));
+            spec.progressConsumer(notification -> Mono.<Void>fromRunnable(() -> handler.progress(name, notification)).subscribeOn(blockingScheduler));
         }
         for (McpListChangedListener listener : listChangedListeners) {
-            spec.toolsChangeConsumer(tools -> Mono.fromRunnable(() -> listener.toolsChanged(name, tools)));
-            spec.promptsChangeConsumer(prompts -> Mono.fromRunnable(() -> listener.promptsChanged(name, prompts)));
-            spec.resourcesChangeConsumer(resources -> Mono.fromRunnable(() -> listener.resourcesChanged(name, resources)));
+            spec.toolsChangeConsumer(tools -> Mono.<Void>fromRunnable(() -> listener.toolsChanged(name, tools)).subscribeOn(blockingScheduler));
+            spec.promptsChangeConsumer(prompts -> Mono.<Void>fromRunnable(() -> listener.promptsChanged(name, prompts)).subscribeOn(blockingScheduler));
+            spec.resourcesChangeConsumer(resources -> Mono.<Void>fromRunnable(() -> listener.resourcesChanged(name, resources)).subscribeOn(blockingScheduler));
         }
         return spec;
     }
 
-    @EachBean(McpClient.AsyncSpec.class)
-    @Bean(preDestroy = "close")
+    // Closed by McpAsyncClientCloser
+    @EachBean(McpClientConnectionConfiguration.class)
     @Singleton
-    McpAsyncClient mcpAysncClient(McpClient.AsyncSpec spec) {
-        return spec.build();
+    McpAsyncClient mcpAysncClient(McpClientConnectionConfiguration configuration) {
+        String name = configuration.getName();
+        connectionClients.claim(name, McpAsyncClient.class);
+        McpAsyncClient client = null;
+        try {
+            client = beanContext.getBean(McpClient.AsyncSpec.class, Qualifiers.byName(name)).build();
+            // Bounded by the initialization timeout of the client
+            client.initialize().block();
+            return client;
+        } catch (RuntimeException e) {
+            connectionClients.release(name, McpAsyncClient.class);
+            if (client != null) {
+                McpAsyncClient failed = client;
+                closeQuietly(name, () -> McpAsyncClientCloser.close(failed));
+            }
+            throw e;
+        }
+    }
+
+    private static void closeQuietly(String name, Runnable close) {
+        try {
+            close.run();
+        } catch (RuntimeException e) {
+            LOG.warn("Failed to close the MCP client of the connection {}", name, e);
+        }
     }
 
     private McpClientTransport transport(String name) {

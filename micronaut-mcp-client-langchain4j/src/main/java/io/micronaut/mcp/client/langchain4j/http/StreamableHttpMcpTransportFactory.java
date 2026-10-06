@@ -24,7 +24,6 @@ import dev.langchain4j.mcp.client.McpHeadersSupplier;
 import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.micronaut.mcp.conf.client.McpClientRequestHeaders;
-import jakarta.inject.Singleton;
 
 import java.util.List;
 
@@ -56,8 +55,9 @@ final class StreamableHttpMcpTransportFactory {
         return builder;
     }
 
+    // A new transport for each client, which owns and closes it
     @EachBean(StreamableHttpMcpTransport.Builder.class)
-    @Singleton
+    @Prototype
     StreamableHttpMcpTransport createStreamableHttpMcpTransport(StreamableHttpMcpTransport.Builder builder) {
         return builder.build();
     }

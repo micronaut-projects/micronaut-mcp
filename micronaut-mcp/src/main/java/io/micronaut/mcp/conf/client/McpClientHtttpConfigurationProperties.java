@@ -40,6 +40,7 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
     private boolean propagateAuthorization;
     private @Nullable Duration initializationTimeout;
     private @Nullable Duration requestTimeout;
+    private boolean autoHealthCheck = true;
 
     /**
      * Constructor.
@@ -164,5 +165,20 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
      */
     public void setRequestTimeout(@Nullable Duration requestTimeout) {
         this.requestTimeout = requestTimeout;
+    }
+
+    @Override
+    public boolean isAutoHealthCheck() {
+        return autoHealthCheck;
+    }
+
+    /**
+     * Whether the LangChain4j client checks periodically that the server is reachable, and reconnects when it is not.
+     * Default value {@code true}.
+     *
+     * @param autoHealthCheck Whether to check the server periodically
+     */
+    public void setAutoHealthCheck(boolean autoHealthCheck) {
+        this.autoHealthCheck = autoHealthCheck;
     }
 }
