@@ -13,6 +13,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -60,6 +61,30 @@ class TransportSecurityTest {
     }
 
     @Test
+    void malformedOriginsAreForbidden() {
+        assertEquals(HttpStatus.OK, status(ping().header("Origin", "http://[::1]:6274")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://[::1")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "localhost")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://localhost@evil.example")));
+    }
+
+    @Test
+    void loopbackOriginsCanBeDisallowed() {
+        try (EmbeddedServer server = ApplicationContext.run(EmbeddedServer.class, Map.of(
+                "micronaut.mcp.server.info.name", "mcp-server",
+                "micronaut.mcp.server.info.version", "0.0.1",
+                "micronaut.mcp.server.transport", "HTTP",
+                "micronaut.mcp.server.transport-security.allow-loopback-origins", false,
+                "micronaut.mcp.server.transport-security.allowed-origins", List.of("http://localhost:6274"),
+                "micronaut.server.cors.localhost-pass-through", true));
+             HttpClient client = server.getApplicationContext().createBean(HttpClient.class, server.getURL())) {
+            assertEquals(HttpStatus.OK, status(client, ping().header("Origin", "http://localhost:6274")));
+            assertEquals(HttpStatus.FORBIDDEN, status(client, ping().header("Origin", "http://localhost:3000")));
+            assertEquals(HttpStatus.OK, status(client, ping()));
+        }
+    }
+
+    @Test
     void validationCanBeDisabled() {
         try (EmbeddedServer server = ApplicationContext.run(EmbeddedServer.class, Map.of(
                 "micronaut.mcp.server.info.name", "mcp-server",
@@ -78,6 +103,10 @@ class TransportSecurityTest {
     }
 
     private HttpStatus status(HttpRequest<?> request) {
+        return status(httpClient, request);
+    }
+
+    private static HttpStatus status(HttpClient httpClient, HttpRequest<?> request) {
         try {
             return httpClient.toBlocking().exchange(request).getStatus();
         } catch (HttpClientResponseException e) {

@@ -63,19 +63,19 @@ final class McpBlockingController extends McpController {
                           McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
                           JsonMapper jsonMapper,
                           McpJsonMapper mcpJsonMapper,
-                          McpRequestValidator requestValidator,
                           ToolRegistry toolRegistry,
                           PromptRegistry promptRegistry,
                           ResourceRegistry resourceRegistry,
                           @Named(TaskExecutors.BLOCKING) ExecutorService blockingExecutor) {
-        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper, requestValidator);
+        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper);
         this.toolRegistry = toolRegistry;
         this.promptRegistry = promptRegistry;
         this.resourceRegistry = resourceRegistry;
         this.blockingScheduler = Schedulers.fromExecutorService(blockingExecutor);
     }
 
-    @SuppressWarnings("java:S3740")
+    // The route returns a JSON-RPC response or an error body, so the response body type is a wildcard
+    @SuppressWarnings({"java:S3740", "java:S1452"})
     @Post
     Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable JsonNode body) {
         Mono<HttpResponse<?>> response = handle(request, body);

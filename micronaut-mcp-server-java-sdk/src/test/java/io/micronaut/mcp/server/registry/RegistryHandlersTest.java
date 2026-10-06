@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -80,6 +81,14 @@ class RegistryHandlersTest {
         // a missing argument, which an exception mapper maps
         var echo = toolRegistry.getStatelessSyncSpecs().stream().filter(s -> s.tool().name().equals("echo")).findFirst().orElseThrow().callHandler();
         assertTrue(isError(() -> echo.apply(CONTEXT, new McpSchema.CallToolRequest("echo", Map.of()))));
+    }
+
+    @Test
+    void parametersReceivingTheContextAreNotToolArguments() {
+        var spec = toolRegistry.getStatelessSyncSpecs().stream().filter(s -> s.tool().name().equals("contextual")).findFirst().orElseThrow();
+        // an Object parameter is bound to the transport context, so it is not advertised in the input schema
+        assertEquals(Set.of("text"), ((Map<?, ?>) spec.tool().inputSchema().get("properties")).keySet());
+        assertEquals("hi true", text(spec.callHandler().apply(CONTEXT, new McpSchema.CallToolRequest("contextual", Map.of("text", "hi")))));
     }
 
     @Test
@@ -159,6 +168,11 @@ class RegistryHandlersTest {
         @Tool
         String echo(String text) {
             return text;
+        }
+
+        @Tool
+        String contextual(String text, Object context) {
+            return text + " " + (context instanceof McpTransportContext);
         }
 
         @Tool

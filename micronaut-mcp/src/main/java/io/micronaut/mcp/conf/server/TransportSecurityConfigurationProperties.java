@@ -31,6 +31,7 @@ final class TransportSecurityConfigurationProperties implements TransportSecurit
 
     private boolean enabled = DEFAULT_ENABLED;
     private List<String> allowedOrigins = List.of();
+    private boolean allowLoopbackOrigins = DEFAULT_ALLOW_LOOPBACK_ORIGINS;
 
     @Override
     public boolean isEnabled() {
@@ -44,6 +45,21 @@ final class TransportSecurityConfigurationProperties implements TransportSecurit
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    @Override
+    public boolean isAllowLoopbackOrigins() {
+        return allowLoopbackOrigins;
+    }
+
+    /**
+     * Whether loopback origins ({@code localhost}, {@code 127.0.0.1} and {@code [::1]}, with any scheme and port) are allowed.
+     * Default value {@value #DEFAULT_ALLOW_LOOPBACK_ORIGINS}.
+     *
+     * @param allowLoopbackOrigins Whether loopback origins are allowed
+     */
+    public void setAllowLoopbackOrigins(boolean allowLoopbackOrigins) {
+        this.allowLoopbackOrigins = allowLoopbackOrigins;
     }
 
     @Override

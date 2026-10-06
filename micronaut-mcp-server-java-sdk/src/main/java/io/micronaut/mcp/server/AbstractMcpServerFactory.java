@@ -19,6 +19,8 @@ import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.mcp.conf.server.IconConfiguration;
 import io.micronaut.mcp.conf.server.McpServerInfoConfiguration;
 import io.micronaut.mcp.conf.server.PromptsConfiguration;
 import io.micronaut.mcp.conf.server.ResourcesConfiguration;
@@ -67,10 +69,17 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
      */
     protected static McpSchema.Implementation serverInfo(McpServerInfoConfiguration configuration) {
         List<McpSchema.Icon> icons = configuration.getIcons().isEmpty() ? null : configuration.getIcons().stream()
-            .map(src -> new McpSchema.Icon(src, null, null, null))
+            .map(AbstractMcpServerFactory::icon)
             .toList();
         return new McpSchema.Implementation(configuration.getName(), configuration.getTitle(), configuration.getVersion(),
             configuration.getDescription(), icons, configuration.getWebsiteUrl());
+    }
+
+    private static McpSchema.Icon icon(IconConfiguration icon) {
+        if (StringUtils.isEmpty(icon.getSrc())) {
+            throw new IllegalStateException("Every icon in " + McpServerInfoConfiguration.PREFIX + ".icons requires a src");
+        }
+        return new McpSchema.Icon(icon.getSrc(), icon.getMimeType(), icon.getSizes().isEmpty() ? null : icon.getSizes(), icon.getTheme());
     }
 
     /**
