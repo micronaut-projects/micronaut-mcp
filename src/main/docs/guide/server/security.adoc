@@ -47,10 +47,4 @@ micronaut:
 
 Tools, prompts and resources receive the authenticated principal through the <<context, transport context>>:
 
-[source,java]
-----
-@Tool
-String whoami(MicronautMcpTransportContext context) {
-    return context.principal().getName();
-}
-----
+snippet::io.micronaut.mcp.docs.security.WhoAmITools[project-base="test-suite-docs", tags="imports,clazz"]
