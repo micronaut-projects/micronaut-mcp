@@ -37,6 +37,7 @@ final class McpClientStdioConfigurationProperties implements McpClientStdioConfi
     private boolean logEvents;
     private @Nullable Duration initializationTimeout;
     private @Nullable Duration requestTimeout;
+    private boolean autoHealthCheck = true;
 
     McpClientStdioConfigurationProperties(@Parameter String name) {
         this.name = name;
@@ -107,5 +108,20 @@ final class McpClientStdioConfigurationProperties implements McpClientStdioConfi
      */
     public void setRequestTimeout(@Nullable Duration requestTimeout) {
         this.requestTimeout = requestTimeout;
+    }
+
+    @Override
+    public boolean isAutoHealthCheck() {
+        return autoHealthCheck;
+    }
+
+    /**
+     * Whether the LangChain4j client checks periodically that the server is reachable, and reconnects when it is not.
+     * Default value {@code true}.
+     *
+     * @param autoHealthCheck Whether to check the server periodically
+     */
+    public void setAutoHealthCheck(boolean autoHealthCheck) {
+        this.autoHealthCheck = autoHealthCheck;
     }
 }
