@@ -27,6 +27,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.json.JsonMapper;
+import io.micronaut.mcp.server.json.MicronautMcpJsonMapper;
 import io.micronaut.jsonschema.JsonSchema;
 import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.annotations.Tool;
@@ -46,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -73,6 +75,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public static final boolean DEFAULT_RETURN_DIRECT_VALUE = false;
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
     private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.CallToolRequest.class};
+    private static final Argument<Map<String, Object>> STRUCTURED_CONTENT_ARGUMENT = Argument.mapOf(String.class, Object.class);
     private static final String MEMBER_ANNOTATIONS = "annotations";
     private static final String MEMBER_READ_ONLY_HINT = "readOnlyHint";
     private static final String MEMBER_DESTRUCTIVE_HINT = "destructiveHint";
@@ -93,6 +96,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;
     private final McpJsonMapper mcpJsonMapper;
     private final JsonMapper jsonMapper;
+    private final boolean convertStructuredContent;
     private final ArgumentBinderRegistry<McpSchema.CallToolRequest> argumentBinderRegistry;
 
     ToolRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
@@ -105,6 +109,9 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         this.jsonSchemaClassPathResourceLoader = jsonSchemaClassPathResourceLoader;
         this.mcpJsonMapper = mcpJsonMapper;
         this.jsonMapper = jsonMapper;
+        // Another MCP JSON mapper, such as Jackson databind, would serialize the result by reflection, which a native image
+        // only allows for registered types, so the result is converted to a Map with the Micronaut mapper first
+        this.convertStructuredContent = !(mcpJsonMapper instanceof MicronautMcpJsonMapper);
         this.argumentBinderRegistry = argumentBinderRegistry;
     }
 
@@ -242,9 +249,9 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                     .isError(true)
                     .build();
             }
-            // Passed as is: the SDK validates the object against the output schema and adds its JSON as text content
+            // The SDK validates the object against the output schema and adds its JSON as text content
             return McpSchema.CallToolResult.builder()
-                .structuredContent(result)
+                .structuredContent(structuredContent(result))
                 .isError(false)
                 .build();
         }
@@ -264,6 +271,17 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             }
         }
         return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
+    }
+
+    private Object structuredContent(Object result) {
+        if (!convertStructuredContent) {
+            return result;
+        }
+        try {
+            return jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), STRUCTURED_CONTENT_ARGUMENT);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private <B> McpSchema.Tool tool(Method<B> toolMethod) {
