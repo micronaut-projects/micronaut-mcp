@@ -22,6 +22,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.http.uri.UriMatchTemplate;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.modelcontextprotocol.common.McpTransportContext;
@@ -128,7 +129,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         Method<B> m
     ) {
         UriMatchTemplate uriTemplate = uriMatchTemplate(m.method());
-        return (exchange, request) -> Mono.just(invokeAndMap(m, uriTemplate, exchange, request));
+        return (exchange, request) -> invokeAndMapAsync(m, uriTemplate, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> statelessSyncHandler(
@@ -142,7 +143,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         Method<B> m
     ) {
         UriMatchTemplate uriTemplate = uriMatchTemplate(m.method());
-        return (ctx, request) -> Mono.just(invokeAndMap(m, uriTemplate, ctx, request));
+        return (ctx, request) -> invokeAndMapAsync(m, uriTemplate, ctx, request);
     }
 
     private static UriMatchTemplate uriMatchTemplate(ExecutableMethod<?, ?> method) {
@@ -155,8 +156,20 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                           UriMatchTemplate uriTemplate,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
+        return m.call(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
+            mcpTransportContext, result -> map(m, request, result), this::failWithMcpError);
+    }
+
+    private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
+                                                                     UriMatchTemplate uriTemplate,
+                                                                     Object mcpTransportContext,
+                                                                     McpSchema.ReadResourceRequest request) {
+        return m.callAsync(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
+            result -> map(m, request, result), this::failWithMcpError);
+    }
+
+    private <B> McpSchema.ReadResourceResult map(Method<B> m, McpSchema.ReadResourceRequest request, @Nullable Object result) {
         ExecutableMethod<B, Object> method = m.method();
-        Object result = m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request);
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
         }
