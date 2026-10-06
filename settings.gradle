@@ -27,6 +27,7 @@ include 'test-suite-docs-java'
 include 'test-suite-docs-kotlin'
 include 'test-suite-docs-groovy'
 include 'test-suite-docs-python'
+include 'test-suite-dev-reload'
 
 enableFeaturePreview 'TYPESAFE_PROJECT_ACCESSORS'
 
