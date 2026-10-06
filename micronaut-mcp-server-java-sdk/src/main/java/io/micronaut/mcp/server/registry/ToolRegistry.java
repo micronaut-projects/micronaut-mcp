@@ -75,7 +75,6 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
     private static final List<Class<?>> BINDABLE_PARAMETER_TYPES = List.of(McpTransportContext.class,
         McpSchema.CallToolRequest.class);
-    private static final Argument<Map<String, Object>> STRUCTURED_CONTENT_ARGUMENT = Argument.mapOf(String.class, Object.class);
     private static final String MEMBER_ANNOTATIONS = "annotations";
     private static final String MEMBER_READ_ONLY_HINT = "readOnlyHint";
     private static final String MEMBER_DESTRUCTIVE_HINT = "destructiveHint";
@@ -217,10 +216,15 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             if (returnClass.isAssignableFrom(McpSchema.CallToolResult.class)) {
                 return (McpSchema.CallToolResult) result;
             } else if (structuredOutput) {
-                // The SDK validates the structured content and adds its JSON as text content, so it is converted once, without a JSON string
-                Map<String, Object> structuredContent = jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), STRUCTURED_CONTENT_ARGUMENT);
+                if (result == null) {
+                    return McpSchema.CallToolResult.builder()
+                        .addTextContent("Tool " + toolName(method) + " returned no structured content")
+                        .isError(true)
+                        .build();
+                }
+                // Passed as is: the SDK validates the object against the output schema and adds its JSON as text content
                 return McpSchema.CallToolResult.builder()
-                    .structuredContent(structuredContent)
+                    .structuredContent(result)
                     .isError(false)
                     .build();
             } else if (returnClass.isAssignableFrom(String.class)) {
