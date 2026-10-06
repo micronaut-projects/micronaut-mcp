@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "spec.name", value = "ToolExecutionErrorsTest")
+@Property(name = "tool-errors.tools", value = "true")
 @MicronautTest
 class ToolExecutionErrorsTest {
 
@@ -39,6 +40,11 @@ class ToolExecutionErrorsTest {
 
     @Inject
     JsonMapper jsonMapper;
+
+    @Test
+    void failuresAreReportedConsistently() throws IOException {
+        ToolErrorAssertions.assertToolErrors(httpClient, jsonMapper);
+    }
 
     @Test
     void aFailingToolProducesAToolExecutionError() throws IOException {

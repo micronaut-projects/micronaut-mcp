@@ -34,7 +34,7 @@ final class McpServerInfoConfigurationProperties implements McpServerInfoConfigu
     private @Nullable String title;
     private @Nullable String description;
     private @Nullable String websiteUrl;
-    private List<String> icons = List.of();
+    private List<IconConfiguration> icons = List.of();
     private @Nullable String instructions;
 
     @Override
@@ -92,14 +92,14 @@ final class McpServerInfoConfigurationProperties implements McpServerInfoConfigu
     }
 
     @Override
-    public @NonNull List<String> getIcons() {
+    public @NonNull List<IconConfiguration> getIcons() {
         return icons;
     }
 
     /**
-     * @param icons The URIs of the icons of the server: HTTPS URLs or {@code data:} URIs
+     * @param icons The icons of the server
      */
-    public void setIcons(@Nullable List<String> icons) {
+    public void setIcons(@Nullable List<IconConfiguration> icons) {
         this.icons = icons != null ? icons : List.of();
     }
 

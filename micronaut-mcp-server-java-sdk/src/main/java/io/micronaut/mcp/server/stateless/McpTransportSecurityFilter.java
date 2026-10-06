@@ -15,18 +15,20 @@
  */
 package io.micronaut.mcp.server.stateless;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.annotation.RequestFilter;
+import io.micronaut.http.annotation.ServerFilter;
 import io.micronaut.mcp.conf.server.TransportSecurityConfiguration;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpStatelessServerTransport;
-import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
-import java.net.URI;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,27 +38,31 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Validates the {@code Origin} and {@code MCP-Protocol-Version} headers of requests to the MCP endpoint.
+ * Validates the {@code Origin} and {@code MCP-Protocol-Version} headers of requests to the MCP endpoint. As a filter it
+ * runs on the thread that received the request, before the body is read and before a blocking server hands the
+ * request to the blocking executor.
  *
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#security-warning">Streamable HTTP security</a>
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#protocol-version-header">Protocol version header</a>
  */
-@Singleton
+@ServerFilter(McpController.PATH)
+@Requires(property = TransportSecurityConfiguration.PREFIX + ".enabled", notEquals = StringUtils.FALSE)
 @Internal
-final class McpRequestValidator {
+final class McpTransportSecurityFilter {
     private static final String WILDCARD = "*";
-    private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "[::1]", "::1");
+    private static final String SCHEME_SEPARATOR = "://";
+    private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "[::1]");
 
-    private final boolean enabled;
     private final boolean anyOrigin;
+    private final boolean allowLoopbackOrigins;
     private final Set<String> allowedOrigins;
     private final List<String> protocolVersions;
 
-    McpRequestValidator(TransportSecurityConfiguration configuration, McpStatelessServerTransport transport) {
-        this.enabled = configuration.isEnabled();
+    McpTransportSecurityFilter(TransportSecurityConfiguration configuration, McpStatelessServerTransport transport) {
         this.anyOrigin = configuration.getAllowedOrigins().contains(WILDCARD);
+        this.allowLoopbackOrigins = configuration.isAllowLoopbackOrigins();
         this.allowedOrigins = configuration.getAllowedOrigins().stream()
-            .map(McpRequestValidator::normalize)
+            .map(McpTransportSecurityFilter::normalize)
             .collect(Collectors.toUnmodifiableSet());
         this.protocolVersions = transport.protocolVersions();
     }
@@ -65,10 +71,10 @@ final class McpRequestValidator {
      * @param request The request
      * @return The response rejecting the request, or {@code null} when it is valid
      */
-    @Nullable HttpResponse<?> reject(HttpRequest<?> request) {
-        if (!enabled) {
-            return null;
-        }
+    // The rejection body is a JSON-RPC error map, so the response body type is a wildcard
+    @SuppressWarnings("java:S1452")
+    @RequestFilter
+    @Nullable HttpResponse<?> filter(HttpRequest<?> request) {
         HttpHeaders headers = request.getHeaders();
         String origin = headers.get(HttpHeaders.ORIGIN);
         if (origin != null && !isAllowed(origin)) {
@@ -85,13 +91,38 @@ final class McpRequestValidator {
         if (anyOrigin || allowedOrigins.contains(normalize(origin))) {
             return true;
         }
-        try {
-            String host = URI.create(origin).getHost();
-            // An attacker controlled name resolving to a loopback address still sends its own name as the origin
-            return host != null && LOOPBACK_HOSTS.contains(host.toLowerCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
-            return false;
+        // An attacker controlled name resolving to a loopback address still sends its own name as the origin
+        return allowLoopbackOrigins && LOOPBACK_HOSTS.contains(host(origin));
+    }
+
+    /**
+     * The host of an origin ({@code scheme://host[:port]}), read without parsing it as a URI, in lower case, or an empty
+     * string when the origin has no host.
+     */
+    private static String host(String origin) {
+        int start = origin.indexOf(SCHEME_SEPARATOR);
+        if (start < 0) {
+            return "";
         }
+        start += SCHEME_SEPARATOR.length();
+        int end;
+        if (origin.startsWith("[", start)) {
+            // An IPv6 literal, kept with its brackets
+            end = origin.indexOf(']', start);
+            if (end < 0) {
+                return "";
+            }
+            end++;
+        } else {
+            end = start;
+            while (end < origin.length() && origin.charAt(end) != ':' && origin.charAt(end) != '/') {
+                end++;
+            }
+        }
+        if (end < origin.length() && origin.charAt(end) != ':' && origin.charAt(end) != '/') {
+            return "";
+        }
+        return origin.substring(start, end).toLowerCase(Locale.ROOT);
     }
 
     private static String normalize(String origin) {

@@ -1,10 +1,11 @@
 package io.micronaut.mcp.server.registry;
 
-import io.micronaut.http.uri.UriMatchTemplate;
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,8 +27,32 @@ class UriTemplateReadResourceRequestTest {
     }
 
     @Test
+    void malformedEscapesAreInvalidParams() {
+        for (String uri : new String[] {"book://book/%zz", "book://book/%E", "book://book/title%"}) {
+            McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("book://book/{title}", uri));
+            assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
+            assertEquals("Invalid percent-encoding in the value of URI template variable title", error.getMessage());
+        }
+    }
+
+    @Test
+    void anEncodedSlashIsRejectedInASimpleVariable() {
+        McpError error = assertThrows(McpError.class,
+            () -> UriTemplateReadResourceRequest.arguments("file:///{path}", "file:///..%2F..%2Fetc%2Fpasswd"));
+        assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
+        assertEquals("The value of URI template variable path must not contain an encoded /", error.getMessage());
+    }
+
+    @Test
+    void reservedVariablesMayContainASlash() {
+        assertEquals(Map.of("path", "docs/read me.txt"),
+            UriTemplateReadResourceRequest.arguments("file:///{+path}", "file:///docs%2Fread%20me.txt"));
+        assertEquals(Set.of("path", "fragment"), UriTemplateReadResourceRequest.Template.compile("file:///{+path}{#fragment}").reservedVariables());
+    }
+
+    @Test
     void requestsMatchedAgainstACompiledTemplate() {
-        UriMatchTemplate template = UriMatchTemplate.of("pgn://round/{round}/pgn");
+        UriTemplateReadResourceRequest.Template template = UriTemplateReadResourceRequest.Template.compile("pgn://round/{round}/pgn");
         McpSchema.ReadResourceRequest round14 = new McpSchema.ReadResourceRequest("pgn://round/14/pgn");
         McpSchema.ReadResourceRequest round15 = new McpSchema.ReadResourceRequest("pgn://round/15/pgn");
 

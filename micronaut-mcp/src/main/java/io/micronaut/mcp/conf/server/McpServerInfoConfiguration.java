@@ -79,10 +79,10 @@ public interface McpServerInfoConfiguration {
     }
 
     /**
-     * @return The URIs of the icons of the server: HTTPS URLs or {@code data:} URIs
+     * @return The icons of the server
      * @since 2.2.0
      */
-    default @NonNull List<String> getIcons() {
+    default @NonNull List<IconConfiguration> getIcons() {
         return List.of();
     }
 
