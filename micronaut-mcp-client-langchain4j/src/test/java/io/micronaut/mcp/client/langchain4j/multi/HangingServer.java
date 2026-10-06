@@ -1,5 +1,7 @@
 package io.micronaut.mcp.client.langchain4j.multi;
 
+import java.util.concurrent.CountDownLatch;
+
 /**
  * A process that never answers, started by {@link UnreachableServersTest} as an MCP server over STDIO.
  */
@@ -7,7 +9,9 @@ public final class HangingServer {
     private HangingServer() {
     }
 
+    // The arguments of a main method
+    @SuppressWarnings("java:S1172")
     public static void main(String[] args) throws InterruptedException {
-        Thread.sleep(Long.MAX_VALUE);
+        new CountDownLatch(1).await();
     }
 }

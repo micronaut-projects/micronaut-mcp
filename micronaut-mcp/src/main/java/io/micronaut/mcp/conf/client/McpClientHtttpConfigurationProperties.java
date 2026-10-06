@@ -18,6 +18,8 @@ package io.micronaut.mcp.conf.client;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.convert.format.MapFormat;
+import io.micronaut.core.naming.conventions.StringConvention;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -30,32 +32,19 @@ import java.util.Map;
  */
 @EachProperty(McpClientHttpConfiguration.PREFIX)
 @Internal
-final class McpClientHttpConfigurationProperties implements McpClientHttpConfiguration {
-    private final String name;
+final class McpClientHttpConfigurationProperties extends AbstractMcpClientConnectionConfigurationProperties implements McpClientHttpConfiguration {
     private URI url;
     private Duration timeout;
     private boolean logRequests;
     private boolean logResponses;
     private Map<String, String> headers = Map.of();
-    private @Nullable Duration initializationTimeout;
-    private @Nullable Duration requestTimeout;
-    private boolean autoHealthCheck = true;
 
     /**
      * Constructor.
      * @param name Name Qualifier
      */
     McpClientHttpConfigurationProperties(@Parameter String name) {
-        this.name = name;
-    }
-
-    /**
-     *
-     * @return The name qualifier
-     */
-    @Override
-    public String getName() {
-        return name;
+        super(name);
     }
 
     /**
@@ -124,46 +113,7 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
     /**
      * @param headers The headers sent with every request, such as {@code Authorization}
      */
-    public void setHeaders(@Nullable Map<String, String> headers) {
+    public void setHeaders(@MapFormat(transformation = MapFormat.MapTransformation.FLAT, keyFormat = StringConvention.RAW) @Nullable Map<String, String> headers) {
         this.headers = headers != null ? headers : Map.of();
-    }
-
-    @Override
-    public @Nullable Duration getInitializationTimeout() {
-        return initializationTimeout;
-    }
-
-    /**
-     * @param initializationTimeout How long to wait for the server to answer the initialization
-     */
-    public void setInitializationTimeout(@Nullable Duration initializationTimeout) {
-        this.initializationTimeout = initializationTimeout;
-    }
-
-    @Override
-    public @Nullable Duration getRequestTimeout() {
-        return requestTimeout;
-    }
-
-    /**
-     * @param requestTimeout How long to wait for the server to answer a request, such as a tool call
-     */
-    public void setRequestTimeout(@Nullable Duration requestTimeout) {
-        this.requestTimeout = requestTimeout;
-    }
-
-    @Override
-    public boolean isAutoHealthCheck() {
-        return autoHealthCheck;
-    }
-
-    /**
-     * Whether the LangChain4j client checks periodically that the server is reachable, and reconnects when it is not.
-     * Default value {@code true}.
-     *
-     * @param autoHealthCheck Whether to check the server periodically
-     */
-    public void setAutoHealthCheck(boolean autoHealthCheck) {
-        this.autoHealthCheck = autoHealthCheck;
     }
 }
