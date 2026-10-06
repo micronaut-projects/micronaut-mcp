@@ -25,7 +25,11 @@ import org.skyscreamer.jsonassert.JSONCompareMode;
 @Property(name = "micronaut.mcp.server.info.title", value = "Weather")
 @Property(name = "micronaut.mcp.server.info.description", value = "Forecasts by city")
 @Property(name = "micronaut.mcp.server.info.website-url", value = "https://example.com")
-@Property(name = "micronaut.mcp.server.info.icons[0]", value = "https://example.com/weather.png")
+@Property(name = "micronaut.mcp.server.info.icons[0].src", value = "https://example.com/weather.png")
+@Property(name = "micronaut.mcp.server.info.icons[1].src", value = "https://example.com/weather-dark.svg")
+@Property(name = "micronaut.mcp.server.info.icons[1].mime-type", value = "image/svg+xml")
+@Property(name = "micronaut.mcp.server.info.icons[1].sizes", value = "any")
+@Property(name = "micronaut.mcp.server.info.icons[1].theme", value = "dark")
 @Property(name = "micronaut.mcp.server.info.instructions", value = "Ask for a city first.")
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "spec.name", value = "PrimitiveMetadataTest")
@@ -41,7 +45,7 @@ class PrimitiveMetadataTest {
         JSONAssert.assertEquals("""
             {"result": {
               "serverInfo": {"name": "weather", "title": "Weather", "version": "1.0.0", "description": "Forecasts by city",
-                             "icons": [{"src": "https://example.com/weather.png"}], "websiteUrl": "https://example.com"},
+                             "icons": [{"src": "https://example.com/weather.png"}, {"src": "https://example.com/weather-dark.svg", "mimeType": "image/svg+xml", "sizes": ["any"], "theme": "dark"}], "websiteUrl": "https://example.com"},
               "instructions": "Ask for a city first."}}""", call("initialize", """
             {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "test", "version": "1"}}"""), JSONCompareMode.LENIENT);
     }

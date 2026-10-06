@@ -21,6 +21,8 @@ import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The {@link McpRequestContext} of a request received over STDIO, through the SDK server exchange, or over HTTP, through
@@ -28,6 +30,7 @@ import org.jspecify.annotations.Nullable;
  */
 @Internal
 public final class DefaultMcpRequestContext implements McpRequestContext {
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultMcpRequestContext.class);
     private static final String UNSUPPORTED = "The stateless HTTP transport cannot send requests to the client, use the STDIO transport";
 
     private final McpTransportContext transportContext;
@@ -85,7 +88,7 @@ public final class DefaultMcpRequestContext implements McpRequestContext {
         if (syncExchange != null) {
             syncExchange.progressNotification(notification);
         } else if (asyncExchange != null) {
-            asyncExchange.progressNotification(notification).subscribe();
+            asyncExchange.progressNotification(notification).subscribe(null, DefaultMcpRequestContext::notificationFailed);
         } else if (emitter != null) {
             emitter.emit(new McpSchema.JSONRPCNotification(McpSchema.JSONRPC_VERSION, McpSchema.METHOD_NOTIFICATION_PROGRESS, notification));
         }
@@ -97,9 +100,15 @@ public final class DefaultMcpRequestContext implements McpRequestContext {
         if (syncExchange != null) {
             syncExchange.loggingNotification(notification);
         } else if (asyncExchange != null) {
-            asyncExchange.loggingNotification(notification).subscribe();
+            asyncExchange.loggingNotification(notification).subscribe(null, DefaultMcpRequestContext::notificationFailed);
         } else if (emitter != null) {
             emitter.emit(new McpSchema.JSONRPCNotification(McpSchema.JSONRPC_VERSION, McpSchema.METHOD_NOTIFICATION_MESSAGE, notification));
+        }
+    }
+
+    private static void notificationFailed(Throwable error) {
+        if (LOG.isWarnEnabled()) {
+            LOG.warn("Failed to send a notification to the client: {}", error.getMessage(), error);
         }
     }
 

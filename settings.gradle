@@ -42,16 +42,14 @@ micronautBuild {
     importMicronautCatalog("micronaut-micrometer")
 }
 
-// Micronaut core 5.3.0-SNAPSHOT comes from Maven local, where a core checkout publishes it with
-// publishToMavenLocal, or from the Central snapshots repository. Only io.micronaut snapshots are resolved
-// from them. Projects that declare their own repositories replace the settings ones, so they are added to
-// each project too. Remove once the build moves to a core 5.3 release.
+// Micronaut core 5.3.0-SNAPSHOT comes from the Central snapshots repository. Maven local, where a core
+// checkout publishes it with publishToMavenLocal, is only used when the build runs with -PuseMavenLocal, and
+// then after the Central snapshots, so a locally published core never silently replaces the shared snapshot
+// (publish a distinct version such as 5.3.0-mine-SNAPSHOT to test local core changes).
+// Only io.micronaut snapshots are resolved from them. Projects that declare their own repositories replace the
+// settings ones, so they are added to each project too. Remove once the build moves to a core 5.3 release.
+def useMavenLocal = providers.gradleProperty('useMavenLocal').map { it != 'false' }.getOrElse(false)
 def micronautSnapshotRepositories = { RepositoryHandler repositories ->
-    repositories.mavenLocal {
-        content {
-            includeVersionByRegex('io\\.micronaut(\\..*)?', '.*', '.*-SNAPSHOT')
-        }
-    }
     repositories.maven {
         url = uri('https://central.sonatype.com/repository/maven-snapshots/')
         mavenContent {
@@ -59,6 +57,13 @@ def micronautSnapshotRepositories = { RepositoryHandler repositories ->
         }
         content {
             includeGroupByRegex('io\\.micronaut(\\..*)?')
+        }
+    }
+    if (useMavenLocal) {
+        repositories.mavenLocal {
+            content {
+                includeVersionByRegex('io\\.micronaut(\\..*)?', '.*', '.*-SNAPSHOT')
+            }
         }
     }
 }

@@ -39,18 +39,21 @@ import reactor.core.publisher.Mono;
 @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.TRUE)
 @Internal
 final class McpReactiveController extends McpController {
+    private final McpStreamingPolicy streamingPolicy;
 
     McpReactiveController(McpStatelessServerHandler mcpHandler,
                           McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
                           JsonMapper jsonMapper,
                           McpJsonMapper mcpJsonMapper,
-                          McpRequestValidator requestValidator) {
-        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper, requestValidator);
+                          McpStreamingPolicy streamingPolicy) {
+        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper);
+        this.streamingPolicy = streamingPolicy;
     }
 
-    @SuppressWarnings("java:S3740")
+    // The route returns a JSON-RPC response or an error body, so the response body type is a wildcard
+    @SuppressWarnings({"java:S3740", "java:S1452"})
     @Post
     Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable JsonNode body) {
-        return handle(request, body);
+        return handle(request, body, streamingPolicy.mayStream(request, body));
     }
 }
