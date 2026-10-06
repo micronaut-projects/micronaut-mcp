@@ -54,6 +54,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.micronaut.inject.BeanDefinition;
 
@@ -150,20 +151,6 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }).orElse(null);
     }
 
-    @Nullable
-    private static McpTransportContext resolveMcpTransportContext(@Nullable Object ctx) {
-        if (ctx instanceof McpTransportContext mcpCtx) {
-            return mcpCtx;
-        }
-        if (ctx instanceof McpSyncServerExchange ex) {
-            return ex.transportContext();
-        }
-        if (ctx instanceof McpAsyncServerExchange ex) {
-            return ex.transportContext();
-        }
-        return null;
-    }
-
     /**
      * The type of the value a method produces: the method return type, or its first type argument when the method returns
      * a reactive type or a {@link CompletionStage}.
@@ -246,13 +233,13 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected static final class Method<B> {
         private final BeanContext beanContext;
         private final BeanDefinition<B> beanDefinition;
-        private final ExecutableMethod<B, Object> method;
+        private final ExecutableMethod<B, Object> executableMethod;
         private final Argument<?>[] boundArguments;
         private final int[] boundIndexes;
         private final Argument<?> resultArgument;
         private final @Nullable String executorName;
-        private volatile @Nullable B singleton;
-        private volatile @Nullable Scheduler scheduler;
+        private final AtomicReference<B> singleton = new AtomicReference<>();
+        private final AtomicReference<Scheduler> scheduler = new AtomicReference<>();
 
         Method(BeanContext beanContext,
                BeanDefinition<B> beanDefinition,
@@ -260,7 +247,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                Class<?>[] boundParameterTypes) {
             this.beanContext = beanContext;
             this.beanDefinition = beanDefinition;
-            this.method = method;
+            this.executableMethod = method;
             this.resultArgument = AbstractMcpMethodRegistry.resultArgument(method);
             this.executorName = method.stringValue(ExecuteOn.class).orElse(null);
             List<Argument<?>> arguments = new ArrayList<>();
@@ -292,7 +279,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
          * @return The executable method.
          */
         public ExecutableMethod<B, Object> method() {
-            return method;
+            return executableMethod;
         }
 
         /**
@@ -302,12 +289,26 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             if (!beanDefinition.isSingleton()) {
                 return beanContext.getBean(beanDefinition);
             }
-            B bean = singleton;
+            B bean = singleton.get();
             if (bean == null) {
                 bean = beanContext.getBean(beanDefinition);
-                singleton = bean;
+                singleton.set(bean);
             }
             return bean;
+        }
+
+        @Nullable
+        private static McpTransportContext resolveMcpTransportContext(@Nullable Object ctx) {
+            if (ctx instanceof McpTransportContext mcpCtx) {
+                return mcpCtx;
+            }
+            if (ctx instanceof McpSyncServerExchange ex) {
+                return ex.transportContext();
+            }
+            if (ctx instanceof McpAsyncServerExchange ex) {
+                return ex.transportContext();
+            }
+            return null;
         }
 
         /**
@@ -369,10 +370,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             if (executorName == null) {
                 return null;
             }
-            Scheduler executor = scheduler;
+            Scheduler executor = scheduler.get();
             if (executor == null) {
                 executor = Schedulers.fromExecutorService(beanContext.getBean(ExecutorService.class, Qualifiers.byName(executorName)));
-                scheduler = executor;
+                scheduler.set(executor);
             }
             return executor;
         }
