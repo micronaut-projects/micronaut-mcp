@@ -187,6 +187,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @param exceptionClass The class of a failure
      * @return The mapper of the failure, if any
      */
+    // Each mapper handles its own type of exception, so the type of the mapper is only known as a wildcard
+    @SuppressWarnings("java:S1452")
     @Nullable
     final McpErrorExceptionMapper<? extends Throwable> getExceptionMapper(@NonNull Class<? extends Throwable> exceptionClass) {
         // Misses are cached too, so exceptions without a mapper do not scan the mappers again
