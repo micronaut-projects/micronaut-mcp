@@ -137,6 +137,10 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
         if (id == null) {
             return new McpSchema.JSONRPCNotification(jsonrpc.getStringValue(), method.getStringValue(), params);
         }
+        if (!id.isString() && !id.isNumber()) {
+            // JSON-RPC request ids are strings or numbers
+            return null;
+        }
         return new McpSchema.JSONRPCRequest(jsonrpc.getStringValue(), method.getStringValue(), id(id), params);
     }
 
@@ -154,14 +158,8 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
         }
     }
 
-    private static @Nullable Object id(JsonNode id) {
-        if (id.isString()) {
-            return id.getStringValue();
-        }
-        if (id.isNumber()) {
-            return id.getNumberValue();
-        }
-        return id.isNull() ? null : id.getValue();
+    private static Object id(JsonNode id) {
+        return id.isString() ? id.getStringValue() : id.getNumberValue();
     }
 
     private static Map<String, Object> invalidRequest() {
