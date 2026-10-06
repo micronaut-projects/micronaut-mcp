@@ -25,21 +25,23 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Java Record to encapsulate of uriTemplate and Read Resource Request.
- * @param uriTemplate URI Template
+ * Java Record to encapsulate the variables matched by a URI template and the Read Resource Request.
+ * @param arguments the variable values extracted by matching the URI template against the {@link McpSchema.ReadResourceRequest#uri()}
  * @param request Read Resource Request
  */
 @Internal
 record UriTemplateReadResourceRequest(
-    String uriTemplate,
+    Map<String, Object> arguments,
     McpSchema.ReadResourceRequest request
 ) {
     /**
-     *
-     * @return arguments extracted by matching the `uriTemplate` against the {@link McpSchema.ReadResourceRequest#uri()}
+     * Matches the request URI once against an already compiled URI template.
+     * @param uriTemplate URI template
+     * @param request Read Resource Request
+     * @return the request with the matched variables
      */
-    Map<String, Object> arguments() {
-        return arguments(uriTemplate, request.uri());
+    static UriTemplateReadResourceRequest of(UriMatchTemplate uriTemplate, McpSchema.ReadResourceRequest request) {
+        return new UriTemplateReadResourceRequest(arguments(uriTemplate, request.uri()), request);
     }
 
     /**
@@ -49,7 +51,10 @@ record UriTemplateReadResourceRequest(
      * @return the variable values
      */
     static Map<String, Object> arguments(String uriTemplate, String uri) {
-        UriMatchTemplate uriMatchTemplate = UriMatchTemplate.of(uriTemplate);
+        return arguments(UriMatchTemplate.of(uriTemplate), uri);
+    }
+
+    private static Map<String, Object> arguments(UriMatchTemplate uriMatchTemplate, String uri) {
         Optional<UriMatchInfo> matchOptional = uriMatchTemplate.match(uri);
         if (matchOptional.isEmpty()) {
             return Collections.emptyMap();
