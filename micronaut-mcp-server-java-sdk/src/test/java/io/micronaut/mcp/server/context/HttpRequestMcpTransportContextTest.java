@@ -4,7 +4,6 @@ import io.micronaut.core.util.LocaleResolver;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
-import io.micronaut.http.server.util.HttpHostResolver;
 import io.modelcontextprotocol.spec.ProtocolVersions;
 import org.junit.jupiter.api.Test;
 
