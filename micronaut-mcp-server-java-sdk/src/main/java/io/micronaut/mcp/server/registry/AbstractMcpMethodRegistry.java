@@ -188,7 +188,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @return The mapper of the failure, if any
      */
     @Nullable
-    protected final McpErrorExceptionMapper<? extends Throwable> getExceptionMapper(@NonNull Class<? extends Throwable> exceptionClass) {
+    final McpErrorExceptionMapper<? extends Throwable> getExceptionMapper(@NonNull Class<? extends Throwable> exceptionClass) {
         // Misses are cached too, so exceptions without a mapper do not scan the mappers again
         return classToExceptionMapper.computeIfAbsent(exceptionClass, aClass -> {
             for (McpErrorExceptionMapper<?> exceptionMapper : exceptionMappers) {
