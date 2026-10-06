@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.micronaut.inject.BeanDefinition;
 
@@ -114,7 +115,9 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         if (exceptionMapper != null) {
             return mapException(exceptionMapper, ex);
         }
-        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).build();
+        // The SDK requires a message
+        String message = ex.getMessage() != null && !ex.getMessage().isBlank() ? ex.getMessage() : ex.getClass().getSimpleName();
+        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(message).build();
     }
 
     @Nullable
@@ -128,20 +131,6 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             }
             return Optional.empty();
         }).orElse(null);
-    }
-
-    @Nullable
-    private static McpTransportContext resolveMcpTransportContext(@Nullable Object ctx) {
-        if (ctx instanceof McpTransportContext mcpCtx) {
-            return mcpCtx;
-        }
-        if (ctx instanceof McpSyncServerExchange ex) {
-            return ex.transportContext();
-        }
-        if (ctx instanceof McpAsyncServerExchange ex) {
-            return ex.transportContext();
-        }
-        return null;
     }
 
     @SuppressWarnings("unchecked")
@@ -158,10 +147,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected static final class Method<B> {
         private final BeanContext beanContext;
         private final BeanDefinition<B> beanDefinition;
-        private final ExecutableMethod<B, Object> method;
+        private final ExecutableMethod<B, Object> executableMethod;
         private final Argument<?>[] boundArguments;
         private final int[] boundIndexes;
-        private volatile @Nullable B singleton;
+        private final AtomicReference<B> singleton = new AtomicReference<>();
 
         Method(BeanContext beanContext,
                BeanDefinition<B> beanDefinition,
@@ -169,7 +158,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                Class<?>[] boundParameterTypes) {
             this.beanContext = beanContext;
             this.beanDefinition = beanDefinition;
-            this.method = method;
+            this.executableMethod = method;
             List<Argument<?>> arguments = new ArrayList<>();
             List<Integer> indexes = new ArrayList<>();
             for (Argument<?> argument : method.getArguments()) {
@@ -199,7 +188,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
          * @return The executable method.
          */
         public ExecutableMethod<B, Object> method() {
-            return method;
+            return executableMethod;
         }
 
         /**
@@ -209,12 +198,26 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             if (!beanDefinition.isSingleton()) {
                 return beanContext.getBean(beanDefinition);
             }
-            B bean = singleton;
+            B bean = singleton.get();
             if (bean == null) {
                 bean = beanContext.getBean(beanDefinition);
-                singleton = bean;
+                singleton.set(bean);
             }
             return bean;
+        }
+
+        @Nullable
+        private static McpTransportContext resolveMcpTransportContext(@Nullable Object ctx) {
+            if (ctx instanceof McpTransportContext mcpCtx) {
+                return mcpCtx;
+            }
+            if (ctx instanceof McpSyncServerExchange ex) {
+                return ex.transportContext();
+            }
+            if (ctx instanceof McpAsyncServerExchange ex) {
+                return ex.transportContext();
+            }
+            return null;
         }
 
         /**
