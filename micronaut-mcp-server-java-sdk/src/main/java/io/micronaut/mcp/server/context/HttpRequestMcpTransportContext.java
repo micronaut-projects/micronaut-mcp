@@ -25,6 +25,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.security.Principal;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A {@link MicronautMcpTransportContext} backed by the HTTP request. Each value is read from the request when it is first
@@ -37,8 +38,8 @@ final class HttpRequestMcpTransportContext implements MicronautMcpTransportConte
     private final HttpRequest<?> request;
     private final HttpHostResolver hostResolver;
     private final LocaleResolver<HttpRequest<?>> localeResolver;
-    private volatile Object host = UNRESOLVED;
-    private volatile Object locale = UNRESOLVED;
+    private final AtomicReference<Object> host = new AtomicReference<>(UNRESOLVED);
+    private final AtomicReference<Object> locale = new AtomicReference<>(UNRESOLVED);
 
     HttpRequestMcpTransportContext(HttpRequest<?> request,
                                    HttpHostResolver hostResolver,
@@ -70,20 +71,20 @@ final class HttpRequestMcpTransportContext implements MicronautMcpTransportConte
 
     @Override
     public @Nullable Locale locale() {
-        Object value = locale;
+        Object value = locale.get();
         if (value == UNRESOLVED) {
             value = localeResolver.resolve(request).orElse(null);
-            locale = value;
+            locale.set(value);
         }
         return (Locale) value;
     }
 
     @Override
     public @Nullable String host() {
-        Object value = host;
+        Object value = host.get();
         if (value == UNRESOLVED) {
             value = hostResolver.resolve(request);
-            host = value;
+            host.set(value);
         }
         return (String) value;
     }
