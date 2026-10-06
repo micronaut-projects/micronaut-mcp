@@ -10,9 +10,9 @@ With https://micronaut-projects.github.io/micronaut-micrometer/latest/guide/[Mic
 |The name of the tool or prompt, the URI of the resource, or the URI template of the resource template
 
 |`error.type`
-|`none`, `tool_error` for a tool execution error, or the class of the exception that ended the operation
+|`none`, `tool_error` for a tool execution error, the JSON-RPC error code of a protocol error (for example `-32602`), or the class of the exception that ended the operation
 |===
 
 Disable the timer with `micronaut.mcp.server.metrics.enabled=false`.
 
-To observe operations otherwise, for example to trace them, register a bean of type `McpServerObserver`: it is notified when each operation starts and ends.
+To observe operations otherwise, for example to trace them, register a bean of type `McpServerObserver`: it is notified when each operation starts and ends. Each operation is stopped exactly once, including on the reactive server, and an observer that throws is logged without failing the operation.

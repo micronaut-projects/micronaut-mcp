@@ -18,9 +18,6 @@ package io.micronaut.mcp.server.registry;
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
-import io.micronaut.core.bind.BoundExecutable;
-import io.micronaut.core.bind.DefaultExecutableBinder;
-import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.inject.ExecutableMethod;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.annotations.PromptCompletion;
@@ -134,43 +131,37 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     private <B> McpSchema.CompleteResult invokeAndMap(Method<B> m,
                                                       Object mcpTransportContext,
                                                       McpSchema.CompleteRequest request) {
-        return observed(McpSchema.METHOD_COMPLETION_COMPLETE, completionName(request), () -> map(m, request, m.await(invoke(m, mcpTransportContext, request))));
+        return observed(McpSchema.METHOD_COMPLETION_COMPLETE, completionName(request), () -> m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
+            mcpTransportContext, CompletionRegistry::map, this::failWithMcpError));
     }
 
     private <B> Mono<McpSchema.CompleteResult> invokeAndMapAsync(Method<B> m,
                                                                  Object mcpTransportContext,
                                                                  McpSchema.CompleteRequest request) {
-        return observedAsync(McpSchema.METHOD_COMPLETION_COMPLETE, completionName(request), () -> m.invokeAsync(() -> invoke(m, mcpTransportContext, request))
-            .map(result -> map(m, request, result))
-            .switchIfEmpty(Mono.fromSupplier(() -> map(m, request, null))));
+        return observedAsync(McpSchema.METHOD_COMPLETION_COMPLETE, completionName(request), () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
+            CompletionRegistry::map, this::failWithMcpError));
     }
 
-    private <B> @Nullable Object invoke(Method<B> m,
-                                        Object mcpTransportContext,
-                                        McpSchema.CompleteRequest request) {
-        ExecutableMethod<B, Object> method = m.method();
-        B bean = m.bean();
-
-        ExecutableBinder<McpSchema.CompleteRequest> executableBinder = new DefaultExecutableBinder<>(
-            m.preBound(mcpTransportContext, request, request.argument()));
-        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, request);
-        return executable.invoke(bean);
-    }
-
-    private <B> McpSchema.CompleteResult map(Method<B> m, McpSchema.CompleteRequest request, @Nullable Object result) {
-        ExecutableMethod<B, Object> method = m.method();
+    private static McpSchema.CompleteResult map(@Nullable Object result) {
         if (result instanceof McpSchema.CompleteResult r) {
             return r;
         }
-        try {
-            List<String> values = asStringList(result);
-            return completeResult(values);
-        } catch (IllegalArgumentException e) {
-            if (LOG.isWarnEnabled()) {
-                LOG.warn("return type is not {} or List<String>", McpSchema.CompleteResult.class.getSimpleName());
-            }
+        if (result == null) {
+            return completeResult(Collections.emptyList());
+        }
+        if (result instanceof List<?> list && list.stream().allMatch(String.class::isInstance)) {
+            return completeResult(list.stream().map(String.class::cast).toList());
+        }
+        if (LOG.isWarnEnabled()) {
+            LOG.warn("Completion result is not a {} or a List<String>: {}", McpSchema.CompleteResult.class.getSimpleName(), result.getClass().getName());
         }
         return completeResult(Collections.emptyList());
+    }
+
+    @Override
+    protected boolean collectsValues(ExecutableMethod<?, ?> method) {
+        // A publisher of completion values, such as a Flux<String>, is collected into the list of values
+        return CharSequence.class.isAssignableFrom(resultArgument(method).getType());
     }
 
     private static String completionName(McpSchema.CompleteRequest request) {
@@ -187,13 +178,6 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
         return new McpSchema.CompleteResult(new McpSchema.CompleteResult.CompleteCompletion(values, values.size(), false));
     }
 
-    public static List<String> asStringList(Object result) {
-        if (result instanceof List<?> list && list.stream().allMatch(String.class::isInstance)) {
-            return list.stream().map(String.class::cast).toList();
-        }
-        throw new IllegalArgumentException("Not a List<String>");
-    }
-
     private static <B> McpSchema.CompleteReference toCompletion(ExecutableMethod<B, Object> method) {
         if (method.hasAnnotation(PromptCompletion.class)) {
             return toPromptReference(method);
@@ -208,7 +192,16 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
         return new McpSchema.ResourceReference(uri);
     }
 
-    private static <B> McpSchema.PromptReference toPromptReference(ExecutableMethod<B, Object> method) {
+    @Override
+    protected @Nullable String primitiveName(ExecutableMethod<?, ?> method) {
+        // A completion request designates the prompt by its name, or the resource by its URI
+        if (method.hasAnnotation(PromptCompletion.class)) {
+            return toPromptReference(method).name();
+        }
+        return method.stringValue(ResourceCompletion.class, URI_PROPERTY).orElse(null);
+    }
+
+    private static McpSchema.PromptReference toPromptReference(ExecutableMethod<?, ?> method) {
         String name = method.stringValue(PromptCompletion.class, NAME_PROPERTY).orElse(PromptCompletion.ELEMENT_NAME);
         if (PromptCompletion.ELEMENT_NAME.equals(name)) {
             name = method.getName();
