@@ -62,6 +62,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.micronaut.inject.BeanDefinition;
 
@@ -92,7 +93,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected final BeanContext beanContext;
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
     private List<McpServerObserver> observers = List.of();
-    private volatile @Nullable Set<String> notifyingNames;
+    private final AtomicReference<Set<String>> notifyingNames = new AtomicReference<>();
     private final Map<Class<? extends Throwable>, Optional<McpErrorExceptionMapper<? extends Throwable>>> classToExceptionMapper = new ConcurrentHashMap<>();
 
     AbstractMcpMethodRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
@@ -240,14 +241,14 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @return Whether the primitive declares an {@link McpRequestContext} parameter, so it may send notifications while it runs
      */
     public final boolean mayNotify(String name) {
-        Set<String> names = notifyingNames;
+        Set<String> names = notifyingNames.get();
         if (names == null) {
             names = methods.stream()
                 .filter(m -> Arrays.stream(m.method().getArguments()).anyMatch(a -> a.getType() == McpRequestContext.class))
                 .map(m -> primitiveName(m.method()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toUnmodifiableSet());
-            notifyingNames = names;
+            notifyingNames.set(names);
         }
         return names.contains(name);
     }
@@ -284,20 +285,6 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             }
             return Optional.empty();
         }).orElse(null);
-    }
-
-    @Nullable
-    private static McpTransportContext resolveMcpTransportContext(@Nullable Object ctx) {
-        if (ctx instanceof McpTransportContext mcpCtx) {
-            return mcpCtx;
-        }
-        if (ctx instanceof McpSyncServerExchange ex) {
-            return ex.transportContext();
-        }
-        if (ctx instanceof McpAsyncServerExchange ex) {
-            return ex.transportContext();
-        }
-        return null;
     }
 
     /**
@@ -383,13 +370,13 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         private static final int REQUEST_CONTEXT = -1;
         private final BeanContext beanContext;
         private final BeanDefinition<B> beanDefinition;
-        private final ExecutableMethod<B, Object> method;
+        private final ExecutableMethod<B, Object> executableMethod;
         private final Argument<?>[] boundArguments;
         private final int[] boundIndexes;
         private final Argument<?> resultArgument;
         private final @Nullable String executorName;
-        private volatile @Nullable B singleton;
-        private volatile @Nullable Scheduler scheduler;
+        private final AtomicReference<B> singleton = new AtomicReference<>();
+        private final AtomicReference<Scheduler> scheduler = new AtomicReference<>();
 
         Method(BeanContext beanContext,
                BeanDefinition<B> beanDefinition,
@@ -397,7 +384,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                Class<?>[] boundParameterTypes) {
             this.beanContext = beanContext;
             this.beanDefinition = beanDefinition;
-            this.method = method;
+            this.executableMethod = method;
             this.resultArgument = AbstractMcpMethodRegistry.resultArgument(method);
             this.executorName = method.stringValue(ExecuteOn.class).orElse(null);
             List<Argument<?>> arguments = new ArrayList<>();
@@ -434,7 +421,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
          * @return The executable method.
          */
         public ExecutableMethod<B, Object> method() {
-            return method;
+            return executableMethod;
         }
 
         /**
@@ -444,12 +431,26 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             if (!beanDefinition.isSingleton()) {
                 return beanContext.getBean(beanDefinition);
             }
-            B bean = singleton;
+            B bean = singleton.get();
             if (bean == null) {
                 bean = beanContext.getBean(beanDefinition);
-                singleton = bean;
+                singleton.set(bean);
             }
             return bean;
+        }
+
+        @Nullable
+        private static McpTransportContext resolveMcpTransportContext(@Nullable Object ctx) {
+            if (ctx instanceof McpTransportContext mcpCtx) {
+                return mcpCtx;
+            }
+            if (ctx instanceof McpSyncServerExchange ex) {
+                return ex.transportContext();
+            }
+            if (ctx instanceof McpAsyncServerExchange ex) {
+                return ex.transportContext();
+            }
+            return null;
         }
 
         /**
@@ -511,10 +512,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             if (executorName == null) {
                 return null;
             }
-            Scheduler executor = scheduler;
+            Scheduler executor = scheduler.get();
             if (executor == null) {
                 executor = Schedulers.fromExecutorService(beanContext.getBean(ExecutorService.class, Qualifiers.byName(executorName)));
-                scheduler = executor;
+                scheduler.set(executor);
             }
             return executor;
         }
