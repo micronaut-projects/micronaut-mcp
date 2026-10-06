@@ -91,7 +91,7 @@ record UriTemplateReadResourceRequest(
         String decoded;
         try {
             decoded = URLDecoder.decode(value.replace("+", "%2B"), StandardCharsets.UTF_8);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             throw invalidParams("Invalid percent-encoding in the value of URI template variable " + name);
         }
         if (decoded.indexOf('/') >= 0 && !uriTemplate.reservedVariables().contains(name)) {
