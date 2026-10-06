@@ -24,6 +24,8 @@ import dev.langchain4j.mcp.client.McpHeadersSupplier;
 import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.micronaut.mcp.conf.client.McpClientRequestHeaders;
+import io.micronaut.mcp.conf.client.McpHttpClientType;
+import io.micronaut.context.exceptions.DisabledBeanException;
 import jakarta.inject.Singleton;
 
 import java.util.List;
@@ -40,6 +42,9 @@ final class StreamableHttpMcpTransportFactory {
     @EachBean(McpClientHttpConfiguration.class)
     @Prototype
     StreamableHttpMcpTransport.Builder createStreamableHttpMcpTransportBuilder(McpClientHttpConfiguration config) {
+        if (config.getHttpClient() == McpHttpClientType.MICRONAUT) {
+            throw new DisabledBeanException("The connection " + config.getName() + " uses the Micronaut HTTP client");
+        }
         StreamableHttpMcpTransport.Builder builder = new StreamableHttpMcpTransport.Builder()
             .url(config.getUrl().toString());
         if (config.getTimeout() != null) {

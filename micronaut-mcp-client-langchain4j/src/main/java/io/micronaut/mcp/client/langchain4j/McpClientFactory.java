@@ -27,7 +27,10 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.mcp.client.langchain4j.http.MicronautHttpClientTransports;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
+import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
+import io.micronaut.mcp.conf.client.McpHttpClientType;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
@@ -45,9 +48,10 @@ final class McpClientFactory {
     DefaultMcpClient.Builder crateMcpClientBuilder(McpClientConnectionConfiguration configuration,
                                                    BeanContext beanContext,
                                                    List<McpClientListener> listeners,
-                                                   @Nullable McpLogMessageHandler logMessageHandler) {
+                                                   @Nullable McpLogMessageHandler logMessageHandler,
+                                                   @Nullable MicronautHttpClientTransports micronautTransports) {
         DefaultMcpClient.Builder builder = new DefaultMcpClient.Builder()
-            .transport(beanContext.getBean(McpTransport.class, Qualifiers.byName(configuration.getName())))
+            .transport(transport(configuration, beanContext, micronautTransports))
             // The key identifies the client, for example in tool name mappers and filters
             .key(configuration.getName())
             .addListeners(listeners);
@@ -63,6 +67,18 @@ final class McpClientFactory {
             builder.logHandler(logMessageHandler);
         }
         return builder;
+    }
+
+    private static McpTransport transport(McpClientConnectionConfiguration configuration,
+                                          BeanContext beanContext,
+                                          @Nullable MicronautHttpClientTransports micronautTransports) {
+        if (configuration instanceof McpClientHttpConfiguration http && http.getHttpClient() == McpHttpClientType.MICRONAUT) {
+            if (micronautTransports == null) {
+                throw new IllegalStateException("The MCP connection " + http.getName() + " uses the Micronaut HTTP client, add the micronaut-http-client dependency");
+            }
+            return micronautTransports.create(http);
+        }
+        return beanContext.getBean(McpTransport.class, Qualifiers.byName(configuration.getName()));
     }
 
     @EachBean(DefaultMcpClient.Builder.class)

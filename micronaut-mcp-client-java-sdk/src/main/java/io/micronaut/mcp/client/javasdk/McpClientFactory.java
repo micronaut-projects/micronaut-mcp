@@ -27,6 +27,8 @@ import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.micronaut.mcp.conf.client.McpClientRequestHeaders;
 import io.micronaut.mcp.conf.client.McpClientStdioConfiguration;
+import io.micronaut.mcp.conf.client.McpHttpClientType;
+import io.micronaut.context.exceptions.DisabledBeanException;
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
@@ -65,6 +67,7 @@ final class McpClientFactory {
     private final List<McpProgressHandler> progressHandlers;
     private final List<McpListChangedListener> listChangedListeners;
     private final List<McpClientHeadersProvider> headersProviders;
+    private final @Nullable MicronautHttpClientTransports micronautTransports;
 
     McpClientFactory(McpJsonMapper mcpJsonMapper,
                      BeanContext beanContext,
@@ -73,7 +76,9 @@ final class McpClientFactory {
                      List<McpLoggingHandler> loggingHandlers,
                      List<McpProgressHandler> progressHandlers,
                      List<McpListChangedListener> listChangedListeners,
-                     List<McpClientHeadersProvider> headersProviders) {
+                     List<McpClientHeadersProvider> headersProviders,
+                     @Nullable MicronautHttpClientTransports micronautTransports) {
+        this.micronautTransports = micronautTransports;
         this.headersProviders = headersProviders;
         this.mcpJsonMapper = mcpJsonMapper;
         this.beanContext = beanContext;
@@ -87,6 +92,9 @@ final class McpClientFactory {
     @EachBean(McpClientHttpConfiguration.class)
     @Prototype
     HttpClientStreamableHttpTransport.Builder transportBuilder(McpClientHttpConfiguration configuration) {
+        if (configuration.getHttpClient() == McpHttpClientType.MICRONAUT) {
+            throw new DisabledBeanException("The connection " + configuration.getName() + " uses the Micronaut HTTP client");
+        }
         HttpClientStreamableHttpTransport.Builder builder = HttpClientStreamableHttpTransport
             .builder(configuration.getUrl().toString())
             .jsonMapper(mcpJsonMapper);
@@ -132,7 +140,7 @@ final class McpClientFactory {
     McpClient.SyncSpec mcpClientSyncSpec(@NonNull McpClientConnectionConfiguration configuration,
                                          @NonNull JsonSchemaValidator jsonSchemaValidator) {
         String name = configuration.getName();
-        McpClient.SyncSpec spec = McpClient.sync(transport(name))
+        McpClient.SyncSpec spec = McpClient.sync(transport(configuration))
             .jsonSchemaValidator(jsonSchemaValidator)
             .capabilities(capabilities());
         if (configuration instanceof McpClientHttpConfiguration http && McpClientRequestHeaders.isDynamic(http, headersProviders)) {
@@ -178,7 +186,7 @@ final class McpClientFactory {
     McpClient.AsyncSpec mcpAysncSpec(@NonNull McpClientConnectionConfiguration configuration,
                                      @NonNull JsonSchemaValidator jsonSchemaValidator) {
         String name = configuration.getName();
-        McpClient.AsyncSpec spec = McpClient.async(transport(name))
+        McpClient.AsyncSpec spec = McpClient.async(transport(configuration))
             .jsonSchemaValidator(jsonSchemaValidator)
             .capabilities(capabilities());
         Duration requestTimeout = requestTimeout(configuration);
@@ -218,8 +226,14 @@ final class McpClientFactory {
         return spec.build();
     }
 
-    private McpClientTransport transport(String name) {
-        return beanContext.getBean(McpClientTransport.class, Qualifiers.byName(name));
+    private McpClientTransport transport(McpClientConnectionConfiguration configuration) {
+        if (configuration instanceof McpClientHttpConfiguration http && http.getHttpClient() == McpHttpClientType.MICRONAUT) {
+            if (micronautTransports == null) {
+                throw new IllegalStateException("The MCP connection " + http.getName() + " uses the Micronaut HTTP client, add the micronaut-http-client dependency");
+            }
+            return micronautTransports.create(http);
+        }
+        return beanContext.getBean(McpClientTransport.class, Qualifiers.byName(configuration.getName()));
     }
 
     private McpSchema.ClientCapabilities capabilities() {

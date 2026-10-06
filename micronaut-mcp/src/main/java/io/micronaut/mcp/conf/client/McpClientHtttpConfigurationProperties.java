@@ -38,6 +38,8 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
     private boolean logResponses;
     private Map<String, String> headers = Map.of();
     private boolean propagateAuthorization;
+    private McpHttpClientType httpClient = McpHttpClientType.JDK;
+    private @Nullable String serviceId;
     private @Nullable Duration initializationTimeout;
     private @Nullable Duration requestTimeout;
 
@@ -126,6 +128,32 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
      */
     public void setHeaders(@Nullable Map<String, String> headers) {
         this.headers = headers != null ? headers : Map.of();
+    }
+
+    @Override
+    public @NonNull McpHttpClientType getHttpClient() {
+        return httpClient;
+    }
+
+    /**
+     * The HTTP client to send the requests with. Default value {@code JDK}.
+     *
+     * @param httpClient The HTTP client
+     */
+    public void setHttpClient(@NonNull McpHttpClientType httpClient) {
+        this.httpClient = httpClient;
+    }
+
+    @Override
+    public @Nullable String getServiceId() {
+        return serviceId;
+    }
+
+    /**
+     * @param serviceId The id of the {@code micronaut.http.services} entry that configures the Micronaut HTTP client
+     */
+    public void setServiceId(@Nullable String serviceId) {
+        this.serviceId = serviceId;
     }
 
     @Override

@@ -72,6 +72,24 @@ public interface McpClientHttpConfiguration extends McpClientConnectionConfigura
         return false;
     }
 
+    /**
+     * @return The HTTP client to send the requests with
+     * @since 2.2.0
+     */
+    @NonNull
+    default McpHttpClientType getHttpClient() {
+        return McpHttpClientType.JDK;
+    }
+
+    /**
+     * @return The id of the {@code micronaut.http.services} entry that configures the Micronaut HTTP client, or {@code null}
+     * for the default client configuration. Only used with {@link McpHttpClientType#MICRONAUT}.
+     * @since 2.2.0
+     */
+    default @Nullable String getServiceId() {
+        return null;
+    }
+
     @NonNull
     static McpClientHttpConfiguration of(@NonNull String name,
                                            @NonNull URI url) {

@@ -7,6 +7,8 @@ dependencies {
     annotationProcessor(mnSerde.micronaut.serde.processor)
     api(mnSerde.micronaut.serde.api)
     compileOnly(mn.micronaut.http)
+    compileOnly(mn.micronaut.http.client.core)
+    compileOnly(mn.reactor)
     testImplementation(mn.micronaut.http)
     testImplementation(mnSerde.micronaut.serde.jackson)
     testAnnotationProcessor(mn.micronaut.inject.java)

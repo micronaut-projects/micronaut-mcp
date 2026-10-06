@@ -61,3 +61,25 @@ micronaut:
 ----
 
 To compute headers for each request otherwise, for example to send an OAuth access token that is refreshed, declare a bean of type `io.micronaut.mcp.conf.client.McpClientHeadersProvider`. Both apply to the LangChain4j and the Java SDK clients, and are evaluated on the thread that calls the client: call it from the thread handling the request for the `Authorization` header to be propagated.
+
+== Micronaut HTTP Client
+
+By default the clients send their requests with the JDK HTTP client. Set `http-client` to `MICRONAUT` on an HTTP connection to use the Micronaut HTTP client instead, with the `micronaut-http-client` dependency: the client filters of the application apply, and `service-id` names the `micronaut.http.services` entry that configures the client, for example its SSL, proxy or timeouts.
+
+[configuration]
+----
+micronaut:
+  mcp:
+    client:
+      http:
+        weather:
+          url: https://weather.example.com/mcp
+          http-client: MICRONAUT
+          service-id: weather
+  http:
+    services:
+      weather:
+        read-timeout: 60s
+----
+
+This applies to the LangChain4j and the Java SDK clients. Responses streamed as server-sent events are read as they arrive.
