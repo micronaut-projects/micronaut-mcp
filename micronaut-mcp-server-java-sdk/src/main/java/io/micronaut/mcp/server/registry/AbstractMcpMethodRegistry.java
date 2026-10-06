@@ -188,6 +188,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @param <R> The result type
      * @return The result
      */
+    // Errors are recorded too, and every failure is rethrown unchanged
+    @SuppressWarnings("java:S1181")
     protected final <R> R observed(String method, String name, Supplier<R> operation, Function<? super R, @Nullable String> errorType) {
         if (observers.isEmpty()) {
             return operation.get();
