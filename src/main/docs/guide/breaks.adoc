@@ -3,3 +3,5 @@ This section documents breaking changes between Micronaut MCP versions.
 === 2.2.0
 
 * With the HTTP transport, the request handed to the SDK carries its parameters as parsed JSON: `McpSchema.JSONRPCRequest.params()` is now an `io.micronaut.json.tree.JsonNode` instead of a `Map`. The SDK handlers convert the parameters with the `McpJsonMapper`, so this only affects code that decorates `McpStatelessServerHandler` and reads `params()` directly.
+* The `uriTemplate` member of `@ResourceTemplate` no longer has a default value, so every `@ResourceTemplate` must declare it. A template without one could never match a request.
+* The values of resource template variables are now percent-decoded before they are bound. A simple variable whose decoded value contains `/`, and a value with a malformed escape, are answered with an invalid params error.
