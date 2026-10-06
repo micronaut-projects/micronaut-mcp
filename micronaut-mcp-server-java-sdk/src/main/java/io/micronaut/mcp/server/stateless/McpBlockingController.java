@@ -51,7 +51,8 @@ final class McpBlockingController extends McpController {
         super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper);
     }
 
-    @SuppressWarnings("java:S3740")
+    // The route returns a JSON-RPC response or an error body, so the response body type is a wildcard
+    @SuppressWarnings({"java:S3740", "java:S1452"})
     @Post
     @Nullable HttpResponse<?> handlePost(HttpRequest<?> request, @Body @Nullable JsonNode body) {
         return handle(request, body).block();
