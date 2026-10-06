@@ -198,16 +198,16 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
                                   List<R> resources,
                                    List<U> resourceTemplates) {
         List<T> allTools = CollectionUtils.concat(tools, getTools(toolRegistry));
-        if (!allTools.isEmpty()) {
+        if (!allTools.isEmpty() || toolsConfiguration.isListChanged()) {
             capabilitiesBuilder.tools(toolsConfiguration.isListChanged());
         }
         List<P> allPrompts = CollectionUtils.concat(prompts, getPrompts(promptRegistry));
-        if (!allPrompts.isEmpty()) {
+        if (!allPrompts.isEmpty() || promptsConfiguration.isListChanged()) {
             capabilitiesBuilder.prompts(promptsConfiguration.isListChanged());
         }
         List<R> allResources = CollectionUtils.concat(resources, getResources(resourceRegistry));
         List<U> allResourceTemplates = CollectionUtils.concat(resourceTemplates, getResourceTemplates(resourceTemplateRegistry));
-        if (!allResourceTemplates.isEmpty() || !allResources.isEmpty()) {
+        if (!allResourceTemplates.isEmpty() || !allResources.isEmpty() || resourcesConfiguration.isListChanged()) {
             capabilitiesBuilder.resources(resourcesConfiguration.isSubscribe(), resourcesConfiguration.isListChanged());
         }
         List<C> allCompletions = CollectionUtils.concat(completions, getCompletions(completionRegistry));
