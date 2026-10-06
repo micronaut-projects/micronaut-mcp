@@ -12,5 +12,6 @@ dependencies {
     implementation(mn.micronaut.http.client)
     runtimeOnly(mnLogging.logback.classic)
     testRuntimeOnly(libs.junit.platform.launcher)
+    testAnnotationProcessor(mnJsonSchema.micronaut.json.schema.processor)
     testImplementation(libs.jsonassert)
 }

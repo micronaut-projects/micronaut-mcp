@@ -1,4 +1,4 @@
-Via configuration, you should define your mcp server name and version. You can also give it a title, a description, a website URL, icons, and instructions that clients may add to the model's prompt:
+Via configuration, you should define your mcp server name and version. You can also give it a title, a description, a website URL, icons (each with a `src` and optionally a `mime-type`, `sizes` and a `theme`), and instructions that clients may add to the model's prompt:
 
 [configuration]
 ----
@@ -12,7 +12,11 @@ micronaut:
         description: Forecasts by city
         website-url: https://example.com
         icons:
-          - https://example.com/weather.png
+          - src: https://example.com/weather.png
+            mime-type: image/png
+            sizes:
+              - 48x48
+            theme: light
         instructions: Ask for a city before asking for a forecast.
 ----
 
