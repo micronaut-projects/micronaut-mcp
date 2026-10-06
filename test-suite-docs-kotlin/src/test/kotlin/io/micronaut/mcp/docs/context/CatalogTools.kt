@@ -23,7 +23,10 @@ class CatalogTools {
     }
 //end::clazz[]
 
+    private val importedPages = mutableListOf<Int>()
+
     private fun importPage(page: Int) {
+        importedPages.add(page)
     }
 //tag::clazz[]
 }
