@@ -49,3 +49,28 @@ The MCP Client pointing to your MCP Server has a name qualifier with value `embe
 To customize client creation further, define a
 https://docs.micronaut.io/latest/api/io/micronaut/context/event/BeanCreatedEventListener.html[BeanCreatedEventListener]
 for `DefaultMcpClient.Builder`, `StreamableHttpMcpTransport.Builder` or `StdioMcpTransport.Builder`.
+
+== Authorization
+
+To call MCP servers on behalf of the user, set `propagate-authorization` on an HTTP connection: the `Authorization` header of the HTTP request the application is handling, such as the user's bearer token, is sent to the MCP server. Only bearer tokens are propagated; set `propagate-any-authorization-scheme` to also propagate other schemes, such as Basic credentials.
+
+[configuration]
+----
+micronaut:
+  mcp:
+    client:
+      http:
+        weather:
+          url: https://weather.example.com/mcp
+          propagate-authorization: true
+----
+
+To compute headers for each request otherwise, for example to send an OAuth access token that is refreshed, declare a bean of type `io.micronaut.mcp.conf.client.McpClientHeadersProvider`. Both apply to the LangChain4j and the Java SDK clients, and are evaluated on the thread that calls the client: call it from the thread handling the request for the `Authorization` header to be propagated. The asynchronous Java SDK client evaluates them in the context its subscriber propagates, such as the request a reactive controller is handling.
+
+A headers provider is asked for every connection, unless it overrides `supports(McpClientHttpConfiguration)`: check the connection, so that a token meant for one MCP server is not sent to the others.
+
+WARNING: The https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization[MCP authorization specification] forbids passing through a token whose audience is not the MCP server, since the MCP server could then use it against the application. Only propagate the `Authorization` header to MCP servers that accept the tokens issued for the application, for example servers of the same organization behind the same authorization server. Otherwise exchange the user's token for one whose audience is the MCP server, for example with https://datatracker.ietf.org/doc/html/rfc8693[OAuth 2.0 Token Exchange], in a custom `McpClientHeadersProvider`.
+
+IMPORTANT: The client of a connection, and so its MCP session, is shared by every user of the application: the propagated `Authorization` header applies to each request, not to the session. If an MCP server binds its sessions to the user that initialized them, declare a connection for each user instead, or use a server that authorizes each request.
+
+The headers of the user are only known while the application handles their request. Requests the clients send on their own, such as the initialization when a client is created, pings and reconnections, and the answers to the requests of the server, such as sampling, elicitation, pings and roots, are sent on other threads: they carry the static headers of the connection and those of the headers providers, which must handle there being no current request, but not the propagated `Authorization` header. MCP servers that require authorization for these requests need a headers provider that supplies credentials of the application, for example a client credentials token.

@@ -38,6 +38,8 @@ final class McpClientHttpConfigurationProperties extends AbstractMcpClientConnec
     private boolean logRequests;
     private boolean logResponses;
     private Map<String, String> headers = Map.of();
+    private boolean propagateAuthorization;
+    private boolean propagateAnyAuthorizationScheme;
 
     /**
      * Constructor.
@@ -115,5 +117,34 @@ final class McpClientHttpConfigurationProperties extends AbstractMcpClientConnec
      */
     public void setHeaders(@MapFormat(transformation = MapFormat.MapTransformation.FLAT, keyFormat = StringConvention.RAW) @Nullable Map<String, String> headers) {
         this.headers = headers != null ? headers : Map.of();
+    }
+
+    @Override
+    public boolean isPropagateAuthorization() {
+        return propagateAuthorization;
+    }
+
+    /**
+     * Whether to send the {@code Authorization} header of the HTTP request the server is handling to the MCP server. Default value {@code false}.
+     *
+     * @param propagateAuthorization Whether to propagate the {@code Authorization} header
+     */
+    public void setPropagateAuthorization(boolean propagateAuthorization) {
+        this.propagateAuthorization = propagateAuthorization;
+    }
+
+    @Override
+    public boolean isPropagateAnyAuthorizationScheme() {
+        return propagateAnyAuthorizationScheme;
+    }
+
+    /**
+     * Whether to propagate the {@code Authorization} header whatever its scheme, instead of only bearer tokens. Default
+     * value {@code false}.
+     *
+     * @param propagateAnyAuthorizationScheme Whether to propagate any authorization scheme
+     */
+    public void setPropagateAnyAuthorizationScheme(boolean propagateAnyAuthorizationScheme) {
+        this.propagateAnyAuthorizationScheme = propagateAnyAuthorizationScheme;
     }
 }
