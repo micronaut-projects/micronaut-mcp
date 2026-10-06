@@ -4,15 +4,21 @@ In a method annotated with `@Tool`, you can use as a return type:
 - `String`
 - A class or Java record which will be serialized to JSON. If the return type is annotated with `@JsonSchema` and it is defined <<toolsOutputJsonSchema, as the tool output>> it will be used as structured content.
 
-Any of these can also be produced asynchronously, by returning a reactive type such as `Mono<T>` or `Publisher<T>`, or a `CompletionStage<T>`. The value it produces is used as if the method had returned it. A `@JsonSchema` type produced this way is still used as the structured output.
+Any of these can also be produced asynchronously, by returning a single value reactive type such as `Mono<T>`, a `Publisher<T>` that emits at most one value, or a `CompletionStage<T>`. Other reactive types, such as RxJava's `Single`, are converted with the conversion service. The value it produces is used as if the method had returned it, and the result is chosen from that value rather than from the declared return type. A `@JsonSchema` type produced this way is still used as the structured output; producing no value is then a tool error.
+
+A method returning a type that may emit several values, such as `Flux<T>`, fails the startup, unless it is annotated with `@SingleResult`. The exception are completion methods: the values of a `Flux<String>` returned by a `@PromptCompletion` or `@ResourceCompletion` method are collected into the completion values. A `Publisher<T>` that emits more than one value fails the call.
 
 The same applies to methods annotated with `@Prompt`, `@Resource`, `@ResourceTemplate`, `@PromptCompletion` and `@ResourceCompletion`.
 
 How the methods are invoked depends on `micronaut.mcp.server.reactive`:
 
-- When it is `false` (the default), the HTTP endpoint handles requests on the blocking executor, which uses virtual threads where they are available. Methods run on that thread, can block, and see the current request through `ServerRequestContext`. The server waits for asynchronous return values.
+- When it is `false` (the default), the HTTP endpoint handles requests on the blocking executor, which uses virtual threads where they are available. Methods run on that thread, can block, and see the current request through `ServerRequestContext`. The server waits for asynchronous return values. A method annotated with `@ExecuteOn` runs on the named executor, for example to limit how many calls run concurrently, and the request thread waits for it.
 - When it is `true`, methods run on the thread that received the request, which must not block. Annotate a method with `@ExecuteOn` to run it on another executor, for example `@ExecuteOn(TaskExecutors.BLOCKING)`.
 
 == Errors
 
 When a tool method throws, including when its arguments cannot be bound or fail bean validation, the call returns a result with `isError` set to `true` and the error message as text. This is a https://modelcontextprotocol.io/specification/2025-11-25/server/tools#error-handling[tool execution error]: the model sees it and can correct the call. To answer with a JSON-RPC protocol error instead, throw an `io.modelcontextprotocol.spec.McpError`; its code and message are kept.
+
+An exception that a bean implementing `io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper` maps is also answered with a protocol error, with the code and message of the `McpError` the mapper returns. The mappers that Micronaut MCP provides for arguments that cannot be bound or fail validation are the exception: their message is returned as a tool execution error. The other primitives (prompts, resources and completions) answer every failure with a protocol error, using the mapped error when a mapper matches.
+
+The exception is looked up after unwrapping the wrappers added by reactive types and `CompletionStage`, so the same mapper and message apply whether the tool throws, returns a failed `Mono` or a failed `CompletableFuture`, and in both execution models. Tool failures that no mapper handles are logged at `WARN` level, because their message is sent to the client.
