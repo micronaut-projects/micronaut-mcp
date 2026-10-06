@@ -28,7 +28,8 @@ import java.util.List;
 public interface McpClientTools {
 
     /**
-     * Lists the tools, initializing the clients that are not initialized yet.
+     * Lists the tools, creating the clients that are not created yet. The tools of a server are cached until it notifies
+     * that they changed. The primary bean skips the servers that cannot be reached.
      *
      * @return The tools
      */

@@ -1,6 +1,10 @@
 package io.micronaut.mcp.client.javasdk.multi;
 
+import io.micronaut.context.BeanContext;
+import io.micronaut.context.Qualifier;
 import io.micronaut.context.annotation.Property;
+import io.micronaut.context.exceptions.BeanInstantiationException;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.client.javasdk.McpClientTool;
@@ -12,6 +16,7 @@ import io.micronaut.mcp.client.javasdk.McpSamplingHandler;
 import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.test.support.TestPropertyProvider;
+import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Inject;
@@ -26,9 +31,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Property(name = "micronaut.mcp.server.info.name", value = "http-server")
@@ -57,6 +65,9 @@ class JavaSdkClientsTest implements TestPropertyProvider {
 
     @Inject
     Notifications notifications;
+
+    @Inject
+    BeanContext beanContext;
 
     @Override
     public Map<String, String> getProperties() {
@@ -97,8 +108,25 @@ class JavaSdkClientsTest implements TestPropertyProvider {
         httpClient.initialize();
         McpSchema.CallToolResult result = httpClient.callTool(new McpSchema.CallToolRequest("importCatalog", Map.of("pages", 2), Map.of("progressToken", "import-1")));
         assertEquals("done", text(result));
-        assertEquals(List.of("embeddedServer 1.0/2.0", "embeddedServer 2.0/2.0"), notifications.progress);
-        assertEquals(List.of("embeddedServer info imported 2 pages"), notifications.logs);
+        // The client dispatches the notifications asynchronously, in no guaranteed order
+        assertEquals(Set.of("embeddedServer 1.0/2.0", "embeddedServer 2.0/2.0"), awaitSize(notifications.progress, 2));
+        assertEquals(Set.of("embeddedServer info imported 2 pages"), awaitSize(notifications.logs, 1));
+    }
+
+    @Test
+    void aConnectionHasEitherASynchronousOrAnAsynchronousClient() {
+        assertTrue(localClient.isInitialized());
+        Qualifier<McpAsyncClient> local = Qualifiers.byName("local");
+        BeanInstantiationException e = assertThrows(BeanInstantiationException.class, () -> beanContext.getBean(McpAsyncClient.class, local));
+        assertTrue(e.getMessage().contains("already has a client of type McpSyncClient"), e.getMessage());
+    }
+
+    private static Set<String> awaitSize(List<String> received, int size) {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (received.size() < size && System.nanoTime() < deadline) {
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(20));
+        }
+        return Set.copyOf(received);
     }
 
     private static Set<String> names(List<McpClientTool> tools) {
