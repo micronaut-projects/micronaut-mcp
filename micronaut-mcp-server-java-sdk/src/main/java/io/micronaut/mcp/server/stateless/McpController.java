@@ -181,7 +181,7 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
         return id.isNull() ? null : id.getValue();
     }
 
-    private static boolean acceptsEventStream(HttpRequest<?> request) {
+    static boolean acceptsEventStream(HttpRequest<?> request) {
         for (String accept : request.getHeaders().getAll(HttpHeaders.ACCEPT)) {
             if (accept.contains(MediaType.TEXT_EVENT_STREAM)) {
                 return true;
