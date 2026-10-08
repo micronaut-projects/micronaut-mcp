@@ -21,7 +21,7 @@ import io.micronaut.context.WatchableBeanContext;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Executable;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.env.DevelopmentMode;
+import io.micronaut.context.env.DevelopmentActive;
 import io.micronaut.context.watch.ConfigurationWatcher;
 import io.micronaut.context.watch.ExecutableMethodChange;
 import io.micronaut.core.annotation.Internal;
@@ -81,7 +81,7 @@ import java.util.function.Function;
  */
 @Internal
 @Context
-@Requires(condition = DevelopmentMode.Active.class)
+@DevelopmentActive
 @Requires(beans = McpServerConfiguration.class)
 final class DevelopmentMcpReloader {
 
