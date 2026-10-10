@@ -22,8 +22,9 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Executable;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.DevelopmentActive;
-import io.micronaut.context.watch.ConfigurationWatcher;
+import io.micronaut.context.watch.BeanExecutableMethod;
 import io.micronaut.context.watch.ExecutableMethodChange;
+import io.micronaut.context.watch.ReloadingConfigurationWatcher;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.annotations.McpPrimitive;
@@ -95,17 +96,17 @@ final class DevelopmentMcpReloader {
     DevelopmentMcpReloader(BeanContext beanContext) {
         this.beanContext = beanContext;
         if (beanContext instanceof WatchableBeanContext watchable) {
-            watchable.watchMethods(McpPrimitive.class, this::onMethodChange);
-            watchable.watchConfiguration(McpServerConfiguration.PREFIX, change -> onConfigurationChange());
+            watchable.methods(McpPrimitive.class).watch(this::onMethodChange);
+            watchable.configuration(McpServerConfiguration.PREFIX).watchReloading(change -> onConfigurationChange());
         }
     }
 
-    private ConfigurationWatcher.Outcome onConfigurationChange() {
+    private ReloadingConfigurationWatcher.Outcome onConfigurationChange() {
         if (servers().isEmpty()) {
-            return ConfigurationWatcher.Outcome.IGNORED;
+            return ReloadingConfigurationWatcher.Outcome.IGNORED;
         }
         LOG.debug("The MCP server configuration changed: a restart applies it");
-        return ConfigurationWatcher.Outcome.REQUIRES_RESTART;
+        return ReloadingConfigurationWatcher.Outcome.REQUIRES_RESTART;
     }
 
     private void onMethodChange(ExecutableMethodChange<McpPrimitive> change) {
@@ -266,14 +267,14 @@ final class DevelopmentMcpReloader {
      * @param entries The methods
      * @return The registries
      */
-    private Registries registries(List<? extends ExecutableMethodChange.Entry<?>> entries) {
+    private Registries registries(List<? extends BeanExecutableMethod<?>> entries) {
         Registries registries = new Registries(
             beanContext.createBean(ToolRegistry.class),
             beanContext.createBean(PromptRegistry.class),
             beanContext.createBean(ResourceRegistry.class),
             beanContext.createBean(ResourceTemplateRegistry.class)
         );
-        for (ExecutableMethodChange.Entry<?> entry : entries) {
+        for (BeanExecutableMethod<?> entry : entries) {
             if (!processed(entry)) {
                 continue;
             }
@@ -295,13 +296,13 @@ final class DevelopmentMcpReloader {
      * @param entry A method of a change
      * @return Whether the startup pass would have given it to the registries: a method marked for processing at startup
      */
-    private static boolean processed(ExecutableMethodChange.Entry<?> entry) {
+    private static boolean processed(BeanExecutableMethod<?> entry) {
         return entry.definition().requiresMethodProcessing()
             && entry.method().booleanValue(Executable.class, Executable.MEMBER_PROCESS_ON_STARTUP).orElse(false);
     }
 
-    private static boolean hasCompletion(List<? extends ExecutableMethodChange.Entry<?>> entries) {
-        for (ExecutableMethodChange.Entry<?> entry : entries) {
+    private static boolean hasCompletion(List<? extends BeanExecutableMethod<?>> entries) {
+        for (BeanExecutableMethod<?> entry : entries) {
             if (entry.method().hasStereotype(PromptCompletion.class) || entry.method().hasStereotype(ResourceCompletion.class)) {
                 return true;
             }
