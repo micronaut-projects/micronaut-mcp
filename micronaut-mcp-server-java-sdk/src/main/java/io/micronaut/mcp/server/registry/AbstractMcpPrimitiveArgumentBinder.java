@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static io.micronaut.core.bind.ArgumentBinder.BindingResult.*;
+import static io.micronaut.core.bind.ArgumentBinder.BindingResult.EMPTY;
 
 /**
  * Abstract base class for binding s from a map supplier using the conversion service.
