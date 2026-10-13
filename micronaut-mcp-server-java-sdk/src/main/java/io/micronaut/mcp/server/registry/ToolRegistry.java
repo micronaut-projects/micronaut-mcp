@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -188,56 +189,59 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                                                                         boolean structuredOutput,
                                                                         Object mcpTransportContext,
                                                                         McpSchema.CallToolRequest callToolRequest) {
-        McpSchema.CallToolResult result = callToolToResult(m, structuredOutput, mcpTransportContext, callToolRequest);
-        if (result == null) {
-            return Mono.empty();
-        }
-        return Mono.just(result);
+        return m.callAsync(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
+            result -> toCallToolResult(m, structuredOutput, result), this::failWithMcpError);
     }
 
     private <B> McpSchema.CallToolResult callToolToResult(Method<B> m,
                                                           boolean structuredOutput,
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
-        ExecutableMethod<B, Object> method = m.method();
-        Argument<?> returnClass = method.getReturnType().asArgument();
-        try {
-            Object result = m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest);
-            String text = "";
-            if (returnClass.isAssignableFrom(McpSchema.CallToolResult.class)) {
-                return (McpSchema.CallToolResult) result;
-            } else if (structuredOutput) {
-                if (result == null) {
-                    return McpSchema.CallToolResult.builder()
-                        .addTextContent("Tool " + toolName(method) + " returned no structured content")
-                        .isError(true)
-                        .build();
-                }
-                // The SDK validates the object against the output schema and adds its JSON as text content
-                Object structuredContent = convertStructuredContent
-                    ? jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), STRUCTURED_CONTENT_ARGUMENT)
-                    : result;
+        return m.call(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
+            mcpTransportContext, result -> toCallToolResult(m, structuredOutput, result), this::failWithMcpError);
+    }
+
+    private <B> McpSchema.CallToolResult toCallToolResult(Method<B> m, boolean structuredOutput, @Nullable Object result) {
+        if (result instanceof McpSchema.CallToolResult callToolResult) {
+            return callToolResult;
+        }
+        if (structuredOutput) {
+            if (result == null) {
                 return McpSchema.CallToolResult.builder()
-                    .structuredContent(structuredContent)
-                    .isError(false)
+                    .addTextContent("Tool " + toolName(m.method()) + " returned no structured content")
+                    .isError(true)
                     .build();
-            } else if (returnClass.isAssignableFrom(String.class)) {
-                text = result.toString();
-            } else if (Enum.class.isAssignableFrom(result.getClass())) {
-                text = result.toString();
-            } else {
-                try {
-                    text = jsonMapper.writeValueAsString(result);
-                } catch (IOException e) {
-                    if (LOG.isErrorEnabled()) {
-                        LOG.error(e.getMessage(), e);
-                    }
-                    return McpSchema.CallToolResult.builder().addTextContent(text).isError(true).build();
-                }
             }
-            return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
-        } catch (Exception ex) {
-            throw mcpError(ex);
+            // The SDK validates the object against the output schema and adds its JSON as text content
+            return McpSchema.CallToolResult.builder()
+                .structuredContent(structuredContent(result))
+                .isError(false)
+                .build();
+        }
+        String text = "";
+        if (result instanceof CharSequence || result instanceof Enum<?>) {
+            text = result.toString();
+        } else if (result != null) {
+            try {
+                text = jsonMapper.writeValueAsString(result);
+            } catch (IOException e) {
+                if (LOG.isErrorEnabled()) {
+                    LOG.error(e.getMessage(), e);
+                }
+                return McpSchema.CallToolResult.builder().addTextContent(text).isError(true).build();
+            }
+        }
+        return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
+    }
+
+    private Object structuredContent(Object result) {
+        if (!convertStructuredContent) {
+            return result;
+        }
+        try {
+            return jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), STRUCTURED_CONTENT_ARGUMENT);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -262,8 +266,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     }
 
     private Optional<String> toolOutputSchema(ExecutableMethod<?, ?> method) {
-        Class<?> returnClass = method.getReturnType().getType();
-        return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(returnClass);
+        return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(resultArgument(method).getType());
     }
 
     private static String toolArgumentName(Argument<?> argument) {

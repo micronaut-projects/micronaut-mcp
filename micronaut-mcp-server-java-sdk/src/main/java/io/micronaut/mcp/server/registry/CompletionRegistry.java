@@ -19,6 +19,7 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.annotations.PromptCompletion;
 import io.micronaut.mcp.annotations.ResourceCompletion;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
@@ -112,7 +113,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.CompleteRequest, Mono<McpSchema.CompleteResult>> asyncHandler(
         Method<B> m
     ) {
-        return (exchange, request) -> Mono.just(invokeAndMap(m, exchange, request));
+        return (exchange, request) -> invokeAndMapAsync(m, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.CompleteRequest, McpSchema.CompleteResult> statelessSyncHandler(
@@ -124,36 +125,47 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     private <B> BiFunction<McpTransportContext, McpSchema.CompleteRequest, Mono<McpSchema.CompleteResult>> statelessAsyncHandler(
         Method<B> m
     ) {
-        return (ctx, request) -> Mono.just(invokeAndMap(m, ctx, request));
+        return (ctx, request) -> invokeAndMapAsync(m, ctx, request);
     }
 
     private <B> McpSchema.CompleteResult invokeAndMap(Method<B> m,
                                                       Object mcpTransportContext,
                                                       McpSchema.CompleteRequest request) {
-        Object result = m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument());
+        return m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
+            mcpTransportContext, CompletionRegistry::map, this::failWithMcpError);
+    }
+
+    private <B> Mono<McpSchema.CompleteResult> invokeAndMapAsync(Method<B> m,
+                                                                 Object mcpTransportContext,
+                                                                 McpSchema.CompleteRequest request) {
+        return m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
+            CompletionRegistry::map, this::failWithMcpError);
+    }
+
+    private static McpSchema.CompleteResult map(@Nullable Object result) {
         if (result instanceof McpSchema.CompleteResult r) {
             return r;
         }
-        try {
-            List<String> values = asStringList(result);
-            return completeResult(values);
-        } catch (IllegalArgumentException e) {
-            if (LOG.isWarnEnabled()) {
-                LOG.warn("return type is not {} or List<String>", McpSchema.CompleteResult.class.getSimpleName());
-            }
+        if (result == null) {
+            return completeResult(Collections.emptyList());
+        }
+        if (result instanceof List<?> list && list.stream().allMatch(String.class::isInstance)) {
+            return completeResult(list.stream().map(String.class::cast).toList());
+        }
+        if (LOG.isWarnEnabled()) {
+            LOG.warn("Completion result is not a {} or a List<String>: {}", McpSchema.CompleteResult.class.getSimpleName(), result.getClass().getName());
         }
         return completeResult(Collections.emptyList());
     }
 
-    private static McpSchema.CompleteResult completeResult(List<String> values) {
-        return new McpSchema.CompleteResult(new McpSchema.CompleteResult.CompleteCompletion(values, values.size(), false));
+    @Override
+    protected boolean collectsValues(ExecutableMethod<?, ?> method) {
+        // A publisher of completion values, such as a Flux<String>, is collected into the list of values
+        return CharSequence.class.isAssignableFrom(resultArgument(method).getType());
     }
 
-    public static List<String> asStringList(Object result) {
-        if (result instanceof List<?> list && list.stream().allMatch(String.class::isInstance)) {
-            return list.stream().map(String.class::cast).toList();
-        }
-        throw new IllegalArgumentException("Not a List<String>");
+    private static McpSchema.CompleteResult completeResult(List<String> values) {
+        return new McpSchema.CompleteResult(new McpSchema.CompleteResult.CompleteCompletion(values, values.size(), false));
     }
 
     private static <B> McpSchema.CompleteReference toCompletion(ExecutableMethod<B, Object> method) {

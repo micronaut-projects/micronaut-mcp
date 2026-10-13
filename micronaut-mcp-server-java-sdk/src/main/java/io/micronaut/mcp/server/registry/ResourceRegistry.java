@@ -20,6 +20,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.annotations.Resource;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
@@ -112,7 +113,7 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> asyncHandler(
         Method<B> m
     ) {
-        return (exchange, request) -> Mono.just(invokeAndMap(m, exchange, request));
+        return (exchange, request) -> invokeAndMapAsync(m, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> statelessSyncHandler(
@@ -124,14 +125,25 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> statelessAsyncHandler(
         Method<B> m
     ) {
-        return (ctx, request) -> Mono.just(invokeAndMap(m, ctx, request));
+        return (ctx, request) -> invokeAndMapAsync(m, ctx, request);
     }
 
     private <B> McpSchema.ReadResourceResult invokeAndMap(Method<B> m,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
+        return m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
+            mcpTransportContext, result -> map(m, request, result), this::failWithMcpError);
+    }
+
+    private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
+                                                                     Object mcpTransportContext,
+                                                                     McpSchema.ReadResourceRequest request) {
+        return m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
+            result -> map(m, request, result), this::failWithMcpError);
+    }
+
+    private <B> McpSchema.ReadResourceResult map(Method<B> m, McpSchema.ReadResourceRequest request, @Nullable Object result) {
         ExecutableMethod<B, Object> method = m.method();
-        Object result = m.invoke(argumentBinderRegistry, request, mcpTransportContext, request);
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
         }
