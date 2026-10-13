@@ -17,15 +17,15 @@ package io.micronaut.mcp.conf.client;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import io.micronaut.core.naming.Named;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Map;
 
 /**
  * MCP Client HTTP Configuration.
  */
-public interface McpClientHttpConfiguration extends Named {
+public interface McpClientHttpConfiguration extends McpClientConnectionConfiguration {
     String PREFIX = "micronaut.mcp.client.http";
 
     /**
@@ -53,6 +53,15 @@ public interface McpClientHttpConfiguration extends Named {
      * @return Whether to log responses
      */
     boolean isLogResponses();
+
+    /**
+     * @return The headers sent with every request, such as {@code Authorization}
+     * @since 2.2.0
+     */
+    @NonNull
+    default Map<String, String> getHeaders() {
+        return Map.of();
+    }
 
     @NonNull
     static McpClientHttpConfiguration of(@NonNull String name,

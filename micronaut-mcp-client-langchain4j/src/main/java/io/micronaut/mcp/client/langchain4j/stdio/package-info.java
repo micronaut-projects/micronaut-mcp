@@ -16,10 +16,7 @@
 /**
  * Classes related with Langchain4J MCP Client and stdio transport.
  */
-@Requires(property = McpClientConfiguration.PROPERTY_TRANSPORT, value = McpClientConfiguration.TRANSPORT_STDIO)
 @Configuration
 package io.micronaut.mcp.client.langchain4j.stdio;
 
 import io.micronaut.context.annotation.Configuration;
-import io.micronaut.context.annotation.Requires;
-import io.micronaut.mcp.conf.client.McpClientConfiguration;
