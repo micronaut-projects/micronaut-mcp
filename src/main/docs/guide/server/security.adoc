@@ -1,0 +1,55 @@
+=== Transport security
+
+The HTTP endpoint validates two request headers, as the https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#security-warning[Streamable HTTP transport] requires:
+
+- `Origin`, to prevent DNS rebinding attacks. A request whose `Origin` is not allowed is answered with `403 Forbidden`. Requests without an `Origin` are allowed: browsers always send one, and other clients do not need one. Loopback origins (`localhost`, `127.0.0.1` and `[::1]`, with any scheme and port) are allowed by default, so that local tools such as the MCP Inspector can connect. On a server reachable from other hosts, set `allow-loopback-origins` to `false`, so that a page served by another application on the user's machine cannot call it. Allow the origins of browser-based clients with `allowed-origins`, or `*` for any origin.
+- `MCP-Protocol-Version`. A request with a version the server does not support is answered with `400 Bad Request`.
+
+The headers are checked by a filter on the MCP endpoint, before the request body is read. Validation is enabled by default, as the specification requires servers to validate the `Origin` header; it can be disabled with `enabled: false`, for example when a gateway in front of the server validates it.
+
+[configuration]
+----
+micronaut:
+  mcp:
+    server:
+      transport-security:
+        allowed-origins:
+          - https://app.example.com
+        allow-loopback-origins: false
+----
+
+include::{includedir}configurationProperties/io.micronaut.mcp.conf.server.TransportSecurityConfigurationProperties.adoc[]
+
+NOTE: A browser-based client on another origin also needs https://docs.micronaut.io/latest/guide/#cors[CORS] to be enabled for that origin. Its MCP requests are POST requests with a JSON body, and usually an `Authorization` and an `MCP-Protocol-Version` header, so the browser first sends a preflight `OPTIONS` request, which the Micronaut CORS configuration must allow, including those headers. The allowed origins of the MCP endpoint do not configure CORS.
+
+=== Authorization
+
+Secure the MCP endpoint with https://micronaut-projects.github.io/micronaut-security/latest/guide/[Micronaut Security]. MCP clients authenticate with OAuth 2.1 bearer tokens, so add `micronaut-security-jwt` to validate the tokens and `micronaut-security-oauth2`, which implements the https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization[authorization discovery] the specification requires:
+
+- an unauthenticated request is answered with `401 Unauthorized` and a `WWW-Authenticate: Bearer resource_metadata="..."` challenge;
+- the https://www.rfc-editor.org/rfc/rfc9728[OAuth 2.0 Protected Resource Metadata] of the endpoint is served at `/.well-known/oauth-protected-resource/mcp`, naming the authorization servers of the configured OpenID clients.
+
+[configuration]
+----
+micronaut:
+  security:
+    token:
+      jwt:
+        signatures:
+          jwks:
+            idp:
+              url: https://idp.example.com/.well-known/jwks.json
+    oauth2:
+      clients:
+        idp:
+          openid:
+            issuer: https://idp.example.com
+    intercept-url-map:
+      - pattern: /mcp
+        access:
+          - isAuthenticated()
+----
+
+Tools, prompts and resources receive the authenticated principal through the <<context, transport context>>:
+
+snippet::io.micronaut.mcp.docs.security.WhoAmITools[project-base="test-suite-docs", tags="imports,clazz"]
