@@ -74,3 +74,29 @@ WARNING: The https://modelcontextprotocol.io/specification/2025-11-25/basic/auth
 IMPORTANT: The client of a connection, and so its MCP session, is shared by every user of the application: the propagated `Authorization` header applies to each request, not to the session. If an MCP server binds its sessions to the user that initialized them, declare a connection for each user instead, or use a server that authorizes each request.
 
 The headers of the user are only known while the application handles their request. Requests the clients send on their own, such as the initialization when a client is created, pings and reconnections, and the answers to the requests of the server, such as sampling, elicitation, pings and roots, are sent on other threads: they carry the static headers of the connection and those of the headers providers, which must handle there being no current request, but not the propagated `Authorization` header. MCP servers that require authorization for these requests need a headers provider that supplies credentials of the application, for example a client credentials token.
+
+== Micronaut HTTP Client
+
+By default the clients send their requests with the JDK HTTP client. Set `http-client` to `MICRONAUT` on an HTTP connection to use the Micronaut HTTP client instead, with the `micronaut-http-client` dependency: the client filters of the application apply, and `service-id` names the `micronaut.http.services` entry that configures the client, for example its SSL, proxy or timeouts. When that entry sets no `url`, the requests go to the host of the `url` of the connection. Without `service-id`, the default client configuration applies, with the `request-timeout` of the connection, or its `timeout`, as the read timeout.
+
+[configuration]
+----
+micronaut:
+  mcp:
+    client:
+      http:
+        weather:
+          url: https://weather.example.com/mcp
+          http-client: MICRONAUT
+          service-id: weather
+  http:
+    services:
+      weather:
+        read-timeout: 60s
+----
+
+This applies to the LangChain4j and the Java SDK clients. Responses streamed as server-sent events are read as they arrive. A message of the server larger than `max-message-size` (default `16MB`) fails the request. The Java SDK client listens to the stream of the messages the server sends on its own, such as the notifications that its tools changed, reconnecting when it ends; as the LangChain4j HTTP transport, the LangChain4j client does not.
+
+WARNING: The client filters of the application apply to the requests sent to MCP servers, including third-party ones. Restrict the filters that add credentials, for example with `@ClientFilter(serviceId = ...)` or path patterns, so that they do not reach MCP servers they are not meant for.
+
+WARNING: The responses are read on the event loop of the Micronaut HTTP client, which by default is shared with the HTTP server. Never call a blocking client API, such as the LangChain4j client or the Java SDK `McpSyncClient`, on an event loop: it would wait for a response that the blocked event loop cannot read. Call them from a thread that may block, for example with `@ExecuteOn(TaskExecutors.BLOCKING)`, or use the asynchronous Java SDK client. The messages are parsed, and the handlers called, on the blocking executor.
