@@ -113,6 +113,11 @@ class ServerCapabilitiesFactory {
             completionRegistry.isNotEmpty()) {
             builder.completions();
         }
+        // Primitives with a request context may send log messages, which requires the logging capability
+        if (toolRegistry.hasNotifyingMethods() || promptRegistry.hasNotifyingMethods() || resourceRegistry.hasNotifyingMethods()
+            || resourceTemplateRegistry.hasNotifyingMethods() || completionRegistry.hasNotifyingMethods()) {
+            builder.logging();
+        }
         return builder;
     }
 

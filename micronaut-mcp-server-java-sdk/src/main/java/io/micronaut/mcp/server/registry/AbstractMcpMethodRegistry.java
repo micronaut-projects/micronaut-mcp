@@ -36,6 +36,8 @@ import io.micronaut.core.type.ReturnType;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.mcp.server.context.DefaultMcpRequestContext;
+import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.modelcontextprotocol.common.McpTransportContext;
@@ -59,7 +61,9 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -69,6 +73,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -96,6 +101,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected final List<Method<Object>> methods = new ArrayList<>();
     protected final BeanContext beanContext;
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
+    private final AtomicReference<Set<String>> notifyingNames = new AtomicReference<>();
     private final Map<Class<? extends Throwable>, Optional<McpErrorExceptionMapper<? extends Throwable>>> classToExceptionMapper = new ConcurrentHashMap<>();
 
     AbstractMcpMethodRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
@@ -147,6 +153,46 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     @Override
     public final boolean isNotEmpty() {
         return !methods.isEmpty();
+    }
+
+    /**
+     * @param name The name of a primitive, as {@link #primitiveName(ExecutableMethod)} gives it
+     * @return Whether the primitive declares an {@link McpRequestContext} parameter, so it may send notifications while it runs
+     */
+    public final boolean mayNotify(String name) {
+        Set<String> names = notifyingNames.get();
+        if (names == null) {
+            names = methods.stream()
+                .filter(m -> declaresRequestContext(m.method()))
+                .map(m -> primitiveName(m.method()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toUnmodifiableSet());
+            notifyingNames.set(names);
+        }
+        return names.contains(name);
+    }
+
+    /**
+     * @return Whether a method of the registry declares an {@link McpRequestContext} parameter, so it may send log message notifications
+     */
+    public final boolean hasNotifyingMethods() {
+        return methods.stream().anyMatch(m -> declaresRequestContext(m.method()));
+    }
+
+    /**
+     * @param method A method
+     * @return Whether the method declares an {@link McpRequestContext} parameter, so it may send notifications while it runs
+     */
+    protected static boolean declaresRequestContext(ExecutableMethod<?, ?> method) {
+        return Arrays.stream(method.getArguments()).anyMatch(a -> a.getType() == McpRequestContext.class);
+    }
+
+    /**
+     * @param method A registered method
+     * @return The name a request designates the primitive of the method by, or {@code null} if requests do not designate it by name
+     */
+    protected @Nullable String primitiveName(ExecutableMethod<?, ?> method) {
+        return null;
     }
 
     /**
@@ -303,6 +349,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      */
     protected static final class Method<B> {
         private static final int NOT_BOUND = -1;
+        private static final int REQUEST_CONTEXT = -2;
         private final BeanContext beanContext;
         private final BeanDefinition<B> beanDefinition;
         private final ExecutableMethod<B, Object> executableMethod;
@@ -334,6 +381,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             this.boundIndexes = new int[arguments.length];
             for (int a = 0; a < arguments.length; a++) {
                 Class<?> type = arguments[a].getType();
+                if (type == McpRequestContext.class) {
+                    boundIndexes[a] = REQUEST_CONTEXT;
+                    continue;
+                }
                 boundIndexes[a] = NOT_BOUND;
                 for (int i = 0; i < boundParameterTypes.length; i++) {
                     Class<?> boundType = boundParameterTypes[i];
@@ -574,18 +625,24 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             ArgumentBinder<?, ?>[] argumentBinders = binders(registry);
             Object[] argumentValues = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
-                Argument<?> argument = arguments[i];
-                int index = boundIndexes[i];
-                if (index != NOT_BOUND) {
-                    Object value = index == 0 ? resolveMcpTransportContext(context) : values[index - 1];
-                    if (argument.getType().isInstance(value)) {
-                        argumentValues[i] = value;
-                        continue;
-                    }
-                }
-                argumentValues[i] = bind(argument, argumentBinders[i], source);
+                argumentValues[i] = argumentValue(i, argumentBinders[i], source, context, values);
             }
             return executableMethod.invoke(bean(), argumentValues);
+        }
+
+        private <S> @Nullable Object argumentValue(int i, @Nullable ArgumentBinder<?, ?> binder, S source, @Nullable Object context, Object[] values) {
+            Argument<?> argument = arguments[i];
+            int index = boundIndexes[i];
+            if (index == REQUEST_CONTEXT) {
+                return DefaultMcpRequestContext.of(context, values[0]);
+            }
+            if (index != NOT_BOUND) {
+                Object value = index == 0 ? resolveMcpTransportContext(context) : values[index - 1];
+                if (argument.getType().isInstance(value)) {
+                    return value;
+                }
+            }
+            return bind(argument, binder, source);
         }
 
         @SuppressWarnings("unchecked")
