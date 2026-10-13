@@ -27,7 +27,7 @@ final class ExecutionModelAssertions {
         assertEquals("wildcard", text(callTool(httpClient, jsonMapper, "wildcardMono")));
         assertEquals("{\"id\":\"1\",\"title\":\"Micronaut\",\"url\":\"https://micronaut.io\"}", text(callTool(httpClient, jsonMapper, "pojoAsObject")));
         // a publisher emitting more than one value fails instead of dropping values
-        assertEquals(McpSchema.ErrorCodes.INTERNAL_ERROR, callToolError(httpClient, jsonMapper, "twoValues", HttpStatus.INTERNAL_SERVER_ERROR).get("code"));
+        assertEquals(Boolean.TRUE, callTool(httpClient, jsonMapper, "twoValues").get("isError"));
         // an McpError is sent as is
         Map<String, Object> error = callToolError(httpClient, jsonMapper, "invalidParams", HttpStatus.BAD_REQUEST);
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.get("code"));

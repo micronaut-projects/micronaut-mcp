@@ -28,7 +28,7 @@ import jakarta.inject.Singleton;
 @Requires(classes = UnsatisfiedArgumentException.class)
 @Singleton
 @Internal
-class UnsatisfiedArgumentExceptionMcpErrorMapper implements McpErrorExceptionMapper<UnsatisfiedArgumentException> {
+class UnsatisfiedArgumentExceptionMcpErrorMapper implements InputErrorMapper<UnsatisfiedArgumentException> {
     @Override
     public boolean canMap(Class<? extends Throwable> clazz) {
         return UnsatisfiedArgumentException.class.isAssignableFrom(clazz);
