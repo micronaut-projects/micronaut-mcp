@@ -63,6 +63,24 @@ public interface McpClientHttpConfiguration extends McpClientConnectionConfigura
         return Map.of();
     }
 
+    /**
+     * @return Whether to send the {@code Authorization} header of the HTTP request the server is handling, for example the
+     * bearer token of the user, to the MCP server
+     * @since 2.2.0
+     */
+    default boolean isPropagateAuthorization() {
+        return false;
+    }
+
+    /**
+     * @return Whether to {@link #isPropagateAuthorization() propagate} the {@code Authorization} header whatever its
+     * scheme, for example Basic credentials, instead of only bearer tokens
+     * @since 2.2.0
+     */
+    default boolean isPropagateAnyAuthorizationScheme() {
+        return false;
+    }
+
     @NonNull
     static McpClientHttpConfiguration of(@NonNull String name,
                                            @NonNull URI url) {
