@@ -4,3 +4,7 @@ In a method annotated with `@ResourceTemplate` you can bind parameters with type
 - `io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest`
 
 Additionally, you can add method parameter matching the uri template variable as show in the previous example.
+
+Variable values are percent-decoded before they are bound, so `book://book/A%20Tale` binds `A Tale`. A malformed escape, such as `%zz`, is answered with an invalid params error. The URI is matched before it is decoded, so a simple variable such as `{path}` matches a single segment, and a value that contains an encoded `/` (`%2F`) is rejected with an invalid params error, so that it cannot smuggle path segments such as `..%2F..%2Fetc` into the value.
+
+WARNING: The values of reserved (`{+path}`) and fragment (`{#fragment}`) variables are decoded too and may contain `/`, `..` and any other character, including control characters such as `%00`. Validate such values before using them, for example to resolve a file.
