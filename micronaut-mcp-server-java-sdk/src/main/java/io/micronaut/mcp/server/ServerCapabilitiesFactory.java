@@ -81,7 +81,9 @@ class ServerCapabilitiesFactory {
             CollectionUtils.isNotEmpty(asyncTools) ||
             CollectionUtils.isNotEmpty(statelessAsyncTools) ||
             CollectionUtils.isNotEmpty(statelessSyncTools) ||
-            toolRegistry.isNotEmpty()
+            toolRegistry.isNotEmpty() ||
+            // A server that expects its list to change may start empty and add tools at runtime
+            toolsConfiguration.isListChanged()
         ) {
             builder.tools(toolsConfiguration.isListChanged());
         }
@@ -89,7 +91,8 @@ class ServerCapabilitiesFactory {
             CollectionUtils.isNotEmpty(asyncPrompts) ||
             CollectionUtils.isNotEmpty(statelessSyncPrompts) ||
             CollectionUtils.isNotEmpty(statelessAsyncPrompts) ||
-            promptRegistry.isNotEmpty()) {
+            promptRegistry.isNotEmpty() ||
+            promptsConfiguration.isListChanged()) {
             builder.prompts(promptsConfiguration.isListChanged());
         }
         boolean resourcesNotEmpty = CollectionUtils.isNotEmpty(syncResources) ||
@@ -103,7 +106,7 @@ class ServerCapabilitiesFactory {
             CollectionUtils.isNotEmpty(statelessAsyncResourceTemplates) ||
             CollectionUtils.isNotEmpty(statelessSyncResourceTemplates) ||
             resourceTemplateRegistry.isNotEmpty();
-        if (resourcesNotEmpty || resourceTemplateNotEmpty) {
+        if (resourcesNotEmpty || resourceTemplateNotEmpty || resourcesConfiguration.isListChanged()) {
             builder.resources(resourcesConfiguration.isSubscribe(), resourcesConfiguration.isListChanged());
         }
         if (CollectionUtils.isNotEmpty(syncCompletions) ||

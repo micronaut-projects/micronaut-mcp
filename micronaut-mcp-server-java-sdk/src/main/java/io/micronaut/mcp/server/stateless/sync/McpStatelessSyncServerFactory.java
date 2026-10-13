@@ -46,6 +46,11 @@ final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpSe
     McpStatelessServerFeatures.SyncResourceTemplateSpecification> {
 
     @Override
+    protected boolean sendsNotifications() {
+        return false;
+    }
+
+    @Override
     protected List<McpStatelessServerFeatures.SyncToolSpecification> getTools(ToolRegistry toolRegistry) {
         return toolRegistry.getStatelessSyncSpecs();
     }

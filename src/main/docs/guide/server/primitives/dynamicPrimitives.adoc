@@ -1,0 +1,7 @@
+Tools, prompts and resources can also be added and removed while the server runs, through the MCP Java SDK server bean of the configured transport and mode: `McpSyncServer` or `McpAsyncServer` for STDIO, and `McpStatelessSyncServer` or `McpStatelessAsyncServer` for HTTP.
+
+snippet::io.micronaut.mcp.docs.dynamic.Plugins[project-base="test-suite-docs", tags="imports,clazz"]
+
+A server that starts without tools, prompts or resources advertises the matching capability only when its `list-changed` property is `true`, so set it to add them at runtime.
+
+Over STDIO, when `micronaut.mcp.server.tools.list-changed` (or the `prompts` or `resources` equivalent) is `true`, the server notifies the client that the list changed. The stateless HTTP transport cannot send notifications outside the response to a request, so it never advertises list changes or resource subscriptions, whatever the configuration: clients see the changes the next time they list the primitives.

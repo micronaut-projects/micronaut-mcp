@@ -60,6 +60,7 @@ server:
           resourceTemplateAnnotationReturnType: Resource Annotation Method Return Type
         resourcesTemplatesFactory: Resource Templates with a Factory
     primitivesMetadata: Icons and Metadata
+    dynamicPrimitives: Adding Primitives at Runtime
     completions:
       title: Completions
       promptCompletionAnnotation:
