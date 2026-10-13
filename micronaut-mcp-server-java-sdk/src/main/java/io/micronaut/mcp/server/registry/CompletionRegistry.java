@@ -131,15 +131,15 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     private <B> McpSchema.CompleteResult invokeAndMap(Method<B> m,
                                                       Object mcpTransportContext,
                                                       McpSchema.CompleteRequest request) {
-        return m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
-            mcpTransportContext, CompletionRegistry::map, this::failWithMcpError);
+        return observed(McpSchema.METHOD_COMPLETION_COMPLETE, completionName(request), () -> m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
+            mcpTransportContext, CompletionRegistry::map, this::failWithMcpError));
     }
 
     private <B> Mono<McpSchema.CompleteResult> invokeAndMapAsync(Method<B> m,
                                                                  Object mcpTransportContext,
                                                                  McpSchema.CompleteRequest request) {
-        return m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
-            CompletionRegistry::map, this::failWithMcpError);
+        return observedAsync(McpSchema.METHOD_COMPLETION_COMPLETE, completionName(request), () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
+            CompletionRegistry::map, this::failWithMcpError));
     }
 
     private static McpSchema.CompleteResult map(@Nullable Object result) {
@@ -162,6 +162,16 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     protected boolean collectsValues(ExecutableMethod<?, ?> method) {
         // A publisher of completion values, such as a Flux<String>, is collected into the list of values
         return CharSequence.class.isAssignableFrom(resultArgument(method).getType());
+    }
+
+    private static String completionName(McpSchema.CompleteRequest request) {
+        if (request.ref() instanceof McpSchema.PromptReference prompt) {
+            return prompt.name();
+        }
+        if (request.ref() instanceof McpSchema.ResourceReference resource) {
+            return resource.uri();
+        }
+        return String.valueOf(request.ref());
     }
 
     private static McpSchema.CompleteResult completeResult(List<String> values) {

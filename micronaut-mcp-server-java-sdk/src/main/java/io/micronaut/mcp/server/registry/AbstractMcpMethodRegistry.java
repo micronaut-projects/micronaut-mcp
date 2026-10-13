@@ -39,6 +39,8 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.server.context.DefaultMcpRequestContext;
 import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
+import io.micronaut.mcp.server.observability.McpServerObserver;
+import jakarta.inject.Inject;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
@@ -70,6 +72,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -101,6 +104,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected final List<Method<Object>> methods = new ArrayList<>();
     protected final BeanContext beanContext;
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
+    private List<McpServerObserver> observers = List.of();
     private final AtomicReference<Set<String>> notifyingNames = new AtomicReference<>();
     private final Map<Class<? extends Throwable>, Optional<McpErrorExceptionMapper<? extends Throwable>>> classToExceptionMapper = new ConcurrentHashMap<>();
 
@@ -108,6 +112,165 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                               BeanContext beanContext) {
         this.exceptionMappers = exceptionMappers;
         this.beanContext = beanContext;
+    }
+
+    /**
+     * @param observers The observers of the operations of the server
+     */
+    @Inject
+    protected void setObservers(List<McpServerObserver> observers) {
+        this.observers = List.copyOf(observers);
+    }
+
+    /**
+     * Starts observing an operation. An observer that fails to start is logged and left out, so that it cannot fail the operation.
+     *
+     * @param method The JSON-RPC method
+     * @param name The name of the primitive
+     * @return The observation, which does nothing when there are no observers
+     */
+    protected final McpServerObserver.Observation observe(String method, String name) {
+        List<McpServerObserver> current = observers;
+        if (current.isEmpty()) {
+            return McpServerObserver.Observation.NOOP;
+        }
+        if (current.size() == 1) {
+            return start(current.getFirst(), method, name);
+        }
+        List<McpServerObserver.Observation> observations = current.stream().map(o -> start(o, method, name)).toList();
+        return errorType -> observations.forEach(o -> stop(o, errorType));
+    }
+
+    private static McpServerObserver.Observation start(McpServerObserver observer, String method, String name) {
+        try {
+            return observer.start(method, name);
+        } catch (RuntimeException e) {
+            observerFailed(e);
+            return McpServerObserver.Observation.NOOP;
+        }
+    }
+
+    private static void stop(McpServerObserver.Observation observation, @Nullable String errorType) {
+        try {
+            observation.stop(errorType);
+        } catch (RuntimeException e) {
+            observerFailed(e);
+        }
+    }
+
+    private static void observerFailed(RuntimeException e) {
+        if (LOG.isWarnEnabled()) {
+            LOG.warn("An MCP server observer failed: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Observes a synchronous operation.
+     *
+     * @param method The JSON-RPC method
+     * @param name The name of the primitive
+     * @param operation The operation
+     * @param <R> The result type
+     * @return The result
+     */
+    protected final <R> R observed(String method, String name, Supplier<R> operation) {
+        return observed(method, name, operation, result -> null);
+    }
+
+    /**
+     * Observes a synchronous operation whose result can be an error. The observation is stopped exactly once, and a
+     * failing observer never fails the operation.
+     *
+     * @param method The JSON-RPC method
+     * @param name The name of the primitive
+     * @param operation The operation
+     * @param errorType The error type of a result, or {@code null} when it is not an error
+     * @param <R> The result type
+     * @return The result
+     */
+    // Errors are recorded too, and every failure is rethrown unchanged
+    @SuppressWarnings("java:S1181")
+    protected final <R> R observed(String method, String name, Supplier<R> operation, Function<? super R, @Nullable String> errorType) {
+        if (observers.isEmpty()) {
+            return operation.get();
+        }
+        McpServerObserver.Observation observation = observe(method, name);
+        R result;
+        try {
+            result = operation.get();
+        } catch (Throwable e) {
+            stop(observation, errorTypeOf(e));
+            throw e;
+        }
+        stop(observation, errorType(errorType, result));
+        return result;
+    }
+
+    /**
+     * The error type of a failure: the JSON-RPC error code of a protocol error, as the semantic conventions for MCP
+     * suggest, or the exception class name.
+     */
+    private static String errorTypeOf(Throwable error) {
+        if (error instanceof McpError mcpError && mcpError.getJsonRpcError() != null) {
+            return String.valueOf(mcpError.getJsonRpcError().code());
+        }
+        return error.getClass().getName();
+    }
+
+    private static <R> @Nullable String errorType(Function<? super R, @Nullable String> errorType, @Nullable R result) {
+        try {
+            return result != null ? errorType.apply(result) : null;
+        } catch (RuntimeException e) {
+            observerFailed(e);
+            return null;
+        }
+    }
+
+    /**
+     * Observes an asynchronous operation, from subscription to completion.
+     *
+     * @param method The JSON-RPC method
+     * @param name The name of the primitive
+     * @param operation The operation
+     * @param <R> The result type
+     * @return The result
+     */
+    protected final <R> Mono<R> observedAsync(String method, String name, Supplier<Mono<R>> operation) {
+        return observedAsync(method, name, operation, result -> null);
+    }
+
+    /**
+     * Observes an asynchronous operation whose result can be an error, from subscription to completion. The observation
+     * is stopped exactly once: by the value, the completion or the error, and by a cancellation only when none of them
+     * came first, since the server cancels the result after its value.
+     *
+     * @param method The JSON-RPC method
+     * @param name The name of the primitive
+     * @param operation The operation
+     * @param errorType The error type of a result, or {@code null} when it is not an error
+     * @param <R> The result type
+     * @return The result
+     */
+    protected final <R> Mono<R> observedAsync(String method, String name, Supplier<Mono<R>> operation, Function<? super R, @Nullable String> errorType) {
+        if (observers.isEmpty()) {
+            return operation.get();
+        }
+        return Mono.defer(() -> {
+            McpServerObserver.Observation observation = observe(method, name);
+            AtomicBoolean stopped = new AtomicBoolean();
+            return operation.get()
+                .doOnEach(signal -> {
+                    if (!signal.isOnSubscribe() && stopped.compareAndSet(false, true)) {
+                        Throwable error = signal.getThrowable();
+                        stop(observation, error != null ? errorTypeOf(error) : errorType(errorType, signal.get()));
+                    }
+                })
+                .doOnCancel(() -> {
+                    if (stopped.compareAndSet(false, true)) {
+                        stop(observation, "cancelled");
+                    }
+                });
+        });
     }
 
     /**
