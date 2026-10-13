@@ -17,21 +17,14 @@ package io.micronaut.mcp.server.context;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.LocaleResolver;
-import io.micronaut.http.HttpAttributes;
-import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.server.util.HttpHostResolver;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
-import io.modelcontextprotocol.spec.ProtocolVersions;
 import jakarta.inject.Singleton;
 
-import java.security.Principal;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * Default implementation of {@link McpTransportContextExtractor}.
+ * Extracts a {@link MicronautMcpTransportContext} that reads its values from the HTTP request when they are asked for.
  */
 @Internal
 @Singleton
@@ -47,28 +40,6 @@ final class DefaultMcpTransportContextExtractor implements McpTransportContextEx
 
     @Override
     public McpTransportContext extract(HttpRequest<?> request) {
-        return new MicronautMcpTransportContextAdapter(McpTransportContext.create(metadata(request)));
-    }
-
-    private Map<String, Object> metadata(HttpRequest<?> request) {
-        Map<String, Object> m = new HashMap<>(metadata(request.getHeaders()));
-        m.put(HttpHeaders.HOST, hostResolver.resolve(request));
-        localeResolver.resolve(request)
-            .ifPresent(locale -> m.put(HttpHeaders.ACCEPT_LANGUAGE, locale));
-        request.getAttribute(HttpAttributes.PRINCIPAL.toString(), Principal.class)
-            .ifPresent(auth -> m.put(HttpAttributes.PRINCIPAL.toString(), auth));
-        return m;
-    }
-
-    private Map<String, Object> metadata(HttpHeaders headers) {
-        Map<String, Object> metadata = new HashMap<>(3);
-        metadata.put(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION,
-            headers.get(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION, String.class)
-                .orElse(ProtocolVersions.MCP_2025_03_26));
-        headers.get(io.modelcontextprotocol.spec.HttpHeaders.MCP_SESSION_ID, String.class)
-            .ifPresent(v -> metadata.put(io.modelcontextprotocol.spec.HttpHeaders.MCP_SESSION_ID, v));
-        headers.get(io.modelcontextprotocol.spec.HttpHeaders.LAST_EVENT_ID, String.class)
-            .ifPresent(v -> metadata.put(io.modelcontextprotocol.spec.HttpHeaders.LAST_EVENT_ID, v));
-        return metadata;
+        return new HttpRequestMcpTransportContext(request, hostResolver, localeResolver);
     }
 }
