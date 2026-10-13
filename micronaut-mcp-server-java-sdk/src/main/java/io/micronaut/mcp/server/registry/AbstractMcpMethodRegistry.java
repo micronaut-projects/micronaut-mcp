@@ -19,8 +19,14 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import io.micronaut.core.bind.ArgumentBinder;
+import io.micronaut.core.bind.ArgumentBinderRegistry;
+import io.micronaut.core.bind.exceptions.UnsatisfiedArgumentException;
+import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.convert.ConversionError;
+import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.modelcontextprotocol.common.McpTransportContext;
@@ -34,7 +40,9 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.micronaut.inject.BeanDefinition;
 
@@ -64,7 +72,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected final List<Method<Object>> methods = new ArrayList<>();
     protected final BeanContext beanContext;
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
-    private final Map<Class<? extends Throwable>, McpErrorExceptionMapper<? extends Throwable>> classToExceptionMapper = new ConcurrentHashMap<>();
+    private final Map<Class<? extends Throwable>, Optional<McpErrorExceptionMapper<? extends Throwable>>> classToExceptionMapper = new ConcurrentHashMap<>();
 
     AbstractMcpMethodRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
                               BeanContext beanContext) {
@@ -73,23 +81,36 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     }
 
     /**
+     * The types of the values that can be bound to a method parameter without an argument binder, in the order they are matched.
+     * The first is always the {@link McpTransportContext}, the second the request.
+     *
+     * @return the bound parameter types
+     */
+    protected abstract Class<?>[] boundParameterTypes();
+
+    /**
      * Adds a new method to the registry by associating it with a given bean definition.
      *
      * @param beanDefinition the bean definition that declares or provides the method
      * @param method         the executable method to be added to the registry
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public final void addMethod(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
-        methods.add(new Method(beanDefinition, method));
+        methods.add(new Method(beanContext, beanDefinition, method, boundParameterTypes()));
     }
 
     /**
      * Returns a stream of the methods currently stored in the registry.
-     * After the stream is consumed or closed, the underlying list of methods will be cleared.
      *
      * @return a stream of methods from the registry
      */
     protected final Stream<Method<Object>> drainMethods() {
-        return methods.stream().onClose(methods::clear);
+        return methods.stream();
+    }
+
+    @Override
+    public final boolean isNotEmpty() {
+        return !methods.isEmpty();
     }
 
     protected McpError mcpError(Exception ex) {
@@ -100,48 +121,22 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         if (exceptionMapper != null) {
             return mapException(exceptionMapper, ex);
         }
-        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).build();
-    }
-
-    protected Map<Argument<?>, Object> prepareBoundVariables(ExecutableMethod<?, ?> executable, List<?> parameters) {
-        Map<Argument<?>, Object> preBound = CollectionUtils.newHashMap(executable.getArguments().length);
-        for (Argument<?> argument : executable.getArguments()) {
-            Class<?> type = argument.getType();
-            for (Object object : parameters) {
-                if (type.isInstance(object)) {
-                    preBound.put(argument, object);
-                    break;
-                }
-            }
-        }
-        return preBound;
+        // The SDK requires a message
+        String message = ex.getMessage() != null && !ex.getMessage().isBlank() ? ex.getMessage() : ex.getClass().getSimpleName();
+        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(message).build();
     }
 
     @Nullable
     private McpErrorExceptionMapper<? extends Throwable> getExceptionMapper(@NonNull Class<? extends Throwable> exceptionClass) {
+        // Misses are cached too, so exceptions without a mapper do not scan the mappers again
         return classToExceptionMapper.computeIfAbsent(exceptionClass, aClass -> {
             for (McpErrorExceptionMapper<?> exceptionMapper : exceptionMappers) {
                 if (exceptionMapper.canMap(aClass)) {
-                    return exceptionMapper;
+                    return Optional.of(exceptionMapper);
                 }
             }
-            return null;
-        });
-    }
-
-    @Nullable
-    protected McpTransportContext resolveMcpTransportContext(Object ctx) {
-        McpTransportContext mcpTransportContext = null;
-        if (ctx instanceof McpTransportContext mcpCtx) {
-            mcpTransportContext = mcpCtx;
-        }
-        if (mcpTransportContext == null && ctx instanceof McpSyncServerExchange ex) {
-            mcpTransportContext = ex.transportContext();
-        }
-        if (mcpTransportContext == null && ctx instanceof McpAsyncServerExchange ex) {
-            mcpTransportContext = ex.transportContext();
-        }
-        return mcpTransportContext;
+            return Optional.empty();
+        }).orElse(null);
     }
 
     @SuppressWarnings("unchecked")
@@ -150,15 +145,175 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     }
 
     /**
-     * A record representing a method associated with a bean definition.
-     * This is used within the method registry to encapsulate the information of
-     * a specific method and its corresponding bean definition.
+     * A method associated with a bean definition. What every invocation needs, other than the request, is resolved once:
+     * the method parameters that receive the transport context or the request, the argument binders of the other
+     * parameters, and the bean when it is a singleton.
      *
-     * @param beanDefinition The bean definition that declares or provides the method.
-     * @param method         The executable method being encapsulated.
-     * @param <B>            The type of the bean.
+     * @param <B> The type of the bean.
      */
-    protected record Method<B>(BeanDefinition<B> beanDefinition,
-                               ExecutableMethod<B, Object> method) {
+    protected static final class Method<B> {
+        private static final int NOT_BOUND = -1;
+        private final BeanContext beanContext;
+        private final BeanDefinition<B> beanDefinition;
+        private final ExecutableMethod<B, Object> executableMethod;
+        private final Argument<?>[] arguments;
+        /**
+         * For each parameter, the index of the value it receives without an argument binder (0 is the transport
+         * context, then the values in the order of {@link #boundParameterTypes()}), or {@link #NOT_BOUND}.
+         */
+        private final int[] boundIndexes;
+        private final AtomicReference<B> singleton = new AtomicReference<>();
+        /**
+         * The argument binders by parameter, resolved on the first invocation, because binders for JSON schema types
+         * are registered when the specifications are built. Concurrent first invocations resolve the same binders.
+         */
+        private ArgumentBinder<?, ?> @Nullable [] binders;
+
+        Method(BeanContext beanContext,
+               BeanDefinition<B> beanDefinition,
+               ExecutableMethod<B, Object> method,
+               Class<?>[] boundParameterTypes) {
+            this.beanContext = beanContext;
+            this.beanDefinition = beanDefinition;
+            this.executableMethod = method;
+            this.arguments = method.getArguments();
+            this.boundIndexes = new int[arguments.length];
+            for (int a = 0; a < arguments.length; a++) {
+                Class<?> type = arguments[a].getType();
+                boundIndexes[a] = NOT_BOUND;
+                for (int i = 0; i < boundParameterTypes.length; i++) {
+                    Class<?> boundType = boundParameterTypes[i];
+                    // A parameter declared as a subtype of a bound type is bound when the value is an instance of it
+                    if (type.isAssignableFrom(boundType) || boundType.isAssignableFrom(type)) {
+                        boundIndexes[a] = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        /**
+         * @param argumentIndex The index of a method parameter
+         * @return Whether the parameter receives the transport context, the request or another value bound without an argument binder
+         */
+        public boolean isBound(int argumentIndex) {
+            return boundIndexes[argumentIndex] != NOT_BOUND;
+        }
+
+        /**
+         * @return The bean definition that declares or provides the method.
+         */
+        public BeanDefinition<B> beanDefinition() {
+            return beanDefinition;
+        }
+
+        /**
+         * @return The executable method.
+         */
+        public ExecutableMethod<B, Object> method() {
+            return executableMethod;
+        }
+
+        /**
+         * The bean to invoke the method on. A singleton is looked up once and kept, so a singleton that is destroyed
+         * or refreshed in the bean context afterwards (with {@code destroyBean} or {@code refreshBean}) is still the
+         * instance that is invoked.
+         *
+         * @return The bean to invoke the method on
+         */
+        public B bean() {
+            if (!beanDefinition.isSingleton()) {
+                return beanContext.getBean(beanDefinition);
+            }
+            B bean = singleton.get();
+            if (bean == null) {
+                bean = beanContext.getBean(beanDefinition);
+                singleton.set(bean);
+            }
+            return bean;
+        }
+
+        @Nullable
+        private static McpTransportContext resolveMcpTransportContext(@Nullable Object ctx) {
+            if (ctx instanceof McpTransportContext mcpCtx) {
+                return mcpCtx;
+            }
+            if (ctx instanceof McpSyncServerExchange ex) {
+                return ex.transportContext();
+            }
+            if (ctx instanceof McpAsyncServerExchange ex) {
+                return ex.transportContext();
+            }
+            return null;
+        }
+
+        /**
+         * Binds the method parameters and invokes the method. A parameter receives its bound value when the value is an
+         * instance of the parameter type, otherwise it is bound by the argument binder like the other parameters,
+         * with the same semantics as {@link io.micronaut.core.bind.DefaultExecutableBinder}.
+         *
+         * @param registry The argument binder registry
+         * @param source The source of the argument binders
+         * @param context The transport context or the server exchange
+         * @param values The request and any other values, in the order of {@link #boundParameterTypes()} after the context
+         * @param <S> The source type
+         * @return The result of the method
+         * @throws UnsatisfiedArgumentException If a required parameter cannot be bound
+         * @throws ConversionErrorException If the value of a required parameter cannot be converted
+         */
+        public <S> @Nullable Object invoke(ArgumentBinderRegistry<S> registry, S source, @Nullable Object context, Object... values) {
+            if (arguments.length == 0) {
+                return executableMethod.invoke(bean());
+            }
+            ArgumentBinder<?, ?>[] argumentBinders = binders(registry);
+            Object[] argumentValues = new Object[arguments.length];
+            for (int i = 0; i < arguments.length; i++) {
+                Argument<?> argument = arguments[i];
+                int index = boundIndexes[i];
+                if (index != NOT_BOUND) {
+                    Object value = index == 0 ? resolveMcpTransportContext(context) : values[index - 1];
+                    if (argument.getType().isInstance(value)) {
+                        argumentValues[i] = value;
+                        continue;
+                    }
+                }
+                argumentValues[i] = bind(argument, argumentBinders[i], source);
+            }
+            return executableMethod.invoke(bean(), argumentValues);
+        }
+
+        @SuppressWarnings("unchecked")
+        private <S> ArgumentBinder<?, ?>[] binders(ArgumentBinderRegistry<S> registry) {
+            ArgumentBinder<?, ?>[] resolved = binders;
+            if (resolved == null) {
+                resolved = new ArgumentBinder<?, ?>[arguments.length];
+                for (int i = 0; i < arguments.length; i++) {
+                    resolved[i] = registry.findArgumentBinder((Argument<Object>) arguments[i]).orElse(null);
+                }
+                binders = resolved;
+            }
+            return resolved;
+        }
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Nullable
+        private static <S> Object bind(Argument<?> argument, @Nullable ArgumentBinder<?, ?> binder, S source) {
+            if (binder == null) {
+                throw new UnsatisfiedArgumentException(argument);
+            }
+            ArgumentConversionContext conversionContext = ConversionContext.of(argument);
+            ArgumentBinder.BindingResult<?> bindingResult = ((ArgumentBinder) binder).bind(conversionContext, source);
+            if (bindingResult.isPresentAndSatisfied()) {
+                return bindingResult.get();
+            }
+            if (argument.isNullable()) {
+                return null;
+            }
+            Optional<ConversionError> lastError = conversionContext.getLastError();
+            if (lastError.isPresent()) {
+                throw new ConversionErrorException(argument, lastError.get());
+            }
+            throw new UnsatisfiedArgumentException(argument);
+        }
     }
 }

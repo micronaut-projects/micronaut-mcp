@@ -51,10 +51,8 @@ final class JsonMapperTypedCallToRequestArgumentBinder<T> implements TypedCallTo
     @Override
     public BindingResult<T> bind(ArgumentConversionContext<T> context, McpSchema.CallToolRequest source) {
         try {
-            String payload = jsonMapper.writeValueAsString(source.arguments());
-            Argument<?> argument = context.getArgument();
-            Class<?> classInputSchema = argument.getType();
-            T obj = (T) jsonMapper.readValue(payload, classInputSchema);
+            // Converted through a tree: the arguments are already parsed, so there is no JSON string to write and read back
+            T obj = jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(source.arguments()), argument);
             return () -> Optional.ofNullable(obj);
 
         } catch (IOException ex) {
