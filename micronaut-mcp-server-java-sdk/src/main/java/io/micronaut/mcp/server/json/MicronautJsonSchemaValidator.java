@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -88,13 +89,17 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
     }
 
     private String schemaJson(Map<String, Object> schema) throws IOException {
-        SchemaKey key = new SchemaKey(schema);
-        String json = schemaJsonCache.get(key);
-        if (json == null) {
-            json = jsonMapper.writeValueAsString(schema);
-            schemaJsonCache.put(key, json);
+        try {
+            return schemaJsonCache.computeIfAbsent(new SchemaKey(schema), key -> {
+                try {
+                    return jsonMapper.writeValueAsString(key.schema());
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
         }
-        return json;
     }
 
     /**
@@ -105,7 +110,7 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
     private record SchemaKey(Map<String, Object> schema) {
         @Override
         public boolean equals(Object o) {
-            return o instanceof SchemaKey other && other.schema == schema;
+            return o instanceof SchemaKey(var other) && other == schema;
         }
 
         @Override
