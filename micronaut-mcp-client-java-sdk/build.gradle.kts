@@ -4,6 +4,7 @@ plugins {
 }
 dependencies {
     compileOnly(mn.micronaut.http.server)
+    compileOnly(mn.micronaut.http.client.core)
     compileOnly(projects.micronautMcpServerJavaSdk)
     api(libs.managed.mcp.java.sdk)
     api(projects.micronautMcp)
