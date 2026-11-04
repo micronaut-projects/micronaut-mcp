@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
@@ -50,6 +51,12 @@ class TransportSecurityTest {
         // a DNS rebinding attacker's own name, even if it resolves to a loopback address
         assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://localhost.evil.example")));
         assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "null")));
+    }
+
+    @Test
+    void onlyTheUsualLoopbackAddressesAreAllowedByDefault() {
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://127.0.0.2:6274")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://[::ffff:127.0.0.1]:6274")));
     }
 
     @Test
@@ -93,6 +100,21 @@ class TransportSecurityTest {
                 "micronaut.server.cors.localhost-pass-through", true));
              HttpClient client = server.getApplicationContext().createBean(HttpClient.class, server.getURL())) {
             assertEquals(HttpStatus.OK, client.toBlocking().exchange(ping().header("Origin", "http://evil.example")).getStatus());
+        }
+    }
+
+    @Test
+    void anHttpServerWithoutTheHttpTransportHasNoFilter() {
+        for (Map<String, Object> properties : List.of(
+                Map.<String, Object>of("micronaut.server.port", -1, "micronaut.server.cors.localhost-pass-through", true),
+                Map.<String, Object>of("micronaut.server.port", -1, "micronaut.server.cors.localhost-pass-through", true,
+                    "micronaut.mcp.server.transport", "STDIO"))) {
+            try (EmbeddedServer server = ApplicationContext.run(EmbeddedServer.class, properties);
+                 HttpClient client = server.getApplicationContext().createBean(HttpClient.class, server.getURL())) {
+                assertFalse(server.getApplicationContext().containsBean(McpTransportSecurityFilter.class));
+                // Not found rather than a failure to create the filter
+                assertEquals(HttpStatus.NOT_FOUND, status(client, ping().header("Origin", "http://evil.example")));
+            }
         }
     }
 
