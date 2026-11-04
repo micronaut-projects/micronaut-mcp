@@ -38,5 +38,145 @@
     "type": "io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry$Method",
     "member": "Constructor io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry$Method(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)",
     "reason": "Internal: AbstractMcpMethodRegistry is package-private and sealed, so its Method class cannot be constructed elsewhere"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.getExposedTypes()",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.getReplacesDefinition()",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.isEnabled(io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.isEnabled(io.micronaut.context.BeanContext,io.micronaut.context.BeanResolutionContext)",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.isParallel()",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.load()",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Constructor io.micronaut.mcp.server.stateless.$McpController$Definition(java.lang.Class,io.micronaut.context.AbstractInitializableBeanDefinition$MethodOrFieldReference)",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Constructor io.micronaut.mcp.server.stateless.$McpController$Definition()",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.context.BeanContextConfigurable",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.InstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.context.EnvironmentConfigurable",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.InjectableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.QualifiedBeanType",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinition",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
   }
 ]
