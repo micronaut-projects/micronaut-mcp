@@ -135,7 +135,12 @@ final class McpController {
         if (jsonrpc == null || !jsonrpc.isString() || method == null || !method.isString()) {
             return null;
         }
-        Object params = params(body.get(KEY_PARAMS));
+        Object params;
+        try {
+            params = params(body.get(KEY_PARAMS));
+        } catch (IOException _) {
+            return null;
+        }
         JsonNode id = body.get(KEY_ID);
         if (id == null) {
             return new McpSchema.JSONRPCNotification(jsonrpc.getStringValue(), method.getStringValue(), params);
@@ -147,18 +152,14 @@ final class McpController {
         return new McpSchema.JSONRPCRequest(jsonrpc.getStringValue(), method.getStringValue(), id(id), params);
     }
 
-    private @Nullable Object params(@Nullable JsonNode params) {
+    private @Nullable Object params(@Nullable JsonNode params) throws IOException {
         if (params == null || params.isNull()) {
             return null;
         }
         if (passJsonTrees) {
             return params;
         }
-        try {
-            return jsonMapper.readValueFromTree(params, Object.class);
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Invalid JSON-RPC params", e);
-        }
+        return jsonMapper.readValueFromTree(params, Object.class);
     }
 
     private static Object id(JsonNode id) {
