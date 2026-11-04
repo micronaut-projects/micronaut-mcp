@@ -1,0 +1,452 @@
+[
+  {
+    "type": "io.micronaut.mcp.server.tools.fetch.$SerdeFetchRequestSerializer$Definition",
+    "member": "Method io.micronaut.mcp.server.tools.fetch.$SerdeFetchRequestSerializer$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of an internal type that was replaced"
+  },
+  {
+    "type": "io.micronaut.mcp.server.tools.fetch.SerdeFetchRequestSerializer",
+    "member": "Constructor io.micronaut.mcp.server.tools.fetch.SerdeFetchRequestSerializer()",
+    "reason": "Generated serializer, whose constructor changes with the Micronaut Serialization version"
+  },
+  {
+    "type": "io.micronaut.mcp.server.tools.search.$SerdeSearchRequestSerializer$Definition",
+    "member": "Method io.micronaut.mcp.server.tools.search.$SerdeSearchRequestSerializer$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of an internal type that was replaced"
+  },
+  {
+    "type": "io.micronaut.mcp.server.tools.search.$SerdeSearchResultSerializer$Definition",
+    "member": "Method io.micronaut.mcp.server.tools.search.$SerdeSearchResultSerializer$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of an internal type that was replaced"
+  },
+  {
+    "type": "io.micronaut.mcp.server.tools.search.SerdeSearchRequestSerializer",
+    "member": "Constructor io.micronaut.mcp.server.tools.search.SerdeSearchRequestSerializer()",
+    "reason": "Generated serializer, whose constructor changes with the Micronaut Serialization version"
+  },
+  {
+    "type": "io.micronaut.mcp.server.tools.search.SerdeSearchResultSerializer",
+    "member": "Constructor io.micronaut.mcp.server.tools.search.SerdeSearchResultSerializer()",
+    "reason": "Generated serializer, whose constructor changes with the Micronaut Serialization version"
+  },
+  {
+    "type": "io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry$Method",
+    "member": "Class io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry$Method",
+    "reason": "Internal: AbstractMcpMethodRegistry is package-private and sealed, so its Method class cannot be constructed elsewhere"
+  },
+  {
+    "type": "io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry$Method",
+    "member": "Constructor io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry$Method(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)",
+    "reason": "Internal: AbstractMcpMethodRegistry is package-private and sealed, so its Method class cannot be constructed elsewhere"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.getExposedTypes()",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.getReplacesDefinition()",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.isEnabled(io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.isEnabled(io.micronaut.context.BeanContext,io.micronaut.context.BeanResolutionContext)",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.isParallel()",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Method io.micronaut.mcp.server.stateless.$McpController$Definition.load()",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Constructor io.micronaut.mcp.server.stateless.$McpController$Definition(java.lang.Class,io.micronaut.context.AbstractInitializableBeanDefinition$MethodOrFieldReference)",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Constructor io.micronaut.mcp.server.stateless.$McpController$Definition()",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.context.BeanContextConfigurable",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.InstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.context.EnvironmentConfigurable",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.InjectableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.QualifiedBeanType",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinition",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.server.stateless.$McpController$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Generated bean definition of the internal McpController, which is now split into a reactive and a blocking controller"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition.dispose(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext,java.lang.Object)",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition.getExposedTypes()",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition.getReplacesDefinition()",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition.isParallel()",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition.load()",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Constructor io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition()",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Constructor io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition(java.lang.Class,io.micronaut.context.AbstractInitializableBeanDefinition$MethodOrFieldReference)",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.context.BeanContextConfigurable",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.DisposableBeanDefinition",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.InstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.context.EnvironmentConfigurable",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.InjectableBeanDefinition",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinition",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.QualifiedBeanType",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition.getExposedTypes()",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition.getReplacesDefinition()",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition.isParallel()",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition.load()",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Constructor io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition()",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Constructor io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition(java.lang.Class,io.micronaut.context.AbstractInitializableBeanDefinition$MethodOrFieldReference)",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.context.BeanContextConfigurable",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.InstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.context.EnvironmentConfigurable",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.InjectableBeanDefinition",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.QualifiedBeanType",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinition",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  }
+]
