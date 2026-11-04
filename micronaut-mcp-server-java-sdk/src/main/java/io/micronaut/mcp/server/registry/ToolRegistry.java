@@ -313,6 +313,10 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     private Optional<Argument<?>> jsonSchemaArgument(@NonNull ExecutableMethod<?, ?> method) {
         Argument<?>[] arguments = method.getArguments();
         for (Argument<?> arg : arguments) {
+            if (arg.getAnnotationMetadata().hasAnnotation(ToolArg.class)) {
+                // A named property of the input, whatever its type
+                continue;
+            }
             try {
                 BeanIntrospection<?> introspection = BeanIntrospection.getIntrospection(arg.getType());
                 if (introspection.findAnnotation(JsonSchema.class).isPresent()) {
