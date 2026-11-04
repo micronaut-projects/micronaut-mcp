@@ -448,5 +448,1155 @@
     "type": "io.micronaut.mcp.client.langchain4j.stdio.$StdioMcpTransportFactory$CreateStdioMcpTransportBuilder0$Definition",
     "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
     "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition.getExposedTypes()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition.getReplacesDefinition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition.isEnabled(io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition.isEnabled(io.micronaut.context.BeanContext,io.micronaut.context.BeanResolutionContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition.isParallel()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition.load()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition(java.lang.Class,io.micronaut.context.AbstractInitializableBeanDefinition$MethodOrFieldReference)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.context.BeanContextConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.inject.InstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.context.EnvironmentConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.inject.InjectableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.inject.QualifiedBeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$ClientCapabilities2$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition.getExposedTypes()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition.getReplacesDefinition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition.isEnabled(io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition.isEnabled(io.micronaut.context.BeanContext,io.micronaut.context.BeanResolutionContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition.isParallel()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition.load()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition(java.lang.Class,io.micronaut.context.AbstractInitializableBeanDefinition$MethodOrFieldReference)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.context.BeanContextConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.inject.InstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.context.EnvironmentConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.inject.InjectableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.inject.QualifiedBeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition.dispose(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext,java.lang.Object)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition.getExposedTypes()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition.getReplacesDefinition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition.isEnabled(io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition.isEnabled(io.micronaut.context.BeanContext,io.micronaut.context.BeanResolutionContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition.isParallel()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition.load()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition(java.lang.Class,io.micronaut.context.AbstractInitializableBeanDefinition$MethodOrFieldReference)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.context.BeanContextConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.inject.DisposableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.inject.InstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.context.EnvironmentConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.inject.InjectableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.inject.QualifiedBeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncClient6$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition.doInstantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext,java.util.Map)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition.getExposedTypes()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition.getReplacesDefinition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition.isEnabled(io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition.isEnabled(io.micronaut.context.BeanContext,io.micronaut.context.BeanResolutionContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition.isParallel()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition.load()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition(java.lang.Class,io.micronaut.context.AbstractInitializableBeanDefinition$MethodOrFieldReference)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.context.BeanContextConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.inject.InstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.inject.ParametrizedInstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.context.EnvironmentConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.inject.InjectableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.inject.QualifiedBeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpAysncSpec5$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition.doInstantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext,java.util.Map)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition.getExposedTypes()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition.getReplacesDefinition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition.isEnabled(io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition.isEnabled(io.micronaut.context.BeanContext,io.micronaut.context.BeanResolutionContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition.isParallel()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition.load()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition(java.lang.Class,io.micronaut.context.AbstractInitializableBeanDefinition$MethodOrFieldReference)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.context.BeanContextConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.inject.InstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.inject.ParametrizedInstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.context.EnvironmentConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.inject.InjectableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.inject.QualifiedBeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpClientSyncSpec3$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition.dispose(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext,java.lang.Object)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition.getExposedTypes()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition.getReplacesDefinition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition.isEnabled(io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition.isEnabled(io.micronaut.context.BeanContext,io.micronaut.context.BeanResolutionContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition.isParallel()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition.load()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition(java.lang.Class,io.micronaut.context.AbstractInitializableBeanDefinition$MethodOrFieldReference)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.context.BeanContextConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.inject.DisposableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.inject.InstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.context.EnvironmentConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.inject.InjectableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.inject.QualifiedBeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$McpSyncClient4$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition.getExposedTypes()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition.getReplacesDefinition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition.isEnabled(io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition.isEnabled(io.micronaut.context.BeanContext,io.micronaut.context.BeanResolutionContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition.isParallel()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition.load()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition(java.lang.Class,io.micronaut.context.AbstractInitializableBeanDefinition$MethodOrFieldReference)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.context.BeanContextConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.InstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.context.EnvironmentConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.InjectableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.QualifiedBeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$Transport1$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition.getExposedTypes()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition.getReplacesDefinition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition.isCandidateBean(io.micronaut.core.type.Argument)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition.isEnabled(io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition.isEnabled(io.micronaut.context.BeanContext,io.micronaut.context.BeanResolutionContext)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition.isParallel()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition.load()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition(java.lang.Class,io.micronaut.context.AbstractInitializableBeanDefinition$MethodOrFieldReference)",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Constructor io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition()",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.context.BeanContextConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.InstantiatableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.context.EnvironmentConfigurable",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanContextConditional",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.InjectableBeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.QualifiedBeanType",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinition",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
+    "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
+    "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
   }
 ]
