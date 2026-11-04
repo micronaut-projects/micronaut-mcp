@@ -101,6 +101,8 @@ public final class MicronautMcpHttpClients {
             return new Endpoint(registry.resolveStreamingHttpClient(null, LoadBalancer.fixed(origin), serviceConfiguration, beanContext), path);
         }
         HttpClientConfiguration clientConfiguration = new ConnectionHttpClientConfiguration(defaultConfiguration());
+        // MCP does not use redirects, and following one could send the token of a user to another server
+        clientConfiguration.setFollowRedirects(false);
         Duration timeout = configuration.getRequestTimeout() != null ? configuration.getRequestTimeout() : configuration.getTimeout();
         if (timeout != null) {
             clientConfiguration.setReadTimeout(timeout);

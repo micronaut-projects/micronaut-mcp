@@ -255,6 +255,15 @@ class MicronautStreamableHttpClientTransportTest implements TestPropertyProvider
     }
 
     @Test
+    void redirectsAreNotFollowed() {
+        McpClientTransport transport = transport("crafted", new CopyOnWriteArrayList<>());
+        server.on("POST tools/list", body(302, "text/plain", "Moved", "Location", "http://localhost:" + server.port() + "/elsewhere"));
+
+        assertStatus(HttpStatus.FOUND, transport.sendMessage(toolsList("1")));
+        assertEquals(List.of("/mcp"), server.requests("POST").stream().map(request -> request.uri().getPath()).toList());
+    }
+
+    @Test
     void messagesLargerThanTheMaximumSizeFail() {
         McpClientTransport transport = transport("small", new CopyOnWriteArrayList<>());
         // An event whose lines are each smaller than the maximum

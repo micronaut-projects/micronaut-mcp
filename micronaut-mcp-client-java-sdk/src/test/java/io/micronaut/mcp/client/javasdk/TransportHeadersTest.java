@@ -1,5 +1,9 @@
 package io.micronaut.mcp.client.javasdk;
 
+import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.context.ServerHttpRequestContext;
+import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.modelcontextprotocol.common.McpTransportContext;
@@ -13,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TransportHeadersTest {
     private static final McpClientHttpConfiguration CONNECTION = new McpClientHttpConfiguration() {
@@ -57,6 +62,18 @@ class TransportHeadersTest {
         McpClientHeadersProvider provider = connection -> Map.of("X-Dynamic", connection.getName());
         assertEquals(Map.of("X-Static", "static", "X-Dynamic", "headers"),
             TransportHeaders.headers(CONNECTION, List.of(provider), McpTransportContext.EMPTY, Context.empty()));
+    }
+
+    @Test
+    void theHeadersProvidersDoNotSeeTheRequestOfTheCurrentThreadWithoutAPropagatedContext() {
+        McpClientHeadersProvider provider = connection -> Map.of("X-Request", String.valueOf(ServerRequestContext.currentRequest().isPresent()));
+        try (var _ = ServerHttpRequestContext.withRequest(PropagatedContext.empty(), HttpRequest.GET("/other-user")).propagate()) {
+            assertTrue(ServerRequestContext.currentRequest().isPresent());
+            assertEquals(Map.of("X-Static", "static", "X-Request", "false"),
+                TransportHeaders.headers(CONNECTION, List.of(provider), McpTransportContext.EMPTY, Context.empty()));
+            // the context of the thread is back after the headers are computed
+            assertTrue(ServerRequestContext.currentRequest().isPresent());
+        }
     }
 
     @Test

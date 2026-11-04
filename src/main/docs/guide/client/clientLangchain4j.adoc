@@ -95,9 +95,12 @@ micronaut:
     services:
       weather:
         read-timeout: 60s
+        follow-redirects: false
 ----
 
 This applies to the LangChain4j and the Java SDK clients. Responses streamed as server-sent events are read as they arrive. A message of the server larger than `max-message-size` (default `16MB`) fails the request. The Java SDK client listens to the stream of the messages the server sends on its own, such as the notifications that its tools changed, reconnecting when it ends; as the LangChain4j HTTP transport, the LangChain4j client does not.
+
+The `request-timeout` or `timeout` of a connection becomes the `read-timeout` of its client, and redirects are not followed, since MCP does not use them and following one could send the token of a user to another server. With `service-id` the `micronaut.http.services` entry configures the client instead: set its `read-timeout` and `follow-redirects: false` there. The `read-idle-timeout` of the client (default `5m`) still applies: it closes the stream of a server that stays quiet that long, and the Java SDK client then reconnects.
 
 WARNING: The client filters of the application apply to the requests sent to MCP servers, including third-party ones. Restrict the filters that add credentials, for example with `@ClientFilter(serviceId = ...)` or path patterns, so that they do not reach MCP servers they are not meant for.
 

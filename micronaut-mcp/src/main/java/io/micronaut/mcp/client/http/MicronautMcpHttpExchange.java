@@ -235,6 +235,10 @@ public final class MicronautMcpHttpExchange {
         }
 
         List<String> chunk(HttpResponse<ByteBuffer<?>> response) {
+            if (response.code() >= HttpStatus.MULTIPLE_CHOICES.getCode()) {
+                // A redirect, which is not followed: nothing else would end the request
+                throw new HttpClientResponseException("The MCP server answered with status " + response.code(), response);
+            }
             if (first) {
                 first = false;
                 if (!sessionless.get()) {
