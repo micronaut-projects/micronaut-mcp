@@ -3,3 +3,6 @@ This section documents breaking changes between Micronaut MCP versions.
 === 2.2.0
 
 * With the HTTP transport, the request handed to the SDK carries its parameters as parsed JSON: `McpSchema.JSONRPCRequest.params()` is now an `io.micronaut.json.tree.JsonNode` instead of a `Map`. The SDK handlers convert the parameters with the `McpJsonMapper`, so this only affects code that decorates `McpStatelessServerHandler` and reads `params()` directly.
+* A `@ToolArg` parameter is always a named property of the input schema of a tool, even when its type has a `@JsonSchema`. Only a parameter without `@ToolArg` can provide the schema of the whole input.
+* The `$id` of generated JSON schemas, which clients see in `tools/list`, defaults to `classpath:META-INF/schemas/<name>` with Micronaut JSON Schema `2.3.2-SNAPSHOT`, instead of `http://localhost:8080/schemas/<name>`. Set the `micronaut.jsonschema.baseUri` annotation processor option to choose another base.
+* Tools, prompts and resources declared on singleton beans keep the bean instance they first resolve, so they keep using it after `destroyBean` or `refreshBean`.
