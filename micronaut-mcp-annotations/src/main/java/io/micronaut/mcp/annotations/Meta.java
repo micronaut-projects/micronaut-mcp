@@ -47,7 +47,7 @@ public @interface Meta {
     String key();
 
     /**
-     * @return The value
+     * @return The value, which is always a string: the {@code _meta} entry cannot be a number, a boolean or an object
      */
     String value();
 }
