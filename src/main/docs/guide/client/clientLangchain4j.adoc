@@ -27,6 +27,8 @@ micronaut:
           auto-health-check: false
 ----
 
+NOTE: The process of a STDIO connection inherits the environment of the application, in addition to its `environment`. Applications that keep secrets in their environment make them available to that process, so only start servers you trust.
+
 For each connection there is a `dev.langchain4j.mcp.client.McpClient` bean, qualified by the name of the connection, which is also the key of the client. A `dev.langchain4j.mcp.McpToolProvider` bean provides the tools of every client to LangChain4j AI services, and a `McpToolProvider` bean qualified by the name of a connection provides only the tools of that client.
 
 Declare beans of these types to customize the clients and the tool providers:
