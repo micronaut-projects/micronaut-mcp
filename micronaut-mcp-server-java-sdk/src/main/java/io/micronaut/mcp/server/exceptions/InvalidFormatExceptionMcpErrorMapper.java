@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 @Requires(classes = InvalidFormatException.class)
 @Singleton
 @Internal
-class InvalidFormatExceptionMcpErrorMapper implements McpErrorExceptionMapper<InvalidFormatException> {
+class InvalidFormatExceptionMcpErrorMapper implements InputErrorMapper<InvalidFormatException> {
     @Override
     public boolean canMap(Class<? extends Throwable> clazz) {
         return InvalidFormatException.class.isAssignableFrom(clazz);
