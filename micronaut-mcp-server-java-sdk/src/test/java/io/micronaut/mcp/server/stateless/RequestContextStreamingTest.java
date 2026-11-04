@@ -143,6 +143,17 @@ class RequestContextStreamingTest {
     }
 
     @Test
+    void settingTheLogLevelIsAcknowledged() {
+        String capabilities = post(MediaType.APPLICATION_JSON, """
+            {"jsonrpc": "2.0", "id": 16, "method": "initialize",
+             "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "test", "version": "1.0"}}}""").body();
+        assertTrue(capabilities.contains("\"logging\""), capabilities);
+        HttpResponse<String> response = post(MediaType.APPLICATION_JSON, """
+            {"jsonrpc": "2.0", "id": 17, "method": "logging/setLevel", "params": {"level": "error"}}""");
+        assertTrue(response.body().contains("\"id\":17") && response.body().contains("\"result\":{}") && !response.body().contains("\"error\""), response.body());
+    }
+
+    @Test
     void theRequestContextIsNotPartOfTheInputSchemaOrPromptArguments() {
         String tools = post(MediaType.APPLICATION_JSON, """
             {"jsonrpc": "2.0", "id": 11, "method": "tools/list", "params": {}}""").body();

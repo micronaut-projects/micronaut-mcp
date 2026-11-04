@@ -88,6 +88,10 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
         McpTransportContext transportContext = contextExtractor.extract(request);
         McpSchema.JSONRPCMessage jsonRpcMessage = jsonRpcMessage(body);
         if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
+            if (McpSchema.METHOD_LOGGING_SET_LEVEL.equals(jsonrpcRequest.method())) {
+                // The SDK has no handler for it on stateless servers, which cannot remember a level between requests
+                return Mono.just(HttpResponse.ok(new McpSchema.JSONRPCResponse(McpSchema.JSONRPC_VERSION, jsonrpcRequest.id(), Map.of(), null)));
+            }
             if (streaming) {
                 return Mono.create(sink -> {
                     StreamingJsonRpcResponse response = new StreamingJsonRpcResponse(sink, jsonrpcRequest);
@@ -149,7 +153,12 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
         if (jsonrpc == null || !jsonrpc.isString() || method == null || !method.isString()) {
             return null;
         }
-        Object params = params(body.get(KEY_PARAMS));
+        Object params;
+        try {
+            params = params(body.get(KEY_PARAMS));
+        } catch (IOException _) {
+            return null;
+        }
         JsonNode id = body.get(KEY_ID);
         if (id == null) {
             return new McpSchema.JSONRPCNotification(jsonrpc.getStringValue(), method.getStringValue(), params);
@@ -161,18 +170,14 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
         return new McpSchema.JSONRPCRequest(jsonrpc.getStringValue(), method.getStringValue(), id(id), params);
     }
 
-    private @Nullable Object params(@Nullable JsonNode params) {
+    private @Nullable Object params(@Nullable JsonNode params) throws IOException {
         if (params == null || params.isNull()) {
             return null;
         }
         if (passJsonTrees) {
             return params;
         }
-        try {
-            return jsonMapper.readValueFromTree(params, Object.class);
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Invalid JSON-RPC params", e);
-        }
+        return jsonMapper.readValueFromTree(params, Object.class);
     }
 
     private static Object id(JsonNode id) {
