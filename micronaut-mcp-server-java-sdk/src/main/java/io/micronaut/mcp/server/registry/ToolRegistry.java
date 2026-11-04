@@ -34,6 +34,7 @@ import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.ToolArg;
 import io.micronaut.mcp.server.exceptions.InputErrorMapper;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
+import io.micronaut.mcp.server.observability.McpServerObserver;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -191,16 +192,20 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                                                                         boolean structuredOutput,
                                                                         Object mcpTransportContext,
                                                                         McpSchema.CallToolRequest callToolRequest) {
-        return m.callAsync(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
-            result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error));
+        return observedAsync(McpSchema.METHOD_TOOLS_CALL, callToolRequest.name(), () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
+            result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)), ToolRegistry::errorType);
     }
 
     private <B> McpSchema.CallToolResult callToolToResult(Method<B> m,
                                                           boolean structuredOutput,
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
-        return m.call(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
-            mcpTransportContext, result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error));
+        return observed(McpSchema.METHOD_TOOLS_CALL, callToolRequest.name(), () -> m.call(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
+            mcpTransportContext, result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)), ToolRegistry::errorType);
+    }
+
+    private static @Nullable String errorType(McpSchema.CallToolResult result) {
+        return Boolean.TRUE.equals(result.isError()) ? McpServerObserver.TOOL_ERROR : null;
     }
 
     /**
