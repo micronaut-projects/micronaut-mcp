@@ -149,13 +149,26 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
         if (result == null) {
             return completeResult(Collections.emptyList());
         }
+        try {
+            return completeResult(asStringList(result));
+        } catch (IllegalArgumentException _) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("Completion result is not a {} or a List<String>: {}", McpSchema.CompleteResult.class.getSimpleName(), result.getClass().getName());
+            }
+            return completeResult(Collections.emptyList());
+        }
+    }
+
+    /**
+     * @param result The result of a completion method
+     * @return The result as a list of strings
+     * @throws IllegalArgumentException If the result is not a list of strings
+     */
+    public static List<String> asStringList(Object result) {
         if (result instanceof List<?> list && list.stream().allMatch(String.class::isInstance)) {
-            return completeResult(list.stream().map(String.class::cast).toList());
+            return list.stream().map(String.class::cast).toList();
         }
-        if (LOG.isWarnEnabled()) {
-            LOG.warn("Completion result is not a {} or a List<String>: {}", McpSchema.CompleteResult.class.getSimpleName(), result.getClass().getName());
-        }
-        return completeResult(Collections.emptyList());
+        throw new IllegalArgumentException("Not a List<String>");
     }
 
     @Override
