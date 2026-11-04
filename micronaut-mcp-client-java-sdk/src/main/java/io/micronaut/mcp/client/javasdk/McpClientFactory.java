@@ -57,7 +57,6 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -135,14 +134,11 @@ final class McpClientFactory {
             return configuration.getHeaders();
         }
         // Without a propagated context, for example for the answers to the requests of the server, the headers providers
-        // run without the HTTP request the application is handling
-        Optional<PropagatedContext> propagatedContext = ReactorPropagation.findPropagatedContext(reactorContext);
-        if (propagatedContext.isPresent()) {
-            try (var _ = propagatedContext.get().propagate()) {
-                return McpClientRequestHeaders.headers(configuration, headersProviders);
-            }
+        // run without an HTTP request: the context of this thread, such as an event loop, may be that of another request
+        PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(reactorContext).orElseGet(PropagatedContext::empty);
+        try (var _ = propagatedContext.propagate()) {
+            return McpClientRequestHeaders.headers(configuration, headersProviders);
         }
-        return McpClientRequestHeaders.headers(configuration, headersProviders);
     }
 
     @EachBean(HttpClientStreamableHttpTransport.Builder.class)

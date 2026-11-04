@@ -29,6 +29,13 @@ import java.util.Map;
  * connections that {@link McpClientHttpConfiguration#isPropagateAuthorization() propagate} it. Only bearer tokens are
  * propagated, unless the connection {@link McpClientHttpConfiguration#isPropagateAnyAuthorizationScheme() propagates any
  * scheme}.
+ *
+ * <p>This passes through a token the MCP server did not issue for itself, which the
+ * <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization">MCP authorization specification</a>
+ * forbids: a server that follows it rejects the token, and one that skips the audience check becomes a confused deputy.
+ * Only use it with trusted servers that share the audience of the token. Otherwise exchange the token, for example with
+ * <a href="https://datatracker.ietf.org/doc/html/rfc8693">OAuth 2.0 Token Exchange</a>, in a custom
+ * {@link McpClientHeadersProvider}.</p>
  */
 @Singleton
 @Internal
