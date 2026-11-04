@@ -54,7 +54,7 @@ public class ToolsTest {
                     }
                   },
                   "required": ["location"],
-                  "$id": "http://localhost:8080/schemas/get-weather-input.schema.json"
+                  "$id": "classpath:META-INF/schemas/get-weather-input.schema.json"
                 }
               }
             ]
