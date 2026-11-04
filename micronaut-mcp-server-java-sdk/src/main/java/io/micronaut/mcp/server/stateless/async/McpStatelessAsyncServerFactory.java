@@ -95,7 +95,10 @@ final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpS
             .resourceTemplates(resourcesTemplates)
             .resources(resources);
         if (configuration != null) {
-            spec.serverInfo(configuration.getName(), configuration.getVersion());
+            spec.serverInfo(serverInfo(configuration));
+            if (configuration.getInstructions() != null) {
+                spec.instructions(configuration.getInstructions());
+            }
         }
         return spec;
     }
