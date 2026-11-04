@@ -88,6 +88,10 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
         McpTransportContext transportContext = contextExtractor.extract(request);
         McpSchema.JSONRPCMessage jsonRpcMessage = jsonRpcMessage(body);
         if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
+            if (McpSchema.METHOD_LOGGING_SET_LEVEL.equals(jsonrpcRequest.method())) {
+                // The SDK has no handler for it on stateless servers, which cannot remember a level between requests
+                return Mono.just(HttpResponse.ok(new McpSchema.JSONRPCResponse(McpSchema.JSONRPC_VERSION, jsonrpcRequest.id(), Map.of(), null)));
+            }
             if (streaming) {
                 return Mono.create(sink -> {
                     StreamingJsonRpcResponse response = new StreamingJsonRpcResponse(sink, jsonrpcRequest);
