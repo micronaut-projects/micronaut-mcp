@@ -39,3 +39,27 @@ micronautBuild {
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-langchain4j")
 }
+
+// Micronaut core 5.3.0-SNAPSHOT comes from the Sonatype Central snapshots repository, which only resolves
+// io.micronaut snapshots. Projects that declare their own repositories replace the settings ones, so it is added
+// to each project too. Remove once the build moves to a core 5.3 release.
+def micronautSnapshotRepositories = { RepositoryHandler repositories ->
+    repositories.maven {
+        url = uri('https://central.sonatype.com/repository/maven-snapshots/')
+        mavenContent {
+            snapshotsOnly()
+        }
+        content {
+            includeGroupByRegex('io\\.micronaut(\\..*)?')
+        }
+    }
+}
+dependencyResolutionManagement {
+    micronautSnapshotRepositories(repositories)
+    repositories {
+        mavenCentral()
+    }
+}
+gradle.beforeProject { project ->
+    micronautSnapshotRepositories(project.repositories)
+}
