@@ -314,7 +314,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     }
 
     @Override
-    public final boolean isNotEmpty() {
+    public boolean isNotEmpty() {
         return !methods.isEmpty();
     }
 
