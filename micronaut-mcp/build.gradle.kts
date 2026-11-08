@@ -6,6 +6,8 @@ plugins {
 dependencies {
     annotationProcessor(mnSerde.micronaut.serde.processor)
     api(mnSerde.micronaut.serde.api)
+    compileOnly(mn.micronaut.http)
+    testImplementation(mn.micronaut.http)
     testImplementation(mnSerde.micronaut.serde.jackson)
     testAnnotationProcessor(mn.micronaut.inject.java)
     testRuntimeOnly(mnLogging.logback.classic)
