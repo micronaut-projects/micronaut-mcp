@@ -26,6 +26,7 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.PromptArg;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
+import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
@@ -164,9 +165,18 @@ public final class PromptRegistry
     private List<McpSchema.PromptArgument> promptArguments(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
         List<McpSchema.PromptArgument> result = new ArrayList<>(method.getArguments().length);
         for (Argument<?> argument : method.getArguments()) {
-            result.add(promptArgument(argument));
+            if (!isBound(argument.getType())) {
+                result.add(promptArgument(argument));
+            }
         }
         return result;
+    }
+
+    private static boolean isBound(Class<?> type) {
+        // Values bound from the request are not arguments the client fills in
+        return McpTransportContext.class.isAssignableFrom(type)
+            || McpRequestContext.class.isAssignableFrom(type)
+            || McpSchema.GetPromptRequest.class.isAssignableFrom(type);
     }
 
     private McpSchema.PromptArgument promptArgument(Argument<?> argument) {
@@ -198,6 +208,11 @@ public final class PromptRegistry
 
     private static Optional<String> promptDescription(ExecutableMethod<?, ?> method) {
         return method.stringValue(Prompt.class, MEMBER_DESCRIPTION);
+    }
+
+    @Override
+    protected String primitiveName(ExecutableMethod<?, ?> method) {
+        return promptName(method);
     }
 
     private static String promptName(ExecutableMethod<?, ?> method) {
