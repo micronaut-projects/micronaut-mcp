@@ -33,7 +33,10 @@ public interface McpClientConfiguration extends Toggleable {
 
     /**
      * @return The MCP Transport.
+     * @deprecated The transport of each connection is set by where it is declared, {@value McpClientHttpConfiguration#PREFIX}
+     * or {@value McpClientStdioConfiguration#PREFIX}, and connections of both transports can be used together.
      */
+    @Deprecated(since = "2.2.0", forRemoval = true)
     @NonNull
     default Transport getTransport() {
         return DEFAULT_TRANSPORT;
