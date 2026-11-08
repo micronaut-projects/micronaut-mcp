@@ -97,7 +97,10 @@ final class McpServerSyncFactory extends AbstractMcpServerFactory<McpServer.Sync
             .resourceTemplates(resourceTemplates)
             .resources(resources);
         if (configuration != null) {
-            spec.serverInfo(configuration.getName(), configuration.getVersion());
+            spec.serverInfo(serverInfo(configuration));
+            if (configuration.getInstructions() != null) {
+                spec.instructions(configuration.getInstructions());
+            }
         }
         return spec;
     }
