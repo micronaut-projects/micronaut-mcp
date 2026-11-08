@@ -2,8 +2,37 @@ To use MCP Clients powered by the https://github.com/modelcontextprotocol/java-s
 
 dependency:micronaut-mcp-client-java-sdk[groupId=io.micronaut.mcp]
 
-Additionally, if you are building an <<serverJavaSdk, MCP Server>>, you can test it by injecting a bean of type `io.modelcontextprotocol.client.McpSyncClient` or `io.modelcontextprotocol.client.McpAsyncClient` in your tests. The MCP Client pointing to your MCP Server has a https://docs.micronaut.io/latest/guide/#qualifiers[name qualifier] with value `embeddedServer`.
+Declare a named connection for each MCP server under `micronaut.mcp.client.http` or `micronaut.mcp.client.stdio`, as for the <<clientLangchain4j, LangChain4j client>>. For each connection there is an `io.modelcontextprotocol.client.McpSyncClient` and an `io.modelcontextprotocol.client.McpAsyncClient` bean, qualified by the name of the connection.
 
-To customize client creation for your application's needs, define
+IMPORTANT: Use either the synchronous or the asynchronous client of a connection, not both. Each client opens its own session over its own transport, which for STDIO would start a second server process, so creating the second client of a connection fails. `McpClientTools` uses the synchronous client.
+
+A client is initialized when it is created, and fails to be created when its server cannot be reached; inject a `BeanProvider` to create it on first use. A client that fails to initialize is closed with its transport, and is created afresh the next time it is requested. When the application stops, the clients are closed gracefully, waiting up to 10 seconds for their transport to close.
+
+Declare beans of these types to answer the requests of servers and receive their notifications. Each method receives the name of the connection: The asynchronous client calls them on the blocking executor, so they may block.
+
+|===
+|Bean type |Purpose
+
+|`io.micronaut.mcp.client.javasdk.McpSamplingHandler`
+|Answers https://modelcontextprotocol.io/specification/2025-11-25/client/sampling[sampling] requests; the clients then advertise the sampling capability
+
+|`io.micronaut.mcp.client.javasdk.McpElicitationHandler`
+|Answers https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation[elicitation] requests; the clients then advertise the elicitation capability
+
+|`io.micronaut.mcp.client.javasdk.McpLoggingHandler`
+|Receives log messages
+
+|`io.micronaut.mcp.client.javasdk.McpProgressHandler`
+|Receives progress notifications for requests sent with a progress token
+
+|`io.micronaut.mcp.client.javasdk.McpListChangedListener`
+|Notified when a server changes its tools, prompts or resources
+|===
+
+To offer the tools of the servers to a model without depending on an AI framework, inject `io.micronaut.mcp.client.javasdk.McpClientTools`: the primary bean lists the tools of every connection, and a bean qualified by the name of a connection only those of that connection. Each `McpClientTool` can be called. The tools of each server are listed once and cached until the server notifies that they changed, the servers of every connection are asked concurrently, and those that cannot be reached are skipped. Declare `McpClientToolFilter` and `McpClientToolNameMapper` beans to select and name the tools.
+
+If you are building an <<serverJavaSdk, MCP Server>>, you can test it by injecting a bean of type `io.modelcontextprotocol.client.McpSyncClient` or `io.modelcontextprotocol.client.McpAsyncClient` in your tests. The MCP Client pointing to your MCP Server has a https://docs.micronaut.io/latest/guide/#qualifiers[name qualifier] with value `embeddedServer`.
+
+To customize client creation further, define
 https://docs.micronaut.io/latest/api/io/micronaut/context/event/BeanCreatedEventListener.html[BeanCreatedEventListener]s
 for `HttpClientStreamableHttpTransport.Builder`, `McpClient.SyncSpec`, or `McpClient.AsyncSpec`.
