@@ -22,6 +22,7 @@ import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.core.type.Argument;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.PromptArg;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
@@ -108,7 +109,7 @@ public final class PromptRegistry
 
     private <B> BiFunction<McpTransportContext, McpSchema.GetPromptRequest, Mono<McpSchema.GetPromptResult>> reactivePromptHandler(Method<B> m) {
         return (mcpTransportContext, promptRequest)
-            -> Mono.just(promptResult(m, mcpTransportContext, promptRequest));
+            -> promptResultAsync(m, mcpTransportContext, promptRequest);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.GetPromptRequest, McpSchema.GetPromptResult> promptHandler(Method<B> m) {
@@ -123,19 +124,29 @@ public final class PromptRegistry
 
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.GetPromptRequest, Mono<McpSchema.GetPromptResult>> asyncPromptHandler(Method<B> m) {
         return (mcpTransportContext, promptRequest)
-            -> Mono.just(promptResult(m, mcpTransportContext, promptRequest));
+            -> promptResultAsync(m, mcpTransportContext, promptRequest);
     }
 
     private <B> McpSchema.GetPromptResult promptResult(Method<B> m,
                                                        Object mcpTransportContext,
                                                        McpSchema.GetPromptRequest promptRequest) {
-        ExecutableMethod<B, Object> method = m.method();
-        Object result = m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest);
+        return m.call(() -> m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest),
+            mcpTransportContext, PromptRegistry::map, this::failWithMcpError);
+    }
+
+    private <B> Mono<McpSchema.GetPromptResult> promptResultAsync(Method<B> m,
+                                                                  Object mcpTransportContext,
+                                                                  McpSchema.GetPromptRequest promptRequest) {
+        return m.callAsync(() -> m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest),
+            PromptRegistry::map, this::failWithMcpError);
+    }
+
+    private static McpSchema.GetPromptResult map(@Nullable Object result) {
         if (result instanceof McpSchema.GetPromptResult promptResult) {
             return promptResult;
         }
-        if (method.getReturnType().getType().isAssignableFrom(String.class)) {
-            McpSchema.TextContent assistantContent = new McpSchema.TextContent(result.toString());
+        if (result instanceof CharSequence text) {
+            McpSchema.TextContent assistantContent = new McpSchema.TextContent(text.toString());
             McpSchema.PromptMessage assistantMessage = new McpSchema.PromptMessage(McpSchema.Role.ASSISTANT, assistantContent);
             //TODO is it possible to get the description from the javadoc @return of the method
             String description = null;
