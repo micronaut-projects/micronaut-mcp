@@ -1,5 +1,6 @@
 package io.micronaut.mcp.client.javasdk.multi;
 
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.io.socket.SocketUtils;
@@ -48,14 +49,18 @@ class HeaderPropagationTest implements TestPropertyProvider {
     @Override
     public Map<String, String> getProperties() {
         int port = SocketUtils.findAvailableTcpPort();
-        return Map.of(
-            "micronaut.server.port", String.valueOf(port),
-            "micronaut.mcp.client.http.self.url", "http://localhost:" + port + "/mcp",
-            "micronaut.mcp.client.http.self.propagate-authorization", "true",
-            "micronaut.mcp.client.http.self.headers.X-Static", "static",
-            "micronaut.mcp.client.http.selfasync.url", "http://localhost:" + port + "/mcp",
-            "micronaut.mcp.client.http.selfasync.propagate-authorization", "true",
-            "micronaut.mcp.client.http.selfasync.headers.X-Static", "static-async");
+        return Map.ofEntries(
+            Map.entry("micronaut.server.port", String.valueOf(port)),
+            Map.entry("micronaut.mcp.client.http.self.url", "http://localhost:" + port + "/mcp"),
+            Map.entry("micronaut.mcp.client.http.self.propagate-authorization", "true"),
+            Map.entry("micronaut.mcp.client.http.self.headers.X-Static", "static"),
+            Map.entry("micronaut.mcp.client.http.selfasync.url", "http://localhost:" + port + "/mcp"),
+            Map.entry("micronaut.mcp.client.http.selfasync.propagate-authorization", "true"),
+            Map.entry("micronaut.mcp.client.http.selfasync.headers.X-Static", "static-async"),
+            Map.entry("micronaut.mcp.client.http.selfmicronaut.url", "http://localhost:" + port + "/mcp"),
+            Map.entry("micronaut.mcp.client.http.selfmicronaut.http-client", "MICRONAUT"),
+            Map.entry("micronaut.mcp.client.http.selfmicronaut.propagate-authorization", "true"),
+            Map.entry("micronaut.mcp.client.http.selfmicronaut.headers.X-Static", "static-micronaut"));
     }
 
     @Test
@@ -74,6 +79,12 @@ class HeaderPropagationTest implements TestPropertyProvider {
     void theAsynchronousClientSendsTheHeadersOfTheReactorContext() {
         String seen = httpClient.toBlocking().retrieve(HttpRequest.GET("/proxy-async-explicit"));
         assertEquals("Bearer explicit | null | static-async", seen);
+    }
+
+    @Test
+    void theMicronautHttpClientPropagatesTheAuthorizationOfTheRequest() {
+        String seen = httpClient.toBlocking().retrieve(HttpRequest.GET("/proxy-micronaut").bearerAuth("micronaut-token"));
+        assertEquals("Bearer micronaut-token | acme | static-micronaut", seen);
     }
 
     @Test
@@ -114,6 +125,23 @@ class HeaderPropagationTest implements TestPropertyProvider {
             return asyncClient.callTool(new McpSchema.CallToolRequest("headers", Map.of()))
                 .map(result -> ((McpSchema.TextContent) result.content().getFirst()).text())
                 .contextWrite(context -> McpClientTransportHeaders.withHeaders(context, Map.of("Authorization", "Bearer explicit")));
+        }
+    }
+
+    @Requires(property = "spec.name", value = "HeaderPropagationTest")
+    @Controller
+    static class MicronautProxyController {
+        private final BeanProvider<McpSyncClient> client;
+
+        MicronautProxyController(@Named("selfmicronaut") BeanProvider<McpSyncClient> client) {
+            this.client = client;
+        }
+
+        @Get("/proxy-micronaut")
+        @ExecuteOn(TaskExecutors.BLOCKING)
+        String proxy() {
+            McpSchema.CallToolResult result = client.get().callTool(new McpSchema.CallToolRequest("headers", Map.of()));
+            return ((McpSchema.TextContent) result.content().getFirst()).text();
         }
     }
 
