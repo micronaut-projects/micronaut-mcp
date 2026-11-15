@@ -14,6 +14,7 @@ dependencies {
     testAnnotationProcessor(mnSerde.micronaut.serde.processor)
     testImplementation(mnSerde.micronaut.serde.jackson)
     testImplementation(mn.micronaut.http.server.netty)
+    testImplementation(mn.micronaut.http.client)
     testImplementation(projects.testSuiteMoon)
     testImplementation(mn.micronaut.management)
 }
