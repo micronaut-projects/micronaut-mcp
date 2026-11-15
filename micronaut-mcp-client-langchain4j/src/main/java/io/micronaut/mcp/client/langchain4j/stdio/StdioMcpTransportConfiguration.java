@@ -19,7 +19,9 @@ import java.util.List;
 
 /**
  * Configuration for STDIO MCP Transport for Langchain4j MCP Client.
+ * @deprecated Use the named STDIO connections of {@code micronaut.mcp.client.stdio}, {@link io.micronaut.mcp.conf.client.McpClientStdioConfiguration}
  */
+@Deprecated(since = "2.2.0", forRemoval = true)
 public interface StdioMcpTransportConfiguration {
     String PREFIX = "langchain4j.mcp.client.transport.stdio";
     String PROPERTY_COMMANDS = PREFIX + ".commands";
