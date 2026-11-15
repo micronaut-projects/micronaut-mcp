@@ -28,5 +28,15 @@
     "type": "io.micronaut.mcp.server.tools.search.SerdeSearchResultSerializer",
     "member": "Constructor io.micronaut.mcp.server.tools.search.SerdeSearchResultSerializer()",
     "reason": "Generated serializer, whose constructor changes with the Micronaut Serialization version"
+  },
+  {
+    "type": "io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry$Method",
+    "member": "Class io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry$Method",
+    "reason": "Internal: AbstractMcpMethodRegistry is package-private and sealed, so its Method class cannot be constructed elsewhere"
+  },
+  {
+    "type": "io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry$Method",
+    "member": "Constructor io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry$Method(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)",
+    "reason": "Internal: AbstractMcpMethodRegistry is package-private and sealed, so its Method class cannot be constructed elsewhere"
   }
 ]

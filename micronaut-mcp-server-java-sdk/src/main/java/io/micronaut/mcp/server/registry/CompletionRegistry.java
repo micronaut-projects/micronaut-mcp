@@ -18,10 +18,6 @@ package io.micronaut.mcp.server.registry;
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
-import io.micronaut.core.bind.BoundExecutable;
-import io.micronaut.core.bind.DefaultExecutableBinder;
-import io.micronaut.core.bind.ExecutableBinder;
-import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.mcp.annotations.PromptCompletion;
 import io.micronaut.mcp.annotations.ResourceCompletion;
@@ -52,6 +48,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     McpStatelessServerFeatures.SyncCompletionSpecification,
     McpStatelessServerFeatures.AsyncCompletionSpecification> {
     private static final Logger LOG = LoggerFactory.getLogger(CompletionRegistry.class);
+    private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.CompleteRequest.class, McpSchema.CompleteRequest.CompleteArgument.class};
     private final ArgumentBinderRegistry<McpSchema.CompleteRequest> argumentBinderRegistry;
 
     CompletionRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
@@ -62,11 +59,16 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     }
 
     @Override
+    protected Class<?>[] boundParameterTypes() {
+        return BOUND_PARAMETER_TYPES;
+    }
+
+    @Override
     public List<McpServerFeatures.SyncCompletionSpecification> getSyncSpecs() {
         return drainMethods()
             .map(m -> new McpServerFeatures.SyncCompletionSpecification(
                 toCompletion(m.method()),
-                syncHandler(m.beanDefinition(), m.method())
+                syncHandler(m)
             ))
             .toList();
     }
@@ -76,7 +78,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
         return drainMethods()
             .map(m -> new McpServerFeatures.AsyncCompletionSpecification(
                 toCompletion(m.method()),
-                asyncHandler(m.beanDefinition(), m.method())
+                asyncHandler(m)
             ))
             .toList();
     }
@@ -86,7 +88,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
         return drainMethods()
             .map(m -> new McpStatelessServerFeatures.SyncCompletionSpecification(
                 toCompletion(m.method()),
-                statelessSyncHandler(m.beanDefinition(), m.method())
+                statelessSyncHandler(m)
             ))
             .toList();
     }
@@ -96,57 +98,39 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
         return drainMethods()
             .map(m -> new McpStatelessServerFeatures.AsyncCompletionSpecification(
                 toCompletion(m.method()),
-                statelessAsyncHandler(m.beanDefinition(), m.method())
+                statelessAsyncHandler(m)
             ))
             .toList();
     }
 
-    @Override
-    public boolean isNotEmpty() {
-        return !getSyncSpecs().isEmpty()
-            || !getAsyncSpecs().isEmpty()
-            || !getStatelessSyncSpecs().isEmpty()
-            || !getStatelessAsyncSpecs().isEmpty();
-    }
-
     private <B> BiFunction<McpSyncServerExchange, McpSchema.CompleteRequest, McpSchema.CompleteResult> syncHandler(
-        BeanDefinition<B> beanDefinition,
-        ExecutableMethod<B, Object> method
+        Method<B> m
     ) {
-        return (exchange, request) -> invokeAndMap(beanDefinition, method, exchange, request);
+        return (exchange, request) -> invokeAndMap(m, exchange, request);
     }
 
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.CompleteRequest, Mono<McpSchema.CompleteResult>> asyncHandler(
-        BeanDefinition<B> beanDefinition,
-        ExecutableMethod<B, Object> method
+        Method<B> m
     ) {
-        return (exchange, request) -> Mono.just(invokeAndMap(beanDefinition, method, exchange, request));
+        return (exchange, request) -> Mono.just(invokeAndMap(m, exchange, request));
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.CompleteRequest, McpSchema.CompleteResult> statelessSyncHandler(
-        BeanDefinition<B> beanDefinition,
-        ExecutableMethod<B, Object> method
+        Method<B> m
     ) {
-        return (ctx, request) -> invokeAndMap(beanDefinition, method, ctx, request);
+        return (ctx, request) -> invokeAndMap(m, ctx, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.CompleteRequest, Mono<McpSchema.CompleteResult>> statelessAsyncHandler(
-        BeanDefinition<B> beanDefinition,
-        ExecutableMethod<B, Object> method
+        Method<B> m
     ) {
-        return (ctx, request) -> Mono.just(invokeAndMap(beanDefinition, method, ctx, request));
+        return (ctx, request) -> Mono.just(invokeAndMap(m, ctx, request));
     }
 
-    private <B> McpSchema.CompleteResult invokeAndMap(BeanDefinition<B> beanDefinition,
-                                                      ExecutableMethod<B, Object> method,
+    private <B> McpSchema.CompleteResult invokeAndMap(Method<B> m,
                                                       Object mcpTransportContext,
                                                       McpSchema.CompleteRequest request) {
-        B bean = beanContext.getBean(beanDefinition);
-
-        ExecutableBinder<McpSchema.CompleteRequest> executableBinder = new DefaultExecutableBinder<>(
-            prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), request, request.argument())));
-        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, request);
-        Object result = executable.invoke(bean);
+        Object result = m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument());
         if (result instanceof McpSchema.CompleteResult r) {
             return r;
         }
