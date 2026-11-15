@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  */
 @Singleton
 @Internal
-class ConstraintViolationExceptionMcpErrorMapper implements McpErrorExceptionMapper<ConstraintViolationException> {
+class ConstraintViolationExceptionMcpErrorMapper implements InputErrorMapper<ConstraintViolationException> {
     @Override
     public boolean canMap(Class<? extends Throwable> clazz) {
         return ConstraintViolationException.class.isAssignableFrom(clazz);
