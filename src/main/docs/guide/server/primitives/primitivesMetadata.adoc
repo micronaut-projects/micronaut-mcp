@@ -1,0 +1,7 @@
+Methods annotated with `@Tool`, `@Prompt`, `@Resource` or `@ResourceTemplate` can declare icons with `@Icon` and `_meta` entries with `@Meta`. Both annotations are repeatable:
+
+snippet::io.micronaut.mcp.docs.metadata.WeatherTools[project-base="test-suite-docs", tags="imports,clazz"]
+
+`@Resource` and `@ResourceTemplate` also accept the resource annotations of the specification: the intended `audience` (`Audience.USER`, `Audience.ASSISTANT`) and a `priority` between 0 and 1. `@Resource` accepts the `size` of the content in bytes.
+
+snippet::io.micronaut.mcp.docs.metadata.WeatherResources[project-base="test-suite-docs", tags="imports,clazz"]

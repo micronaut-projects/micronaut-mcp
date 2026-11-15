@@ -83,4 +83,22 @@ public @interface Resource {
      * @return The MIME type of the returned content (e.g. "text/plain", "application/json").
      */
     String mimeType() default DEFAULT_MIME_TYPE;
+
+    /**
+     * @return The intended audience of the resource. Empty when not specified.
+     * @since 2.2.0
+     */
+    Audience[] audience() default {};
+
+    /**
+     * @return How important the resource is, from 0 (least) to 1 (most important). Negative when not specified.
+     * @since 2.2.0
+     */
+    double priority() default -1;
+
+    /**
+     * @return The size of the resource content in bytes, before any encoding. Negative when not known.
+     * @since 2.2.0
+     */
+    long size() default -1;
 }
