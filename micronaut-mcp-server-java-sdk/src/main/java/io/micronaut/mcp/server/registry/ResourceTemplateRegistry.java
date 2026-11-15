@@ -189,8 +189,8 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                           String mimeType,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
-        return m.call(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
-            mcpTransportContext, result -> map(mimeType, request, result), this::failWithMcpError);
+        return observed(McpSchema.METHOD_RESOURCES_READ, uriTemplate.matchTemplate().toString(), () -> m.call(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
+            mcpTransportContext, result -> map(mimeType, request, result), this::failWithMcpError));
     }
 
     private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
@@ -198,8 +198,8 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                                      String mimeType,
                                                                      Object mcpTransportContext,
                                                                      McpSchema.ReadResourceRequest request) {
-        return m.callAsync(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
-            result -> map(mimeType, request, result), this::failWithMcpError);
+        return observedAsync(McpSchema.METHOD_RESOURCES_READ, uriTemplate.matchTemplate().toString(), () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
+            result -> map(mimeType, request, result), this::failWithMcpError));
     }
 
     private static McpSchema.ReadResourceResult map(String mimeType, McpSchema.ReadResourceRequest request, @Nullable Object result) {
