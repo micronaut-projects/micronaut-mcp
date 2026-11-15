@@ -24,6 +24,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.json.tree.JsonNode;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
+import io.micronaut.mcp.server.context.McpNotificationEmitter;
 import io.micronaut.mcp.server.exceptions.JsonRrpcResponseUtils;
 import io.micronaut.mcp.server.json.MicronautMcpJsonMapper;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -76,11 +77,31 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
         this.passJsonTrees = mcpJsonMapper instanceof MicronautMcpJsonMapper;
     }
 
+    /**
+     * @param request The request
+     * @param body The body of the request
+     * @param streaming Whether the response may become an event stream of the notifications of the request, as {@link McpStreamingPolicy} decides
+     * @return The response
+     */
     @SuppressWarnings("java:S3740")
-    final Mono<HttpResponse<?>> handle(HttpRequest<?> request, @Nullable JsonNode body) {
+    final Mono<HttpResponse<?>> handle(HttpRequest<?> request, @Nullable JsonNode body, boolean streaming) {
         McpTransportContext transportContext = contextExtractor.extract(request);
         McpSchema.JSONRPCMessage jsonRpcMessage = jsonRpcMessage(body);
         if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
+            if (McpSchema.METHOD_LOGGING_SET_LEVEL.equals(jsonrpcRequest.method())) {
+                // The SDK has no handler for it on stateless servers, which cannot remember a level between requests
+                return Mono.just(HttpResponse.ok(new McpSchema.JSONRPCResponse(McpSchema.JSONRPC_VERSION, jsonrpcRequest.id(), Map.of(), null)));
+            }
+            if (streaming) {
+                return Mono.create(sink -> {
+                    StreamingJsonRpcResponse response = new StreamingJsonRpcResponse(sink, jsonrpcRequest);
+                    request.setAttribute(McpNotificationEmitter.ATTRIBUTE, response);
+                    response.subscription(handleJsonRpcRequest(jsonrpcRequest, transportContext)
+                        // The Reactor context of the route, with the propagated context, reaches the primitive
+                        .contextWrite(sink.contextView())
+                        .subscribe(response::complete, response::fail, response::completeEmpty));
+                });
+            }
             return handleJsonRpcRequest(jsonrpcRequest, transportContext);
         } else if (jsonRpcMessage instanceof McpSchema.JSONRPCNotification notification) {
             return handleJsonRpcNotification(notification, transportContext);
