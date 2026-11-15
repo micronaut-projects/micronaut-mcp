@@ -25,6 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Property(name = "micronaut.mcp.client.http.weather.initialization-timeout", value = "5s")
 @Property(name = "micronaut.mcp.client.http.weather.request-timeout", value = "30s")
 @Property(name = "micronaut.mcp.client.http.weather.auto-health-check", value = "false")
+@Property(name = "micronaut.mcp.client.http.weather.http-client", value = "MICRONAUT")
+@Property(name = "micronaut.mcp.client.http.weather.service-id", value = "weather-service")
+@Property(name = "micronaut.mcp.client.http.weather.max-message-size", value = "1MB")
 @Property(name = "micronaut.mcp.client.stdio.files.command[0]", value = "npx")
 @Property(name = "micronaut.mcp.client.stdio.files.command[1]", value = "server")
 @Property(name = "micronaut.mcp.client.stdio.files.environment.DEBUG", value = "false")
@@ -49,6 +52,9 @@ class McpClientConnectionConfigurationTest {
         assertEquals(Duration.ofSeconds(5), http.getInitializationTimeout());
         assertEquals(Duration.ofSeconds(30), http.getRequestTimeout());
         assertFalse(http.isAutoHealthCheck());
+        assertEquals(McpHttpClientType.MICRONAUT, http.getHttpClient());
+        assertEquals("weather-service", http.getServiceId());
+        assertEquals(1024L * 1024, http.getMaxMessageSize());
     }
 
     @Test
@@ -95,5 +101,8 @@ class McpClientConnectionConfigurationTest {
         assertNull(http.getRequestTimeout());
         assertTrue(http.isAutoHealthCheck());
         assertEquals(Map.of(), http.getHeaders());
+        assertEquals(McpHttpClientType.JDK, http.getHttpClient());
+        assertNull(http.getServiceId());
+        assertEquals(16L * 1024 * 1024, http.getMaxMessageSize());
     }
 }
