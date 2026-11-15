@@ -81,7 +81,7 @@ final class ClasspathPromptFactory {
     @Singleton
     McpStatelessServerFeatures.AsyncPromptSpecification stalessAsyncPromptSpecification(ClasspathPrompt classpathPrompt) {
         return new McpStatelessServerFeatures.AsyncPromptSpecification(prompt(classpathPrompt),
-                (mcpTransportContext, getPromptRequest) -> Mono.just(result(mcpTransportContext, getPromptRequest)));
+                (mcpTransportContext, getPromptRequest) -> Mono.fromSupplier(() -> result(mcpTransportContext, getPromptRequest)));
     }
 
     @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
@@ -99,7 +99,7 @@ final class ClasspathPromptFactory {
     @Singleton
     McpServerFeatures.AsyncPromptSpecification asyncPromptSpecification(ClasspathPrompt classpathPrompt) {
         return new McpServerFeatures.AsyncPromptSpecification(prompt(classpathPrompt),
-                (mcpSyncServerExchange, getPromptRequest) -> Mono.just(result(mcpSyncServerExchange.transportContext(), getPromptRequest)));
+                (mcpSyncServerExchange, getPromptRequest) -> Mono.fromSupplier(() -> result(mcpSyncServerExchange.transportContext(), getPromptRequest)));
     }
 
     @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)

@@ -21,9 +21,6 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
-import io.micronaut.http.annotation.Body;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Post;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.json.tree.JsonNode;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
@@ -46,14 +43,15 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * This class exposes a POST endpoint in route {@value McpServerConfiguration#DEFAULT_ENDPOINT}.
+ * Handles the POST endpoint, in route {@value McpServerConfiguration#DEFAULT_ENDPOINT}.
  * The route can be configured via the property {@value McpServerConfiguration#PROPERTY_ENDPOINT}.
  * The endpoint expects to receive JSON RPC Messages, and it responds JSON RPC Messages.
  * @see <a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#streamable-http">Streamble HTTP Transport</a>.
  */
-@Controller("${" + McpServerConfiguration.PROPERTY_ENDPOINT + ":" + McpServerConfiguration.DEFAULT_ENDPOINT + "}")
 @Internal
-final class McpController {
+abstract sealed class McpController permits McpReactiveController, McpBlockingController {
+    static final String PATH = "${" + McpServerConfiguration.PROPERTY_ENDPOINT + ":" + McpServerConfiguration.DEFAULT_ENDPOINT + "}";
+
     private static final Logger LOG = LoggerFactory.getLogger(McpController.class);
     private static final String KEY_METHOD = "method";
     private static final String KEY_ID = "id";
@@ -79,8 +77,7 @@ final class McpController {
     }
 
     @SuppressWarnings("java:S3740")
-    @Post
-    public Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body JsonNode body) {
+    final Mono<HttpResponse<?>> handle(HttpRequest<?> request, @Nullable JsonNode body) {
         McpTransportContext transportContext = contextExtractor.extract(request);
         McpSchema.JSONRPCMessage jsonRpcMessage = jsonRpcMessage(body);
         if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
