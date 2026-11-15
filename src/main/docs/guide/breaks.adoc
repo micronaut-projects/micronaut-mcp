@@ -9,3 +9,4 @@ This section documents breaking changes between Micronaut MCP versions.
 * A `@ToolArg` parameter is always a named property of the input schema of a tool, even when its type has a `@JsonSchema`. Only a parameter without `@ToolArg` can provide the schema of the whole input.
 * The `$id` of generated JSON schemas, which clients see in `tools/list`, defaults to `classpath:META-INF/schemas/<name>` with Micronaut JSON Schema `2.3.2-SNAPSHOT`, instead of `http://localhost:8080/schemas/<name>`. Set the `micronaut.jsonschema.baseUri` annotation processor option to choose another base.
 * Tools, prompts and resources declared on singleton beans keep the bean instance they first resolve, so they keep using it after `destroyBean` or `refreshBean`.
+* Stateless servers no longer advertise `listChanged` or `subscribe`, even when `list-changed` or `subscribe` is configured, since they cannot send notifications outside the response to a request.

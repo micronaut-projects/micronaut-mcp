@@ -50,6 +50,11 @@ final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpS
     McpStatelessServerFeatures.AsyncResourceTemplateSpecification> {
 
     @Override
+    protected boolean sendsNotifications() {
+        return false;
+    }
+
+    @Override
     protected List<McpStatelessServerFeatures.AsyncToolSpecification> getTools(ToolRegistry toolRegistry) {
         return toolRegistry.getStatelessAsyncSpecs();
     }
