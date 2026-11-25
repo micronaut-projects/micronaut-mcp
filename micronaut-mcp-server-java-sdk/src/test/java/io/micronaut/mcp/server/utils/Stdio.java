@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,29 +59,43 @@ public class Stdio implements AutoCloseable {
     }
 
     /**
-     * Blocks until the server has written {@code count} lines. Unlike {@link #readResponses()}, it does not depend on
-     * sleeping long enough before reading. Do not mix it with {@link #readResponses()} on the same instance: each keeps its
-     * own buffered reader over the same pipe.
+     * Waits until the server has written {@code count} lines, failing if they do not all arrive within {@code timeout}.
+     * Unlike {@link #readResponses()}, it does not depend on sleeping long enough before reading.
      *
-     * @param count number of lines to read
+     * <p>Call it from the thread that sends the requests and keep it there: {@link PipedInputStream} remembers the last
+     * thread on each end of a pipe and reports the pipe as broken once that thread has died, so the I/O must not run on a
+     * short-lived thread such as the one {@code assertTimeoutPreemptively} creates. That is why the timeout is enforced by
+     * polling here instead.</p>
+     *
+     * <p>Do not mix it with {@link #readResponses()} on the same instance: each keeps its own buffered reader over the same
+     * pipe.</p>
+     *
+     * @param count   number of lines to read
+     * @param timeout how long to wait for all of them
      * @return the lines read
      */
-    public synchronized List<String> readLines(int count) {
+    public synchronized List<String> readLines(int count, Duration timeout) {
+        long deadline = System.nanoTime() + timeout.toNanos();
         try {
             if (lineReader == null) {
                 lineReader = new BufferedReader(new InputStreamReader(serverToClient, StandardCharsets.UTF_8));
             }
             List<String> lines = new ArrayList<>(count);
-            for (int i = 0; i < count; i++) {
-                String line = lineReader.readLine();
-                if (line == null) {
-                    break;
+            while (lines.size() < count) {
+                if (lineReader.ready()) {
+                    lines.add(lineReader.readLine());
+                } else if (System.nanoTime() - deadline > 0) {
+                    throw new AssertionError("Expected " + count + " lines within " + timeout + " but read " + lines);
+                } else {
+                    Thread.sleep(10);
                 }
-                lines.add(line);
             }
             return lines;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
         }
     }
 

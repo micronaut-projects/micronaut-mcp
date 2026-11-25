@@ -23,7 +23,6 @@ import java.util.List;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZE;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 @Property(name = "micronaut.mcp.server.info.name", value="test mcp server")
 @Property(name = "micronaut.mcp.server.info.version", value="0.0.1")
@@ -44,14 +43,12 @@ class StdioResourcesListNoResourcesCapabilityTest {
      * In that scenario, the server should return an empty list of prompts
      */
     @Test
-    void syncPrompts() throws JSONException {
-        List<String> responses = assertTimeoutPreemptively(Duration.ofSeconds(10), () -> {
-            factory.stdio.sendRequest(INITIALIZE);
-            factory.stdio.sendRequest(INITIALIZED);
-            factory.stdio.sendRequest(RESOURCES_LIST);
-            // the initialized notification gets no response
-            return factory.stdio.readLines(2);
-        });
+    void syncPrompts() throws IOException, JSONException {
+        factory.stdio.sendRequest(INITIALIZE);
+        factory.stdio.sendRequest(INITIALIZED);
+        factory.stdio.sendRequest(RESOURCES_LIST);
+        // the initialized notification gets no response
+        List<String> responses = factory.stdio.readLines(2, Duration.ofSeconds(10));
         assertEquals(2, responses.size());
         String readJsonRpc = responses.get(1);
         JSONAssert.assertEquals(RESOURCES_LIST_RESULT, readJsonRpc, true);
