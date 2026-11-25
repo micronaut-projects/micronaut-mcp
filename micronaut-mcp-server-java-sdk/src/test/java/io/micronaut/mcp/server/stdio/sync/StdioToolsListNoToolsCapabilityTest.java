@@ -5,7 +5,7 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.mcp.server.stdio.StdioServerTransportProviderReplacement;
+import io.micronaut.mcp.server.stdio.StdioTestTransportProviders;
 import io.micronaut.mcp.server.utils.Stdio;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -13,6 +13,7 @@ import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
@@ -53,6 +54,8 @@ class StdioToolsListNoToolsCapabilityTest {
         Thread.sleep(TimeUnit.SECONDS.toMillis(1));
         List<String> responses = factory.stdio.readResponses();
         assertEquals(2, responses.size());
+        // the decorator must not narrow the SDK's protocol versions: a 2025-06-18 client is answered with 2025-06-18
+        assertEquals("2025-06-18", new JSONObject(responses.get(0)).getJSONObject("result").getString("protocolVersion"));
         String readJsonRpc = responses.get(1);
         JSONAssert.assertEquals(TOOLS_LIST_RESULT, readJsonRpc, true);
     }
@@ -65,7 +68,7 @@ class StdioToolsListNoToolsCapabilityTest {
         @Prototype
         @Replaces(McpServerTransportProvider.class)
         McpServerTransportProvider stdioServerTransportProviderReplacement(McpJsonMapper jsonMapper) {
-            return new StdioServerTransportProviderReplacement(jsonMapper, stdio.serverStdin, stdio.serverStdout);
+            return StdioTestTransportProviders.gracefulListing(jsonMapper, stdio);
         }
 
         @PreDestroy

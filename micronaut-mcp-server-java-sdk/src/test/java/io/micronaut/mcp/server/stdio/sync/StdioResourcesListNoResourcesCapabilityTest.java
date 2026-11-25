@@ -5,7 +5,7 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.mcp.server.stdio.StdioServerTransportProviderReplacement;
+import io.micronaut.mcp.server.stdio.StdioTestTransportProviders;
 import io.micronaut.mcp.server.utils.Stdio;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -65,7 +65,7 @@ class StdioResourcesListNoResourcesCapabilityTest {
         @Prototype
         @Replaces(McpServerTransportProvider.class)
         McpServerTransportProvider stdioServerTransportProviderReplacement(McpJsonMapper jsonMapper) {
-            return new StdioServerTransportProviderReplacement(jsonMapper, stdio.serverStdin, stdio.serverStdout);
+            return StdioTestTransportProviders.gracefulListing(jsonMapper, stdio);
         }
 
         @PreDestroy

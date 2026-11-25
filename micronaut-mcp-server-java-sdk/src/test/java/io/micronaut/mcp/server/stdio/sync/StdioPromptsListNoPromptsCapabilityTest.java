@@ -9,11 +9,10 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
-import io.micronaut.mcp.server.stdio.StdioServerTransportProviderReplacement;
+import io.micronaut.mcp.server.stdio.StdioTestTransportProviders;
 import io.micronaut.mcp.server.utils.Stdio;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.json.McpJsonMapper;
-import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -74,7 +73,7 @@ class StdioPromptsListNoPromptsCapabilityTest {
         @Prototype
         @Replaces(McpServerTransportProvider.class)
         McpServerTransportProvider stdioServerTransportProviderReplacement(McpJsonMapper jsonMapper) {
-            return new StdioServerTransportProviderReplacement(jsonMapper, stdio.serverStdin, stdio.serverStdout);
+            return StdioTestTransportProviders.gracefulListing(jsonMapper, stdio);
         }
 
         @PreDestroy
