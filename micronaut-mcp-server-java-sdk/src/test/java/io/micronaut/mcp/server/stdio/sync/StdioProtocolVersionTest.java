@@ -13,6 +13,7 @@ import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import jakarta.annotation.PreDestroy;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -24,8 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 /**
- * The stdio transport must not narrow the protocol versions the SDK supports: a client asking for any of them is answered
- * with the version it asked for. Delegation of {@code protocolVersions()} itself is covered by
+ * Pins protocol-version negotiation over the stdio transport as wired by the module (decision: advertise the SDK defaults,
+ * no 2024-11-05 pin). Because the SDK stdio provider uses the interface default for {@code protocolVersions()}, this test
+ * cannot tell whether the decorator delegates that method or inherits the same default; that delegation is pinned by
  * {@code GracefulListingServerTransportProviderTest}.
  */
 class StdioProtocolVersionTest {
@@ -36,6 +38,18 @@ class StdioProtocolVersionTest {
     @ParameterizedTest
     @ValueSource(strings = {"2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25"})
     void initializeIsAnsweredWithTheRequestedProtocolVersion(String protocolVersion) throws JSONException {
+        assertEquals(protocolVersion, negotiatedProtocolVersion(protocolVersion));
+    }
+
+    /**
+     * A client asking for a version the server does not support is answered with the latest supported one.
+     */
+    @Test
+    void unsupportedProtocolVersionIsAnsweredWithTheLatestSupportedVersion() throws JSONException {
+        assertEquals("2025-11-25", negotiatedProtocolVersion("2099-01-01"));
+    }
+
+    private static String negotiatedProtocolVersion(String protocolVersion) throws JSONException {
         try (ApplicationContext ctx = ApplicationContext.run(Map.of(
             "micronaut.mcp.server.info.name", "test mcp server",
             "micronaut.mcp.server.info.version", "0.0.1",
@@ -47,11 +61,11 @@ class StdioProtocolVersionTest {
 
             List<String> responses = assertTimeoutPreemptively(Duration.ofSeconds(10), () -> {
                 stdio.sendRequest(INITIALIZE.formatted(protocolVersion));
-                return stdio.readResponses();
+                return stdio.readLines(1);
             });
 
             assertEquals(1, responses.size());
-            assertEquals(protocolVersion, new JSONObject(responses.get(0)).getJSONObject("result").getString("protocolVersion"));
+            return new JSONObject(responses.get(0)).getJSONObject("result").getString("protocolVersion");
         }
     }
 

@@ -116,6 +116,7 @@ class GracefulListingServerTransportProviderTest {
 
     @Test
     void transportProtocolVersionsDelegates() {
+        assertEquals(List.of("transport-version-a", "transport-version-b"), sessionTransport.protocolVersions());
         assertSame(delegateTransport.protocolVersions, sessionTransport.protocolVersions());
     }
 
@@ -151,6 +152,7 @@ class GracefulListingServerTransportProviderTest {
 
     @Test
     void providerProtocolVersionsDelegates() {
+        assertEquals(List.of("provider-version-a", "provider-version-b"), provider.protocolVersions());
         assertSame(delegateProvider.protocolVersions, provider.protocolVersions());
     }
 
@@ -180,7 +182,7 @@ class GracefulListingServerTransportProviderTest {
         final List<McpSchema.JSONRPCMessage> sent = new ArrayList<>();
         final Mono<Void> sendResult = distinctMono();
         final Mono<Void> closeGracefullyResult = distinctMono();
-        final List<String> protocolVersions = List.of("test-version");
+        final List<String> protocolVersions = List.of("transport-version-a", "transport-version-b");
         Object unmarshalData;
         TypeRef<?> unmarshalTypeRef;
         int closeCount;
@@ -220,7 +222,7 @@ class GracefulListingServerTransportProviderTest {
         final Mono<Void> notifyClientsResult = distinctMono();
         final Mono<Void> notifyClientResult = distinctMono();
         final Mono<Void> closeGracefullyResult = distinctMono();
-        final List<String> protocolVersions = List.of("test-version");
+        final List<String> protocolVersions = List.of("provider-version-a", "provider-version-b");
         final List<String> notifiedMethods = new ArrayList<>();
         Object notifiedParams;
         String notifiedSessionId;

@@ -19,6 +19,7 @@ public class Stdio implements AutoCloseable {
     public final PipedInputStream  serverStdin;
     public final PipedOutputStream serverStdout;
     private static final byte NEWLINE = (byte) '\n';
+    private BufferedReader lineReader;
 
     public Stdio() {
         try {
@@ -48,6 +49,33 @@ public class Stdio implements AutoCloseable {
                 if (!br.ready()) {
                     break;
                 }
+            }
+            return lines;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Blocks until the server has written {@code count} lines. Unlike {@link #readResponses()}, it does not depend on
+     * sleeping long enough before reading. Do not mix it with {@link #readResponses()} on the same instance: each keeps its
+     * own buffered reader over the same pipe.
+     *
+     * @param count number of lines to read
+     * @return the lines read
+     */
+    public synchronized List<String> readLines(int count) {
+        try {
+            if (lineReader == null) {
+                lineReader = new BufferedReader(new InputStreamReader(serverToClient, StandardCharsets.UTF_8));
+            }
+            List<String> lines = new ArrayList<>(count);
+            for (int i = 0; i < count; i++) {
+                String line = lineReader.readLine();
+                if (line == null) {
+                    break;
+                }
+                lines.add(line);
             }
             return lines;
         } catch (IOException e) {
