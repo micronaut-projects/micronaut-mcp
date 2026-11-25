@@ -22,11 +22,30 @@ import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
 @Internal
 @Factory
 final class StdioServerTransportProviderFactory {
     @Prototype
     McpServerTransportProvider createStdioServerTransportProvider(McpJsonMapper mcpJsonMapper) {
-        return new GracefulListingServerTransportProvider(new StdioServerTransportProvider(mcpJsonMapper));
+        return stdioServerTransportProvider(mcpJsonMapper, System.in, System.out);
+    }
+
+    /**
+     * Builds the stdio transport provider for the given streams. Tests use it with in-memory pipes so that they exercise the
+     * same composition as the {@link System#in}/{@link System#out} bean.
+     *
+     * @param mcpJsonMapper JSON mapper
+     * @param inputStream   the stream the server reads requests from
+     * @param outputStream  the stream the server writes responses to
+     * @return the stdio transport provider
+     */
+    static McpServerTransportProvider stdioServerTransportProvider(McpJsonMapper mcpJsonMapper,
+                                                                   InputStream inputStream,
+                                                                   OutputStream outputStream) {
+        return new GracefulListingServerTransportProvider(
+            new StdioServerTransportProvider(mcpJsonMapper, inputStream, outputStream));
     }
 }

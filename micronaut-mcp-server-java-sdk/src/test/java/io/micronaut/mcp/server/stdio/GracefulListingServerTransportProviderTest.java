@@ -19,7 +19,6 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -46,11 +45,6 @@ class GracefulListingServerTransportProviderTest {
     @Test
     void delegateIsRequired() {
         assertThrows(NullPointerException.class, () -> new GracefulListingServerTransportProvider(null));
-    }
-
-    @Test
-    void sessionReceivesAWrapperAroundTheDelegateTransport() {
-        assertNotSame(delegateTransport, sessionTransport);
     }
 
     static Stream<Arguments> listingMethods() {

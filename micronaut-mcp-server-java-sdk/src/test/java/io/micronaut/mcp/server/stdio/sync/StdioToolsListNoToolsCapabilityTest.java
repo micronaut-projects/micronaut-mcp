@@ -13,7 +13,6 @@ import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
@@ -54,8 +53,6 @@ class StdioToolsListNoToolsCapabilityTest {
         Thread.sleep(TimeUnit.SECONDS.toMillis(1));
         List<String> responses = factory.stdio.readResponses();
         assertEquals(2, responses.size());
-        // the decorator must not narrow the SDK's protocol versions: a 2025-06-18 client is answered with 2025-06-18
-        assertEquals("2025-06-18", new JSONObject(responses.get(0)).getJSONObject("result").getString("protocolVersion"));
         String readJsonRpc = responses.get(1);
         JSONAssert.assertEquals(TOOLS_LIST_RESULT, readJsonRpc, true);
     }

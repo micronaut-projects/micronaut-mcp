@@ -78,7 +78,13 @@ final class GracefulListingServerTransportProvider implements McpServerTransport
         return delegate.protocolVersions();
     }
 
-    private record GracefulListingServerTransport(McpServerTransport delegate) implements McpServerTransport {
+    private static final class GracefulListingServerTransport implements McpServerTransport {
+
+        private final McpServerTransport delegate;
+
+        private GracefulListingServerTransport(McpServerTransport delegate) {
+            this.delegate = delegate;
+        }
 
         @Override
         public Mono<Void> sendMessage(McpSchema.JSONRPCMessage message) {

@@ -11,7 +11,7 @@ import io.micronaut.mcp.server.utils.Stdio;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
-import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
+import io.micronaut.mcp.server.stdio.StdioTestTransportProviders;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import jakarta.annotation.PreDestroy;
@@ -144,7 +144,7 @@ class AsyncResourcesTest {
         @Prototype
         @Replaces(McpServerTransportProvider.class)
         McpServerTransportProvider stdioServerTransportProviderReplacement(McpJsonMapper mcpJsonMapper) {
-            return new StdioServerTransportProvider(mcpJsonMapper, stdio.serverStdin, stdio.serverStdout);
+            return StdioTestTransportProviders.gracefulListing(mcpJsonMapper, stdio);
         }
 
         @PreDestroy

@@ -10,7 +10,7 @@ import io.micronaut.mcp.server.utils.Stdio;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
-import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
+import io.micronaut.mcp.server.stdio.StdioTestTransportProviders;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import jakarta.annotation.PreDestroy;
@@ -83,7 +83,7 @@ class AsyncPromptsTest {
         @Prototype
         @Replaces(McpServerTransportProvider.class)
         McpServerTransportProvider stdioServerTransportProviderReplacement(McpJsonMapper jsonMapper) {
-            return new StdioServerTransportProvider(jsonMapper, stdio.serverStdin, stdio.serverStdout);
+            return StdioTestTransportProviders.gracefulListing(jsonMapper, stdio);
         }
 
         @PreDestroy
