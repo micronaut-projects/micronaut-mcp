@@ -24,8 +24,8 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
-import io.micronaut.json.JsonMapper;
 import io.micronaut.json.tree.JsonNode;
+import io.micronaut.json.JsonMapper;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
@@ -70,7 +70,8 @@ final class McpBlockingController extends McpController {
     // The route returns a JSON-RPC response or an error body, so the response body type is a wildcard
     @SuppressWarnings({"java:S3740", "java:S1452"})
     @Post
-    CompletableFuture<@Nullable HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable JsonNode body) {
+    CompletableFuture<@Nullable HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable McpRequestBody requestBody) {
+        JsonNode body = requestBody != null ? requestBody.value() : null;
         if (streamingPolicy.mayStream(request, body)) {
             // The server writes a response only once the route returns, so a primitive that may stream runs on another
             // thread of the blocking executor, and the response completes with its first notification or its result
