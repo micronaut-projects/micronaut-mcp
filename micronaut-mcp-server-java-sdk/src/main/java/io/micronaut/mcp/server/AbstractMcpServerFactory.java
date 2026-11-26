@@ -31,6 +31,8 @@ import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -48,6 +50,8 @@ import java.util.List;
  */
 @Internal
 public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractMcpServerFactory.class);
 
     /**
      * Retrieves a list of tools from the provided {@link ToolRegistry}.
@@ -193,7 +197,12 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
         // ServerCapabilitiesFactory decides which capabilities the server advertises
         McpSchema.ServerCapabilities capabilities = capabilitiesProvider.get();
         if (!sendsNotifications()) {
-            capabilities = withoutNotifications(capabilities);
+            McpSchema.ServerCapabilities advertised = withoutNotifications(capabilities);
+            if (!advertised.equals(capabilities)) {
+                LOG.debug("The server cannot send notifications outside the response to a request, so it advertises listChanged and subscribe as false. Configured capabilities: {}",
+                    capabilities);
+            }
+            capabilities = advertised;
         }
         return createMcpServerSpec(transport, jsonMapper, jsonSchemaValidator, configuration, capabilities, allTools, allCompletions, allPrompts, allResources, allResourceTemplates);
     }
