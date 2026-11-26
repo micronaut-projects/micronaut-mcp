@@ -10,7 +10,6 @@ dependencies {
     testImplementation(mn.micronaut.http.server.netty)
     testImplementation(mn.micronaut.http.client)
     testImplementation(libs.jsonassert)
-}
-dependencies {
     testImplementation(mnTest.micronaut.test.junit5)
+    testImplementation(mnTest.junit.jupiter.params)
 }

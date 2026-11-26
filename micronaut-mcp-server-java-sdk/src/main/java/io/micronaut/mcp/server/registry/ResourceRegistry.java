@@ -50,6 +50,8 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     McpStatelessServerFeatures.AsyncResourceSpecification> {
 
     private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.ReadResourceRequest.class};
+    private static final String SIZE_PROPERTY = "size";
+    private static final long UNKNOWN_SIZE = -1;
     private final ArgumentBinderRegistry<McpSchema.ReadResourceRequest> argumentBinderRegistry;
 
     public ResourceRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
@@ -66,7 +68,7 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpServerFeatures.SyncResourceSpecification> getSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpServerFeatures.SyncResourceSpecification(
                 toResource(m.method()),
                 syncHandler(m)
@@ -76,7 +78,7 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpServerFeatures.AsyncResourceSpecification> getAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpServerFeatures.AsyncResourceSpecification(
                 toResource(m.method()),
                 asyncHandler(m)
@@ -86,7 +88,7 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpStatelessServerFeatures.SyncResourceSpecification> getStatelessSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpStatelessServerFeatures.SyncResourceSpecification(
                 toResource(m.method()),
                 statelessSyncHandler(m)
@@ -96,7 +98,7 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpStatelessServerFeatures.AsyncResourceSpecification> getStatelessAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpStatelessServerFeatures.AsyncResourceSpecification(
                 toResource(m.method()),
                 statelessAsyncHandler(m)
@@ -107,39 +109,47 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     private <B> BiFunction<McpSyncServerExchange, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> syncHandler(
         Method<B> m
     ) {
-        return (exchange, request) -> invokeAndMap(m, exchange, request);
+        String name = observedName(m);
+        return (exchange, request) -> invokeAndMap(m, name, exchange, request);
     }
 
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> asyncHandler(
         Method<B> m
     ) {
-        return (exchange, request) -> invokeAndMapAsync(m, exchange, request);
+        String name = observedName(m);
+        return (exchange, request) -> invokeAndMapAsync(m, name, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> statelessSyncHandler(
         Method<B> m
     ) {
-        return (ctx, request) -> invokeAndMap(m, ctx, request);
+        String name = observedName(m);
+        return (ctx, request) -> invokeAndMap(m, name, ctx, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> statelessAsyncHandler(
         Method<B> m
     ) {
-        return (ctx, request) -> invokeAndMapAsync(m, ctx, request);
+        String name = observedName(m);
+        return (ctx, request) -> invokeAndMapAsync(m, name, ctx, request);
     }
 
     private <B> McpSchema.ReadResourceResult invokeAndMap(Method<B> m,
+                                                          String name,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
-        return observed(McpSchema.METHOD_RESOURCES_READ, request.uri(), () -> m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
-            mcpTransportContext, result -> map(m, request, result), this::failWithMcpError));
+        return observed(McpSchema.METHOD_RESOURCES_READ, name,
+            () -> m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
+                mcpTransportContext, result -> map(m, request, result), e -> failWithMcpError(m, e)));
     }
 
     private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
+                                                                     String name,
                                                                      Object mcpTransportContext,
                                                                      McpSchema.ReadResourceRequest request) {
-        return observedAsync(McpSchema.METHOD_RESOURCES_READ, request.uri(), () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
-            result -> map(m, request, result), this::failWithMcpError));
+        return observedAsync(McpSchema.METHOD_RESOURCES_READ, name,
+            () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
+                result -> map(m, request, result), e -> failWithMcpError(m, e)));
     }
 
     private <B> McpSchema.ReadResourceResult map(Method<B> m, McpSchema.ReadResourceRequest request, @Nullable Object result) {
@@ -172,8 +182,8 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
         String title = method.stringValue(Resource.class, TITLE_PROPERTY).orElse(null);
         String description = method.stringValue(Resource.class, DESCRIPTION_PROPERTY).orElse(null);
         String mimeType = method.stringValue(Resource.class, MIME_TYPE_PROPERTY).orElse(Resource.DEFAULT_MIME_TYPE);
-        long size = method.longValue(Resource.class, "size").orElse(-1);
-        McpSchema.Annotations annotations = resourceAnnotations(method.getAnnotation(Resource.class));
+        long size = method.longValue(Resource.class, SIZE_PROPERTY).orElse(UNKNOWN_SIZE);
+        McpSchema.Annotations annotations = resourceAnnotations(method, Resource.class);
         return new McpSchema.Resource(uri, name, title, description, mimeType, size < 0 ? null : size, annotations, meta(method), icons(method));
     }
 }

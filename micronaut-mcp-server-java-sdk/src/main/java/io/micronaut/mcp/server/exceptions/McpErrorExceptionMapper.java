@@ -18,7 +18,13 @@ package io.micronaut.mcp.server.exceptions;
 import io.modelcontextprotocol.spec.McpError;
 
 /**
- * ApI to define mappers from exceptions to {@link McpError}.
+ * API to define mappers from exceptions to {@link McpError}, the JSON-RPC error sent to the client.
+ * <p>
+ * For a tool, an exception that a mapper maps is answered with the protocol error the mapper returns. The model does not
+ * see a protocol error, whereas it sees the message of an exception that no mapper maps, which is answered with a tool
+ * execution error, a result whose {@code isError} is {@code true}. The built-in mappers of arguments that cannot be bound
+ * or are not valid do not follow this rule: the message of their error is sent as a tool execution error.
+ *
  * @param <T> Exception to Map
  */
 public interface McpErrorExceptionMapper<T extends Throwable> {
