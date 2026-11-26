@@ -49,6 +49,9 @@ abstract class AbstractMcpClientConnectionConfigurationProperties implements Mcp
     }
 
     /**
+     * How long to wait for the server to answer the initialization. Only used by the LangChain4j client, whose default
+     * is 30 seconds.
+     *
      * @param initializationTimeout How long to wait for the server to answer the initialization
      */
     public void setInitializationTimeout(@Nullable Duration initializationTimeout) {
@@ -61,7 +64,10 @@ abstract class AbstractMcpClientConnectionConfigurationProperties implements Mcp
     }
 
     /**
-     * @param requestTimeout How long to wait for the server to answer a request, such as a tool call
+     * How long to wait for the server to answer an MCP request, such as a tool call or a ping. Only used by the
+     * LangChain4j client, whose defaults are 60 seconds for requests and 10 seconds for pings.
+     *
+     * @param requestTimeout How long to wait for the server to answer a request
      */
     public void setRequestTimeout(@Nullable Duration requestTimeout) {
         this.requestTimeout = requestTimeout;
@@ -74,7 +80,7 @@ abstract class AbstractMcpClientConnectionConfigurationProperties implements Mcp
 
     /**
      * Whether the LangChain4j client checks periodically that the server is reachable, and reconnects when it is not.
-     * Default value {@code true}.
+     * Default value `true`.
      *
      * @param autoHealthCheck Whether to check the server periodically
      */

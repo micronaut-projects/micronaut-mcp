@@ -28,6 +28,8 @@ import java.time.Duration;
 public interface McpClientConnectionConfiguration extends Named {
 
     /**
+     * Only used by the LangChain4j client.
+     *
      * @return How long to wait for the server to answer the initialization, or {@code null} for the client default
      */
     default @Nullable Duration getInitializationTimeout() {
@@ -35,6 +37,9 @@ public interface McpClientConnectionConfiguration extends Named {
     }
 
     /**
+     * Only used by the LangChain4j client. For an HTTP connection, {@link McpClientHttpConfiguration#getTimeout()} is
+     * the timeout of the HTTP transport.
+     *
      * @return How long to wait for the server to answer a request, such as a tool call, or {@code null} for the client default
      */
     default @Nullable Duration getRequestTimeout() {
@@ -47,7 +52,6 @@ public interface McpClientConnectionConfiguration extends Named {
      * it for servers that are slow to start or that cannot run twice.
      *
      * @return Whether the client checks the server periodically
-     * @since 2.2.0
      */
     default boolean isAutoHealthCheck() {
         return true;

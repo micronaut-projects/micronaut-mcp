@@ -20,19 +20,19 @@ import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.McpClientListener;
 import dev.langchain4j.mcp.client.logging.McpLogMessageHandler;
 import dev.langchain4j.mcp.client.transport.McpTransport;
-import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -53,14 +53,16 @@ final class McpClientFactory {
             .key(configuration.getName())
             .autoHealthCheck(configuration.isAutoHealthCheck())
             .addListeners(listeners);
-        if (configuration.getInitializationTimeout() != null) {
-            builder.initializationTimeout(configuration.getInitializationTimeout());
+        Duration initializationTimeout = configuration.getInitializationTimeout();
+        if (initializationTimeout != null) {
+            builder.initializationTimeout(initializationTimeout);
         }
-        if (configuration.getRequestTimeout() != null) {
-            builder.toolExecutionTimeout(configuration.getRequestTimeout())
-                .resourcesTimeout(configuration.getRequestTimeout())
-                .promptsTimeout(configuration.getRequestTimeout())
-                .pingTimeout(configuration.getRequestTimeout());
+        Duration requestTimeout = configuration.getRequestTimeout();
+        if (requestTimeout != null) {
+            builder.toolExecutionTimeout(requestTimeout)
+                .resourcesTimeout(requestTimeout)
+                .promptsTimeout(requestTimeout)
+                .pingTimeout(requestTimeout);
         }
         if (logMessageHandler != null) {
             builder.logHandler(logMessageHandler);
@@ -71,21 +73,18 @@ final class McpClientFactory {
     @EachBean(McpClientConnectionConfiguration.class)
     @Bean(preDestroy = "close")
     @Singleton
-    McpClient createMcpClient(McpClientConnectionConfiguration configuration, BeanContext beanContext) {
-        // The client owns its transport, which it closes, and a new one is created for each attempt to create the
-        // client, so that a failed attempt does not leave a server process running
-        DefaultMcpClient.Builder builder = beanContext.getBean(DefaultMcpClient.Builder.class, Qualifiers.byName(configuration.getName()));
-        McpTransport transport = transport(configuration, beanContext);
+    McpClient createMcpClient(McpClientConnectionConfiguration configuration,
+                              @Parameter DefaultMcpClient.Builder builder,
+                              @Parameter McpTransport transport) {
+        // The client owns its transport, which it closes. The builder and the transport are prototypes, so each attempt
+        // to create the client gets a new transport, and a failed attempt must close it so that it does not leave a
+        // server process running
         try {
             return builder.transport(transport).build();
         } catch (RuntimeException e) {
             close(transport, configuration);
             throw e;
         }
-    }
-
-    private static McpTransport transport(McpClientConnectionConfiguration configuration, BeanContext beanContext) {
-        return beanContext.getBean(McpTransport.class, Qualifiers.byName(configuration.getName()));
     }
 
     private static void close(McpTransport transport, McpClientConnectionConfiguration configuration) {

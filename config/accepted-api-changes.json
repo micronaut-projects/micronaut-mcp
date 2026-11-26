@@ -1598,5 +1598,10 @@
     "type": "io.micronaut.mcp.client.javasdk.$McpClientHttpFactory$TransportBuilder0$Definition",
     "member": "Implemented interface io.micronaut.inject.BeanDefinitionReference",
     "reason": "Generated bean definition of the internal McpClientHttpFactory, replaced by McpClientFactory with named connections"
+  },
+  {
+    "type": "io.micronaut.mcp.client.langchain4j.$McpClientFactory$CreateMcpClient1$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.$McpClientFactory$CreateMcpClient1$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of the internal client factory, whose client now receives its builder and transport as parameters"
   }
 ]
