@@ -159,9 +159,19 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         if (exceptionMapper != null) {
             return mapException(exceptionMapper, throwable);
         }
-        // The SDK requires a message
-        String message = throwable.getMessage() != null && !throwable.getMessage().isBlank() ? throwable.getMessage() : throwable.getClass().getSimpleName();
-        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(message).build();
+        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(errorMessage(throwable)).build();
+    }
+
+    /**
+     * The message sent to the client for a failure that no mapper handles. The SDK requires a message, so a failure
+     * without one is described by the simple name of its class.
+     *
+     * @param throwable The failure
+     * @return The message of the failure, or the simple name of its class when it has no message
+     */
+    static String errorMessage(Throwable throwable) {
+        String message = throwable.getMessage();
+        return message != null && !message.isBlank() ? message : throwable.getClass().getSimpleName();
     }
 
     /**

@@ -224,13 +224,12 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         } else if (mapper != null) {
             throw mapException(mapper, error);
         } else {
-            message = error.getMessage() != null && !error.getMessage().isBlank() ? error.getMessage() : error.getClass().getSimpleName();
+            message = errorMessage(error);
             if (LOG.isWarnEnabled()) {
                 LOG.warn("Tool {} failed: {}", toolName(m.method()), message, error);
             }
         }
         return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
-
     }
 
     private <B> McpSchema.CallToolResult toCallToolResult(Method<B> m, boolean structuredOutput, @Nullable Object result) {
