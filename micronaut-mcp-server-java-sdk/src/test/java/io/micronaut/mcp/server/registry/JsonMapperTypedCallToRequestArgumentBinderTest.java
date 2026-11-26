@@ -12,6 +12,7 @@ import jakarta.inject.Inject;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -51,6 +52,15 @@ class JsonMapperTypedCallToRequestArgumentBinderTest {
         ArgumentBinder.BindingResult<Order> result = bind(arguments);
         assertFalse(result.isPresentAndSatisfied());
         assertEquals(1, result.getConversionErrors().size());
+    }
+
+    @Test
+    void anIntegerOutOfTheRangeOfAnIntIsAConversionError() {
+        for (Object quantity : List.of(4294967297L, 4294967295L, 2147483648L, -4294967296L, new BigInteger("99999999999999999999999999"), 1e10)) {
+            ArgumentBinder.BindingResult<Order> result = bind(Map.of("customer", Map.of("name", "Ada"),
+                "lines", List.of(Map.of("product", "pen", "quantity", quantity))));
+            assertFalse(result.isPresentAndSatisfied(), () -> quantity + " is out of the range of an int");
+        }
     }
 
     @Test
