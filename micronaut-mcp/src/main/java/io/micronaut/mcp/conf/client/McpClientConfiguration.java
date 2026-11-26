@@ -26,14 +26,30 @@ public interface McpClientConfiguration extends Toggleable {
     String PREFIX = "micronaut.mcp.client";
     String PROPERTY_ENABLED = PREFIX + ".enabled";
     boolean DEFAULT_ENABLED = true;
+    /**
+     * @deprecated The property has no effect, see {@link #getTransport()}.
+     */
+    @Deprecated(since = "2.2.0", forRemoval = true)
     String PROPERTY_TRANSPORT = PREFIX + ".transport";
+    /**
+     * @deprecated The property {@link #PROPERTY_TRANSPORT} has no effect, see {@link #getTransport()}.
+     */
+    @Deprecated(since = "2.2.0", forRemoval = true)
     String TRANSPORT_STDIO = "STDIO";
+    /**
+     * @deprecated The property {@link #PROPERTY_TRANSPORT} has no effect, see {@link #getTransport()}.
+     */
+    @Deprecated(since = "2.2.0", forRemoval = true)
     String TRANSPORT_HTTP = "HTTP";
+    /**
+     * @deprecated The property {@link #PROPERTY_TRANSPORT} has no effect, see {@link #getTransport()}.
+     */
+    @Deprecated(since = "2.2.0", forRemoval = true)
     Transport DEFAULT_TRANSPORT = Transport.HTTP;
 
     /**
      * @return The MCP Transport.
-     * @deprecated The transport of each connection is set by where it is declared, {@value McpClientHttpConfiguration#PREFIX}
+     * @deprecated The property has no effect. The transport of each connection is set by where it is declared, {@value McpClientHttpConfiguration#PREFIX}
      * or {@value McpClientStdioConfiguration#PREFIX}, and connections of both transports can be used together.
      */
     @Deprecated(since = "2.2.0", forRemoval = true)

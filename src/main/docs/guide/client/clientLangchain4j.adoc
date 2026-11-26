@@ -27,6 +27,12 @@ micronaut:
           auto-health-check: false
 ----
 
+Each connection needs a name that is unique across `micronaut.mcp.client.http` and `micronaut.mcp.client.stdio`. When two connections have the same name, the creation of the `McpToolProvider` bean and of the health indicator fails.
+
+For an HTTP connection, `timeout` is the timeout of the HTTP transport, and `request-timeout` is how long the client waits for the server to answer an MCP request, such as a tool call.
+
+NOTE: Keys of `headers` and `environment` keep their case when set in a configuration file. When they are set with environment variables, such as `MICRONAUT_MCP_CLIENT_STDIO_FILES_ENVIRONMENT_DEBUG`, they are lower-cased, so the server process receives `debug` rather than `DEBUG`. Set keys whose case matters in a configuration file.
+
 NOTE: The process of a STDIO connection inherits the environment of the application, in addition to its `environment`. Applications that keep secrets in their environment make them available to that process, so only start servers you trust.
 
 For each connection there is a `dev.langchain4j.mcp.client.McpClient` bean, qualified by the name of the connection, which is also the key of the client. A `dev.langchain4j.mcp.McpToolProvider` bean provides the tools of every client to LangChain4j AI services, and a `McpToolProvider` bean qualified by the name of a connection provides only the tools of that client.
@@ -35,19 +41,25 @@ Declare beans of these types to customize the clients and the tool providers:
 
 - `io.micronaut.mcp.client.langchain4j.McpToolFilter` selects the tools that the tool providers provide.
 - `io.micronaut.mcp.client.langchain4j.McpToolNameMapper` names them, for example to prefix them with the client key so that the tools of different servers cannot clash.
-- `dev.langchain4j.mcp.client.McpClientListener` and `dev.langchain4j.mcp.client.logging.McpLogMessageHandler` are registered with every client.
+- Every `dev.langchain4j.mcp.client.McpClientListener` bean, and a `dev.langchain4j.mcp.client.logging.McpLogMessageHandler` bean, are registered with every client.
+
+The tool providers only provide the tools of the connections. An `McpClient` bean that your application declares itself is not part of them.
 
 With Micronaut Management, the `mcp` health indicator pings every server concurrently, and reports each connection whose server cannot be reached, or whose client cannot be created, as down. The servers that do not answer within `endpoints.health.mcp.timeout` (default `10s`) are reported down. Disable the indicator with `endpoints.health.mcp.enabled=false`.
 
-A client is created when it is first used, which initializes the connection to its server. The `McpToolProvider` beans skip the servers that cannot be reached, so an unreachable server does not prevent the application from starting, and creating their client is attempted again the next time the tools are provided. The `request-timeout` of a connection also applies to the pings of its client.
+WARNING: When any server cannot be reached, the `mcp` indicator is down, so the health endpoint answers `503 Service Unavailable`. If a probe, such as a Kubernetes liveness or readiness probe, uses the health endpoint, a server that the application can do without makes the probe fail. The indicator also pings the `embeddedServer` connection of an application that is itself an MCP server, without credentials, so it is down when that endpoint requires authentication. In these cases, disable the indicator.
+
+A client is created when it is first used, which initializes the connection to its server. The `McpToolProvider` beans skip the servers that cannot be reached, so an unreachable server does not prevent the application from starting, and creating their client is attempted again the next time the tools are provided. Each attempt waits up to the `initialization-timeout` of the connection, so while a server cannot be reached every request that provides the tools takes that much longer. Set a short `initialization-timeout` for servers that may be unavailable. The `request-timeout` of a connection also applies to the pings of its client.
 
 By default, each client checks periodically that its server is reachable, and reconnects when it is not. Disable it for a connection with `auto-health-check: false`. For STDIO connections, a reconnection starts a new server process, so consider disabling it for servers that are slow to start, such as those started with `npx`, or that cannot run twice.
 
-The `langchain4j.mcp.client.transport.stdio.commands` property is deprecated: it declares a STDIO connection named `stdio`.
+The `langchain4j.mcp.client.transport.stdio.commands` property is deprecated: it declares a STDIO connection named `stdio`, whatever the value of `micronaut.mcp.client.transport`.
+
+The `micronaut.mcp.client.transport` property is deprecated and has no effect: the transport of a connection is set by where it is declared. In particular, `micronaut.mcp.client.transport: STDIO` no longer removes the `embeddedServer` connection of an application that is itself an HTTP MCP server, so the tool providers provide the application's own tools. To leave them out, declare an `McpToolFilter` that rejects the tools of the client whose key is `embeddedServer`.
 
 If you are building an MCP Server, you can test it by injecting a bean of type `dev.langchain4j.mcp.client.McpClient` in your tests.
 The MCP Client pointing to your MCP Server has a name qualifier with value `embeddedServer`.
 
 To customize client creation further, define a
 https://docs.micronaut.io/latest/api/io/micronaut/context/event/BeanCreatedEventListener.html[BeanCreatedEventListener]
-for `DefaultMcpClient.Builder`, `StreamableHttpMcpTransport.Builder` or `StdioMcpTransport.Builder`.
+for `DefaultMcpClient.Builder`, `StreamableHttpMcpTransport.Builder` or `StdioMcpTransport.Builder`. A `BeanCreatedEventListener` for `McpToolProvider.Builder` customizes the tool providers, both the one of every client and the one of each connection.
