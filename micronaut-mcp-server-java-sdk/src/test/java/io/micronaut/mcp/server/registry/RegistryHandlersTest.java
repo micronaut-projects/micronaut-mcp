@@ -138,6 +138,7 @@ class RegistryHandlersTest {
     void resourceTemplateVariablesArePercentDecoded() {
         McpSchema.ReadResourceRequest request = new McpSchema.ReadResourceRequest("handlers://pages/A%20Tale");
         McpSchema.ReadResourceRequest malformed = new McpSchema.ReadResourceRequest("handlers://pages/%zz");
+        McpSchema.ReadResourceRequest unmatched = new McpSchema.ReadResourceRequest("handlers://pages/C++");
         String template = "handlers://pages/{page}";
         var sync = spec(resourceTemplateRegistry.getSyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
         var async = spec(resourceTemplateRegistry.getAsyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
@@ -153,6 +154,12 @@ class RegistryHandlersTest {
         assertInvalidParams(() -> async.apply(ASYNC_EXCHANGE, malformed).block());
         assertInvalidParams(() -> statelessSync.apply(CONTEXT, malformed));
         assertInvalidParams(() -> statelessAsync.apply(CONTEXT, malformed).block());
+        // Not a missing argument: the URI does not match the template
+        String doesNotMatch = "The URI does not match the URI template " + template;
+        assertTrue(assertInvalidParams(() -> sync.apply(SYNC_EXCHANGE, unmatched)).startsWith(doesNotMatch));
+        assertTrue(assertInvalidParams(() -> async.apply(ASYNC_EXCHANGE, unmatched).block()).startsWith(doesNotMatch));
+        assertTrue(assertInvalidParams(() -> statelessSync.apply(CONTEXT, unmatched)).startsWith(doesNotMatch));
+        assertTrue(assertInvalidParams(() -> statelessAsync.apply(CONTEXT, unmatched).block()).startsWith(doesNotMatch));
     }
 
     @Test
@@ -178,9 +185,10 @@ class RegistryHandlersTest {
         return specs.stream().filter(s -> resourceTemplate.apply(s).uriTemplate().equals(uriTemplate)).findFirst().orElseThrow();
     }
 
-    private static void assertInvalidParams(Executable read) {
+    private static String assertInvalidParams(Executable read) {
         McpError error = assertThrows(McpError.class, read);
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
+        return error.getMessage();
     }
 
     private static String text(McpSchema.CallToolResult result) {

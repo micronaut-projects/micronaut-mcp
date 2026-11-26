@@ -26,7 +26,6 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -50,8 +49,8 @@ record UriTemplateReadResourceRequest(
      * @param uriTemplate URI template
      * @param request Read Resource Request
      * @return the request with the matched variables
-     * @throws McpError An invalid params error when a variable value is not a valid percent-encoded UTF-8 value, or when
-     * the value of a simple variable contains a {@code /} once decoded
+     * @throws McpError An invalid params error when the URI does not match the template, when a variable value is not a
+     * valid percent-encoded UTF-8 value, or when the value of a simple variable contains a {@code /} once decoded
      */
     static UriTemplateReadResourceRequest of(Template uriTemplate, McpSchema.ReadResourceRequest request) {
         return new UriTemplateReadResourceRequest(arguments(uriTemplate, request.uri()), request);
@@ -62,6 +61,7 @@ record UriTemplateReadResourceRequest(
      * @param uriTemplate URI template
      * @param uri Uri
      * @return the variable values
+     * @throws McpError An invalid params error, see {@link #of(Template, McpSchema.ReadResourceRequest)}
      */
     static Map<String, Object> arguments(String uriTemplate, String uri) {
         return arguments(Template.compile(uriTemplate), uri);
@@ -70,7 +70,10 @@ record UriTemplateReadResourceRequest(
     private static Map<String, Object> arguments(Template uriTemplate, String uri) {
         Optional<UriMatchInfo> matchOptional = uriTemplate.matchTemplate().match(uri);
         if (matchOptional.isEmpty()) {
-            return Collections.emptyMap();
+            // The SDK routes the request with a laxer matcher, which accepts characters such as + that a simple
+            // variable does not match. Binding nothing would report the variables as missing, or bind null.
+            throw invalidParams("The URI does not match the URI template " + uriTemplate.matchTemplate()
+                + ": percent-encode reserved characters such as +, ;, &, !, ( and ) in variable values, for example + as %2B");
         }
         Map<String, Object> variables = matchOptional.get().getVariableValues();
         // Copied only when a value contains an escape
@@ -95,7 +98,7 @@ record UriTemplateReadResourceRequest(
     private static String decode(Template uriTemplate, String name, String value) {
         String decoded = percentDecode(name, value);
         if (decoded.indexOf('/') >= 0 && !uriTemplate.reservedVariables().contains(name)) {
-            throw invalidParams("The value of URI template variable " + name + " must not contain an encoded /");
+            throw invalidParams("The value of URI template variable '" + name + "' must not contain an encoded / (%2F)");
         }
         return decoded;
     }
@@ -158,7 +161,8 @@ record UriTemplateReadResourceRequest(
     }
 
     private static McpError malformed(String name) {
-        return invalidParams("Invalid percent-encoding in the value of URI template variable " + name);
+        return invalidParams("Invalid percent-encoding in the value of URI template variable '" + name
+            + "': escapes must be %XX hexadecimal pairs encoding UTF-8");
     }
 
     private static McpError invalidParams(String message) {

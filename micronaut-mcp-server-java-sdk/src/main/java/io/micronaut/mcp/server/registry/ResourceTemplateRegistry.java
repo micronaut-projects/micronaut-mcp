@@ -156,7 +156,8 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
 
     private static String uriTemplateValue(ExecutableMethod<?, ?> method) {
         return method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY)
-            .orElseThrow(() -> new ConfigurationException("Missing required member uriTemplate in @ResourceTemplate annotation"));
+            .orElseThrow(() -> new ConfigurationException("Missing required member uriTemplate in @ResourceTemplate on method "
+                + method.getDeclaringType().getSimpleName() + "." + method.getDescription(true)));
     }
 
     private static String mimeType(ExecutableMethod<?, ?> method) {

@@ -41,7 +41,8 @@ class UriTemplateReadResourceRequestTest {
             "book://book/\uD800%20"}) {
             McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("book://book/{title}", uri));
             assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
-            assertEquals("Invalid percent-encoding in the value of URI template variable title", error.getMessage());
+            assertEquals("Invalid percent-encoding in the value of URI template variable 'title': escapes must be %XX hexadecimal pairs encoding UTF-8",
+                error.getMessage());
         }
     }
 
@@ -50,7 +51,7 @@ class UriTemplateReadResourceRequestTest {
         McpError error = assertThrows(McpError.class,
             () -> UriTemplateReadResourceRequest.arguments("file:///{path}", "file:///..%2F..%2Fetc%2Fpasswd"));
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
-        assertEquals("The value of URI template variable path must not contain an encoded /", error.getMessage());
+        assertEquals("The value of URI template variable 'path' must not contain an encoded / (%2F)", error.getMessage());
     }
 
     @Test
@@ -70,8 +71,17 @@ class UriTemplateReadResourceRequestTest {
     void aLiteralPlusIsNotDecodedAsASpace() {
         assertEquals(Map.of("path", "C++ notes.txt"),
             UriTemplateReadResourceRequest.arguments("file:///{+path}", "file:///C++%20notes.txt"));
-        // A simple variable does not match a literal +, so clients encode it as %2B
-        assertEquals(Map.of(), UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/C++%20notes"));
+    }
+
+    @Test
+    void aUriThatDoesNotMatchTheTemplateIsInvalidParams() {
+        // The SDK routes these URIs to the template, but a simple variable does not match a literal +, ;, &, !, ( or )
+        for (String uri : new String[] {"book://book/C++%20notes", "book://book/a;b", "book://book/a&b", "book://book/a!b", "book://book/a(b)"}) {
+            McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("book://book/{title}", uri));
+            assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
+            assertEquals("The URI does not match the URI template book://book/{title}: percent-encode reserved characters such as +, ;, &, !, ( and ) in variable values, for example + as %2B",
+                error.getMessage());
+        }
     }
 
     @Test
@@ -86,6 +96,7 @@ class UriTemplateReadResourceRequestTest {
         assertEquals(Map.of("round", "14"), first.arguments());
         assertSame(round14, first.request());
         assertEquals(Map.of("round", "15"), second.arguments());
-        assertEquals(Map.of(), UriTemplateReadResourceRequest.of(template, new McpSchema.ReadResourceRequest("other://x")).arguments());
+        McpSchema.ReadResourceRequest other = new McpSchema.ReadResourceRequest("other://x");
+        assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.of(template, other));
     }
 }
