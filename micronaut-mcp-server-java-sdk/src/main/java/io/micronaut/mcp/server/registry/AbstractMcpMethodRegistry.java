@@ -75,9 +75,9 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
     private final Map<Class<? extends Throwable>, Optional<McpErrorExceptionMapper<? extends Throwable>>> classToExceptionMapper = new ConcurrentHashMap<>();
     /**
-     * The unmapped exception types already logged with their stack trace.
+     * The methods and unmapped exception types already logged with a stack trace.
      */
-    private final Set<Class<? extends Throwable>> loggedUnmappedExceptionTypes = ConcurrentHashMap.newKeySet();
+    private final Set<Map.Entry<ExecutableMethod<?, ?>, Class<? extends Throwable>>> loggedUnmappedExceptions = ConcurrentHashMap.newKeySet();
 
     AbstractMcpMethodRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
                               BeanContext beanContext) {
@@ -140,13 +140,17 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
         // The SDK logs only exceptions that are not an McpError, so an unmapped exception is logged here
         if (LOG.isWarnEnabled()) {
-            // The stack trace is logged once per exception type, so a method that keeps failing does not flood the log
-            if (loggedUnmappedExceptionTypes.add(ex.getClass())) {
+            // The stack trace is logged once per method and exception type, so a method that keeps failing does not flood
+            // the log, and a failure of one method does not hide the stack trace of another
+            if (loggedUnmappedExceptions.add(Map.entry(method, ex.getClass()))) {
                 LOG.warn("MCP method {}#{} threw an exception that no McpErrorExceptionMapper maps, so it is returned as an internal error",
                     method.getDeclaringType().getName(), method.getMethodName(), ex);
             } else {
                 LOG.warn("MCP method {}#{} threw {} again, returned as an internal error", method.getDeclaringType().getName(),
                     method.getMethodName(), ex.getClass().getName());
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Repeated exception of MCP method {}#{}", method.getDeclaringType().getName(), method.getMethodName(), ex);
+                }
             }
         }
         return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(internalErrorMessage(ex)).build();
