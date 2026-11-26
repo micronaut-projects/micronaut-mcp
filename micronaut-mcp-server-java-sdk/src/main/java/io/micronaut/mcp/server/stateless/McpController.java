@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
+import java.math.BigInteger;
 import java.util.Map;
 
 /**
@@ -85,7 +85,11 @@ final class McpController {
 
     @SuppressWarnings("java:S3740")
     @Post
-    public Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body JsonNode body) {
+    public Mono<HttpResponse<?>> post(HttpRequest<?> request, @Body McpRequestBody body) {
+        return handlePost(request, body.value());
+    }
+
+    Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, JsonNode body) {
         McpSchema.JSONRPCMessage jsonRpcMessage;
         try {
             jsonRpcMessage = jsonRpcMessage(body);
@@ -189,6 +193,9 @@ final class McpController {
             return params;
         }
         try {
+            if (jsonMapper.getStreamConfig().useBigDecimalForFloats()) {
+                return jsonMapper.readValue(jsonMapper.writeValueAsBytes(params), Object.class);
+            }
             return jsonMapper.readValueFromTree(params, Object.class);
         } catch (IOException _) {
             throw new InvalidRequestException(UNREADABLE_PARAMS);
@@ -204,6 +211,9 @@ final class McpController {
             if (number instanceof Integer || number instanceof Long) {
                 return number;
             }
+            if (number instanceof BigInteger integer && integer.bitLength() < Long.SIZE) {
+                return integer.longValue();
+            }
         }
         // MCP request ids are strings or integers
         return null;
@@ -216,12 +226,11 @@ final class McpController {
     }
 
     // JSON-RPC answers a message that is not a valid request with a null id, which the SDK response type does not allow
-    private static Map<String, Object> invalidRequest(String message) {
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put(KEY_JSONRPC, McpSchema.JSONRPC_VERSION);
-        response.put(KEY_ID, null);
-        response.put("error", Map.of("code", McpSchema.ErrorCodes.INVALID_REQUEST, "message", message));
-        return response;
+    private static JsonNode invalidRequest(String message) {
+        return JsonNode.createObjectNode(Map.of(
+            KEY_JSONRPC, JsonNode.createStringNode(McpSchema.JSONRPC_VERSION),
+            KEY_ID, JsonNode.nullNode(),
+            "error", JsonNode.from(Map.of("code", McpSchema.ErrorCodes.INVALID_REQUEST, "message", message))));
     }
 
     @NonNull
