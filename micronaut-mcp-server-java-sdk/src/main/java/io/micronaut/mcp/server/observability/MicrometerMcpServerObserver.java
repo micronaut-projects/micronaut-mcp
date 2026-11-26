@@ -38,12 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Internal
 @Requires(classes = MeterRegistry.class)
 @Requires(beans = MeterRegistry.class)
-@Requires(property = MicrometerMcpServerObserver.PROPERTY_ENABLED, notEquals = StringUtils.FALSE)
+@Requires(property = MetricsConfigurationProperties.PROPERTY_ENABLED, notEquals = StringUtils.FALSE)
 final class MicrometerMcpServerObserver implements McpServerObserver {
-    /**
-     * The property that disables the metrics.
-     */
-    static final String PROPERTY_ENABLED = "micronaut.mcp.server.metrics.enabled";
     static final String METER_NAME = "mcp.server.operation.duration";
     static final String TAG_METHOD = "mcp.method.name";
     static final String TAG_NAME = "mcp.primitive.name";

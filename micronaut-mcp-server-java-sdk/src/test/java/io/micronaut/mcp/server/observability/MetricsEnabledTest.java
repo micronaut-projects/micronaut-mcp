@@ -16,14 +16,24 @@ class MetricsEnabledTest {
         try (ApplicationContext context = ApplicationContext.run()) {
             assertTrue(context.containsBean(MeterRegistry.class));
             assertTrue(context.containsBean(MicrometerMcpServerObserver.class));
+            assertTrue(context.getBean(MetricsConfigurationProperties.class).isEnabled());
+        }
+    }
+
+    @Test
+    void disablingMicrometerDisablesTheMetrics() {
+        try (ApplicationContext context = ApplicationContext.run(Map.of("micronaut.metrics.enabled", false))) {
+            assertFalse(context.containsBean(MeterRegistry.class));
+            assertFalse(context.containsBean(MicrometerMcpServerObserver.class));
         }
     }
 
     @Test
     void metricsCanBeDisabled() {
-        try (ApplicationContext context = ApplicationContext.run(Map.of(MicrometerMcpServerObserver.PROPERTY_ENABLED, false))) {
+        try (ApplicationContext context = ApplicationContext.run(Map.of(MetricsConfigurationProperties.PROPERTY_ENABLED, false))) {
             assertTrue(context.containsBean(MeterRegistry.class));
             assertFalse(context.containsBean(MicrometerMcpServerObserver.class));
+            assertFalse(context.getBean(MetricsConfigurationProperties.class).isEnabled());
         }
     }
 }
