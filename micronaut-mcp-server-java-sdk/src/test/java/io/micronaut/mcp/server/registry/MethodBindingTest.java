@@ -123,13 +123,16 @@ class MethodBindingTest {
     }
 
     @Test
-    void aSingletonIsLookedUpOnce() {
+    void aSingletonIsLookedUpOnceUntilItIsDestroyed() {
         AbstractMcpMethodRegistry.Method<Greeter> method = method("contextual");
         Greeter first = method.bean();
-        // the bean context creates a new singleton, but the method keeps invoking the one it looked up
-        beanContext.destroyBean(Greeter.class);
-        assertNotSame(first, beanContext.getBean(Greeter.class));
         assertSame(first, method.bean());
+        // the registries forget the singleton when the bean context destroys it, so the replacement is invoked
+        beanContext.destroyBean(Greeter.class);
+        method.forget(beanContext.getBeanDefinition(Greeter.class));
+        Greeter second = method.bean();
+        assertNotSame(first, second);
+        assertSame(beanContext.getBean(Greeter.class), second);
     }
 
     @Test
@@ -139,6 +142,14 @@ class MethodBindingTest {
         Class<?>[] requestFirst = {String.class, McpTransportContext.class};
         assertThrows(IllegalArgumentException.class,
             () -> new AbstractMcpMethodRegistry.Method<>(beanContext, definition, executable, requestFirst, false));
+    }
+
+    @Test
+    void aParameterOfAnApplicationInterfaceReceivesACustomContextThatImplementsIt() {
+        AbstractMcpMethodRegistry.Method<Greeter> method = method("tenant");
+        assertEquals("acme", method.invoke(registry(null), "request", new TenantContext("acme"), "request"));
+        // another context is no tenant, so the parameter is left to its binder
+        assertThrows(UnsatisfiedArgumentException.class, () -> method.invoke(registry(null), "request", CONTEXT, "request"));
     }
 
     private AbstractMcpMethodRegistry.Method<Greeter> method(String name) {
@@ -187,6 +198,17 @@ class MethodBindingTest {
         }
     }
 
+    interface Tenant {
+        String tenantId();
+    }
+
+    record TenantContext(String tenantId) implements McpTransportContext, Tenant {
+        @Override
+        public @Nullable Object get(String key) {
+            return null;
+        }
+    }
+
     @Requires(property = "spec.name", value = "MethodBindingTest")
     @Singleton
     static class Greeter {
@@ -213,6 +235,11 @@ class MethodBindingTest {
         @Executable
         boolean contextual(Object context) {
             return context instanceof McpTransportContext;
+        }
+
+        @Executable
+        String tenant(Tenant tenant) {
+            return tenant.tenantId();
         }
     }
 }

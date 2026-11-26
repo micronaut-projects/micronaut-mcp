@@ -205,13 +205,13 @@ abstract class AbstractRequestContextStreamingTest {
         assertEquals(2, tool.size(), String.valueOf(tool));
         assertTrue(tool.get(0).contains("notifications/message"), tool.get(0));
         assertTrue(tool.get(1).contains("\"id\":30") && tool.get(1).contains("\"isError\":true") && tool.get(1).contains("import failed"), tool.get(1));
-        // A prompt that fails produces a JSON-RPC error, in a response that is already a stream with the status 200
+        // A prompt that fails produces a JSON-RPC error without the details of the exception, in a response that is already a stream with the status 200
         HttpResponse<String> response = post(ACCEPT_BOTH, """
             {"jsonrpc": "2.0", "id": 31, "method": "prompts/get", "params": {"name": "failingPrompt", "arguments": {}}}""");
         assertEquals(HttpStatus.OK, response.getStatus());
         List<String> prompt = data(response.body());
         assertEquals(2, prompt.size(), String.valueOf(prompt));
-        assertTrue(prompt.get(1).contains("\"id\":31") && prompt.get(1).contains("\"error\"") && prompt.get(1).contains("prompt failed"), prompt.get(1));
+        assertTrue(prompt.get(1).contains("\"id\":31") && prompt.get(1).contains("\"error\"") && prompt.get(1).contains("Internal error"), prompt.get(1));
     }
 
     @Test
