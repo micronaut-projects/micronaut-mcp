@@ -11,6 +11,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class UriTemplateReadResourceRequestTest {
     @Test
+    void aCompiledTemplateKeepsTheTemplateAsDeclared() {
+        // the declared template names the template in observations, whatever form the match template normalizes it to
+        for (String template : new String[] {"file:///{+path}", "search://items{?q,page}", "doc://{name}{#section}", "pgn://round/{round}/pgn"}) {
+            assertEquals(template, UriTemplateReadResourceRequest.Template.compile(template).uriTemplate());
+        }
+    }
+
+    @Test
     void arguments() {
         Map<String, Object> m = UriTemplateReadResourceRequest.arguments("pgn://round/{round}/pgn", "pgn://round/14/pgn");
         assertEquals(Map.of("round", "14"), m);
