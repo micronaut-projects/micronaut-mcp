@@ -44,7 +44,11 @@ class ToolRegistryInputSchemaTest {
     @Test
     void toolArgParameterIsANamedProperty() {
         McpStatelessServerFeatures.SyncToolSpecification spec = spec("named");
-        assertEquals(Set.of("move"), properties(spec.tool()).keySet());
+        assertEquals(Map.of("move", Map.of(
+            "title", "ToolRegistryInputSchemaTest.Move",
+            "type", "object",
+            "description", "The move to play",
+            "properties", Map.of("from", Map.of("type", "string"), "to", Map.of("type", "string")))), properties(spec.tool()));
         assertEquals(List.of("move"), spec.tool().inputSchema().get("required"));
         assertEquals("e2-e4", text(spec.callHandler().apply(CONTEXT,
             new McpSchema.CallToolRequest("named", Map.of("move", Map.of("from", "e2", "to", "e4"))))));

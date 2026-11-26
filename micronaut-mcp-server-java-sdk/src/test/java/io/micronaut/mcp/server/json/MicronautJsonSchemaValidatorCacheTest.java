@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -49,7 +50,7 @@ class MicronautJsonSchemaValidatorCacheTest {
     void structuredContentThatCannotBeSerializedIsInvalid() {
         JsonSchemaValidator.ValidationResponse response = validator.validate(Map.of("type", "object"), new Unserializable());
         assertFalse(response.valid());
-        assertTrue(response.errorMessage().startsWith("Structured content cannot be serialized: "), response.errorMessage());
+        assertEquals("Structured content cannot be serialized", response.errorMessage());
     }
 
     /**

@@ -31,7 +31,7 @@ import java.util.Set;
 
 /**
  * MCP {@link io.modelcontextprotocol.json.schema.JsonSchemaValidator} backed by Micronaut JSON Schema Validator {@link JsonSchemaValidator}.
- *
+ * The JSON of each schema Map is cached by identity, so a schema Map must not be mutated after its first validation.
  */
 public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.json.schema.JsonSchemaValidator {
     private static final Logger LOG = LoggerFactory.getLogger(MicronautJsonSchemaValidator.class);
@@ -72,7 +72,8 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
             if (LOG.isErrorEnabled()) {
                 LOG.error("Structured content cannot be serialized", e);
             }
-            return ValidationResponse.asInvalid("Structured content cannot be serialized: " + e.getMessage());
+            // The cause is meant for the developer, so it is only logged
+            return ValidationResponse.asInvalid("Structured content cannot be serialized");
         }
         try {
             Set<? extends ValidationMessage> validationResult = validator.validate(jsonStructuredOutput, schemaJson(schema));

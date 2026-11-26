@@ -17,3 +17,5 @@ Then, use the Java record as the method return type:
 Then, use the dataclass as the method return type:
 
 snippet::io.micronaut.mcp.docs.tools.jsonschema.output.Tools[project-base="test-suite-docs", tags="fakepackage,imports,clazz"]
+
+If a tool with an output JSON Schema returns `null`, or a value that cannot be serialized, the client receives a tool result with `isError: true`, and the server logs the cause.

@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -76,7 +77,9 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
     private static final List<Class<?>> BINDABLE_PARAMETER_TYPES = List.of(McpTransportContext.class,
         McpSchema.CallToolRequest.class);
-    private static final Argument<Map<String, Object>> STRUCTURED_CONTENT_ARGUMENT = Argument.mapOf(String.class, Object.class);
+    private static final Argument<Map<String, Object>> JSON_OBJECT_ARGUMENT = Argument.mapOf(String.class, Object.class);
+    private static final String KEY_SCHEMA = "$schema";
+    private static final String KEY_ID = "$id";
     private static final String MEMBER_ANNOTATIONS = "annotations";
     private static final String MEMBER_READ_ONLY_HINT = "readOnlyHint";
     private static final String MEMBER_DESTRUCTIVE_HINT = "destructiveHint";
@@ -246,29 +249,33 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
 
     private McpSchema.CallToolResult structuredToolResult(ExecutableMethod<?, ?> method, @Nullable Object result) {
         if (result == null) {
-            return McpSchema.CallToolResult.builder()
-                .addTextContent("Tool " + toolName(method) + " returned no structured content")
-                .isError(true)
-                .build();
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("Tool {} returned null but declares an output schema; returning an error result to the client", toolName(method));
+            }
+            return toolError("Tool " + toolName(method) + " produced no result");
         }
         // The SDK validates the object against the output schema and adds its JSON as text content
         Object structuredContent;
         try {
             structuredContent = convertStructuredContent
-                ? jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), STRUCTURED_CONTENT_ARGUMENT)
+                ? jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), JSON_OBJECT_ARGUMENT)
                 : result;
         } catch (IOException e) {
             if (LOG.isErrorEnabled()) {
                 LOG.error("Tool {} returned structured content that cannot be serialized", toolName(method), e);
             }
-            return McpSchema.CallToolResult.builder()
-                .addTextContent("Tool " + toolName(method) + " returned structured content that cannot be serialized")
-                .isError(true)
-                .build();
+            return toolError("Tool " + toolName(method) + " returned structured content that cannot be serialized");
         }
         return McpSchema.CallToolResult.builder()
             .structuredContent(structuredContent)
             .isError(false)
+            .build();
+    }
+
+    private static McpSchema.CallToolResult toolError(String reason) {
+        return McpSchema.CallToolResult.builder()
+            .addTextContent(reason + ". This is a server-side error; retrying with the same arguments will not help.")
+            .isError(true)
             .build();
     }
 
@@ -378,6 +385,32 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return new McpSchema.JsonSchema(argumentType(argument), null, null, null, null, null);
     }
 
+    /**
+     * The schema of a named property of the tool input: the JSON Schema of its type when there is one, so that the client
+     * sees its fields, else a schema with the JSON type of the argument.
+     */
+    private Object propertyJsonSchema(Argument<?> argument, Function<Argument<?>, String> argumentDescription) {
+        return jsonSchema(argument)
+            .<Object>map(json -> embeddedJsonSchema(json, argumentDescription.apply(argument)))
+            .orElseGet(() -> argumentJsonSchema(argument, argumentDescription));
+    }
+
+    private Map<String, Object> embeddedJsonSchema(String json, @Nullable String description) {
+        Map<String, Object> schema;
+        try {
+            schema = new LinkedHashMap<>(jsonMapper.readValue(json, JSON_OBJECT_ARGUMENT));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        // The schema is embedded in the tool input schema, where its own identifier and dialect do not apply
+        schema.remove(KEY_SCHEMA);
+        schema.remove(KEY_ID);
+        if (StringUtils.isNotEmpty(description)) {
+            schema.put(MEMBER_DESCRIPTION, description);
+        }
+        return schema;
+    }
+
     @NonNull
     private Optional<String> jsonSchema(Argument<?> argument) {
         Class<?> argumentClass = argument.getType();
@@ -397,7 +430,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             }
             Argument<?> argument = arguments[i];
             String propertyName = propertyNameFunction.apply(argument);
-            properties.put(propertyName, argumentJsonSchema(argument, argumentDescription));
+            properties.put(propertyName, propertyJsonSchema(argument, argumentDescription));
             if (isArgumentRequired(argument)) {
                 requiredProperties.add(propertyName);
             }

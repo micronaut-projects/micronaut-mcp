@@ -46,7 +46,7 @@ class ToolRegistryOtherMapperTest {
         McpSchema.CallToolResult result = call("unserializable");
         assertTrue(result.isError());
         assertNull(result.structuredContent());
-        assertEquals("Tool unserializable returned structured content that cannot be serialized",
+        assertEquals("Tool unserializable returned structured content that cannot be serialized. This is a server-side error; retrying with the same arguments will not help.",
             ((McpSchema.TextContent) result.content().getFirst()).text());
     }
 
