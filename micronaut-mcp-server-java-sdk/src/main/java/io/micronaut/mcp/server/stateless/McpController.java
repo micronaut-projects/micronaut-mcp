@@ -42,7 +42,6 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * This class exposes a POST endpoint in route {@value McpServerConfiguration#DEFAULT_ENDPOINT}.
@@ -66,6 +65,7 @@ final class McpController {
     private static final String INVALID_PARAMS = "Invalid Request: \"params\" must be an object or an array";
     private static final String UNREADABLE_PARAMS = "Invalid Request: \"params\" could not be read";
     private static final String INTERNAL_ERROR = "Internal error";
+    private static final int MAX_LOGGED_METHOD_LENGTH = 64;
 
     private final McpStatelessServerHandler mcpHandler;
     private final McpTransportContextExtractor<HttpRequest<?>> contextExtractor;
@@ -101,22 +101,34 @@ final class McpController {
 
     @SuppressWarnings("java:S3740")
     private Mono<HttpResponse<?>> handleJsonRpcNotification(McpSchema.JSONRPCNotification jsonrpcNotification, McpTransportContext transportContext) {
-        return mcpHandler.handleNotification(transportContext, jsonrpcNotification)
-            .map((Function<Void, HttpResponse<?>>) response -> HttpResponse.accepted())
-            .defaultIfEmpty(HttpResponse.accepted())
+        // deferred so that a handler that throws is answered like one that emits an error
+        return Mono.defer(() -> mcpHandler.handleNotification(transportContext, jsonrpcNotification))
             .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
-            .onErrorResume(McpError.class, e -> exceptionJsonRpcResponse(e, jsonrpcNotification))
-            .onErrorResume(throwable -> exceptionJsonRpcResponse(throwable, jsonrpcNotification));
+            .then(Mono.<HttpResponse<?>>fromSupplier(HttpResponse::accepted))
+            .onErrorResume(e -> notificationFailure(e, jsonrpcNotification));
     }
 
-    private Mono<HttpResponse<?>> exceptionJsonRpcResponse(Throwable e, McpSchema.JSONRPCMessage jsonrpcMessage) {
+    // A notification has no id, so no JSON-RPC response can carry its error: the HTTP status alone reports it
+    private Mono<HttpResponse<?>> notificationFailure(Throwable e, McpSchema.JSONRPCNotification jsonrpcNotification) {
+        if (e instanceof McpError mcpError) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to handle JSON-RPC notification {}: {}", loggable(jsonrpcNotification.method()), mcpError.getMessage());
+            }
+            McpSchema.JSONRPCResponse.JSONRPCError error = mcpError.getJsonRpcError();
+            return Mono.just(HttpResponse.status(error != null ? status(error) : HttpStatus.INTERNAL_SERVER_ERROR));
+        }
+        LOG.error("Failed to handle JSON-RPC notification {}", loggable(jsonrpcNotification.method()), e);
+        return Mono.just(HttpResponse.serverError());
+    }
+
+    private Mono<HttpResponse<?>> internalErrorResponse(Throwable e, McpSchema.JSONRPCRequest jsonrpcRequest) {
         // an exception other than an McpError is a server fault: log it, and do not show its message to the client
-        LOG.error("Failed to handle JSON-RPC message {}", method(jsonrpcMessage), e);
+        LOG.error("Failed to handle JSON-RPC request {}", loggable(jsonrpcRequest.method()), e);
         McpError mcpError = mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, INTERNAL_ERROR);
-        return exceptionJsonRpcResponse(mcpError, jsonrpcMessage);
+        return exceptionJsonRpcResponse(mcpError, jsonrpcRequest);
     }
 
-    private Mono<HttpResponse<?>> exceptionJsonRpcResponse(McpError e, McpSchema.JSONRPCMessage jsonrpcMessage) {
+    private Mono<HttpResponse<?>> exceptionJsonRpcResponse(McpError e, McpSchema.JSONRPCRequest jsonrpcMessage) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Failed to handle JSON RPC Message: {}", e.getMessage());
         }
@@ -134,7 +146,7 @@ final class McpController {
             .map(rsp -> HttpResponse.status(status(rsp)).body(rsp));
         return mono
             .onErrorResume(McpError.class, e -> exceptionJsonRpcResponse(e, jsonrpcRequest))
-            .onErrorResume(throwable -> exceptionJsonRpcResponse(throwable, jsonrpcRequest));
+            .onErrorResume(throwable -> internalErrorResponse(throwable, jsonrpcRequest));
     }
 
     private McpSchema.JSONRPCMessage jsonRpcMessage(@Nullable JsonNode body) throws InvalidRequestException {
@@ -193,9 +205,10 @@ final class McpController {
         return null;
     }
 
-    private static String method(McpSchema.JSONRPCMessage message) {
-        return message instanceof McpSchema.JSONRPCRequest request ? request.method()
-            : ((McpSchema.JSONRPCNotification) message).method();
+    // The method is client input: only a short printable name is written to the log
+    private static String loggable(String method) {
+        String name = method.length() > MAX_LOGGED_METHOD_LENGTH ? method.substring(0, MAX_LOGGED_METHOD_LENGTH) : method;
+        return name.chars().allMatch(c -> c > ' ' && c < 0x7f) ? name : "<non-printable method>";
     }
 
     // JSON-RPC answers a message that is not a valid request with a null id, which the SDK response type does not allow

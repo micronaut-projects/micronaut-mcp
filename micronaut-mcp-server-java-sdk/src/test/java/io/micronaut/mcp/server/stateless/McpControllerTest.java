@@ -37,7 +37,6 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class McpControllerTest {
@@ -168,21 +167,60 @@ class McpControllerTest {
         assertTrue(logs.list.stream().noneMatch(e -> e.getLevel() == Level.ERROR));
     }
 
-    @Test
-    void aNotificationHandlerFailureIsLoggedWithItsMethod() {
-        McpController controller = controller(new StubHandler(
-            request -> Mono.empty(), () -> Mono.error(new IllegalStateException(SECRET))));
-        JsonNode body = JsonNode.createObjectNode(Map.of(
-            "jsonrpc", JsonNode.createStringNode("2.0"),
-            "method", JsonNode.createStringNode("notifications/initialized")));
+    static Stream<Arguments> failingNotificationHandlers() {
+        Supplier<Mono<Void>> throwing = () -> {
+            throw new IllegalStateException(SECRET);
+        };
+        Supplier<Mono<Void>> failing = () -> Mono.error(new IllegalStateException(SECRET));
+        return Stream.of(Arguments.of(Named.of("throws", throwing)), Arguments.of(Named.of("emits an error", failing)));
+    }
 
-        Mono<HttpResponse<?>> response = controller.handlePost(HttpRequest.POST("/mcp", ""), body);
+    @ParameterizedTest
+    @MethodSource("failingNotificationHandlers")
+    void aNotificationHandlerFailureIsAServerErrorThatIsLoggedOnce(Supplier<Mono<Void>> handler) {
+        McpController controller = controller(new StubHandler(request -> Mono.empty(), handler));
 
-        // Pre-existing limitation: the error response of a notification has no id, which the SDK response type refuses
-        assertThrows(IllegalArgumentException.class, response::block);
+        HttpResponse<?> response = controller.handlePost(HttpRequest.POST("/mcp", ""), notification()).block();
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatus());
+        assertTrue(response.getBody().isEmpty());
         ILoggingEvent event = singleError();
         assertTrue(event.getFormattedMessage().contains("notifications/initialized"), event.getFormattedMessage());
-        assertNotNull(event.getThrowableProxy());
+        assertEquals(SECRET, event.getThrowableProxy().getMessage());
+    }
+
+    @Test
+    void aNotificationMcpErrorGivesItsStatusAndIsNotLoggedAsAnError() {
+        McpController controller = controller(new StubHandler(request -> Mono.empty(),
+            () -> Mono.error(McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS).message("Bad params").build())));
+
+        HttpResponse<?> response = controller.handlePost(HttpRequest.POST("/mcp", ""), notification()).block();
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
+        assertTrue(response.getBody().isEmpty());
+        assertTrue(logs.list.stream().noneMatch(e -> e.getLevel() == Level.ERROR));
+    }
+
+    @ParameterizedTest
+    @MethodSource("methodsAndLoggedNames")
+    void onlyAShortPrintableMethodNameIsLogged(String method, String loggedName) {
+        McpController controller = controller(new StubHandler(request -> {
+            throw new IllegalStateException(SECRET);
+        }, Mono::empty));
+
+        controller.handlePost(HttpRequest.POST("/mcp", ""), request(JsonNode.createNumberNode(5), method)).block();
+
+        assertEquals("Failed to handle JSON-RPC request " + loggedName, singleError().getFormattedMessage());
+    }
+
+    static Stream<Arguments> methodsAndLoggedNames() {
+        return Stream.of(
+            Arguments.of("tools/call", "tools/call"),
+            Arguments.of("tools/call\n12:00:00 INFO forged line", "<non-printable method>"),
+            Arguments.of("tools/call\u001b[31m", "<non-printable method>"),
+            Arguments.of("t".repeat(100), "t".repeat(64)));
     }
 
     private ILoggingEvent singleError() {
@@ -191,11 +229,21 @@ class McpControllerTest {
         return errors.get(0);
     }
 
+    private static JsonNode notification() {
+        return JsonNode.createObjectNode(Map.of(
+            "jsonrpc", JsonNode.createStringNode("2.0"),
+            "method", JsonNode.createStringNode("notifications/initialized")));
+    }
+
     private static JsonNode request(JsonNode id) {
+        return request(id, "tools/call");
+    }
+
+    private static JsonNode request(JsonNode id, String method) {
         return JsonNode.createObjectNode(Map.of(
             "jsonrpc", JsonNode.createStringNode("2.0"),
             "id", id,
-            "method", JsonNode.createStringNode("tools/call"),
+            "method", JsonNode.createStringNode(method),
             "params", JsonNode.createObjectNode(Map.of("name", JsonNode.createStringNode("echo")))));
     }
 
