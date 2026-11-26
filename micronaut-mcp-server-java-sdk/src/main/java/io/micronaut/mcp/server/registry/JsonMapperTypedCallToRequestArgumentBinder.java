@@ -51,10 +51,9 @@ final class JsonMapperTypedCallToRequestArgumentBinder<T> implements TypedCallTo
     @Override
     public BindingResult<T> bind(ArgumentConversionContext<T> context, McpSchema.CallToolRequest source) {
         try {
-            String payload = jsonMapper.writeValueAsString(source.arguments());
-            Argument<?> argument = context.getArgument();
-            Class<?> classInputSchema = argument.getType();
-            T obj = (T) jsonMapper.readValue(payload, classInputSchema);
+            // Read back through the stream parser, which range-checks numbers: the tree decoder narrows an out of range
+            // integer silently, so 4294967297 would bind to an int as 1
+            T obj = jsonMapper.readValue(jsonMapper.writeValueAsBytes(source.arguments()), argument);
             return () -> Optional.ofNullable(obj);
 
         } catch (IOException ex) {
