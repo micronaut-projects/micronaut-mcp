@@ -1,0 +1,32 @@
+[
+  {
+    "type": "io.micronaut.mcp.server.tools.fetch.$SerdeFetchRequestSerializer$Definition",
+    "member": "Method io.micronaut.mcp.server.tools.fetch.$SerdeFetchRequestSerializer$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of an internal type that was replaced"
+  },
+  {
+    "type": "io.micronaut.mcp.server.tools.fetch.SerdeFetchRequestSerializer",
+    "member": "Constructor io.micronaut.mcp.server.tools.fetch.SerdeFetchRequestSerializer()",
+    "reason": "Generated serializer, whose constructor changes with the Micronaut Serialization version"
+  },
+  {
+    "type": "io.micronaut.mcp.server.tools.search.$SerdeSearchRequestSerializer$Definition",
+    "member": "Method io.micronaut.mcp.server.tools.search.$SerdeSearchRequestSerializer$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of an internal type that was replaced"
+  },
+  {
+    "type": "io.micronaut.mcp.server.tools.search.$SerdeSearchResultSerializer$Definition",
+    "member": "Method io.micronaut.mcp.server.tools.search.$SerdeSearchResultSerializer$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "Generated bean definition of an internal type that was replaced"
+  },
+  {
+    "type": "io.micronaut.mcp.server.tools.search.SerdeSearchRequestSerializer",
+    "member": "Constructor io.micronaut.mcp.server.tools.search.SerdeSearchRequestSerializer()",
+    "reason": "Generated serializer, whose constructor changes with the Micronaut Serialization version"
+  },
+  {
+    "type": "io.micronaut.mcp.server.tools.search.SerdeSearchResultSerializer",
+    "member": "Constructor io.micronaut.mcp.server.tools.search.SerdeSearchResultSerializer()",
+    "reason": "Generated serializer, whose constructor changes with the Micronaut Serialization version"
+  }
+]

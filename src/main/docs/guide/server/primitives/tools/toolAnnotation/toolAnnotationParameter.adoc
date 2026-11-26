@@ -8,3 +8,5 @@ In a method annotated with `@Tool` you can bind parameters with types:
 - A class or Java record defined as the tool <<Input JSON Schema,toolsInputJsonSchema>>.
 - `io.modelcontextprotocol.spec.McpSchema.CallToolRequest`.
 
+
+A parameter whose type is defined as the tool <<toolsInputJsonSchema, input JSON Schema>> is the whole tool input. Annotate it with api:mcp.annotations.ToolArg[] to make it a named property of the tool input instead. The JSON Schema of its type is then used as the schema of that property.
