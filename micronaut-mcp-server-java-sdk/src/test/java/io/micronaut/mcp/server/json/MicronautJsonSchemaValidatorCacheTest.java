@@ -79,8 +79,7 @@ class MicronautJsonSchemaValidatorCacheTest {
             // Nothing is cached for the schema, so the error is reported on every validation
             JsonSchemaValidator.ValidationResponse response = validator.validate(schema, Map.of());
             assertFalse(response.valid());
-            assertTrue(response.errorMessage().startsWith("Unexpected validation error: "), response.errorMessage());
-            assertTrue(response.errorMessage().contains(Unserializable.class.getSimpleName()), response.errorMessage());
+            assertEquals("The tool JSON Schema could not be applied", response.errorMessage());
         }
     }
 

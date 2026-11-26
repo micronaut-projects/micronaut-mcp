@@ -15,7 +15,6 @@
  */
 package io.micronaut.mcp.server.json;
 
-import tools.jackson.core.JacksonException;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.clhm.ConcurrentLinkedHashMap;
 import io.micronaut.json.JsonMapper;
@@ -68,7 +67,7 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
         String jsonStructuredOutput;
         try {
             jsonStructuredOutput = jsonMapper.writeValueAsString(structuredContent);
-        } catch (IOException | JacksonException e) {
+        } catch (IOException | RuntimeException e) {
             if (LOG.isErrorEnabled()) {
                 LOG.error("Structured content cannot be serialized", e);
             }
@@ -78,21 +77,19 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
         try {
             Set<? extends ValidationMessage> validationResult = validator.validate(jsonStructuredOutput, schemaJson(schema));
             if (CollectionUtils.isNotEmpty(validationResult)) {
+                // The validator validates both tool arguments against the input schema and structured content against the
+                // output schema
                 return ValidationResponse
-                    .asInvalid("Validation failed: structuredContent does not match tool outputSchema. "
+                    .asInvalid("Validation failed: content does not match the tool JSON Schema. "
                         + "Validation errors: " + validationResult);
             }
             return ValidationResponse.asValid(jsonStructuredOutput);
-        } catch (JacksonException e) {
+        } catch (IOException | RuntimeException e) {
+            // A schema that cannot be serialized, read or compiled. The cause is meant for the developer, so it is only logged
             if (LOG.isErrorEnabled()) {
-                LOG.error("Error parsing schema: {}", e);
+                LOG.error("The tool JSON Schema could not be applied", e);
             }
-            return ValidationResponse.asInvalid("Error parsing tool JSON Schema: " + e.getMessage());
-        } catch (IOException e) {
-            if (LOG.isErrorEnabled()) {
-                LOG.error("Unexpected error: {}", e);
-            }
-            return ValidationResponse.asInvalid("Unexpected validation error: " + e.getMessage());
+            return ValidationResponse.asInvalid("The tool JSON Schema could not be applied");
         }
     }
 

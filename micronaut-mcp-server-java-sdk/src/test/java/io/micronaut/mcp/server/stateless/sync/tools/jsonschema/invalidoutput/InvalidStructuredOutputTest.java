@@ -30,7 +30,7 @@ class InvalidStructuredOutputTest {
         assertFalse(result.has("structuredContent"));
         String text = result.getJSONArray("content").getJSONObject(0).getString("text");
         assertTrue(text.startsWith("Tool (blankEvaluation) output validation failed: "
-            + "Validation failed: structuredContent does not match tool outputSchema."), text);
+            + "Validation failed: content does not match the tool JSON Schema."), text);
     }
 
     @Test
