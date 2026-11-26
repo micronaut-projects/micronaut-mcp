@@ -11,4 +11,8 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 @Property(name = AbstractRequestContextStreamingTest.PROPERTY, value = StringUtils.TRUE)
 @MicronautTest
 class ReactiveRequestContextStreamingTest extends AbstractRequestContextStreamingTest {
+    @Override
+    boolean invokesOnTheEventLoop() {
+        return true;
+    }
 }

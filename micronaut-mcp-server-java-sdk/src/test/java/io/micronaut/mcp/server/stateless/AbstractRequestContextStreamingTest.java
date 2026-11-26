@@ -1,7 +1,15 @@
 package io.micronaut.mcp.server.stateless;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.core.propagation.PropagatedContextElement;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.http.MutableHttpResponse;
+import io.micronaut.http.annotation.Filter;
+import io.micronaut.http.filter.HttpServerFilter;
+import io.micronaut.http.filter.ServerFilterChain;
+import io.netty.util.concurrent.FastThreadLocalThread;
+import org.reactivestreams.Publisher;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -54,6 +62,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 abstract class AbstractRequestContextStreamingTest {
     static final String PROPERTY = "request-context-streaming-test";
     static final String ACCEPT_BOTH = "application/json, text/event-stream";
+
+    /**
+     * @return Whether the controller invokes a method without an executor on the event loop, as the reactive one does
+     */
+    abstract boolean invokesOnTheEventLoop();
 
     @Inject
     @Client("/")
@@ -196,6 +209,17 @@ abstract class AbstractRequestContextStreamingTest {
                 {"jsonrpc": "2.0", "id": 32, "method": "tools/call", "params": {"name": "%s", "arguments": {}}}""".formatted(tool)).body();
             String result = data(body).getLast();
             assertTrue(result.contains("\"isError\":true") && result.contains("is not supported over the stateless HTTP transport"), result);
+        }
+    }
+
+    @Test
+    void thePropagatedContextReachesThePrimitive() {
+        // Streaming, the blocking controller runs the primitive on another blocking thread; as JSON, on the route's own
+        for (String accept : List.of(ACCEPT_BOTH, MediaType.APPLICATION_JSON)) {
+            String body = post(accept, """
+                {"jsonrpc": "2.0", "id": 33, "method": "tools/call", "params": {"name": "propagated", "arguments": {}}}""").body();
+            String result = data(body).isEmpty() ? body : data(body).getLast();
+            assertTrue(result.contains("\"text\":\"marker=true, eventLoop=" + invokesOnTheEventLoop() + "\""), accept + ": " + result);
         }
     }
 
@@ -387,6 +411,13 @@ abstract class AbstractRequestContextStreamingTest {
         }
 
         @Tool
+        String propagated(McpRequestContext context) {
+            context.log(McpSchema.LoggingLevel.INFO, "checking the propagated context");
+            return "marker=" + PropagatedContext.getOrEmpty().find(Marker.class).isPresent()
+                + ", eventLoop=" + (Thread.currentThread() instanceof FastThreadLocalThread);
+        }
+
+        @Tool
         String quiet(McpRequestContext context) {
             return "quiet";
         }
@@ -425,6 +456,23 @@ abstract class AbstractRequestContextStreamingTest {
         String explain(String topic, McpRequestContext context, MicronautMcpTransportContext transport, McpSchema.Request request) {
             context.log(McpSchema.LoggingLevel.INFO, "explaining " + topic + " for " + ((McpSchema.GetPromptRequest) request).name());
             return "Explain " + topic;
+        }
+    }
+
+    record Marker() implements PropagatedContextElement {
+    }
+
+    /**
+     * Adds a {@link Marker} to the propagated context of each MCP request.
+     */
+    @Requires(property = PROPERTY, value = StringUtils.TRUE)
+    @Filter("/mcp")
+    static class MarkerFilter implements HttpServerFilter {
+        @Override
+        public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
+            try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new Marker()).propagate()) {
+                return chain.proceed(request);
+            }
         }
     }
 }
