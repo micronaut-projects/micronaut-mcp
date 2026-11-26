@@ -37,6 +37,10 @@ import java.util.stream.Collectors;
 public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.json.schema.JsonSchemaValidator {
     private static final Logger LOG = LoggerFactory.getLogger(MicronautJsonSchemaValidator.class);
     private static final int SCHEMA_CACHE_CAPACITY = 512;
+    /**
+     * How the message of a validation error on the root object starts: its location is empty.
+     */
+    private static final String ROOT_LOCATION_PREFIX = ": ";
     private final JsonMapper jsonMapper;
     private final JsonSchemaValidator validator;
     /**
@@ -52,6 +56,16 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
                                         JsonSchemaValidator validator) {
         this.jsonMapper = jsonMapper;
         this.validator = validator;
+    }
+
+    /**
+     * The message of a validation error. An error on the root object has an empty location, which would leave the
+     * message starting with a colon, so the location is dropped. The messages are sorted, so the same errors read the
+     * same way in every call.
+     */
+    private static String message(ValidationMessage validationMessage) {
+        String message = validationMessage.getMessage();
+        return message.startsWith(ROOT_LOCATION_PREFIX) ? message.substring(ROOT_LOCATION_PREFIX.length()) : message;
     }
 
     @Override
@@ -71,7 +85,8 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
             if (CollectionUtils.isNotEmpty(validationResult)) {
                 // Used for tool inputs and outputs: the SDK prefixes the message with what was validated
                 return ValidationResponse.asInvalid(validationResult.stream()
-                    .map(ValidationMessage::getMessage)
+                    .map(MicronautJsonSchemaValidator::message)
+                    .sorted()
                     .collect(Collectors.joining("; ")));
             }
             return ValidationResponse.asValid(jsonStructuredOutput);
