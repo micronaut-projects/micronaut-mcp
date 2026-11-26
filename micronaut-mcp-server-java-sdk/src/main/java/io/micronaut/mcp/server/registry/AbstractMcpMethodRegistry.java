@@ -16,8 +16,6 @@
 package io.micronaut.mcp.server.registry;
 
 import io.micronaut.context.BeanContext;
-import io.micronaut.context.event.BeanDestroyedEvent;
-import io.micronaut.context.event.BeanDestroyedEventListener;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.StringUtils;
@@ -89,7 +87,7 @@ import java.util.stream.Stream;
  * @param <U> Stateless Async Specification
  */
 @Internal
-abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimitiveRegistry<S, A, T, U>, BeanDestroyedEventListener<Object>
+abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimitiveRegistry<S, A, T, U>
     permits CompletionRegistry, PromptRegistry, ResourceRegistry, ResourceTemplateRegistry, ToolRegistry {
     protected static final String MEMBER_DESCRIPTION = "description";
     protected static final String KEY_TYPE = "type";
@@ -166,19 +164,6 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
         return methods.stream();
     }
 
-    /**
-     * Forgets the instance of a destroyed singleton bean, so that its methods are invoked on the instance that replaces it.
-     *
-     * @param event The event of the destroyed bean
-     */
-    @Override
-    public final void onDestroyed(BeanDestroyedEvent<Object> event) {
-        BeanDefinition<?> definition = event.getBeanDefinition();
-        for (Method<Object> method : methods) {
-            method.forget(definition);
-        }
-    }
-
     @Override
     public boolean isNotEmpty() {
         return !methods.isEmpty();
@@ -225,18 +210,14 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
     }
 
     /**
-     * Maps a failure of a method to the protocol error sent to the client: an {@link McpError} is returned unchanged,
-     * other exceptions are mapped by the matching {@link McpErrorExceptionMapper}, or become an internal error.
+     * Maps a failure of a method to the protocol error sent to the client: a failure that an {@link McpErrorExceptionMapper} maps is mapped by
+     * it, another {@link McpError} is returned unchanged, and any other failure becomes an internal error.
      *
      * @param method The method that was invoked
      * @param throwable The failure
      * @return The protocol error
      */
     protected McpError mcpError(ExecutableMethod<?, ?> method, Throwable throwable) {
-        if (throwable instanceof McpError mcpError) {
-            // An error the method throws keeps its code
-            return mcpError;
-        }
         McpErrorExceptionMapper<? extends Throwable> exceptionMapper = getExceptionMapper(throwable.getClass());
         if (exceptionMapper != null) {
             // A mapped exception is an expected client error
@@ -244,6 +225,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
                 LOG.debug(throwable.getMessage(), throwable);
             }
             return mapException(exceptionMapper, throwable);
+        }
+        if (throwable instanceof McpError mcpError) {
+            // An error the method throws keeps its code, unless a mapper maps it
+            return mcpError;
         }
         // The SDK logs only exceptions that are not an McpError, so an unmapped exception is logged here
         if (LOG.isWarnEnabled()) {
@@ -422,25 +407,20 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
     /**
      * A method associated with a bean definition. What every invocation needs, other than the request, is resolved once:
      * the method parameters that receive the transport context or the request, the argument binders of the other
-     * parameters, the executor named by {@link ExecuteOn}, and the bean when it is a singleton.
+     * parameters and the executor named by {@link ExecuteOn}.
      *
      * @param <B> The type of the bean.
      */
     protected static final class Method<B> {
         private static final int NOT_BOUND = -1;
         private static final int REQUEST_CONTEXT = -2;
-        /**
-         * A parameter declared as an application interface, which receives the transport context when the context
-         * implements it, and is bound by its argument binder otherwise.
-         */
-        private static final int CONTEXT_IF_INSTANCE = -3;
         private final BeanContext beanContext;
         private final BeanDefinition<B> beanDefinition;
         private final ExecutableMethod<B, Object> executableMethod;
         private final Argument<?>[] arguments;
         /**
          * For each parameter, the index in {@link AbstractMcpMethodRegistry#boundParameterTypes()} of the type of the value
-         * it receives without an argument binder, or {@link #NOT_BOUND}, {@link #REQUEST_CONTEXT} or {@link #CONTEXT_IF_INSTANCE}.
+         * it can receive without an argument binder, {@link #REQUEST_CONTEXT}, or {@link #NOT_BOUND} when there is no declared match.
          */
         private final int[] boundIndexes;
         private final boolean declaresRequestContext;
@@ -458,7 +438,6 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
          */
         private final boolean mayBeDeferred;
         private final @Nullable Scheduler scheduler;
-        private final AtomicReference<B> singleton = new AtomicReference<>();
         /**
          * The argument binders by parameter, resolved on the first invocation, because binders for JSON schema types
          * are registered when the specifications are built. Concurrent first invocations resolve the same binders.
@@ -505,10 +484,6 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
                 if (type.isAssignableFrom(boundType) || boundType.isAssignableFrom(type)) {
                     return i;
                 }
-            }
-            if (type.isInterface() && !type.getName().startsWith("java.")) {
-                // A custom transport context may implement an interface of the application, which only the value tells
-                return CONTEXT_IF_INSTANCE;
             }
             return NOT_BOUND;
         }
@@ -559,32 +534,12 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
         }
 
         /**
-         * The bean to invoke the method on. A singleton is looked up once and kept until the bean context destroys it, see
-         * {@link #forget(BeanDefinition)}.
+         * Resolves the bean through the context on each call so replacements are visible.
          *
          * @return The bean to invoke the method on
          */
         public B bean() {
-            if (!beanDefinition.isSingleton()) {
-                return beanContext.getBean(beanDefinition);
-            }
-            B bean = singleton.get();
-            if (bean == null) {
-                bean = beanContext.getBean(beanDefinition);
-                singleton.set(bean);
-            }
-            return bean;
-        }
-
-        /**
-         * Forgets the kept singleton if it is an instance of the given bean definition, which the context destroyed.
-         *
-         * @param definition The definition of a destroyed bean
-         */
-        void forget(BeanDefinition<?> definition) {
-            if (beanDefinition.equals(definition)) {
-                singleton.set(null);
-            }
+            return beanContext.getBean(beanDefinition);
         }
 
         @Nullable
@@ -737,9 +692,9 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
         }
 
         /**
-         * Binds the method parameters and invokes the method. A parameter receives its bound value when the value is an
-         * instance of the parameter type, otherwise it is bound by the argument binder like the other parameters,
-         * with the same semantics as {@link io.micronaut.core.bind.DefaultExecutableBinder}.
+         * Binds the method parameters and invokes the method. The runtime transport context takes precedence over the
+         * request values. Parameters with no matching value use the argument binder, with the same semantics as
+         * {@link io.micronaut.core.bind.DefaultExecutableBinder}.
          *
          * @param registry The argument binder registry
          * @param source The source of the argument binders
@@ -756,24 +711,27 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
                 return executableMethod.invoke(bean());
             }
             ArgumentBinder<?, ?>[] argumentBinders = binders(registry);
+            McpTransportContext transportContext = resolveMcpTransportContext(context);
             Object[] argumentValues = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
-                argumentValues[i] = argumentValue(i, argumentBinders[i], source, context, values);
+                argumentValues[i] = argumentValue(i, argumentBinders[i], source, context, transportContext, values);
             }
             return executableMethod.invoke(bean(), argumentValues);
         }
 
-        private <S> @Nullable Object argumentValue(int i, @Nullable ArgumentBinder<?, ?> binder, S source, @Nullable Object context, Object[] values) {
+        private <S> @Nullable Object argumentValue(int i, @Nullable ArgumentBinder<?, ?> binder, S source, @Nullable Object context,
+                                                    @Nullable McpTransportContext transportContext, Object[] values) {
             Argument<?> argument = arguments[i];
+            Class<?> type = argument.getType();
             int index = boundIndexes[i];
             if (index == REQUEST_CONTEXT) {
                 return DefaultMcpRequestContext.of(context, values[0]);
             }
-            if (index != NOT_BOUND) {
-                Object value = index == 0 || index == CONTEXT_IF_INSTANCE ? resolveMcpTransportContext(context) : values[index - 1];
-                if (argument.getType().isInstance(value)) {
-                    return value;
-                }
+            if (type.isInstance(transportContext)) {
+                return transportContext;
+            }
+            if (index > 0 && type.isInstance(values[index - 1])) {
+                return values[index - 1];
             }
             return bind(argument, binder, source);
         }
