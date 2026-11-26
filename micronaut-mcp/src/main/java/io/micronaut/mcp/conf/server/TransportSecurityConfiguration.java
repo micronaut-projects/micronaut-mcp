@@ -22,6 +22,11 @@ import java.util.List;
 /**
  * Protection of the Streamable HTTP endpoint against DNS rebinding and unsupported clients.
  *
+ * <p>Inject it to read the configuration, which is set with the {@value #PREFIX} properties. It is not meant to be
+ * implemented: a bean that provides it instead must replace the configuration with
+ * {@code @Replaces(TransportSecurityConfiguration.class)}, and it cannot turn the validation off, which only the
+ * {@value #PROPERTY_ENABLED} property does.</p>
+ *
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#security-warning">Streamable HTTP security</a>
  * @since 2.2.0
  */
@@ -30,6 +35,13 @@ public interface TransportSecurityConfiguration {
      * Transport security configuration prefix.
      */
     String PREFIX = McpServerConfiguration.PREFIX + ".transport-security";
+
+    /**
+     * The property that turns the validation of the {@code Origin} and {@code MCP-Protocol-Version} request headers on
+     * or off. It is read as a property, not through this interface: only the value {@code false}, in lower case, keeps
+     * the filter that validates the headers from being created.
+     */
+    String PROPERTY_ENABLED = PREFIX + ".enabled";
 
     /**
      * Whether the {@code Origin} and {@code MCP-Protocol-Version} request headers are validated by default.
@@ -42,20 +54,18 @@ public interface TransportSecurityConfiguration {
     boolean DEFAULT_ALLOW_LOOPBACK_ORIGINS = true;
 
     /**
-     * @return Whether the {@code Origin} and {@code MCP-Protocol-Version} request headers are validated. A request with
-     * an {@code Origin} that is not allowed is answered with 403, and one with an unsupported protocol version with 400.
-     */
-    boolean isEnabled();
-
-    /**
      * @return The origins allowed besides loopback origins, such as {@code https://app.example.com}. {@code *} allows
-     * every origin. Requests without an {@code Origin} header, which browsers always send, are allowed.
+     * every origin. Each other entry is an origin, {@code scheme://host[:port]}, without a path. Requests without an
+     * {@code Origin} header are always allowed: browsers send one with every {@code POST} request, so only non-browser
+     * clients omit it. None by default.
      */
     @NonNull
-    List<String> getAllowedOrigins();
+    default List<String> getAllowedOrigins() {
+        return List.of();
+    }
 
     /**
-     * Whether loopback origins ({@code localhost}, {@code 127.0.0.1} and {@code [::1]}, with any scheme and port) are
+     * Whether loopback origins ({@code localhost}, {@code 127.0.0.1} and {@code [::1]}, with http or https and any port) are
      * allowed, so that local tools such as the MCP Inspector can connect. A server reachable from other hosts can
      * disable it, so that pages served by other local applications cannot call it.
      *
