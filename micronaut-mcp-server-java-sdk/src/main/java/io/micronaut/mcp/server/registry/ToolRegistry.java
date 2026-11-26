@@ -217,10 +217,11 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
      * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/server/tools#error-handling">Tool error handling</a>
      */
     private <B> McpSchema.CallToolResult toolExecutionError(Method<B> m, Throwable error) {
-        if (error instanceof McpError mcpError) {
+        McpErrorExceptionMapper<? extends Throwable> mapper = getExceptionMapper(error.getClass());
+        if (mapper == null && error instanceof McpError mcpError) {
+            // An McpError keeps its code, unless an application mapper maps it
             throw mcpError;
         }
-        McpErrorExceptionMapper<? extends Throwable> mapper = getExceptionMapper(error.getClass());
         String name = toolName(m.method());
         String message;
         if (mapper instanceof InputErrorMapper<?> inputErrorMapper) {

@@ -21,8 +21,8 @@ import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.callToolEr
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * An application mapper that matches every runtime exception turns tool failures into protocol errors, but an
- * {@link McpError} a tool throws is still sent as is.
+ * An application mapper that matches every runtime exception turns tool failures into protocol errors, including an
+ * {@link McpError} a tool throws: the registered mappers are asked before an {@link McpError} is sent as is.
  */
 @Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
@@ -40,10 +40,10 @@ class CatchAllMapperTest {
     JsonMapper jsonMapper;
 
     @Test
-    void anMcpErrorIsNotMapped() throws IOException {
-        Map<String, Object> error = callToolError(httpClient, jsonMapper, "protocolError", HttpStatus.BAD_REQUEST);
-        assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.get("code"));
-        assertEquals("unknown city", error.get("message"));
+    void anMcpErrorIsMappedToo() throws IOException {
+        Map<String, Object> error = callToolError(httpClient, jsonMapper, "protocolError", HttpStatus.INTERNAL_SERVER_ERROR);
+        assertEquals(McpSchema.ErrorCodes.INTERNAL_ERROR, error.get("code"));
+        assertEquals("caught: unknown city", error.get("message"));
     }
 
     @Test
