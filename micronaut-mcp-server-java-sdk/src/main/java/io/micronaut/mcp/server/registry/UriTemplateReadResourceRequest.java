@@ -107,10 +107,11 @@ record UriTemplateReadResourceRequest(
     /**
      * A compiled URI template.
      *
+     * @param uriTemplate The URI template as declared, which names the template in observations
      * @param matchTemplate The template the URIs are matched against
      * @param reservedVariables The names of the variables expanded with the reserved ({@code +}) or fragment ({@code #}) operator
      */
-    record Template(UriMatchTemplate matchTemplate, Set<String> reservedVariables) {
+    record Template(String uriTemplate, UriMatchTemplate matchTemplate, Set<String> reservedVariables) {
         private static final Pattern RESERVED_EXPRESSION = Pattern.compile("\\{[+#]([^}]*)}");
 
         /**
@@ -126,7 +127,7 @@ record UriTemplateReadResourceRequest(
                     reserved.add(variable.replaceAll("[:*].*$", "").trim());
                 }
             }
-            return new Template(UriMatchTemplate.of(uriTemplate), Set.copyOf(reserved));
+            return new Template(uriTemplate, UriMatchTemplate.of(uriTemplate), Set.copyOf(reserved));
         }
     }
 }

@@ -189,7 +189,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                           String mimeType,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
-        return observed(McpSchema.METHOD_RESOURCES_READ, uriTemplate.matchTemplate().toString(),
+        return observed(McpSchema.METHOD_RESOURCES_READ, uriTemplate.uriTemplate(),
             () -> m.call(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
                 mcpTransportContext, result -> map(mimeType, request, result), this::failWithMcpError));
     }
@@ -199,7 +199,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                                      String mimeType,
                                                                      Object mcpTransportContext,
                                                                      McpSchema.ReadResourceRequest request) {
-        return observedAsync(McpSchema.METHOD_RESOURCES_READ, uriTemplate.matchTemplate().toString(),
+        return observedAsync(McpSchema.METHOD_RESOURCES_READ, uriTemplate.uriTemplate(),
             () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
                 result -> map(mimeType, request, result), this::failWithMcpError));
     }
