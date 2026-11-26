@@ -50,6 +50,7 @@ import org.skyscreamer.jsonassert.JSONCompareMode;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -190,6 +191,53 @@ class SecuredMcpServerTest implements TestPropertyProvider {
         String metadata = httpClient.toBlocking().retrieve(HttpRequest.GET("/.well-known/oauth-protected-resource/mcp")
             .header("X-Forwarded-Host", "evil.example"));
         assertFalse(metadata.contains("evil.example"), metadata);
+    }
+
+    @Test
+    void behindAProxyTheConfiguredForwardedHeadersNameTheResource() throws JOSEException, JSONException {
+        String issuer = issuer();
+        Map<String, Object> properties = new HashMap<>(Map.of(
+            "micronaut.mcp.server.info.name", "secured",
+            "micronaut.mcp.server.info.version", "1.0.0",
+            "micronaut.mcp.server.transport", "HTTP",
+            "micronaut.security.intercept-url-map[0].pattern", "/mcp",
+            "micronaut.security.intercept-url-map[0].access[0]", "isAuthenticated()",
+            "micronaut.security.token.jwt.signatures.jwks.idp.url", issuer + "/.well-known/jwks.json",
+            "micronaut.security.oauth2.clients.idp.openid.issuer", issuer,
+            "spec.name", "SecuredMcpServerTest"));
+        properties.putAll(Map.of(
+            "micronaut.security.token.jwt.claims-validators.audience", "https://mcp.example.com/mcp",
+            "micronaut.security.token.jwt.claims-validators.issuer", issuer,
+            "micronaut.security.token.jwt.claims-validators.not-before", StringUtils.TRUE,
+            // the proxy terminates TLS and sets these headers, replacing any the client sent
+            "micronaut.server.host-resolution.protocol-header", "X-Forwarded-Proto",
+            "micronaut.server.host-resolution.host-header", "X-Forwarded-Host",
+            "micronaut.server.host-resolution.allowed-hosts[0]", "https://mcp[.]example[.]com"));
+        try (EmbeddedServer proxied = ApplicationContext.run(EmbeddedServer.class, properties);
+             HttpClient client = proxied.getApplicationContext().createBean(HttpClient.class, proxied.getURL())) {
+            BlockingHttpClient blocking = client.toBlocking();
+            MutableHttpRequest<String> request = proxied(whoami("/mcp"));
+            HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> blocking.exchange(request, String.class));
+            assertEquals("Bearer resource_metadata=\"https://mcp.example.com/.well-known/oauth-protected-resource/mcp\"",
+                ex.getResponse().getHeaders().get("WWW-Authenticate"));
+            JSONObject metadata = new JSONObject(blocking.retrieve(proxied(HttpRequest.GET("/.well-known/oauth-protected-resource/mcp"))));
+            assertEquals("https://mcp.example.com/mcp", metadata.getString("resource"));
+            String token = token(claims().audience("https://mcp.example.com/mcp").build(), key);
+            assertEquals(HttpStatus.OK, blocking.exchange(proxied(whoami("/mcp")).bearerAuth(token), String.class).getStatus());
+            // Once the headers are configured, only they are read: a forged Host or Forwarded header names no resource
+            for (MutableHttpRequest<String> forged : List.of(
+                    whoami("/mcp").header("Host", "evil.example"),
+                    whoami("/mcp").header("Forwarded", "proto=https;host=evil.example"),
+                    whoami("/mcp").header("X-Forwarded-Proto", "https").header("X-Forwarded-Host", "evil.example"))) {
+                HttpClientResponseException rejected = assertThrows(HttpClientResponseException.class, () -> blocking.exchange(forged, String.class));
+                assertEquals("Bearer resource_metadata=\"http://localhost/.well-known/oauth-protected-resource/mcp\"",
+                    rejected.getResponse().getHeaders().get("WWW-Authenticate"));
+            }
+        }
+    }
+
+    private static <T> MutableHttpRequest<T> proxied(MutableHttpRequest<T> request) {
+        return request.header("X-Forwarded-Proto", "https").header("X-Forwarded-Host", "mcp.example.com");
     }
 
     @Test

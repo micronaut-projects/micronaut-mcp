@@ -2,7 +2,7 @@ Secure the MCP endpoint with https://micronaut-projects.github.io/micronaut-secu
 
 dependency:micronaut-security-jwt[groupId=io.micronaut.security]
 
-and `micronaut-security-oauth2` (Micronaut Security 4.14.0 or later), which implements the https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization[authorization discovery] the specification requires:
+and `micronaut-security-oauth2` (Micronaut Security 5; this recipe is tested with 5.5.2), which implements the https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization[authorization discovery] the specification requires:
 
 dependency:micronaut-security-oauth2[groupId=io.micronaut.security]
 
@@ -43,7 +43,24 @@ The specification requires the server to accept only tokens issued for it, so th
 
 Micronaut Security accepts a token without an expiration (`exp`). If your provider can issue such tokens, register a `GenericJwtClaimsValidator` bean whose `validate` method returns `claims.contains(Claims.EXPIRATION_TIME)`, so that a leaked token cannot be used forever.
 
-The `WWW-Authenticate` challenge and the `resource` of the protected resource metadata are built from the host the request names, in its `Host` or forwarded headers. List the hosts of the server in `micronaut.server.host-resolution.allowed-hosts`, regular expressions matched against `scheme://host[:port]`, so that a forged host, for example in a cached response, cannot send clients to another authorization server. Only let a trusted proxy set the forwarded headers. With the allowed hosts set, the `resource` is the canonical URL of the endpoint, the audience above.
+Serve the endpoint over HTTPS only, with `micronaut.server.ssl` or behind a proxy that terminates TLS, as the bearer tokens are sent with every request.
+
+The `WWW-Authenticate` challenge and the `resource` of the protected resource metadata are built from the host the request names, in its `Host` or forwarded headers. List the hosts of the server in `micronaut.server.host-resolution.allowed-hosts`, regular expressions matched against `scheme://host[:port]`, so that a forged host, for example in a cached response, cannot send clients to another authorization server. A request whose host matches none of them is resolved to `http://localhost`, so clients would look for the metadata on their own machine. With the allowed hosts set, the `resource` is the canonical URL of the endpoint, the audience above.
+
+Behind a proxy that terminates TLS, the server sees plain HTTP. Name the headers the proxy sets, so that the resolved host is the `https` one the clients use. Once they are configured, only those headers are read, and the proxy must replace any copies the client sent:
+
+[configuration]
+----
+micronaut:
+  server:
+    host-resolution:
+      protocol-header: X-Forwarded-Proto
+      host-header: X-Forwarded-Host
+      allowed-hosts:
+        - https://mcp[.]example[.]com
+----
+
+Use `host-header: Host` if the proxy keeps the `Host` header instead of setting `X-Forwarded-Host`.
 
 If you change `micronaut.mcp.server.endpoint`, use the same path in the `intercept-url-map` pattern. The metadata path follows the endpoint: `/.well-known/oauth-protected-resource/<endpoint>`.
 

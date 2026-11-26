@@ -115,7 +115,7 @@ final class McpTransportSecurityFilter implements Ordered {
                 LOG.debug("Rejected request to {}: Origin '{}' is not listed in {}{}", request.getPath(), sanitize(origin),
                     ALLOWED_ORIGINS, allowLoopbackOrigins ? " and is not a loopback origin" : "");
             }
-            return error(HttpStatus.FORBIDDEN, "Origin not allowed: " + origin);
+            return error(HttpStatus.FORBIDDEN, "Origin not allowed: " + sanitize(origin));
         }
         List<String> versions = headers.getAll(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION);
         if (versions.size() > 1) {
@@ -128,7 +128,7 @@ final class McpTransportSecurityFilter implements Ordered {
                 LOG.debug("Rejected request to {}: MCP-Protocol-Version '{}' is not supported (supported: {})",
                     request.getPath(), sanitize(protocolVersion), protocolVersions);
             }
-            return error(HttpStatus.BAD_REQUEST, "Unsupported protocol version: " + protocolVersion + ", supported versions: " + protocolVersions);
+            return error(HttpStatus.BAD_REQUEST, "Unsupported protocol version: " + sanitize(protocolVersion) + ", supported versions: " + protocolVersions);
         }
         return null;
     }
@@ -274,7 +274,7 @@ final class McpTransportSecurityFilter implements Ordered {
 
     /**
      * A request header value without control characters (C0, DEL and C1) and line separators, so that it cannot forge
-     * log lines.
+     * log lines, here or where a client logs the error message.
      */
     private static String sanitize(String value) {
         StringBuilder sanitized = new StringBuilder(value.length());

@@ -91,6 +91,13 @@ class TransportSecurityTest {
     }
 
     @Test
+    void theRejectionDoesNotEchoControlCharacters() {
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class,
+            () -> httpClient.toBlocking().exchange(ping().header("Origin", "http://evil.example\tforged"), String.class));
+        assertTrue(e.getResponse().getBody(String.class).orElseThrow().contains("Origin not allowed: http://evil.example?forged"));
+    }
+
+    @Test
     void theFilterAppliesToTheEndpointWithATrailingSlash() {
         assertEquals(HttpStatus.FORBIDDEN, status(ping("/mcp/").header("Origin", "http://evil.example")));
     }
