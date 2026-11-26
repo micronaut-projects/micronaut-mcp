@@ -32,7 +32,7 @@ abstract class AbstractToolExecutionErrorsTest {
     JsonMapper jsonMapper;
 
     @ParameterizedTest
-    @ValueSource(strings = {"failing", "failingPublisher"})
+    @ValueSource(strings = {"failing", "failingPublisher", "failingOnExecutor"})
     void aFailureWithoutAMapperIsAToolExecutionError(String tool) throws IOException {
         assertToolError("the backend is down", callTool(httpClient, jsonMapper, tool));
     }
@@ -40,6 +40,13 @@ abstract class AbstractToolExecutionErrorsTest {
     @Test
     void aFailureWithoutAMessageIsDescribedByItsClass() throws IOException {
         assertToolError("IllegalStateException", callTool(httpClient, jsonMapper, "failingWithoutMessage"));
+    }
+
+    @Test
+    void aFailureOfAnAnonymousClassWithoutAMessageIsDescribedByTheClassName() throws IOException {
+        Map<String, Object> result = callTool(httpClient, jsonMapper, "failingAnonymously");
+        assertEquals(Boolean.TRUE, result.get("isError"));
+        assertTrue(text(result).startsWith(ToolErrorTools.class.getName() + "$"), text(result));
     }
 
     @ParameterizedTest
@@ -55,9 +62,10 @@ abstract class AbstractToolExecutionErrorsTest {
         assertToolError("count: must be less than or equal to 10", result);
     }
 
-    @Test
-    void anMcpErrorIsAProtocolErrorWithItsCodeAndMessage() throws IOException {
-        Map<String, Object> error = callToolError(httpClient, jsonMapper, "protocolError", HttpStatus.BAD_REQUEST);
+    @ParameterizedTest
+    @ValueSource(strings = {"protocolError", "protocolErrorFuture"})
+    void anMcpErrorIsAProtocolErrorWithItsCodeAndMessage(String tool) throws IOException {
+        Map<String, Object> error = callToolError(httpClient, jsonMapper, tool, HttpStatus.BAD_REQUEST);
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.get("code"));
         assertEquals("unknown city", error.get("message"));
     }

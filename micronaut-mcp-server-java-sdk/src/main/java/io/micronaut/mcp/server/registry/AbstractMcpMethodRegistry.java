@@ -167,11 +167,16 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * without one is described by the simple name of its class.
      *
      * @param throwable The failure
-     * @return The message of the failure, or the simple name of its class when it has no message
+     * @return The message of the failure, or the simple name of its class (its name for an anonymous class) when it has no message
      */
     static String errorMessage(Throwable throwable) {
         String message = throwable.getMessage();
-        return message != null && !message.isBlank() ? message : throwable.getClass().getSimpleName();
+        if (message != null && !message.isBlank()) {
+            return message;
+        }
+        // An anonymous class has no simple name
+        String simpleName = throwable.getClass().getSimpleName();
+        return simpleName.isEmpty() ? throwable.getClass().getName() : simpleName;
     }
 
     /**
@@ -227,7 +232,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @return The error the mapper maps the failure to
      */
     @SuppressWarnings("unchecked")
-    protected static <T extends Throwable> McpError mapException(McpErrorExceptionMapper<? extends Throwable> mapper, T ex) {
+    static <T extends Throwable> McpError mapException(McpErrorExceptionMapper<? extends Throwable> mapper, T ex) {
         return ((McpErrorExceptionMapper<T>) mapper).map(ex);
     }
 

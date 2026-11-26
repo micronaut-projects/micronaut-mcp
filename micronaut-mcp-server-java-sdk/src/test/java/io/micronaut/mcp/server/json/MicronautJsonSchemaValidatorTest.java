@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -36,8 +37,8 @@ class MicronautJsonSchemaValidatorTest {
     void everyViolationIsReported() {
         JsonSchemaValidator.ValidationResponse response = validator.validate(SCHEMA, Map.of("age", "thirty"));
         assertFalse(response.valid());
-        assertTrue(response.errorMessage().contains("name") && response.errorMessage().contains("age")
-            && response.errorMessage().contains("; "), response.errorMessage());
+        // The violations are a set, so they are compared without their order
+        assertEquals(Set.of("/age: string found, integer expected", ": required property 'name' not found"), Set.of(response.errorMessage().split("; ")));
     }
 
     @Test
