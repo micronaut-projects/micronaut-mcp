@@ -165,9 +165,12 @@ final class ConnectionMcpClient implements McpClient {
         client().setRoots(roots);
     }
 
+    /**
+     * Forgets the client of the connection without closing it, as the client bean is closed with the bean context. The
+     * next call resolves the client bean again.
+     */
     @Override
     public void close() {
-        // The client bean is closed with the bean context, only forget it here
         client.set(null);
     }
 }

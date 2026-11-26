@@ -20,6 +20,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.mcp.conf.client.McpClientStdioConfiguration;
 import jakarta.inject.Named;
@@ -76,6 +77,10 @@ class StdioMcpTransportFactory {
     @EachBean(McpClientStdioConfiguration.class)
     @Prototype
     StdioMcpTransport.Builder createStdioMcpTransportBuilder(McpClientStdioConfiguration configuration) {
+        if (configuration.getCommand().isEmpty()) {
+            throw new ConfigurationException("The MCP STDIO connection " + configuration.getName() + " has no command, set "
+                + McpClientStdioConfiguration.PREFIX + "." + configuration.getName() + ".command");
+        }
         StdioMcpTransport.Builder builder = new StdioMcpTransport.Builder()
             .command(configuration.getCommand())
             .logEvents(configuration.isLogEvents());

@@ -20,6 +20,7 @@ import dev.langchain4j.mcp.client.McpClient;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
@@ -46,7 +47,7 @@ final class ToolProviderFactory {
     @Prototype
     @Primary
     McpToolProvider.Builder toolProviderBuilder(List<McpClientConnectionConfiguration> connections, BeanContext beanContext) {
-        return builder(connections.stream()
+        return builder(McpClientConnections.requireUniqueNames(connections).stream()
             .map(connection -> client(connection, beanContext))
             .toList());
     }
@@ -58,9 +59,15 @@ final class ToolProviderFactory {
     }
 
     @EachBean(McpClientConnectionConfiguration.class)
+    @Prototype
+    McpToolProvider.Builder clientToolProviderBuilder(McpClientConnectionConfiguration connection, BeanContext beanContext) {
+        return builder(List.of(client(connection, beanContext)));
+    }
+
+    @EachBean(McpClientConnectionConfiguration.class)
     @Singleton
-    McpToolProvider clientToolProvider(McpClientConnectionConfiguration connection, BeanContext beanContext) {
-        return builder(List.of(client(connection, beanContext))).build();
+    McpToolProvider clientToolProvider(@Parameter McpToolProvider.Builder builder) {
+        return builder.build();
     }
 
     /**
