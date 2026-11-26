@@ -19,9 +19,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.callTool;
 import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.callToolError;
+import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.text;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -69,6 +71,14 @@ class ToolErrorLoggingTest {
         assertEquals("Tool failing failed: the backend is down", event.getFormattedMessage());
         assertNotNull(event.getThrowableProxy());
         assertEquals(IllegalStateException.class.getName(), event.getThrowableProxy().getClassName());
+    }
+
+    @Test
+    void lineBreaksInTheMessageAreNotLogged() throws IOException {
+        Map<String, Object> result = callTool(httpClient, jsonMapper, "failingWithLineBreak");
+        // the model receives the message as is
+        assertEquals("Unknown city: Gotham\n12:00:00.000 INFO forged line", text(result));
+        assertEquals("Tool failingWithLineBreak failed: Unknown city: Gotham_12:00:00.000 INFO forged line", single(Level.WARN).getFormattedMessage());
     }
 
     @Test

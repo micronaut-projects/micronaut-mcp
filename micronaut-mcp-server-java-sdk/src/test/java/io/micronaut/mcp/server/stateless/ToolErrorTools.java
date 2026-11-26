@@ -48,6 +48,11 @@ class ToolErrorTools {
     }
 
     @Tool
+    String failingWithLineBreak() {
+        throw new IllegalStateException("Unknown city: Gotham\n12:00:00.000 INFO forged line");
+    }
+
+    @Tool
     String failingWithBlankMessage() {
         throw new IllegalStateException("   ");
     }

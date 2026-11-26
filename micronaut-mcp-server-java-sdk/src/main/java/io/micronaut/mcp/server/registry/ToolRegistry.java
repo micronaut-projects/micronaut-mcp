@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.regex.Pattern;
 import java.util.function.Function;
 
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_ARRAY;
@@ -72,6 +73,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public static final boolean DEFAULT_OPEN_WORLD_HINT_VALUE = true;
     public static final boolean DEFAULT_RETURN_DIRECT_VALUE = false;
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
+    private static final Pattern CONTROL_CHARACTERS = Pattern.compile("\\p{Cntrl}");
     private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.CallToolRequest.class};
     private static final Argument<Map<String, Object>> STRUCTURED_CONTENT_ARGUMENT = Argument.mapOf(String.class, Object.class);
     private static final String MEMBER_ANNOTATIONS = "annotations";
@@ -223,7 +225,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             message = mapped != null && !mapped.isBlank() ? mapped : toolErrorMessage(name, error);
             // Classified by the type of the exception, which may also be thrown by the tool body
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Tool {} failed with an input error: {}", name, message, error);
+                LOG.debug("Tool {} failed with an input error: {}", name, loggable(message), error);
             }
         } else if (mapper != null) {
             // The SDK does not log the protocol errors it sends
@@ -234,10 +236,18 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         } else {
             message = toolErrorMessage(name, error);
             if (LOG.isWarnEnabled()) {
-                LOG.warn("Tool {} failed: {}", name, message, error);
+                LOG.warn("Tool {} failed: {}", name, loggable(message), error);
             }
         }
         return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
+    }
+
+    /**
+     * A message that may contain the arguments of a call, made safe to log: control characters, such as line breaks,
+     * are replaced, so that a caller cannot forge log lines (CWE-117). The text sent to the model is unchanged.
+     */
+    private static String loggable(@Nullable String message) {
+        return message == null ? "null" : CONTROL_CHARACTERS.matcher(message).replaceAll("_");
     }
 
     @SuppressWarnings("unchecked")
@@ -265,9 +275,10 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             return serialize(m, structuredOutput, result);
         } catch (IOException e) {
             // Reported like an output that does not match the output schema: a tool execution error with the reason
-            String message = "The result of tool " + toolName(m.method()) + " could not be serialized: " + e.getMessage();
+            String name = toolName(m.method());
+            String message = "The result of tool " + name + " could not be serialized: " + e.getMessage();
             if (LOG.isWarnEnabled()) {
-                LOG.warn(message, e);
+                LOG.warn("The result of tool {} could not be serialized: {}", name, loggable(e.getMessage()), e);
             }
             return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
         }
