@@ -8,11 +8,13 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
+import io.micronaut.mcp.conf.client.McpClientStdioConfiguration;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -57,6 +59,7 @@ class McpClientConnectionsValidatorTest {
         assertEquals("Each MCP connection needs a unique name, but langchain4j.mcp.client.transport.stdio.commands and"
                 + " micronaut.mcp.client.stdio.stdio have the same name 'stdio'. Rename one of them.",
             startupError(Map.of(
+                "micronaut.mcp.client.transport", "STDIO",
                 "langchain4j.mcp.client.transport.stdio.commands", "java",
                 "micronaut.mcp.client.stdio.stdio.command", "java")));
     }
@@ -102,28 +105,51 @@ class McpClientConnectionsValidatorTest {
 
     @Test
     void credentialsSentOverHttpToAnotherHostAreWarnedAbout() {
-        assertEquals(List.of("The MCP HTTP connection remote sends credentials in its headers over http, use https"),
-            warnings(Map.of(
-                "micronaut.mcp.client.http.remote.url", "http://mcp.example.com/mcp",
-                "micronaut.mcp.client.http.remote.headers.authorization", "Bearer secret",
-                "micronaut.mcp.client.http.secure.url", "https://mcp.example.com/mcp",
-                "micronaut.mcp.client.http.secure.headers.Authorization", "Bearer secret",
-                "micronaut.mcp.client.http.local.url", "http://localhost:8080/mcp",
-                "micronaut.mcp.client.http.local.headers.Cookie", "session=secret",
-                "micronaut.mcp.client.http.plain.url", "http://mcp.example.com/mcp",
-                "micronaut.mcp.client.http.plain.headers.X-Trace", "1")));
+        assertEquals(Set.of(
+                "The MCP HTTP connection remote sends credentials over http, use https",
+                "The MCP HTTP connection api-key sends credentials over http, use https",
+                "The MCP HTTP connection user-info sends credentials over http, use https",
+                "The MCP HTTP connection lookalike sends credentials over http, use https"),
+            Set.copyOf(warnings(Map.ofEntries(
+                Map.entry("micronaut.mcp.client.http.remote.url", "http://mcp.example.com/mcp"),
+                Map.entry("micronaut.mcp.client.http.remote.headers.authorization", "Bearer secret"),
+                Map.entry("micronaut.mcp.client.http.api-key.url", "http://mcp.example.com/mcp"),
+                Map.entry("micronaut.mcp.client.http.api-key.headers.X-Api-Key", "secret"),
+                Map.entry("micronaut.mcp.client.http.user-info.url", "http://user:secret@mcp.example.com/mcp"),
+                Map.entry("micronaut.mcp.client.http.lookalike.url", "http://127.example.com/mcp"),
+                Map.entry("micronaut.mcp.client.http.lookalike.headers.Authorization", "Bearer secret"),
+                Map.entry("micronaut.mcp.client.http.loopback.url", "http://127.0.0.1:8080/mcp"),
+                Map.entry("micronaut.mcp.client.http.loopback.headers.Authorization", "Bearer secret"),
+                Map.entry("micronaut.mcp.client.http.secure.url", "https://mcp.example.com/mcp"),
+                Map.entry("micronaut.mcp.client.http.secure.headers.Authorization", "Bearer secret"),
+                Map.entry("micronaut.mcp.client.http.local.url", "http://localhost:8080/mcp"),
+                Map.entry("micronaut.mcp.client.http.local.headers.Cookie", "session=secret"),
+                Map.entry("micronaut.mcp.client.http.plain.url", "http://mcp.example.com/mcp"),
+                Map.entry("micronaut.mcp.client.http.plain.headers.X-Trace", "1")))));
     }
 
     @Test
     void theDeprecatedPropertiesAreWarnedAbout() {
         assertEquals(List.of(
-                    "micronaut.mcp.client.transport is deprecated and has no effect: the connections of micronaut.mcp.client.http"
-                        + " and micronaut.mcp.client.stdio are all used, whatever their transport",
-                    "langchain4j.mcp.client.transport.stdio.commands is deprecated: it declares a STDIO connection named stdio,"
-                        + " declare it with micronaut.mcp.client.stdio.stdio.command instead"),
+                    "micronaut.mcp.client.transport is deprecated: the connections of micronaut.mcp.client.http and"
+                        + " micronaut.mcp.client.stdio are all used, whatever their transport, and it only enables"
+                        + " langchain4j.mcp.client.transport.stdio.commands",
+                    "langchain4j.mcp.client.transport.stdio.commands is deprecated and declares a STDIO connection named stdio:"
+                        + " declare a STDIO connection with micronaut.mcp.client.stdio.<name>.command instead"),
             warnings(Map.of(
                 "micronaut.mcp.client.transport", "STDIO",
                 "langchain4j.mcp.client.transport.stdio.commands", "java")));
+    }
+
+    @Test
+    void theDeprecatedCommandsWithoutTheStdioTransportAreIgnored() {
+        try (ApplicationContext context = ApplicationContext.run(Map.of("langchain4j.mcp.client.transport.stdio.commands", "java"))) {
+            assertTrue(context.getBeansOfType(McpClientStdioConfiguration.class).isEmpty(), "No STDIO connection is declared");
+        }
+        assertEquals(List.of("langchain4j.mcp.client.transport.stdio.commands is deprecated and ignored, as"
+                + " micronaut.mcp.client.transport is not STDIO: declare a STDIO connection with"
+                + " micronaut.mcp.client.stdio.<name>.command instead"),
+            warnings(Map.of("langchain4j.mcp.client.transport.stdio.commands", "java")));
     }
 
     private static List<String> warnings(Map<String, Object> properties) {

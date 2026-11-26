@@ -22,7 +22,6 @@ import io.micronaut.context.event.StartupEvent;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.mcp.client.langchain4j.stdio.LegacyMcpClientStdioConfiguration;
-import io.micronaut.mcp.conf.client.McpClientConfiguration;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.micronaut.mcp.conf.client.McpClientStdioConfiguration;
@@ -33,8 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Checks the configuration of the MCP connections when the application starts, so that a mistake fails the startup
@@ -45,9 +43,8 @@ import java.util.Set;
 @Internal
 final class McpClientConnectionsValidator implements ApplicationEventListener<StartupEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(McpClientConnectionsValidator.class);
-    // The deprecated property, named here so that this class does not use the deprecated constant
-    private static final String TRANSPORT = McpClientConfiguration.PREFIX + ".transport";
-    private static final Set<String> CREDENTIAL_HEADERS = Set.of("authorization", "proxy-authorization", "cookie");
+    private static final Pattern CREDENTIAL_HEADER = Pattern.compile("auth|cookie|token|key|secret|password", Pattern.CASE_INSENSITIVE);
+    private static final Pattern LOOPBACK_IPV4 = Pattern.compile("127(\\.\\d{1,3}){3}");
 
     private final BeanContext beanContext;
     private final Environment environment;
@@ -74,13 +71,19 @@ final class McpClientConnectionsValidator implements ApplicationEventListener<St
     }
 
     private void warnAboutDeprecatedProperties() {
-        if (environment.containsProperty(TRANSPORT)) {
-            LOG.warn("{} is deprecated and has no effect: the connections of {} and {} are all used, whatever their transport",
-                TRANSPORT, McpClientHttpConfiguration.PREFIX, McpClientStdioConfiguration.PREFIX);
+        String transport = LegacyMcpClientStdioConfiguration.TRANSPORT;
+        if (environment.containsProperty(transport)) {
+            LOG.warn("{} is deprecated: the connections of {} and {} are all used, whatever their transport, and it only enables {}",
+                transport, McpClientHttpConfiguration.PREFIX, McpClientStdioConfiguration.PREFIX, LegacyMcpClientStdioConfiguration.PROPERTY);
         }
         if (environment.containsProperty(LegacyMcpClientStdioConfiguration.PROPERTY)) {
-            LOG.warn("{} is deprecated: it declares a STDIO connection named stdio, declare it with {}.stdio.command instead",
-                LegacyMcpClientStdioConfiguration.PROPERTY, McpClientStdioConfiguration.PREFIX);
+            boolean enabled = environment.getProperty(transport, String.class)
+                .filter(LegacyMcpClientStdioConfiguration.TRANSPORT_STDIO::equals)
+                .isPresent();
+            LOG.warn("{} is deprecated{}: declare a STDIO connection with {}.<name>.command instead",
+                LegacyMcpClientStdioConfiguration.PROPERTY,
+                enabled ? " and declares a STDIO connection named stdio" : " and ignored, as " + transport + " is not STDIO",
+                McpClientStdioConfiguration.PREFIX);
         }
     }
 
@@ -94,17 +97,16 @@ final class McpClientConnectionsValidator implements ApplicationEventListener<St
 
     private static void warnAboutCleartextCredentials(McpClientHttpConfiguration http) {
         URI url = http.getUrl();
-        boolean credentials = http.getHeaders().keySet().stream()
-            .map(header -> header.toLowerCase(Locale.ROOT))
-            .anyMatch(CREDENTIAL_HEADERS::contains);
+        boolean credentials = url.getRawUserInfo() != null
+            || http.getHeaders().keySet().stream().anyMatch(header -> CREDENTIAL_HEADER.matcher(header).find());
         if (credentials && "http".equalsIgnoreCase(url.getScheme()) && !isLoopback(url.getHost())) {
-            // Only the name, never the value of a header
-            LOG.warn("The MCP HTTP connection {} sends credentials in its headers over http, use https", http.getName());
+            // Only the name, never the value of a header or of the user information
+            LOG.warn("The MCP HTTP connection {} sends credentials over http, use https", http.getName());
         }
     }
 
     private static boolean isLoopback(String host) {
-        return host != null && (host.equalsIgnoreCase("localhost") || host.startsWith("127.") || host.equals("[::1]"));
+        return host != null && (host.equalsIgnoreCase("localhost") || LOOPBACK_IPV4.matcher(host).matches() || host.equals("[::1]"));
     }
 
     private void requireCommand(McpClientStdioConfiguration stdio) {

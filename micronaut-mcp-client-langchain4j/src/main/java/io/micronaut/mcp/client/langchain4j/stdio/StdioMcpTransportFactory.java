@@ -34,7 +34,9 @@ import jakarta.inject.Singleton;
 class StdioMcpTransportFactory {
     /**
      * Adapts the deprecated {@value StdioMcpTransportConfiguration#PROPERTY_COMMANDS} property to a STDIO connection
-     * named {@value LegacyMcpClientStdioConfiguration#NAME}.
+     * named {@value LegacyMcpClientStdioConfiguration#NAME}, only when the deprecated
+     * {@value LegacyMcpClientStdioConfiguration#TRANSPORT} property is {@code STDIO}, as before named connections, so
+     * that a leftover value does not start a process after an upgrade.
      *
      * @param configuration The deprecated configuration
      * @return The STDIO connection
@@ -44,6 +46,7 @@ class StdioMcpTransportFactory {
     @Named(LegacyMcpClientStdioConfiguration.NAME)
     @Singleton
     @Requires(bean = StdioMcpTransportConfiguration.class)
+    @Requires(property = LegacyMcpClientStdioConfiguration.TRANSPORT, value = LegacyMcpClientStdioConfiguration.TRANSPORT_STDIO)
     McpClientStdioConfiguration legacyStdioConfiguration(StdioMcpTransportConfiguration configuration) {
         return new LegacyMcpClientStdioConfiguration(configuration.getCommands());
     }

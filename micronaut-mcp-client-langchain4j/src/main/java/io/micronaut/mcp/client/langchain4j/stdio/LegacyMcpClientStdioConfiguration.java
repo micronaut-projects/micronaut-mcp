@@ -23,7 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The STDIO connection named {@value #NAME} that the deprecated {@value #PROPERTY} property declares.
+ * The STDIO connection named {@value #NAME} that the deprecated {@value #PROPERTY} property declares when the deprecated
+ * {@value #TRANSPORT} property is {@value #TRANSPORT_STDIO}.
  */
 @Internal
 public final class LegacyMcpClientStdioConfiguration implements McpClientStdioConfiguration {
@@ -36,6 +37,14 @@ public final class LegacyMcpClientStdioConfiguration implements McpClientStdioCo
      */
     @SuppressWarnings("removal")
     public static final String PROPERTY = StdioMcpTransportConfiguration.PROPERTY_COMMANDS;
+    /**
+     * The deprecated property that must be {@value #TRANSPORT_STDIO} for {@value #PROPERTY} to declare the connection.
+     */
+    public static final String TRANSPORT = "micronaut.mcp.client.transport";
+    /**
+     * The value of {@value #TRANSPORT} that enables the connection.
+     */
+    public static final String TRANSPORT_STDIO = "STDIO";
 
     private final List<String> command;
 

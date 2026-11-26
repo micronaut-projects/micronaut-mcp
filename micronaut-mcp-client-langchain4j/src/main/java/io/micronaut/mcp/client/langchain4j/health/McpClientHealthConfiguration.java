@@ -43,13 +43,6 @@ final class McpClientHealthConfiguration {
     private Duration timeout = DEFAULT_TIMEOUT;
 
     /**
-     * @return Whether the indicator is enabled
-     */
-    boolean isEnabled() {
-        return enabled;
-    }
-
-    /**
      * Whether the `mcp` health indicator pings the MCP servers. When it is enabled, a server that cannot be reached
      * makes the health endpoint answer 503. Default value `true`.
      *
@@ -57,6 +50,16 @@ final class McpClientHealthConfiguration {
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    /**
+     * {@link McpClientHealthEnabledCondition} reads the property itself, as the condition is evaluated before this
+     * configuration is bound.
+     *
+     * @return Whether the indicator is enabled
+     */
+    boolean isEnabled() {
+        return enabled;
     }
 
     /**
@@ -72,6 +75,9 @@ final class McpClientHealthConfiguration {
      * @param timeout How long to wait for the servers to answer
      */
     public void setTimeout(Duration timeout) {
+        if (timeout.isNegative() || timeout.isZero()) {
+            throw new IllegalArgumentException(PREFIX + ".timeout must be positive, but is " + timeout);
+        }
         this.timeout = timeout;
     }
 }

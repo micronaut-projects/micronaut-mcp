@@ -18,7 +18,6 @@ package io.micronaut.mcp.client.langchain4j.health;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.health.HealthStatus;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.management.endpoint.health.HealthEndpoint;
@@ -55,7 +54,7 @@ import java.util.concurrent.TimeoutException;
 @Requires(classes = HealthEndpoint.class)
 @Requires(beans = HealthEndpoint.class)
 @Requires(beans = McpClientConnectionConfiguration.class)
-@Requires(property = McpClientHealthConfiguration.PROPERTY_ENABLED, notEquals = StringUtils.FALSE)
+@Requires(condition = McpClientHealthEnabledCondition.class)
 final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String, Object>> {
     private static final String NAME = "mcp";
     private static final String STATUS = "status";

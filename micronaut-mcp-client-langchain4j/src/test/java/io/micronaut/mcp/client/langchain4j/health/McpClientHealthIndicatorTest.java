@@ -98,6 +98,22 @@ class McpClientHealthIndicatorTest {
     }
 
     @Test
+    void theIndicatorCanBeDisabledWhateverTheCase() {
+        try (ApplicationContext context = ApplicationContext.run(Map.of(
+            "micronaut.mcp.client.http.weather.url", "http://localhost:1/mcp",
+            "endpoints.health.mcp.enabled", "FALSE"))) {
+            assertTrue(context.getBeansOfType(HealthIndicator.class).stream().noneMatch(McpClientHealthIndicator.class::isInstance));
+        }
+    }
+
+    @Test
+    void aTimeoutThatIsNotPositiveIsRejected() {
+        McpClientHealthConfiguration configuration = new McpClientHealthConfiguration();
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> configuration.setTimeout(Duration.ZERO));
+        assertEquals("endpoints.health.mcp.timeout must be positive, but is PT0S", e.getMessage());
+    }
+
+    @Test
     void theIndicatorIsEnabledByDefault() {
         try (ApplicationContext context = ApplicationContext.run(Map.of(
             "micronaut.mcp.client.http.weather.url", "http://localhost:1/mcp"))) {

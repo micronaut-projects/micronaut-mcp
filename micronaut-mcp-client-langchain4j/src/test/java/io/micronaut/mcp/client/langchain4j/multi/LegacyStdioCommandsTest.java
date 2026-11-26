@@ -37,8 +37,8 @@ class LegacyStdioCommandsTest {
         for (int i = 0; i < command.size(); i++) {
             properties.put("langchain4j.mcp.client.transport.stdio.commands[" + i + "]", command.get(i));
         }
-        // The deprecated transport property no longer leaves out the STDIO connections
-        properties.put("micronaut.mcp.client.transport", "HTTP");
+        // As before named connections, the deprecated commands only declare a connection with the STDIO transport
+        properties.put("micronaut.mcp.client.transport", "STDIO");
         Set<Long> childrenBefore = children();
         ProcessHandle server;
         try (ApplicationContext context = ApplicationContext.run(properties)) {
