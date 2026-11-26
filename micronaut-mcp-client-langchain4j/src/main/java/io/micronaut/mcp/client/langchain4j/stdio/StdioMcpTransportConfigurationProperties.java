@@ -35,6 +35,9 @@ class StdioMcpTransportConfigurationProperties implements StdioMcpTransportConfi
     }
 
     /**
+     * Deprecated: declares a STDIO connection named `stdio`, declare it with `micronaut.mcp.client.stdio.stdio.command`
+     * instead.
+     *
      * @param commands The command that starts the server, and its arguments
      * @deprecated Declare a STDIO connection with {@code micronaut.mcp.client.stdio.<name>.command} instead.
      */

@@ -45,7 +45,7 @@ final class McpClientConfigurationProperties implements McpClientConfiguration {
     }
 
     /**
-     * Set the MCP Transport. It defaults to HTTP.
+     * Deprecated, has no effect: declare the connections under `micronaut.mcp.client.http` or `micronaut.mcp.client.stdio`.
      * @param transport The MCP transport.
      * @deprecated The property has no effect: the transport of each connection is set by where it is declared,
      * {@value McpClientHttpConfiguration#PREFIX} or {@value McpClientStdioConfiguration#PREFIX}.
