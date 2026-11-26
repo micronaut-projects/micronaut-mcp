@@ -13,6 +13,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -32,16 +33,21 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.test.support.TestPropertyProvider;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,14 +55,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Starts the configuration of the Authorization section of the guide against a stub identity provider.
+ * Starts the configuration of the Authorization section of the guide
+ * ({@code src/main/docs/guide/server/security/authorization.adoc}) against a stub identity provider. Keep the two in
+ * sync: the {@code intercept-url-map} below and the JWKS, issuer and audience properties of {@link #getProperties()} are
+ * the guide's {@code [configuration]} block, with the stub's URLs and the server's own URL as the audience.
  */
 @Property(name = "micronaut.mcp.server.info.name", value = "secured")
 @Property(name = "micronaut.mcp.server.info.version", value = "1.0.0")
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "micronaut.security.intercept-url-map[0].pattern", value = "/mcp")
 @Property(name = "micronaut.security.intercept-url-map[0].access[0]", value = "isAuthenticated()")
-@Property(name = "micronaut.security.token.jwt.claims-validators.audience", value = SecuredMcpServerTest.AUDIENCE)
 // Core denies non-local origins on a localhost server; pass them through to reach the MCP endpoint rules
 @Property(name = "micronaut.server.cors.localhost-pass-through", value = StringUtils.TRUE)
 @Property(name = "spec.name", value = "SecuredMcpServerTest")
@@ -65,7 +73,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SecuredMcpServerTest implements TestPropertyProvider {
 
     private static final String KEY_ID = "idp";
-    static final String AUDIENCE = "https://mcp.example.com/mcp";
 
     private final RSAKey key = generateKey();
 
@@ -75,18 +82,20 @@ class SecuredMcpServerTest implements TestPropertyProvider {
         "micronaut.mcp.server.enabled", StringUtils.FALSE,
         "idp.jwks", new JWKSet(key.toPublicJWK()).toString()));
 
+    // The server's port is chosen up front, so that the audience can be the resource the metadata reports
+    private final int port = SocketUtils.findAvailableTcpPort();
+
     @Inject
     @Client("/")
     HttpClient httpClient;
-
-    @Inject
-    EmbeddedServer server;
 
     @Override
     public Map<String, String> getProperties() {
         String issuer = issuer();
         return Map.of(
-            "micronaut.security.token.jwt.signatures.jwks.idp.url", issuer + "/keys",
+            "micronaut.server.port", String.valueOf(port),
+            "micronaut.security.token.jwt.claims-validators.audience", audience(),
+            "micronaut.security.token.jwt.signatures.jwks.idp.url", issuer + "/.well-known/jwks.json",
             "micronaut.security.oauth2.clients.idp.openid.issuer", issuer);
     }
 
@@ -95,65 +104,99 @@ class SecuredMcpServerTest implements TestPropertyProvider {
         idp.close();
     }
 
-    @Test
-    void anUnauthenticatedCallIsChallengedWithTheProtectedResourceMetadata() {
-        BlockingHttpClient client = httpClient.toBlocking();
-        MutableHttpRequest<String> request = whoami();
-        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request));
+    @ParameterizedTest
+    @ValueSource(strings = {"/mcp", "/mcp/"})
+    void anUnauthenticatedCallIsChallengedWithTheProtectedResourceMetadata(String path) {
+        HttpClientResponseException ex = rejected(whoami(path));
         assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatus());
-        String challenge = ex.getResponse().getHeaders().get("WWW-Authenticate");
-        assertTrue(challenge != null && challenge.startsWith("Bearer") && challenge.contains("resource_metadata=")
-            && challenge.contains("/.well-known/oauth-protected-resource/mcp"), challenge);
+        assertEquals("Bearer resource_metadata=\"http://localhost:" + port + "/.well-known/oauth-protected-resource"
+            + path + "\"", ex.getResponse().getHeaders().get("WWW-Authenticate"));
     }
 
     @Test
-    void theProtectedResourceMetadataNamesTheMcpEndpointAndTheAuthorizationServer() throws JSONException {
-        String metadata = httpClient.toBlocking().retrieve("/.well-known/oauth-protected-resource/mcp");
-        JSONAssert.assertEquals("""
-            {"resource": "%s/mcp", "authorization_servers": ["%s"]}""".formatted(server.getURL(), issuer()),
-            metadata, JSONCompareMode.LENIENT);
+    void theProtectedResourceMetadataNamesTheAudienceAndTheAuthorizationServer() throws JSONException {
+        JSONObject metadata = new JSONObject(httpClient.toBlocking().retrieve("/.well-known/oauth-protected-resource/mcp"));
+        // The guide asks for the audience to be the resource the metadata reports
+        assertEquals(audience(), metadata.getString("resource"));
+        JSONAssert.assertEquals(new JSONArray(List.of(issuer())), metadata.getJSONArray("authorization_servers"), JSONCompareMode.STRICT);
     }
 
-    @Test
-    void aCallWithATokenOfTheIdentityProviderReachesTheToolWithItsPrincipal() throws JSONException, JOSEException {
-        HttpResponse<String> response = httpClient.toBlocking().exchange(whoami().bearerAuth(token("alice", AUDIENCE)), String.class);
+    @ParameterizedTest
+    @ValueSource(strings = {"/mcp", "/mcp/"})
+    void aCallWithATokenOfTheIdentityProviderReachesTheToolWithItsPrincipal(String path) throws JSONException, JOSEException {
+        HttpResponse<String> response = httpClient.toBlocking().exchange(whoami(path).bearerAuth(token(claims().build(), key)), String.class);
         assertEquals(HttpStatus.OK, response.getStatus());
         JSONAssert.assertEquals("""
             {"result": {"content": [{"type": "text", "text": "alice"}], "isError": false}}""", response.body(), JSONCompareMode.LENIENT);
     }
 
     @Test
+    void aTokenWithSeveralAudiencesIncludingTheServerIsAccepted() throws JOSEException {
+        String token = token(claims().audience(List.of("https://other.example.com/api", audience())).build(), key);
+        assertEquals(HttpStatus.OK, httpClient.toBlocking().exchange(whoami("/mcp").bearerAuth(token), String.class).getStatus());
+    }
+
+    @Test
     void aTokenIssuedForAnotherResourceIsRejected() throws JOSEException {
-        BlockingHttpClient client = httpClient.toBlocking();
-        MutableHttpRequest<String> request = whoami().bearerAuth(token("alice", "https://other.example.com/api"));
-        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request));
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatus());
+        String token = token(claims().audience("https://other.example.com/api").build(), key);
+        assertEquals(HttpStatus.UNAUTHORIZED, rejected(whoami("/mcp").bearerAuth(token)).getStatus());
+        assertEquals(HttpStatus.UNAUTHORIZED, rejected(whoami("/mcp/").bearerAuth(token)).getStatus());
+    }
+
+    @Test
+    void aTokenWithoutAnAudienceIsRejected() throws JOSEException {
+        String token = token(claims().audience((String) null).build(), key);
+        assertEquals(HttpStatus.UNAUTHORIZED, rejected(whoami("/mcp").bearerAuth(token)).getStatus());
+    }
+
+    @Test
+    void anExpiredTokenIsRejected() throws JOSEException {
+        String token = token(claims().expirationTime(Date.from(Instant.now().minus(1, ChronoUnit.HOURS))).build(), key);
+        assertEquals(HttpStatus.UNAUTHORIZED, rejected(whoami("/mcp").bearerAuth(token)).getStatus());
+    }
+
+    @Test
+    void aTokenSignedWithAnotherKeyIsRejected() throws JOSEException {
+        String token = token(claims().build(), generateKey());
+        assertEquals(HttpStatus.UNAUTHORIZED, rejected(whoami("/mcp").bearerAuth(token)).getStatus());
     }
 
     @Test
     void aForeignOriginIsRejectedBeforeAuthentication() {
-        BlockingHttpClient client = httpClient.toBlocking();
-        MutableHttpRequest<String> request = whoami().header("Origin", "http://evil.example");
-        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
+        HttpClientResponseException ex = rejected(whoami("/mcp").header("Origin", "http://evil.example"));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
         String body = ex.getResponse().getBody(String.class).orElseThrow();
         assertTrue(body.contains("Origin not allowed: http://evil.example"), body);
+    }
+
+    private HttpClientResponseException rejected(MutableHttpRequest<String> request) {
+        BlockingHttpClient client = httpClient.toBlocking();
+        return assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
+    }
+
+    private String audience() {
+        return "http://localhost:" + port + "/mcp";
     }
 
     private String issuer() {
         return idp.getURL().toString();
     }
 
-    private String token(String subject, String audience) throws JOSEException {
-        SignedJWT jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(KEY_ID).build(),
-            new JWTClaimsSet.Builder()
-                .issuer(issuer())
-                .subject(subject)
-                .audience(audience)
-                .issueTime(new Date())
-                .expirationTime(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                .build());
-        jwt.sign(new RSASSASigner(key));
+    /**
+     * The claims of a valid token for alice.
+     */
+    private JWTClaimsSet.Builder claims() {
+        return new JWTClaimsSet.Builder()
+            .issuer(issuer())
+            .subject("alice")
+            .audience(audience())
+            .issueTime(new Date())
+            .expirationTime(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)));
+    }
+
+    private static String token(JWTClaimsSet claims, RSAKey signingKey) throws JOSEException {
+        SignedJWT jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(KEY_ID).build(), claims);
+        jwt.sign(new RSASSASigner(signingKey));
         return jwt.serialize();
     }
 
@@ -165,8 +208,8 @@ class SecuredMcpServerTest implements TestPropertyProvider {
         }
     }
 
-    private static MutableHttpRequest<String> whoami() {
-        return HttpRequest.POST("/mcp", """
+    private static MutableHttpRequest<String> whoami(String path) {
+        return HttpRequest.POST(path, """
             {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "whoami", "arguments": {}}}""");
     }
 
@@ -197,13 +240,13 @@ class SecuredMcpServerTest implements TestPropertyProvider {
         String openIdConfiguration() {
             String issuer = server.getURL().toString();
             return """
-                {"issuer": "%1$s", "jwks_uri": "%1$s/keys", "authorization_endpoint": "%1$s/authorize",
+                {"issuer": "%1$s", "jwks_uri": "%1$s/.well-known/jwks.json", "authorization_endpoint": "%1$s/authorize",
                  "token_endpoint": "%1$s/token", "response_types_supported": ["code"],
                  "subject_types_supported": ["public"], "id_token_signing_alg_values_supported": ["RS256"]}"""
                 .formatted(issuer);
         }
 
-        @Get(uri = "/keys", produces = MediaType.APPLICATION_JSON)
+        @Get(uri = "/.well-known/jwks.json", produces = MediaType.APPLICATION_JSON)
         String keys() {
             return jwks;
         }
