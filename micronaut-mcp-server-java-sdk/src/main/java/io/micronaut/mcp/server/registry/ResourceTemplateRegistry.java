@@ -157,11 +157,14 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
     }
 
     /**
+     * A request designates a resource template by the URI of a resource it matches.
+     *
      * @param uri The URI of a resource
      * @return Whether a template matching the URI declares an {@link io.micronaut.mcp.server.context.McpRequestContext}
      * parameter, so reading the resource may send notifications
      */
-    public boolean mayNotifyUri(String uri) {
+    @Override
+    public boolean mayNotify(String uri) {
         List<UriTemplateReadResourceRequest.Template> templates = notifyingTemplates.get();
         if (templates == null) {
             templates = methods.stream()
@@ -171,7 +174,8 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
             notifyingTemplates.set(templates);
         }
         for (UriTemplateReadResourceRequest.Template template : templates) {
-            if (template.matchTemplate().match(uri).isPresent()) {
+            // Guarded as reading the resource is, so that a URI a template cannot match is not matched slowly
+            if (UriTemplateReadResourceRequest.matches(template, uri)) {
                 return true;
             }
         }
@@ -217,8 +221,8 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
         }
-        if (result instanceof String s) {
-            McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(request.uri(), mimeType, s);
+        if (result instanceof CharSequence text) {
+            McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(request.uri(), mimeType, text.toString());
             return new McpSchema.ReadResourceResult(List.of(contents));
         }
         // Unsupported return type: return empty contents
