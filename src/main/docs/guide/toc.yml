@@ -57,6 +57,7 @@ server:
           title: Resource Template with Annotations
           resourceTemplateAnnotationParameter: Resource Annotation Method Parameters
           resourceTemplateAnnotationReturnType: Resource Annotation Method Return Type
+          resourceTemplateVariableDecoding: Resource Template Variable Decoding
         resourcesTemplatesFactory: Resource Templates with a Factory
     primitivesMetadata: Icons, Metadata and Resource Hints
     completions:

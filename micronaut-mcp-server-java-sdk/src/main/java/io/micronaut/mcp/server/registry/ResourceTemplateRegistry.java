@@ -110,8 +110,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
     }
 
     private static <B> McpSchema.ResourceTemplate toResourceTemplate(ExecutableMethod<B, Object> method) {
-        String uri = method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY)
-            .orElseThrow(() -> new ConfigurationException("Missing required member uriTemplate in @ResourceTemplate annotation"));
+        String uri = uriTemplateValue(method);
         String name = method.stringValue(ResourceTemplate.class, NAME_PROPERTY).orElse(ResourceTemplate.ELEMENT_NAME);
         if (ResourceTemplate.ELEMENT_NAME.equals(name)) {
             name = method.getName();
@@ -156,9 +155,13 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
     }
 
     private static UriTemplateReadResourceRequest.Template uriTemplate(ExecutableMethod<?, ?> method) {
-        String uriTemplate = method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY)
-            .orElseThrow(() -> new ConfigurationException("Missing required member uriTemplate in @ResourceTemplate annotation"));
-        return UriTemplateReadResourceRequest.Template.compile(uriTemplate);
+        return UriTemplateReadResourceRequest.Template.compile(uriTemplateValue(method));
+    }
+
+    private static String uriTemplateValue(ExecutableMethod<?, ?> method) {
+        return method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY)
+            .orElseThrow(() -> new ConfigurationException("Missing required member uriTemplate in @ResourceTemplate on method "
+                + method.getDeclaringType().getSimpleName() + "." + method.getDescription(true)));
     }
 
     private static String mimeType(ExecutableMethod<?, ?> method) {
@@ -170,6 +173,8 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                           String mimeType,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
+        // Matched where the method runs, on its executor if it declares one, so that a slow match of an untrusted URI
+        // does not run on the transport thread
         return m.call(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
             mcpTransportContext, result -> map(mimeType, request, result), e -> failWithMcpError(m, e));
     }
@@ -179,6 +184,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                                      String mimeType,
                                                                      Object mcpTransportContext,
                                                                      McpSchema.ReadResourceRequest request) {
+        // Matched where the method runs, see invokeAndMap
         return m.callAsync(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
             result -> map(mimeType, request, result), e -> failWithMcpError(m, e));
     }
