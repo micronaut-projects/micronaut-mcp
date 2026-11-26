@@ -114,13 +114,17 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
             McpSchema.JSONRPCResponse.JSONRPCError error = mcpError.getJsonRpcError();
             return Mono.just(HttpResponse.status(error != null ? status(error) : HttpStatus.INTERNAL_SERVER_ERROR));
         }
-        LOG.error("Failed to handle JSON-RPC notification {}", loggable(jsonrpcNotification.method()), e);
+        if (LOG.isErrorEnabled()) {
+            LOG.error("Failed to handle JSON-RPC notification {}", loggable(jsonrpcNotification.method()), e);
+        }
         return Mono.just(HttpResponse.serverError());
     }
 
     private Mono<HttpResponse<?>> internalErrorResponse(Throwable e, McpSchema.JSONRPCRequest jsonrpcRequest) {
         // an exception other than an McpError is a server fault: log it, and do not show its message to the client
-        LOG.error("Failed to handle JSON-RPC request {}", loggable(jsonrpcRequest.method()), e);
+        if (LOG.isErrorEnabled()) {
+            LOG.error("Failed to handle JSON-RPC request {}", loggable(jsonrpcRequest.method()), e);
+        }
         McpError mcpError = mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, INTERNAL_ERROR);
         return exceptionJsonRpcResponse(mcpError, jsonrpcRequest);
     }
@@ -183,7 +187,7 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
         }
         try {
             return jsonMapper.readValueFromTree(params, Object.class);
-        } catch (IOException e) {
+        } catch (IOException _) {
             throw new InvalidRequestException(UNREADABLE_PARAMS);
         }
     }
