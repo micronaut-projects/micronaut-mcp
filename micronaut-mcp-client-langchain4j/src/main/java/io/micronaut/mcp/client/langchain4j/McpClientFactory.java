@@ -33,6 +33,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -53,14 +54,16 @@ final class McpClientFactory {
             .key(configuration.getName())
             .autoHealthCheck(configuration.isAutoHealthCheck())
             .addListeners(listeners);
-        if (configuration.getInitializationTimeout() != null) {
-            builder.initializationTimeout(configuration.getInitializationTimeout());
+        Duration initializationTimeout = configuration.getInitializationTimeout();
+        if (initializationTimeout != null) {
+            builder.initializationTimeout(initializationTimeout);
         }
-        if (configuration.getRequestTimeout() != null) {
-            builder.toolExecutionTimeout(configuration.getRequestTimeout())
-                .resourcesTimeout(configuration.getRequestTimeout())
-                .promptsTimeout(configuration.getRequestTimeout())
-                .pingTimeout(configuration.getRequestTimeout());
+        Duration requestTimeout = configuration.getRequestTimeout();
+        if (requestTimeout != null) {
+            builder.toolExecutionTimeout(requestTimeout)
+                .resourcesTimeout(requestTimeout)
+                .promptsTimeout(requestTimeout)
+                .pingTimeout(requestTimeout);
         }
         if (logMessageHandler != null) {
             builder.logHandler(logMessageHandler);
