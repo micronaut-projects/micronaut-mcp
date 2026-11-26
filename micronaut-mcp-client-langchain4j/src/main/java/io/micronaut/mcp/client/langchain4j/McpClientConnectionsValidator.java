@@ -88,7 +88,7 @@ final class McpClientConnectionsValidator implements ApplicationEventListener<St
     }
 
     private void requireCommand(McpClientStdioConfiguration stdio) {
-        if (stdio.getCommand().isEmpty()) {
+        if (stdio.getCommand().isEmpty() || stdio.getCommand().getFirst().isBlank()) {
             String property = McpClientStdioConfiguration.PREFIX + "." + stdio.getName() + ".command";
             String hint = environment.containsProperties(property + "s") ? " (the property is command, not commands)" : "";
             throw new ConfigurationException("The MCP STDIO connection " + stdio.getName() + " has no command, set " + property + hint);
