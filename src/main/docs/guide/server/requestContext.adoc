@@ -45,7 +45,7 @@ data: {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info"
 data: {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"done"}],"isError":false}}
 ----
 
-A request that sends no notification is answered with JSON, and so is a client that only accepts JSON, whose notifications are dropped.
+A request that sends no notification is answered with JSON, and so is a client that only accepts JSON, whose notifications are dropped. On the blocking server, so that the response can become a stream while the method runs, a request for a primitive that declares an `McpRequestContext`, from a client that accepts both, runs the method on another thread of the blocking executor.
 
 Once the response is an event stream, its HTTP status is `200 OK`, even when the request fails: the error arrives as a JSON-RPC response with an `error` member in the last event. Check that member, not the HTTP status. A request that fails before its first notification is answered with JSON and the usual error status.
 
@@ -55,7 +55,7 @@ NOTE: Only requests for a primitive that declares an `McpRequestContext` paramet
 
 When the client closes the event stream, the request is cancelled and `isCancelled()` returns `true`; on the reactive server, a method that runs on an executor (`@ExecuteOn`) is also interrupted.
 
-The server does not detect a client that goes away before the first notification. A long-running method that checks `isCancelled()` should therefore send a log message first, for example `context.log(LoggingLevel.DEBUG, "Started")`. A progress notification only starts the event stream when the client sent a progress token.
+Apart from that interruption, cancelling does not stop a running method: a long-running method should check `isCancelled()` regularly and return early. The server does not detect a client that goes away before the first notification. A long-running method that checks `isCancelled()` should therefore send a log message first, for example `context.log(LoggingLevel.DEBUG, "Started")`. A progress notification only starts the event stream when the client sent a progress token.
 
 `isCancelled()` is always `false` over STDIO, and when the response is sent as JSON. The server does not handle the `notifications/cancelled` message of the protocol on either transport.
 

@@ -79,15 +79,17 @@ final class McpStreamingPolicy {
         if (method == null || !method.isString() || params == null || !params.isObject()) {
             return false;
         }
-        boolean mayNotify = switch (method.getStringValue()) {
-            case McpSchema.METHOD_TOOLS_CALL -> name(params, KEY_NAME) instanceof String name && toolRegistry.mayNotify(name);
-            case McpSchema.METHOD_PROMPT_GET -> name(params, KEY_NAME) instanceof String name && promptRegistry.mayNotify(name);
-            case McpSchema.METHOD_RESOURCES_READ -> name(params, KEY_URI) instanceof String uri
+        return switch (method.getStringValue()) {
+            case McpSchema.METHOD_TOOLS_CALL -> name(params, KEY_NAME) instanceof String name && toolRegistry.mayNotify(name)
+                && acceptsJsonAndEventStream(request);
+            case McpSchema.METHOD_PROMPT_GET -> name(params, KEY_NAME) instanceof String name && promptRegistry.mayNotify(name)
+                && acceptsJsonAndEventStream(request);
+            // Matching the URI templates costs more than parsing the Accept header, so it comes last
+            case McpSchema.METHOD_RESOURCES_READ -> name(params, KEY_URI) instanceof String uri && acceptsJsonAndEventStream(request)
                 && (resourceRegistry.mayNotify(uri) || resourceTemplateRegistry.mayNotify(uri));
-            case McpSchema.METHOD_COMPLETION_COMPLETE -> completionMayNotify(params.get(KEY_REF));
+            case McpSchema.METHOD_COMPLETION_COMPLETE -> completionMayNotify(params.get(KEY_REF)) && acceptsJsonAndEventStream(request);
             default -> false;
         };
-        return mayNotify && acceptsJsonAndEventStream(request);
     }
 
     private boolean completionMayNotify(@Nullable JsonNode ref) {

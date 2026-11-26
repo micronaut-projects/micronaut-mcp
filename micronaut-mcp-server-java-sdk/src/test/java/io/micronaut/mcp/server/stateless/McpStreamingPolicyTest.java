@@ -6,6 +6,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.json.tree.JsonNode;
+import io.micronaut.mcp.annotations.ResourceTemplate;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -75,6 +76,18 @@ class McpStreamingPolicyTest {
         assertFalse(policy.mayStream(request("text/event-stream"), body(CALL_NOTIFYING)), "a client that does not accept JSON");
     }
 
+    @Test
+    void aResourceReadMayStreamOnlyForAClientThatAcceptsBoth() throws IOException {
+        JsonNode read = body("""
+            {"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "items://42"}}""");
+        assertTrue(policy.mayStream(request(ACCEPT_BOTH), read));
+        assertFalse(policy.mayStream(request("application/json"), read));
+        assertFalse(policy.mayStream(request(ACCEPT_BOTH), body("""
+            {"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "other://42"}}""")));
+        assertFalse(policy.mayStream(request(ACCEPT_BOTH), body("""
+            {"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": 42}}""")));
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {
         "[]",
@@ -115,6 +128,11 @@ class McpStreamingPolicyTest {
         @Tool
         String quiet() {
             return "quiet";
+        }
+
+        @ResourceTemplate(uriTemplate = "items://{id}")
+        String item(String id, McpRequestContext context) {
+            return id;
         }
     }
 }
