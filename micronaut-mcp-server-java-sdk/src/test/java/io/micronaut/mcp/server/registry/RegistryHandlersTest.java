@@ -35,6 +35,7 @@ import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -98,30 +99,27 @@ class RegistryHandlersTest {
     }
 
     @Test
-    void unmappedExceptionsAreInternalErrorsWithTheirMessage() {
+    void unmappedExceptionsAreInternalErrorsWithoutTheirDetails() {
         var failing = toolHandler("failing");
         McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("failing", Map.of());
         // twice, so the second lookup hits the cached miss
-        assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "failing", () -> failing.apply(CONTEXT, request));
-        assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "failing", () -> failing.apply(CONTEXT, request));
+        assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Internal error", () -> failing.apply(CONTEXT, request));
+        assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Internal error", () -> failing.apply(CONTEXT, request));
+        // with or without a message, the exception stays in the server log
+        for (String tool : List.of("silent", "blank", "anonymous")) {
+            assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Internal error",
+                () -> toolHandler(tool).apply(CONTEXT, new McpSchema.CallToolRequest(tool, Map.of())));
+        }
     }
 
     @Test
-    void exceptionsWithoutAMessageAreReportedWithTheirType() {
-        // the SDK requires a message
-        assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "IllegalStateException",
-            () -> toolHandler("silent").apply(CONTEXT, new McpSchema.CallToolRequest("silent", Map.of())));
-        assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "IllegalStateException",
-            () -> toolHandler("blank").apply(CONTEXT, new McpSchema.CallToolRequest("blank", Map.of())));
-    }
-
-    @Test
-    void exceptionsOfAnAnonymousClassWithoutAMessageAreReportedWithTheNameOfTheirClass() {
-        McpError error = assertThrows(McpError.class,
-            () -> toolHandler("anonymous").apply(CONTEXT, new McpSchema.CallToolRequest("anonymous", Map.of())));
-        assertEquals(McpSchema.ErrorCodes.INTERNAL_ERROR, error.getJsonRpcError().code());
-        // an anonymous class has no simple name
-        assertTrue(error.getJsonRpcError().message().startsWith(Primitives.class.getName() + "$"));
+    void aDestroyedSingletonIsReplaced() {
+        var instance = toolHandler("instance");
+        McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("instance", Map.of());
+        String first = text(instance.apply(CONTEXT, request));
+        assertEquals(first, text(instance.apply(CONTEXT, request)));
+        beanContext.destroyBean(Rotating.class);
+        assertNotEquals(first, text(instance.apply(CONTEXT, request)));
     }
 
     @Test
@@ -473,6 +471,18 @@ class RegistryHandlersTest {
         int canMapCalls(Class<?> clazz) {
             AtomicInteger calls = canMapCalls.get(clazz);
             return calls == null ? 0 : calls.get();
+        }
+    }
+
+    @Requires(property = "spec.name", value = "RegistryHandlersTest")
+    @Singleton
+    static class Rotating {
+        private static final AtomicInteger INSTANCES = new AtomicInteger();
+        private final int instance = INSTANCES.incrementAndGet();
+
+        @Tool
+        String instance() {
+            return String.valueOf(instance);
         }
     }
 
