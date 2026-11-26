@@ -29,6 +29,7 @@ import io.micronaut.http.annotation.RequestFilter;
 import io.micronaut.http.annotation.ServerFilter;
 import io.micronaut.http.filter.ServerFilterPhase;
 import io.micronaut.mcp.conf.server.TransportSecurityConfiguration;
+import io.micronaut.web.router.RouteAttributes;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpStatelessServerTransport;
 import org.jspecify.annotations.Nullable;
@@ -44,7 +45,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Validates the {@code Origin} and {@code MCP-Protocol-Version} headers of requests to the MCP endpoint. As a filter it
+ * Validates the {@code Origin} and {@code MCP-Protocol-Version} headers of requests routed to the MCP endpoint. As a filter it
  * runs on the thread that received the request, before the body is read and before a blocking server hands the
  * request to the blocking executor. It runs just before the security filter: after the CORS filter, so that a browser
  * can read the rejection and the preflight is answered by CORS alone, and after the metrics and tracing filters, so
@@ -55,7 +56,9 @@ import java.util.stream.Collectors;
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#security-warning">Streamable HTTP security</a>
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#protocol-version-header">Protocol version header</a>
  */
-@ServerFilter(McpController.PATH)
+// Every path, and the route decides: a second reading of the endpoint property as a filter pattern can disagree with
+// the controller's, for example for /mcp/ or mcp, and leave the endpoint unprotected
+@ServerFilter(ServerFilter.MATCH_ALL_PATTERN)
 @Context
 @Requires(property = TransportSecurityConfiguration.PROPERTY_ENABLED, notEquals = StringUtils.FALSE)
 @Internal
@@ -65,6 +68,7 @@ final class McpTransportSecurityFilter implements Ordered {
     private static final String ALLOWED_ORIGINS = TransportSecurityConfiguration.PREFIX + ".allowed-origins";
     private static final String SCHEME_SEPARATOR = "://";
     private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "[::1]");
+    private static final Set<String> LOOPBACK_SCHEMES = Set.of("http", "https");
 
     private final boolean anyOrigin;
     private final boolean allowLoopbackOrigins;
@@ -95,6 +99,9 @@ final class McpTransportSecurityFilter implements Ordered {
     @SuppressWarnings("java:S1452")
     @RequestFilter
     @Nullable HttpResponse<?> filter(HttpRequest<?> request) {
+        if (!isMcpRoute(request)) {
+            return null;
+        }
         HttpHeaders headers = request.getHeaders();
         List<String> origins = headers.getAll(HttpHeaders.ORIGIN);
         if (origins.size() > 1) {
@@ -126,12 +133,29 @@ final class McpTransportSecurityFilter implements Ordered {
         return null;
     }
 
+    /**
+     * Whether the request is routed to the MCP endpoint. A request that no route of the endpoint accepts, such as a
+     * {@code GET}, reaches no MCP code, so it is left to the router.
+     */
+    private static boolean isMcpRoute(HttpRequest<?> request) {
+        return RouteAttributes.getRouteMatch(request)
+            .map(match -> McpController.class.isAssignableFrom(match.getRouteInfo().getDeclaringType()))
+            .orElse(false);
+    }
+
     private boolean isAllowed(String origin) {
         if (anyOrigin || allowedOrigins.contains(normalize(origin))) {
             return true;
         }
-        // An attacker controlled name resolving to a loopback address still sends its own name as the origin
-        return allowLoopbackOrigins && LOOPBACK_HOSTS.contains(host(origin));
+        if (!allowLoopbackOrigins) {
+            return false;
+        }
+        // An attacker controlled name resolving to a loopback address still sends its own name as the origin. Only web
+        // pages are exempted: the content of web view shells, such as capacitor://localhost, must be listed
+        int separator = origin.indexOf(SCHEME_SEPARATOR);
+        return separator > 0
+            && LOOPBACK_SCHEMES.contains(origin.substring(0, separator).trim().toLowerCase(Locale.ROOT))
+            && LOOPBACK_HOSTS.contains(host(origin));
     }
 
     /**
@@ -249,13 +273,14 @@ final class McpTransportSecurityFilter implements Ordered {
     }
 
     /**
-     * A request header value without control characters, so that it cannot forge log lines.
+     * A request header value without control characters (C0, DEL and C1) and line separators, so that it cannot forge
+     * log lines.
      */
     private static String sanitize(String value) {
         StringBuilder sanitized = new StringBuilder(value.length());
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
-            sanitized.append(c < ' ' || c == 0x7f ? '?' : c);
+            sanitized.append(Character.isISOControl(c) || c == '\u2028' || c == '\u2029' ? '?' : c);
         }
         return sanitized.toString();
     }

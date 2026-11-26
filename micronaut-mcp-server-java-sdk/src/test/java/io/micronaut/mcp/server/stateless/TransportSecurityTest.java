@@ -113,11 +113,35 @@ class TransportSecurityTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"GET", "POST", "DELETE", "PUT"})
-    void everyMethodOnTheEndpointIsValidated(String method) {
-        assertEquals(HttpStatus.FORBIDDEN, status(HttpRequest.create(HttpMethod.parse(method), "/mcp").header("Origin", "http://evil.example")));
-        assertEquals(HttpStatus.BAD_REQUEST, status(HttpRequest.create(HttpMethod.parse(method), "/mcp")
-            .header("Origin", "http://localhost:6274").header("MCP-Protocol-Version", "1999-01-01")));
+    @ValueSource(strings = {"GET", "DELETE", "PUT"})
+    void aMethodWithoutAnMcpRouteIsLeftToTheRouter(String method) {
+        // nothing is served, so there is nothing to protect
+        assertEquals(HttpStatus.METHOD_NOT_ALLOWED, status(HttpRequest.create(HttpMethod.parse(method), "/mcp")
+            .header("Origin", "http://evil.example")));
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+        "/mcp/ | | /mcp",
+        "/mcp/ | | /mcp/",
+        "mcp | | /mcp",
+        "mcp | | /mcp/",
+        "/mcp/ | /ctx | /ctx/mcp",
+        "/api/mcp | /ctx | /ctx/api/mcp/"})
+    void everyShapeOfTheEndpointIsProtected(String endpoint, String contextPath, String path) {
+        Map<String, Object> properties = new HashMap<>(Map.of(
+            "micronaut.mcp.server.endpoint", endpoint,
+            // the endpoint rules, not the authorization of application-test.properties
+            "micronaut.security.enabled", false));
+        if (contextPath != null) {
+            properties.put("micronaut.server.context-path", contextPath);
+        }
+        try (EmbeddedServer server = mcpServer(properties);
+             HttpClient client = server.getApplicationContext().createBean(HttpClient.class, server.getURL())) {
+            assertEquals(HttpStatus.OK, status(client, ping(path).header("Origin", "http://localhost:6274")));
+            assertEquals(HttpStatus.FORBIDDEN, status(client, ping(path).header("Origin", "http://evil.example")));
+            assertEquals(HttpStatus.BAD_REQUEST, status(client, ping(path).header("MCP-Protocol-Version", "1999-01-01")));
+        }
     }
 
     @Test
@@ -129,6 +153,14 @@ class TransportSecurityTest {
     void onlyTheUsualLoopbackAddressesAreAllowedByDefault() {
         assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://127.0.0.2:6274")));
         assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://[::ffff:127.0.0.1]:6274")));
+    }
+
+    @Test
+    void onlyWebPagesOnLoopbackHostsAreAllowedByDefault() {
+        assertEquals(HttpStatus.OK, status(ping().header("Origin", "https://localhost:8443")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "capacitor://localhost")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "tauri://localhost")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "://localhost")));
     }
 
     @Test
@@ -294,6 +326,7 @@ class TransportSecurityTest {
             assertEquals(List.of(), appender.list);
             logger.setLevel(Level.DEBUG);
             status(ping().header("Origin", "http://evil.example\tforged"));
+            status(ping().header("Origin", "http://evil.example\u0085forged"));
             status(ping().header("Origin", "http://localhost:1").header("Origin", "http://localhost:2"));
             status(ping().header("MCP-Protocol-Version", "1999-01-01"));
             status(ping().header("MCP-Protocol-Version", "2025-11-25").header("MCP-Protocol-Version", "2025-11-25"));
@@ -302,6 +335,8 @@ class TransportSecurityTest {
             logger.setLevel(level);
         }
         assertEquals(List.of(
+            "Rejected request to /mcp: Origin 'http://evil.example?forged' is not listed in "
+                + "micronaut.mcp.server.transport-security.allowed-origins and is not a loopback origin",
             "Rejected request to /mcp: Origin 'http://evil.example?forged' is not listed in "
                 + "micronaut.mcp.server.transport-security.allowed-origins and is not a loopback origin",
             "Rejected request to /mcp: 2 Origin headers",

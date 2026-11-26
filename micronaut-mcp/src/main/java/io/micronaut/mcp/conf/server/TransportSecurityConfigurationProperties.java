@@ -55,7 +55,7 @@ final class TransportSecurityConfigurationProperties implements TransportSecurit
     }
 
     /**
-     * Whether loopback origins (localhost, 127.0.0.1 and [::1], with any scheme and port) are allowed. Default value `true`.
+     * Whether loopback origins (localhost, 127.0.0.1 and [::1], with http or https and any port) are allowed. Default value `true`.
      *
      * @param allowLoopbackOrigins Whether loopback origins are allowed
      */

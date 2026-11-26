@@ -38,8 +38,8 @@ public interface TransportSecurityConfiguration {
 
     /**
      * The property that turns the validation of the {@code Origin} and {@code MCP-Protocol-Version} request headers on
-     * or off. It is read as a property, not through this interface: with {@code false}, the filter that validates the
-     * headers is not created.
+     * or off. It is read as a property, not through this interface: only the value {@code false}, in lower case, keeps
+     * the filter that validates the headers from being created.
      */
     String PROPERTY_ENABLED = PREFIX + ".enabled";
 
@@ -65,7 +65,7 @@ public interface TransportSecurityConfiguration {
     }
 
     /**
-     * Whether loopback origins ({@code localhost}, {@code 127.0.0.1} and {@code [::1]}, with any scheme and port) are
+     * Whether loopback origins ({@code localhost}, {@code 127.0.0.1} and {@code [::1]}, with http or https and any port) are
      * allowed, so that local tools such as the MCP Inspector can connect. A server reachable from other hosts can
      * disable it, so that pages served by other local applications cannot call it.
      *
