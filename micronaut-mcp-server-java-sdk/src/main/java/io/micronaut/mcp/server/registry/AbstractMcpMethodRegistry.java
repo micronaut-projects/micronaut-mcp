@@ -91,6 +91,12 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected static final String URI_TEMPLATE_PROPERTY = "uriTemplate";
     protected static final String MEMBER_NAME = "name";
     protected static final String MEMBER_TITLE = "title";
+    private static final String SRC_PROPERTY = "src";
+    private static final String SIZES_PROPERTY = "sizes";
+    private static final String THEME_PROPERTY = "theme";
+    private static final String KEY_PROPERTY = "key";
+    private static final String AUDIENCE_PROPERTY = "audience";
+    private static final String PRIORITY_PROPERTY = "priority";
     private static final double UNSET_PRIORITY = -1;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMcpMethodRegistry.class);
     protected final List<Method<Object>> methods = new ArrayList<>();
@@ -229,12 +235,12 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
         List<McpSchema.Icon> icons = new ArrayList<>(values.size());
         for (AnnotationValue<Icon> value : values) {
-            String[] sizes = value.stringValues("sizes");
+            String[] sizes = value.stringValues(SIZES_PROPERTY);
             icons.add(new McpSchema.Icon(
-                value.stringValue("src").orElseThrow(),
+                value.stringValue(SRC_PROPERTY).orElseThrow(),
                 value.stringValue(MIME_TYPE_PROPERTY).filter(StringUtils::isNotEmpty).orElse(null),
                 sizes.length == 0 ? null : List.of(sizes),
-                value.stringValue("theme").filter(StringUtils::isNotEmpty).orElse(null)));
+                value.stringValue(THEME_PROPERTY).filter(StringUtils::isNotEmpty).orElse(null)));
         }
         return icons;
     }
@@ -250,7 +256,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
         Map<String, Object> meta = LinkedHashMap.newLinkedHashMap(values.size());
         for (AnnotationValue<Meta> value : values) {
-            meta.put(value.stringValue("key").orElseThrow(), value.stringValue().orElse(""));
+            meta.put(value.stringValue(KEY_PROPERTY).orElseThrow(), value.stringValue().orElse(""));
         }
         return meta;
     }
@@ -261,8 +267,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @throws IllegalStateException If the priority is set and is not between 0 and 1
      */
     protected static McpSchema.@Nullable Annotations resourceAnnotations(AnnotationValue<?> annotation) {
-        Audience[] audience = annotation.enumValues("audience", Audience.class);
-        double priority = annotation.doubleValue("priority").orElse(UNSET_PRIORITY);
+        Audience[] audience = annotation.enumValues(AUDIENCE_PROPERTY, Audience.class);
+        double priority = annotation.doubleValue(PRIORITY_PROPERTY).orElse(UNSET_PRIORITY);
         boolean hasPriority = Double.compare(priority, UNSET_PRIORITY) != 0;
         // NaN fails the range check too
         if (hasPriority && !(priority >= 0 && priority <= 1)) {
@@ -280,7 +286,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     }
 
     private static McpSchema.Role role(Audience audience) {
-        return audience == Audience.USER ? McpSchema.Role.USER : McpSchema.Role.ASSISTANT;
+        return switch (audience) {
+            case USER -> McpSchema.Role.USER;
+            case ASSISTANT -> McpSchema.Role.ASSISTANT;
+        };
     }
 
     /**
