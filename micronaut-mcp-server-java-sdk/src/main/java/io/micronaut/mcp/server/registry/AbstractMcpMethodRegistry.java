@@ -145,18 +145,25 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         return errorType -> observations.forEach(o -> o.stop(errorType));
     }
 
+    // An observer that fails with an Error, such as an AssertionError or a NoClassDefFoundError of a missing tracing
+    // library, must not fail the operation either; only an error of the virtual machine itself is rethrown
+    @SuppressWarnings("java:S1181")
     private static McpServerObserver.Observation start(McpServerObserver observer, String method, String name) {
         McpServerObserver.Observation observation;
         try {
             observation = observer.start(method, name);
-        } catch (RuntimeException e) {
+        } catch (VirtualMachineError e) {
+            throw e;
+        } catch (Throwable e) {
             observerFailed(observer, "start", method, name, e);
             return McpServerObserver.Observation.NOOP;
         }
         return errorType -> {
             try {
                 observation.stop(errorType);
-            } catch (RuntimeException e) {
+            } catch (VirtualMachineError e) {
+                throw e;
+            } catch (Throwable e) {
                 observerFailed(observer, "stop", method, name, e);
             }
         };
@@ -166,7 +173,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * Logs a failing observer: with the stack trace the first time it fails, and at debug level
      * afterwards, so that an observer that fails on every operation does not flood the log.
      */
-    private static void observerFailed(McpServerObserver observer, String phase, String method, String name, RuntimeException e) {
+    private static void observerFailed(McpServerObserver observer, String phase, String method, String name, Throwable e) {
         String observerName = observer.getClass().getName();
         if (FAILED_OBSERVERS.put(observer, Boolean.TRUE) == null) {
             if (LOG.isWarnEnabled()) {
