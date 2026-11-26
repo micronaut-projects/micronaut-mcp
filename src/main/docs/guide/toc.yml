@@ -20,7 +20,10 @@ server:
   context: MCP Transport Context
   requestContext: MCP Request Context
   observability: Observability
-  security: Security
+  security:
+    title: Security
+    transportSecurity: Transport Security
+    authorization: Authorization
   primitives:
     title: Primitives
     tools:
@@ -60,6 +63,7 @@ server:
           title: Resource Template with Annotations
           resourceTemplateAnnotationParameter: Resource Annotation Method Parameters
           resourceTemplateAnnotationReturnType: Resource Annotation Method Return Type
+          resourceTemplateVariableDecoding: Resource Template Variable Decoding
         resourcesTemplatesFactory: Resource Templates with a Factory
     primitivesMetadata: Icons, Metadata and Resource Hints
     dynamicPrimitives: Adding and Removing Primitives at Runtime
