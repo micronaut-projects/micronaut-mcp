@@ -107,7 +107,8 @@ public interface McpRequestContext {
      * Whether the client stopped waiting for the result. Over the HTTP transport, that is when the client closes the
      * event stream of the response, so only once the response has become an event stream with the first notification:
      * the server does not detect a client that goes away before. It is always {@code false} over STDIO, and when the
-     * response is sent as JSON.
+     * response is sent as JSON: the {@code notifications/cancelled} message of the protocol is not handled on either
+     * transport.
      *
      * @return Whether the client stopped waiting for the result
      */
@@ -118,6 +119,18 @@ public interface McpRequestContext {
      * The method waits for the answer, so on a reactive server, which invokes a method without an executor on the thread
      * that reads the messages of the client, it must run on a blocking executor, for example with
      * {@code @ExecuteOn(TaskExecutors.BLOCKING)}; otherwise it fails with an {@link IllegalStateException}.
+     *
+     * <pre>
+     * &#64;Tool
+     * &#64;ExecuteOn(TaskExecutors.BLOCKING)
+     * String greet(McpRequestContext context) {
+     *     McpSchema.ElicitResult answer = context.elicit(McpSchema.ElicitRequest.builder()
+     *         .message("What is your name?")
+     *         .requestedSchema(Map.of("type", "object", "properties", Map.of("name", Map.of("type", "string"))))
+     *         .build());
+     *     return answer.action() == McpSchema.ElicitResult.Action.ACCEPT ? "Hello " + answer.content().get("name") : "Hello";
+     * }
+     * </pre>
      *
      * @param request The elicitation request
      * @return The user's answer
