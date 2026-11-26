@@ -173,10 +173,10 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
         }
-        if (result instanceof String s) {
+        if (result instanceof CharSequence text) {
             String mimeType = method.stringValue(ResourceTemplate.class, MIME_TYPE_PROPERTY)
                 .orElse(ResourceTemplate.DEFAULT_MIME_TYPE);
-            McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(request.uri(), mimeType, s);
+            McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(request.uri(), mimeType, text.toString());
             return new McpSchema.ReadResourceResult(List.of(contents));
         }
         // Unsupported return type: return empty contents
