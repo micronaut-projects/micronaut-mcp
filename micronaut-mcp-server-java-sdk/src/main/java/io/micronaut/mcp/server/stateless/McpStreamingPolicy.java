@@ -92,8 +92,12 @@ final class McpStreamingPolicy {
         if (ref == null || !ref.isObject()) {
             return false;
         }
+        // A prompt reference has a name, a resource reference a URI
         String name = name(ref, KEY_NAME);
-        return completionRegistry.mayNotify(name != null ? name : String.valueOf(name(ref, KEY_URI)));
+        if (name == null) {
+            name = name(ref, KEY_URI);
+        }
+        return name != null && completionRegistry.mayNotify(name);
     }
 
     private static @Nullable String name(JsonNode node, String key) {

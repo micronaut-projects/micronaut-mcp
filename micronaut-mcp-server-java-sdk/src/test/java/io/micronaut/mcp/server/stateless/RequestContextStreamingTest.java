@@ -16,6 +16,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.PromptCompletion;
 import io.micronaut.mcp.annotations.Resource;
+import io.micronaut.mcp.annotations.ResourceCompletion;
 import io.micronaut.mcp.annotations.ResourceTemplate;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.context.McpRequestContext;
@@ -120,6 +121,21 @@ class RequestContextStreamingTest {
              "params": {"ref": {"type": "ref/prompt", "name": "explain"}, "argument": {"name": "topic", "value": "m"}}}""").body());
         assertEquals(2, completion.size(), String.valueOf(completion));
         assertTrue(completion.get(0).contains("completing topics") && completion.get(1).contains("\"mcp\""), String.valueOf(completion));
+        List<String> resourceCompletion = data(post(ACCEPT_BOTH, """
+            {"jsonrpc": "2.0", "id": 23, "method": "completion/complete",
+             "params": {"ref": {"type": "ref/resource", "uri": "catalog://items/{id}"}, "argument": {"name": "id", "value": "4"}}}""").body());
+        assertEquals(2, resourceCompletion.size(), String.valueOf(resourceCompletion));
+        assertTrue(resourceCompletion.get(0).contains("completing ids") && resourceCompletion.get(1).contains("\"42\""), String.valueOf(resourceCompletion));
+    }
+
+    @Test
+    void aCompletionWithoutAReferencedPrimitiveStaysJson() {
+        for (String ref : List.of("{\"type\": \"ref/prompt\"}", "\"explain\"")) {
+            HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> post(ACCEPT_BOTH, """
+                {"jsonrpc": "2.0", "id": 24, "method": "completion/complete", "params": {"ref": %s, "argument": {"name": "topic", "value": "m"}}}"""
+                .formatted(ref)));
+            assertTrue(e.getResponse().getContentType().map(MediaType.APPLICATION_JSON_TYPE::matches).orElse(false), ref);
+        }
     }
 
     @Test
@@ -248,6 +264,12 @@ class RequestContextStreamingTest {
         String item(String id, McpRequestContext context) {
             context.log(McpSchema.LoggingLevel.INFO, "reading item " + id);
             return "item " + id;
+        }
+
+        @ResourceCompletion(uri = "catalog://items/{id}")
+        List<String> ids(McpRequestContext context) {
+            context.log(McpSchema.LoggingLevel.INFO, "completing ids");
+            return List.of("42");
         }
 
         @PromptCompletion(name = "explain")
