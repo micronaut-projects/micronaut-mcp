@@ -82,13 +82,24 @@ abstract class AbstractRequestContextStdioTest {
         Map<?, ?> result = read(server);
         assertEquals(1, ((Number) result.get("id")).intValue());
         assertTrue(String.valueOf(result.get("result")).contains("Bonjour Ada (END_TURN)"), String.valueOf(result));
+        thenOnTheSameSession(server);
     }
 
-    private void answer(Map<?, ?> request, Map<String, Object> result) throws IOException {
+    /**
+     * Further checks on the initialized session.
+     *
+     * @param server The messages the server sends
+     * @throws IOException If the session fails
+     */
+    void thenOnTheSameSession(BufferedReader server) throws IOException {
+        // nothing more by default
+    }
+
+    void answer(Map<?, ?> request, Map<String, Object> result) throws IOException {
         factory.stdio.sendRequest(jsonMapper.writeValueAsString(Map.of("jsonrpc", "2.0", "id", request.get("id"), "result", result)));
     }
 
-    private Map<?, ?> read(BufferedReader server) throws IOException {
+    Map<?, ?> read(BufferedReader server) throws IOException {
         return jsonMapper.readValue(server.readLine(), Map.class);
     }
 

@@ -359,6 +359,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
          * context, then the values in the order of {@link #boundParameterTypes()}), or {@link #NOT_BOUND}.
          */
         private final int[] boundIndexes;
+        private final boolean declaresRequestContext;
         private final boolean collectsValues;
         private final @Nullable ExecutorService executor;
         private final @Nullable Scheduler scheduler;
@@ -395,6 +396,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                     }
                 }
             }
+            this.declaresRequestContext = Arrays.stream(boundIndexes).anyMatch(index -> index == REQUEST_CONTEXT);
             this.collectsValues = collectsValues(method, collectsValues);
             // Resolved here, so that an unknown executor fails the startup rather than every invocation
             String executorName = method.stringValue(ExecuteOn.class).orElse(null);
@@ -519,7 +521,12 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                                      Function<@Nullable Object, R> mapper,
                                      Function<Throwable, R> errorHandler) {
             if (scheduler == null) {
-                return invokeNow(invocation, mapper, errorHandler);
+                // Invoked on the thread that received the request, where its request context must not wait for an
+                // answer of the client
+                Supplier<@Nullable Object> onReceivingThread = declaresRequestContext
+                    ? () -> DefaultMcpRequestContext.onReceivingThread(invocation)
+                    : invocation;
+                return invokeNow(onReceivingThread, mapper, errorHandler);
             }
             PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
             return Mono.defer(() -> {

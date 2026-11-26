@@ -56,6 +56,22 @@ class DefaultMcpRequestContextTest {
     }
 
     @Test
+    void theAsyncExchangeDoesNotWaitForTheClientOnTheReceivingThread() {
+        McpRequestContext context = DefaultMcpRequestContext.of(exchange(new RecordingSession()), REQUEST);
+        IllegalStateException elicit = assertThrows(IllegalStateException.class,
+            () -> DefaultMcpRequestContext.onReceivingThread(() -> context.elicit(ELICIT)));
+        assertTrue(elicit.getMessage().startsWith("Elicitation waits") && elicit.getMessage().contains("@ExecuteOn"), elicit.getMessage());
+        // a nested invocation keeps the outer one on the receiving thread
+        IllegalStateException sample = assertThrows(IllegalStateException.class, () -> DefaultMcpRequestContext.onReceivingThread(() -> {
+            DefaultMcpRequestContext.onReceivingThread(() -> null);
+            return context.sample(SAMPLE);
+        }));
+        assertTrue(sample.getMessage().startsWith("Sampling waits"), sample.getMessage());
+        // off the receiving thread, the request is sent
+        assertEquals(McpSchema.ElicitResult.Action.ACCEPT, context.elicit(ELICIT).action());
+    }
+
+    @Test
     void theEmitterOfTheHttpRequestSendsNotifications() {
         RecordingEmitter emitter = new RecordingEmitter();
         MutableHttpRequest<?> request = HttpRequest.POST("/mcp", "");
@@ -79,8 +95,10 @@ class DefaultMcpRequestContextTest {
         context.progress(1);
         context.log(McpSchema.LoggingLevel.INFO, "message");
         assertFalse(context.isCancelled());
-        assertThrows(UnsupportedOperationException.class, () -> context.elicit(ELICIT));
-        assertThrows(UnsupportedOperationException.class, () -> context.sample(SAMPLE));
+        assertEquals("Elicitation is not supported over the stateless HTTP transport",
+            assertThrows(UnsupportedOperationException.class, () -> context.elicit(ELICIT)).getMessage());
+        assertEquals("Sampling is not supported over the stateless HTTP transport",
+            assertThrows(UnsupportedOperationException.class, () -> context.sample(SAMPLE)).getMessage());
         McpRequestContext withToken = DefaultMcpRequestContext.of(McpTransportContext.EMPTY, REQUEST);
         assertEquals("token", withToken.progressToken());
         withToken.progress(1);

@@ -25,6 +25,8 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.Supplier;
+
 /**
  * The {@link McpRequestContext} of a request received over STDIO, through the SDK server exchange, or over HTTP, through
  * the {@link McpNotificationEmitter} of the request.
@@ -32,7 +34,13 @@ import org.slf4j.LoggerFactory;
 @Internal
 public final class DefaultMcpRequestContext implements McpRequestContext {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultMcpRequestContext.class);
-    private static final String UNSUPPORTED = "The stateless HTTP transport cannot send requests to the client, use the STDIO transport";
+    private static final String ELICITATION = "Elicitation";
+    private static final String SAMPLING = "Sampling";
+    /**
+     * Whether the current thread is invoking a method on the thread that received its request, so a request context
+     * must not wait there for an answer of the client.
+     */
+    private static final ThreadLocal<Boolean> ON_RECEIVING_THREAD = new ThreadLocal<>();
 
     private final McpTransportContext transportContext;
     private final @Nullable McpSyncServerExchange syncExchange;
@@ -134,9 +142,10 @@ public final class DefaultMcpRequestContext implements McpRequestContext {
             return syncExchange.createElicitation(request);
         }
         if (asyncExchange != null) {
+            checkMayWait(ELICITATION);
             return asyncExchange.createElicitation(request).block();
         }
-        throw new UnsupportedOperationException(UNSUPPORTED);
+        throw unsupported(ELICITATION);
     }
 
     @Override
@@ -145,8 +154,42 @@ public final class DefaultMcpRequestContext implements McpRequestContext {
             return syncExchange.createMessage(request);
         }
         if (asyncExchange != null) {
+            checkMayWait(SAMPLING);
             return asyncExchange.createMessage(request).block();
         }
-        throw new UnsupportedOperationException(UNSUPPORTED);
+        throw unsupported(SAMPLING);
+    }
+
+    /**
+     * Invokes a method on the thread that received its request: a reactive server without an executor for the method.
+     * Its request context then fails rather than waits for an answer of the client, which this thread would read.
+     *
+     * @param invocation The invocation of the method
+     * @param <T> The type of the result
+     * @return The result of the invocation
+     */
+    public static <T> T onReceivingThread(Supplier<T> invocation) {
+        Boolean previous = ON_RECEIVING_THREAD.get();
+        ON_RECEIVING_THREAD.set(Boolean.TRUE);
+        try {
+            return invocation.get();
+        } finally {
+            if (previous == null) {
+                ON_RECEIVING_THREAD.remove();
+            } else {
+                ON_RECEIVING_THREAD.set(previous);
+            }
+        }
+    }
+
+    private static void checkMayWait(String feature) {
+        if (Boolean.TRUE.equals(ON_RECEIVING_THREAD.get())) {
+            throw new IllegalStateException(feature + " waits for the answer of the client, which the thread that runs the method"
+                + " reads on a reactive server: annotate the method with @ExecuteOn(TaskExecutors.BLOCKING)");
+        }
+    }
+
+    private static UnsupportedOperationException unsupported(String feature) {
+        return new UnsupportedOperationException(feature + " is not supported over the stateless HTTP transport");
     }
 }
