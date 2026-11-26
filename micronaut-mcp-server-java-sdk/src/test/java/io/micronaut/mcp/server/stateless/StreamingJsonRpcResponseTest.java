@@ -58,7 +58,7 @@ class StreamingJsonRpcResponseTest {
         McpSchema.JSONRPCResponse error = assertInstanceOf(McpSchema.JSONRPCResponse.class, events.get(1).getData());
         assertEquals(7, error.id());
         assertEquals(McpSchema.ErrorCodes.INTERNAL_ERROR, error.error().code());
-        assertEquals("Failed to handle request: boom", error.error().message());
+        assertEquals("Internal error", error.error().message(), "the message of the exception stays in the server log");
     }
 
     @Test
@@ -73,13 +73,11 @@ class StreamingJsonRpcResponseTest {
     }
 
     @Test
-    void anErrorWithoutAMessageIsNamedByItsType() {
-        AtomicReference<StreamingJsonRpcResponse> streaming = new AtomicReference<>();
-        HttpResponse<?> response = started(streaming);
-        streaming.get().fail(new IllegalStateException());
-        McpSchema.JSONRPCResponse error = assertInstanceOf(McpSchema.JSONRPCResponse.class,
-            events(response).collectList().block().getLast().getData());
-        assertEquals("Failed to handle request: IllegalStateException", error.error().message());
+    void aRequestIdIsLoggedWithoutControlCharactersAndTruncated() {
+        assertEquals("7", StreamingJsonRpcResponse.printable(7));
+        assertEquals("x_2026-11-26 ERROR forged__[31m_", StreamingJsonRpcResponse.printable("x\n2026-11-26 ERROR forged\r\u001b[31m\u0085"));
+        assertEquals("a".repeat(64) + "...", StreamingJsonRpcResponse.printable("a".repeat(65)));
+        assertEquals("a".repeat(64), StreamingJsonRpcResponse.printable("a".repeat(64)));
     }
 
     @Test

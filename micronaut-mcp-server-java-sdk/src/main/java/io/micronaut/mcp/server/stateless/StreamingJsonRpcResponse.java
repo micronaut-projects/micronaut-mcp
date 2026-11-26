@@ -62,6 +62,7 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
      * The estimated size of a notification besides its text.
      */
     private static final int NOTIFICATION_OVERHEAD = 128;
+    private static final int MAX_LOGGED_ID_LENGTH = 64;
     private static final Logger LOG = LoggerFactory.getLogger(StreamingJsonRpcResponse.class);
 
     private final MonoSink<HttpResponse<?>> response;
@@ -119,9 +120,19 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
         }
     }
 
-    private static String message(Throwable error) {
-        String message = error.getMessage();
-        return message != null && !message.isBlank() ? message : error.getClass().getSimpleName();
+    /**
+     * @param id A JSON-RPC request id, which the client chooses
+     * @return The id, safe to log: control characters are replaced and a long id is truncated
+     */
+    static String printable(Object id) {
+        String text = String.valueOf(id);
+        int length = Math.min(text.length(), MAX_LOGGED_ID_LENGTH);
+        StringBuilder printable = new StringBuilder(length + 3);
+        for (int i = 0; i < length; i++) {
+            char c = text.charAt(i);
+            printable.append(Character.isISOControl(c) ? '_' : c);
+        }
+        return text.length() > MAX_LOGGED_ID_LENGTH ? printable.append("...").toString() : printable.toString();
     }
 
     private void dropped(McpSchema.JSONRPCNotification notification) {
@@ -129,7 +140,7 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
             overflowed = true;
             if (LOG.isWarnEnabled()) {
                 LOG.warn("Dropping the notifications of request {}: the client does not read the event stream fast enough, {} events of about {} characters are pending",
-                    request.id(), queue.size(), pendingChars.get());
+                    printable(request.id()), queue.size(), pendingChars.get());
             }
         } else if (LOG.isDebugEnabled()) {
             LOG.debug("Dropped a {} notification: the client does not read the event stream fast enough", notification.method());
@@ -262,8 +273,14 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
                 return;
             }
             if (!finishJson()) {
-                McpError mcpError = error instanceof McpError e ? e
-                    : McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message("Failed to handle request: " + message(error)).build();
+                McpError mcpError;
+                if (error instanceof McpError e) {
+                    mcpError = e;
+                } else {
+                    // The message of an unexpected error may tell internal details, so it stays in the server log
+                    LOG.error("Failed to handle request {} after its event stream started", printable(request.id()), error);
+                    mcpError = McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message("Internal error").build();
+                }
                 emitEvent(JsonRrpcResponseUtils.jsonrpcResponse(mcpError, request));
                 completeEvents();
                 return;
