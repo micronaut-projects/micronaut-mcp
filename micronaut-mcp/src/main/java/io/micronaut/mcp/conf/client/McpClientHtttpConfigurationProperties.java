@@ -74,8 +74,11 @@ final class McpClientHttpConfigurationProperties extends AbstractMcpClientConnec
     }
 
     /**
+     * The timeout of the HTTP calls of the LangChain4j transport. The Java SDK client uses it as the timeout of an MCP
+     * request. To limit how long an MCP request, such as a tool call, may take with the LangChain4j client, set
+     * `request-timeout`.
      *
-     * @param timeout The duration to wait for server responses before timing out requests.
+     * @param timeout The timeout of the HTTP calls
      */
     public void setTimeout(@Nullable Duration timeout) {
         this.timeout = timeout;
@@ -113,7 +116,9 @@ final class McpClientHttpConfigurationProperties extends AbstractMcpClientConnec
     }
 
     /**
-     * @param headers The headers sent with every request, such as {@code Authorization}
+     * The headers sent with every request, such as `Authorization`. Only used by the LangChain4j client.
+     *
+     * @param headers The headers sent with every request
      */
     public void setHeaders(@MapFormat(transformation = MapFormat.MapTransformation.FLAT, keyFormat = StringConvention.RAW) @Nullable Map<String, String> headers) {
         this.headers = headers != null ? headers : Map.of();

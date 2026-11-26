@@ -24,10 +24,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.mcp.conf.client.McpClientStdioConfiguration;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.jspecify.annotations.NonNull;
 
-import java.util.List;
-import java.util.Map;
 
 /**
  * Creates a {@link StdioMcpTransport} for each STDIO connection.
@@ -35,42 +32,23 @@ import java.util.Map;
 @Internal
 @Factory
 class StdioMcpTransportFactory {
-    private static final String LEGACY_NAME = "stdio";
-
     /**
      * Adapts the deprecated {@value StdioMcpTransportConfiguration#PROPERTY_COMMANDS} property to a STDIO connection
-     * named {@value #LEGACY_NAME}.
+     * named {@value LegacyMcpClientStdioConfiguration#NAME}, only when the deprecated
+     * {@value LegacyMcpClientStdioConfiguration#TRANSPORT} property is {@code STDIO}, as before named connections, so
+     * that a leftover value does not start a process after an upgrade.
      *
      * @param configuration The deprecated configuration
      * @return The STDIO connection
      */
     // Bridges the deprecated configuration, until it is removed
     @SuppressWarnings({"removal", "java:S5738"})
-    @Named(LEGACY_NAME)
+    @Named(LegacyMcpClientStdioConfiguration.NAME)
     @Singleton
     @Requires(bean = StdioMcpTransportConfiguration.class)
+    @Requires(property = LegacyMcpClientStdioConfiguration.TRANSPORT, value = LegacyMcpClientStdioConfiguration.TRANSPORT_STDIO)
     McpClientStdioConfiguration legacyStdioConfiguration(StdioMcpTransportConfiguration configuration) {
-        return new McpClientStdioConfiguration() {
-            @Override
-            public @NonNull String getName() {
-                return LEGACY_NAME;
-            }
-
-            @Override
-            public @NonNull List<String> getCommand() {
-                return configuration.getCommands();
-            }
-
-            @Override
-            public @NonNull Map<String, String> getEnvironment() {
-                return Map.of();
-            }
-
-            @Override
-            public boolean isLogEvents() {
-                return false;
-            }
-        };
+        return new LegacyMcpClientStdioConfiguration(configuration.getCommands());
     }
 
     @EachBean(McpClientStdioConfiguration.class)

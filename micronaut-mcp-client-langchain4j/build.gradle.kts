@@ -17,6 +17,7 @@ dependencies {
     testImplementation(mn.micronaut.http.client)
     testImplementation(projects.testSuiteMoon)
     testImplementation(mn.micronaut.management)
+    testImplementation(mnLogging.logback.classic)
 }
 micronautBuild {
     testFramework = TestFramework.JUNIT6

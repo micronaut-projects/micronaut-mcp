@@ -1,17 +1,18 @@
 package io.micronaut.mcp.client.langchain4j.multi;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.mcp.McpToolProvider;
 import dev.langchain4j.mcp.client.McpClient;
-import dev.langchain4j.service.tool.ToolProviderRequest;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.health.HealthStatus;
+import io.micronaut.json.JsonMapper;
 import io.micronaut.management.health.indicator.HealthIndicator;
 import io.micronaut.management.health.indicator.HealthResult;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.client.langchain4j.McpToolNameMapper;
+import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.test.support.TestPropertyProvider;
 import jakarta.inject.Inject;
@@ -19,15 +20,20 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import reactor.core.publisher.Flux;
 
-import java.nio.file.Path;
+import java.io.IOException;
+import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static io.micronaut.mcp.client.langchain4j.multi.MultiClientTestSupport.health;
+import static io.micronaut.mcp.client.langchain4j.multi.MultiClientTestSupport.mcpHealth;
+import static io.micronaut.mcp.client.langchain4j.multi.MultiClientTestSupport.mcpHealthDetails;
+import static io.micronaut.mcp.client.langchain4j.multi.MultiClientTestSupport.stdioConnection;
+import static io.micronaut.mcp.client.langchain4j.multi.MultiClientTestSupport.toolNames;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Property(name = "micronaut.mcp.server.info.name", value = "http-server")
@@ -42,6 +48,10 @@ class StdioAndHttpClientsTest implements TestPropertyProvider {
     List<McpClient> clients;
 
     @Inject
+    @Named("local")
+    McpClient localClient;
+
+    @Inject
     McpToolProvider toolProvider;
 
     @Inject
@@ -51,17 +61,21 @@ class StdioAndHttpClientsTest implements TestPropertyProvider {
     @Inject
     List<HealthIndicator> healthIndicators;
 
+    @Inject
+    EmbeddedServer embeddedServer;
+
+    @Inject
+    JsonMapper jsonMapper;
+
     @Override
     public Map<String, String> getProperties() {
-        String java = ProcessHandle.current().info().command().orElse("java");
-        String logback = Path.of("src/test/resources/logback-stderr.xml").toAbsolutePath().toString();
-        Map<String, String> properties = new HashMap<>();
-        List<String> command = List.of(java, "-Dlogback.configurationFile=" + logback,
-            "-cp", System.getProperty("java.class.path"), StdioServer.class.getName());
-        for (int i = 0; i < command.size(); i++) {
-            properties.put("micronaut.mcp.client.stdio.local.command[" + i + "]", command.get(i));
-        }
+        // The server logs to the standard error, as its standard output carries the protocol
+        Map<String, String> properties = new HashMap<>(stdioConnection("local", StdioServer.class,
+            "-Dlogback.configurationFile=logback-stderr.xml"));
         properties.put("micronaut.mcp.client.stdio.local.request-timeout", "20s");
+        // A mixed case key, which keeps its case
+        properties.put("micronaut.mcp.client.stdio.local.environment.Mcp_Test_Value", "from-configuration");
+        properties.put("endpoints.health.details-visible", "ANONYMOUS");
         return properties;
     }
 
@@ -72,36 +86,41 @@ class StdioAndHttpClientsTest implements TestPropertyProvider {
 
     @Test
     void thePrimaryToolProviderProvidesTheToolsOfEveryClient() {
-        assertEquals(Set.of("embeddedServer__forecast", "local__hello"), toolNames(toolProvider));
+        assertEquals(Set.of("embeddedServer__forecast", "local__hello", "local__env"), toolNames(toolProvider));
     }
 
     @Test
     void eachClientHasItsOwnToolProvider() {
-        assertEquals(Set.of("local__hello"), toolNames(localToolProvider));
+        assertEquals(Set.of("local__hello", "local__env"), toolNames(localToolProvider));
     }
 
     @Test
     void toolsOfTheStdioServerCanBeCalled() {
-        McpClient local = clients.stream().filter(c -> c.key().equals("local")).findFirst().orElseThrow();
-        String result = local.executeTool(dev.langchain4j.agent.tool.ToolExecutionRequest.builder()
+        String result = localClient.executeTool(ToolExecutionRequest.builder()
             .name("hello").arguments("{\"name\": \"Micronaut\"}").build()).resultText();
         assertEquals("Hello Micronaut from STDIO", result);
     }
 
     @Test
-    void theHealthIndicatorPingsEveryServer() {
-        HealthResult mcp = healthIndicators.stream()
-            .map(indicator -> Flux.from(indicator.getResult()).blockFirst())
-            .filter(result -> result != null && result.getName().equals("mcp"))
-            .findFirst().orElseThrow();
-        assertEquals(HealthStatus.UP, mcp.getStatus());
-        assertEquals(Map.of("embeddedServer", "UP", "local", "UP"), mcp.getDetails());
+    void theStdioServerReceivesTheEnvironmentOfTheConnection() {
+        String result = localClient.executeTool(ToolExecutionRequest.builder()
+            .name("env").arguments("{\"variable\": \"Mcp_Test_Value\"}").build()).resultText();
+        assertEquals("from-configuration", result);
     }
 
-    private static Set<String> toolNames(McpToolProvider provider) {
-        return provider.provideTools(new ToolProviderRequest("memory", UserMessage.from("hi"))).tools().keySet().stream()
-            .map(ToolSpecification::name)
-            .collect(Collectors.toSet());
+    @Test
+    void theHealthEndpointAnswersOkWhenEveryServerIsUp() throws IOException, InterruptedException {
+        HttpResponse<String> response = health(embeddedServer);
+        assertEquals(200, response.statusCode(), response.body());
+        assertEquals(Map.of("embeddedServer", Map.of("status", "UP"), "local", Map.of("status", "UP")),
+            mcpHealthDetails(jsonMapper, response), response.body());
+    }
+
+    @Test
+    void theHealthIndicatorPingsEveryServer() {
+        HealthResult mcp = mcpHealth(healthIndicators);
+        assertEquals(HealthStatus.UP, mcp.getStatus());
+        assertEquals(Map.of("embeddedServer", Map.of("status", "UP"), "local", Map.of("status", "UP")), mcp.getDetails());
     }
 
     @Requires(property = "spec.name", value = "StdioAndHttpClientsTest")

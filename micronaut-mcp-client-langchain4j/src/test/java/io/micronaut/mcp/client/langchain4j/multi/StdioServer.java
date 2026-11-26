@@ -33,5 +33,10 @@ public final class StdioServer {
         String hello(String name) {
             return "Hello " + name + " from STDIO";
         }
+
+        @Tool(description = "Returns an environment variable of the STDIO server")
+        String env(String variable) {
+            return String.valueOf(System.getenv(variable));
+        }
     }
 }

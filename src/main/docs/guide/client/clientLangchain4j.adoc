@@ -2,6 +2,8 @@ To use an https://docs.langchain4j.dev/tutorials/mcp#mcp-client[MCP Client power
 
 dependency:micronaut-mcp-client-langchain4j[groupId=io.micronaut.mcp]
 
+=== Connections
+
 Declare a named connection for each MCP server, over Streamable HTTP or STDIO. Connections of both transports can be used together:
 
 [configuration]
@@ -20,39 +22,119 @@ micronaut:
           command:
             - npx
             - -y
-            - "@modelcontextprotocol/server-filesystem"
+            - "@modelcontextprotocol/server-filesystem@<version>"
             - /tmp
           environment:
             DEBUG: "false"
+          initialization-timeout: 2m
           auto-health-check: false
 ----
 
-NOTE: The process of a STDIO connection inherits the environment of the application, in addition to its `environment`. Applications that keep secrets in their environment make them available to that process, so only start servers you trust.
+The name of a connection declared in configuration is normalized to kebab case: `micronaut.mcp.client.http.internalAdmin` declares the connection `internal-admin`, which is also the key of its client. The `embeddedServer` connection keeps its name.
 
-For each connection there is a `dev.langchain4j.mcp.client.McpClient` bean, qualified by the name of the connection, which is also the key of the client. A `dev.langchain4j.mcp.McpToolProvider` bean provides the tools of every client to LangChain4j AI services, and a `McpToolProvider` bean qualified by the name of a connection provides only the tools of that client.
+Each connection needs a name that is unique across `micronaut.mcp.client.http` and `micronaut.mcp.client.stdio`. The application fails to start when two connections have the same name, when an HTTP connection has no `url`, or when a STDIO connection has no `command`.
 
-Declare beans of these types to customize the clients and the tool providers:
+.Settings of a connection
+|===
+|Setting |Transport |Description |Default
+
+|`url` |HTTP |The URL of the MCP endpoint of the server. Required. |
+|`headers` |HTTP |The headers sent with every request, such as `Authorization`. |
+|`timeout` |HTTP |The timeout of the HTTP calls of the transport. |
+|`log-requests`, `log-responses` |HTTP |Whether to log the HTTP requests and responses. |`false`
+|`command` |STDIO |The command that starts the server, and its arguments. Required. |
+|`environment` |STDIO |The environment variables of the server process, in addition to those of the application. |
+|`log-events` |STDIO |Whether to log the messages exchanged with the server. |`false`
+|`initialization-timeout` |Both |How long to wait for the server to answer the initialization. |`30s`
+|`request-timeout` |Both |How long to wait for the server to answer an MCP request, such as a tool call or a ping. |`60s`, and `10s` for pings
+|`auto-health-check` |Both |Whether the client checks periodically that its server is reachable, and reconnects when it is not. |`true`
+|===
+
+NOTE: Keys of `headers` and `environment` keep their case when set in a configuration file. When they are set with environment variables, such as `MICRONAUT_MCP_CLIENT_STDIO_FILES_ENVIRONMENT_DEBUG`, they are lower-cased, so the server process receives `debug` rather than `DEBUG`. Set keys whose case matters in a configuration file.
+
+NOTE: The process of a STDIO connection inherits the environment of the application, in addition to its `environment`. Applications that keep secrets in their environment make them available to that process, so only start servers you trust, pin their version, for example `@modelcontextprotocol/server-filesystem@<version>` rather than the latest release that `npx` would download, and consider starting them with a cleared environment, for example `command: [env, -i, "PATH=/usr/bin:/bin", npx, ...]`. Pass secrets to a server in its `environment` rather than in its `command`, as the command is logged at debug level.
+
+For STDIO connections, a reconnection by `auto-health-check` starts a new server process, so consider disabling it for servers that are slow to start, such as those started with `npx`, or that cannot run twice.
+
+=== Using the tools
+
+For each connection there is a `dev.langchain4j.mcp.client.McpClient` bean, qualified by the name of the connection, which is also the key of the client (`client.key()`).
+
+A `dev.langchain4j.mcp.McpToolProvider` bean provides the tools of every connection to LangChain4j AI services. A `McpToolProvider` bean qualified by the name of a connection provides only the tools of that connection. An `McpClient` bean that your application declares itself is not part of the tool providers.
+
+WARNING: LangChain4j rejects two tools with the same name, and the primary `McpToolProvider` gives the tools of every connection under their own names. When two servers have a tool with the same name, every call that uses the primary provider fails, and a server can cause it at any time by renaming or adding a tool. Unless you trust every server, prefix the tools with the name of their connection with an `McpToolNameMapper`, as shown below, or use the provider of each connection.
+
+WARNING: The primary `McpToolProvider` gives the model the tools, and the tool descriptions, of every connection at once. A server you do not fully trust can use its descriptions to steer the model into calling the tools of another connection. Give an AI service the `McpToolProvider` qualified by the name of the connection it needs, or restrict the tools with an `McpToolFilter`, rather than the primary provider.
+
+=== Customizing the tools
+
+Declare one bean of each of these types to customize the tools of all the tool providers. Use the key of the client, the normalized name of its connection, to treat connections differently. Prefer a filter that lists the connections it allows to one that lists those it rejects, so that a name that does not match hides tools rather than exposes them:
 
 - `io.micronaut.mcp.client.langchain4j.McpToolFilter` selects the tools that the tool providers provide.
-- `io.micronaut.mcp.client.langchain4j.McpToolNameMapper` names them, for example to prefix them with the client key so that the tools of different servers cannot clash.
-- `dev.langchain4j.mcp.client.McpClientListener` and `dev.langchain4j.mcp.client.logging.McpLogMessageHandler` are registered with every client.
+- `io.micronaut.mcp.client.langchain4j.McpToolNameMapper` names them.
 
-With Micronaut Management, the `mcp` health indicator pings every server concurrently, and reports each connection whose server cannot be reached, or whose client cannot be created, as down. The servers that do not answer within `endpoints.health.mcp.timeout` (default `10s`) are reported down. Disable the indicator with `endpoints.health.mcp.enabled=false`.
+For example, the following beans prefix every tool with the name of its connection, so that the tools of different servers cannot clash, and only provide the tools of the connections they list, which leaves out, for example, the `embeddedServer` connection of an application that is itself an MCP server:
 
-A client is created when it is first used, which initializes the connection to its server. The `McpToolProvider` bean of every client skips the servers that cannot be reached, and creating their client is attempted again the next time the tools are provided. The `request-timeout` of a connection also applies to the pings of its client.
+[source,java]
+----
+@Factory
+class McpToolsFactory {
 
-By default, each client checks periodically that its server is reachable, and reconnects when it is not. Disable it for a connection with `auto-health-check: false`. For STDIO connections, a reconnection starts a new server process, so consider disabling it for servers that are slow to start, such as those started with `npx`, or that cannot run twice.
+    @Singleton
+    McpToolNameMapper prefixWithConnection() {
+        return (client, tool) -> client.key() + "__" + tool.name();
+    }
 
-The `langchain4j.mcp.client.transport.stdio.commands` property is deprecated: it declares a STDIO connection named `stdio`.
+    @Singleton
+    McpToolFilter onlyListedConnections() {
+        return (client, tool) -> Set.of("weather", "files").contains(client.key());
+    }
+}
+----
 
-If you are building an MCP Server, you can test it by injecting a bean of type `dev.langchain4j.mcp.client.McpClient` in your tests.
-The MCP Client pointing to your MCP Server has a name qualifier with value `embeddedServer`.
+Every `dev.langchain4j.mcp.client.McpClientListener` bean, and a `dev.langchain4j.mcp.client.logging.McpLogMessageHandler` bean, are registered with every client.
 
 To customize client creation further, define a
 https://docs.micronaut.io/latest/api/io/micronaut/context/event/BeanCreatedEventListener.html[BeanCreatedEventListener]
-for `DefaultMcpClient.Builder`, `StreamableHttpMcpTransport.Builder` or `StdioMcpTransport.Builder`.
+for `DefaultMcpClient.Builder`, `StreamableHttpMcpTransport.Builder` or `StdioMcpTransport.Builder`. A `BeanCreatedEventListener` for `McpToolProvider.Builder` customizes the tool providers, both the provider of every connection and the provider of each connection.
 
-== Authorization
+=== Unreachable servers
+
+A client is created when it is first used, which initializes the connection to its server, and starts the process of a STDIO server. The `McpToolProvider` beans skip the servers that cannot be reached, so an unreachable server does not prevent the application from starting. Creating a client that failed is attempted again the next time the tools are provided. A warning names the connection when its client cannot be created, and an information message when it is created again; the failures in between are logged at debug level.
+
+Only one attempt to create the client of a connection runs at a time. The requests made while it runs do not wait for it: they get no tools from that server. The request that makes an attempt waits up to twice the `initialization-timeout` of the connection, as the client tries two versions of the protocol, once for each connection whose server cannot be reached, so set a short `initialization-timeout` for servers that may be unavailable. Each attempt to create the client of a STDIO connection starts a new server process.
+
+By default, each client checks its server periodically with a thread of its own, see `auto-health-check`.
+
+=== Health
+
+With Micronaut Management, the `mcp` health indicator pings every server concurrently, and reports each connection whose server cannot be reached, or whose client cannot be created, as down. The servers that do not answer within `endpoints.health.mcp.timeout` (default `10s`) are reported down. Disable the indicator with `endpoints.health.mcp.enabled=false`.
+
+The first health check creates the clients that are not created yet, so it starts the processes of the STDIO servers, for example an `npx` download. While a request is creating the client of a connection, the health check reports that connection down without waiting.
+
+WARNING: Health checks are not authenticated by default, so anyone who can reach the health endpoint can make the indicator attempt to create the clients that failed, which starts the process of a STDIO server again. Require authentication with `endpoints.health.sensitive=true`, or serve the management endpoints on a separate port with `endpoints.all.port`, when the health endpoint is reachable from untrusted networks.
+
+WARNING: When any server cannot be reached, the `mcp` indicator is down, so the `/health` and `/health/readiness` endpoints answer `503 Service Unavailable`; `/health/liveness` is not affected. A readiness probe on these endpoints takes the application out of service when a server that it can do without is down. The indicator also pings the `embeddedServer` connection of an application that is itself an MCP server, without credentials, so it is down when that endpoint requires authentication. In these cases, disable the indicator.
+
+=== Migrating from 2.1
+
+The `micronaut.mcp.client.transport` property is deprecated and no longer selects the transport: the transport of a connection is set by where it is declared, and connections of both transports can be used together. Its only remaining effect is described below. In particular, `micronaut.mcp.client.transport: STDIO` no longer removes the `embeddedServer` connection of an application that is itself an HTTP MCP server, so the tool providers provide the application's own tools; leave them out with an `McpToolFilter`, as shown above.
+
+The `langchain4j.mcp.client.transport.stdio.commands` property is deprecated: as in 2.1, it declares a STDIO connection named `stdio` only when `micronaut.mcp.client.transport` is `STDIO`, and it is ignored otherwise. Declare the connection under `micronaut.mcp.client.stdio` instead, and note that the property there is `command`, not `commands`:
+
+[source,yaml]
+----
+# Before
+micronaut.mcp.client.transport: STDIO
+langchain4j.mcp.client.transport.stdio.commands: [npx, -y, "@modelcontextprotocol/server-filesystem@<version>", /tmp]
+
+# After
+micronaut.mcp.client.stdio.stdio.command: [npx, -y, "@modelcontextprotocol/server-filesystem@<version>", /tmp]
+----
+
+The application logs a warning when it uses either deprecated property. See also the <<breaks, breaking changes>>.
+
+=== Authorization
 
 To call MCP servers on behalf of the user, set `propagate-authorization` on an HTTP connection: the `Authorization` header of the HTTP request the application is handling, such as the user's bearer token, is sent to the MCP server. Only bearer tokens are propagated; set `propagate-any-authorization-scheme` to also propagate other schemes, such as Basic credentials.
 
@@ -76,3 +158,8 @@ WARNING: The https://modelcontextprotocol.io/specification/2025-11-25/basic/auth
 IMPORTANT: The client of a connection, and so its MCP session, is shared by every user of the application: the session is created for the first user, and the propagated `Authorization` header applies to each request, not to the session. An MCP server that binds its sessions to the user that initialized them, as the specification recommends, rejects or mixes up the calls of other users. Connections that propagate authorization need a server without user-bound sessions, or a connection for each user.
 
 The headers of the user are only known while the application handles their request. Requests the clients send on their own, such as the initialization when a client is created, pings and reconnections, and the answers to the requests of the server, such as sampling, elicitation, pings and roots, are sent on other threads: they carry the static headers of the connection and those of the headers providers, which must handle there being no current request, but not the propagated `Authorization` header. MCP servers that require authorization for these requests need a headers provider that supplies credentials of the application, for example a client credentials token.
+
+=== Testing an MCP server
+
+If you are building an MCP Server, you can test it by injecting a bean of type `dev.langchain4j.mcp.client.McpClient` in your tests.
+The MCP Client pointing to your MCP Server has a name qualifier with value `embeddedServer`.

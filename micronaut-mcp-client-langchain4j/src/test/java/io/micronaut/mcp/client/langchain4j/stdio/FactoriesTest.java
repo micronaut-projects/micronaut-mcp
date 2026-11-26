@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest(startApplication = false)
+@Property(name = "micronaut.mcp.client.transport", value = "STDIO")
 @Property(name = "langchain4j.mcp.client.transport.stdio.commands[0]", value = "java")
 @Property(name = "langchain4j.mcp.client.transport.stdio.commands[1]", value = "-jar")
 @Property(name = "langchain4j.mcp.client.transport.stdio.commands[2]", value = "build/libs/mcp-server-0.1-all.jar")
