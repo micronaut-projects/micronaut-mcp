@@ -19,3 +19,5 @@ Then, use the dataclass as the method return type:
 snippet::io.micronaut.mcp.docs.tools.jsonschema.output.Tools[project-base="test-suite-docs", tags="fakepackage,imports,clazz"]
 
 If a tool with an output JSON Schema returns `null`, or a value that cannot be serialized, the client receives a tool result with `isError: true`, and the server logs the cause.
+
+The object a tool returns is validated against the output JSON Schema and then serialized in the response, so do not modify it once the tool has returned it, for example by returning an object that other threads update.
