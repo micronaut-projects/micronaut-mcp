@@ -2,6 +2,7 @@ package io.micronaut.mcp.server.stateless;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
@@ -25,9 +26,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
-@Property(name = "micronaut.mcp.server.tools.list-changed", value = "true")
-@Property(name = "micronaut.mcp.server.resources.list-changed", value = "true")
-@Property(name = "micronaut.mcp.server.resources.subscribe", value = "true")
+@Property(name = "micronaut.mcp.server.tools.list-changed", value = StringUtils.TRUE)
+@Property(name = "micronaut.mcp.server.resources.list-changed", value = StringUtils.TRUE)
+@Property(name = "micronaut.mcp.server.resources.subscribe", value = StringUtils.TRUE)
 @Property(name = "spec.name", value = "StatelessDynamicToolsTest")
 @MicronautTest
 class StatelessDynamicToolsTest {
@@ -53,11 +54,13 @@ class StatelessDynamicToolsTest {
             .tool(McpSchema.Tool.builder().name("added").inputSchema(Map.of("type", "object")).build())
             .callHandler((context, request) -> McpSchema.CallToolResult.builder().addTextContent("added at runtime").build())
             .build());
-        assertTrue(call("tools/list", "{}").contains("\"name\":\"added\""));
-        assertTrue(call("tools/call", """
-            {"name": "added", "arguments": {}}""").contains("added at runtime"));
-
-        server.removeTool("added");
+        try {
+            assertTrue(call("tools/list", "{}").contains("\"name\":\"added\""));
+            assertTrue(call("tools/call", """
+                {"name": "added", "arguments": {}}""").contains("added at runtime"));
+        } finally {
+            server.removeTool("added");
+        }
         assertFalse(call("tools/list", "{}").contains("\"name\":\"added\""));
     }
 

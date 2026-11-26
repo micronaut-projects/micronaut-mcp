@@ -1,6 +1,7 @@
 package io.micronaut.mcp.server.stateless;
 
 import io.micronaut.context.annotation.Property;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
@@ -26,9 +27,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
-@Property(name = "micronaut.mcp.server.tools.list-changed", value = "true")
-@Property(name = "micronaut.mcp.server.prompts.list-changed", value = "true")
-@Property(name = "micronaut.mcp.server.resources.list-changed", value = "true")
+@Property(name = "micronaut.mcp.server.tools.list-changed", value = StringUtils.TRUE)
+@Property(name = "micronaut.mcp.server.prompts.list-changed", value = StringUtils.TRUE)
+@Property(name = "micronaut.mcp.server.resources.list-changed", value = StringUtils.TRUE)
 @Property(name = "spec.name", value = "StatelessEmptyDynamicPrimitivesTest")
 @MicronautTest
 class StatelessEmptyDynamicPrimitivesTest {
@@ -57,15 +58,23 @@ class StatelessEmptyDynamicPrimitivesTest {
             .build());
         server.addPrompt(new McpStatelessServerFeatures.SyncPromptSpecification(new McpSchema.Prompt("greeting", null, null, List.of()),
             (context, request) -> new McpSchema.GetPromptResult(null, List.of(), null)));
+        server.addResource(new McpStatelessServerFeatures.SyncResourceSpecification(McpSchema.Resource.builder("file:///added.txt", "added").build(),
+            (context, request) -> new McpSchema.ReadResourceResult(List.of(new McpSchema.TextResourceContents(request.uri(), "text/plain", "added at runtime")))));
         try {
             assertTrue(call("tools/call", """
                 {"name": "added", "arguments": {}}""").contains("added at runtime"));
             assertTrue(call("prompts/list", "{}").contains("\"name\":\"greeting\""));
+            assertTrue(call("resources/list", "{}").contains("\"uri\":\"file:///added.txt\""));
+            assertTrue(call("resources/read", """
+                {"uri": "file:///added.txt"}""").contains("added at runtime"));
         } finally {
             server.removeTool("added");
             server.removePrompt("greeting");
+            server.removeResource("file:///added.txt");
         }
         assertFalse(call("tools/list", "{}").contains("\"name\":\"added\""));
+        assertFalse(call("prompts/list", "{}").contains("\"name\":\"greeting\""));
+        assertFalse(call("resources/list", "{}").contains("\"uri\":\"file:///added.txt\""));
     }
 
     private String call(String method, String params) {

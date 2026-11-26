@@ -22,9 +22,6 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.mcp.conf.server.IconConfiguration;
 import io.micronaut.mcp.conf.server.McpServerInfoConfiguration;
-import io.micronaut.mcp.conf.server.PromptsConfiguration;
-import io.micronaut.mcp.conf.server.ResourcesConfiguration;
-import io.micronaut.mcp.conf.server.ToolsConfiguration;
 import io.micronaut.mcp.server.registry.CompletionRegistry;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ResourceRegistry;
@@ -69,16 +66,6 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
      */
     protected boolean sendsNotifications() {
         return true;
-    }
-
-    private static McpSchema.ServerCapabilities withoutNotifications(McpSchema.ServerCapabilities capabilities) {
-        return new McpSchema.ServerCapabilities(
-            capabilities.completions(),
-            capabilities.experimental(),
-            capabilities.logging(),
-            capabilities.prompts() != null ? new McpSchema.ServerCapabilities.PromptCapabilities(false) : null,
-            capabilities.resources() != null ? new McpSchema.ServerCapabilities.ResourceCapabilities(false, false) : null,
-            capabilities.tools() != null ? new McpSchema.ServerCapabilities.ToolCapabilities(false) : null);
     }
 
     /**
@@ -167,11 +154,7 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
      * @param jsonMapper MCP JSON Mapper
      * @param jsonSchemaValidator MCP JSON schema validator
      * @param configuration MCP Server Info Configuration
-     * @param toolsConfiguration Tools Configuration
-     * @param promptsConfiguration Prompts Configuration
-     * @param resourcesConfiguration Resources Configuration
-     * @param capabilitiesBuilder Capabilities Builder
-     * @param capabilitiesProvider Capabilities Provider
+     * @param capabilitiesProvider Capabilities Provider, see {@link ServerCapabilitiesFactory}
      * @param toolRegistry Tool Registry
      * @param promptRegistry Prompt Registry
      * @param resourceRegistry Resource Registry
@@ -191,43 +174,48 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
                                    McpJsonMapper jsonMapper,
                                    JsonSchemaValidator jsonSchemaValidator,
                                    @Nullable McpServerInfoConfiguration configuration,
-                                  ToolsConfiguration toolsConfiguration,
-                                  PromptsConfiguration promptsConfiguration,
-                                  ResourcesConfiguration resourcesConfiguration,
-                                  McpSchema.ServerCapabilities.Builder capabilitiesBuilder,
-                                  Provider<McpSchema.ServerCapabilities> capabilitiesProvider,
-                                  ToolRegistry toolRegistry,
-                                  PromptRegistry promptRegistry,
-                                  ResourceRegistry resourceRegistry,
-                                  ResourceTemplateRegistry resourceTemplateRegistry,
-                                  CompletionRegistry completionRegistry,
-                                  List<T> tools,
-                                  List<C> completions,
-                                  List<P> prompts,
-                                  List<R> resources,
+                                   Provider<McpSchema.ServerCapabilities> capabilitiesProvider,
+                                   ToolRegistry toolRegistry,
+                                   PromptRegistry promptRegistry,
+                                   ResourceRegistry resourceRegistry,
+                                   ResourceTemplateRegistry resourceTemplateRegistry,
+                                   CompletionRegistry completionRegistry,
+                                   List<T> tools,
+                                   List<C> completions,
+                                   List<P> prompts,
+                                   List<R> resources,
                                    List<U> resourceTemplates) {
         List<T> allTools = CollectionUtils.concat(tools, getTools(toolRegistry));
-        if (!allTools.isEmpty() || toolsConfiguration.isListChanged()) {
-            capabilitiesBuilder.tools(toolsConfiguration.isListChanged());
-        }
         List<P> allPrompts = CollectionUtils.concat(prompts, getPrompts(promptRegistry));
-        if (!allPrompts.isEmpty() || promptsConfiguration.isListChanged()) {
-            capabilitiesBuilder.prompts(promptsConfiguration.isListChanged());
-        }
         List<R> allResources = CollectionUtils.concat(resources, getResources(resourceRegistry));
         List<U> allResourceTemplates = CollectionUtils.concat(resourceTemplates, getResourceTemplates(resourceTemplateRegistry));
-        if (!allResourceTemplates.isEmpty() || !allResources.isEmpty() || resourcesConfiguration.isListChanged()) {
-            capabilitiesBuilder.resources(resourcesConfiguration.isSubscribe(), resourcesConfiguration.isListChanged());
-        }
         List<C> allCompletions = CollectionUtils.concat(completions, getCompletions(completionRegistry));
-        if (!allCompletions.isEmpty()) {
-            capabilitiesBuilder.completions();
-        }
+        // ServerCapabilitiesFactory decides which capabilities the server advertises
         McpSchema.ServerCapabilities capabilities = capabilitiesProvider.get();
         if (!sendsNotifications()) {
             capabilities = withoutNotifications(capabilities);
         }
         return createMcpServerSpec(transport, jsonMapper, jsonSchemaValidator, configuration, capabilities, allTools, allCompletions, allPrompts, allResources, allResourceTemplates);
+    }
+
+    /**
+     * Copies the capabilities, keeping every other component, with list changes and resource subscriptions turned off.
+     *
+     * @param capabilities The capabilities
+     * @return The capabilities without notifications
+     */
+    private static McpSchema.ServerCapabilities withoutNotifications(McpSchema.ServerCapabilities capabilities) {
+        McpSchema.ServerCapabilities.Builder builder = capabilities.mutate();
+        if (capabilities.prompts() != null) {
+            builder.prompts(false);
+        }
+        if (capabilities.resources() != null) {
+            builder.resources(false, false);
+        }
+        if (capabilities.tools() != null) {
+            builder.tools(false);
+        }
+        return builder.build();
     }
 
 }
