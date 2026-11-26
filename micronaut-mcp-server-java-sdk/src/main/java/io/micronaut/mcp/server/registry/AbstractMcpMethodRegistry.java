@@ -113,7 +113,14 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         return !methods.isEmpty();
     }
 
-    protected McpError mcpError(Exception ex) {
+    /**
+     * Converts an exception thrown while invoking a method into the error returned to the client.
+     *
+     * @param method The method that was invoked
+     * @param ex The exception
+     * @return The error
+     */
+    protected McpError mcpError(ExecutableMethod<?, ?> method, Exception ex) {
         if (ex instanceof McpError mcpError) {
             // An error the method throws keeps its code
             return mcpError;
@@ -128,7 +135,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
         // The SDK logs only exceptions that are not an McpError, so an unmapped exception is logged here
         if (LOG.isWarnEnabled()) {
-            LOG.warn("Unexpected error invoking an MCP method", ex);
+            LOG.warn("MCP method {}#{} threw an exception that no McpErrorExceptionMapper maps, so it is returned as an internal error",
+                method.getDeclaringType().getName(), method.getMethodName(), ex);
         }
         return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(internalErrorMessage(ex)).build();
     }

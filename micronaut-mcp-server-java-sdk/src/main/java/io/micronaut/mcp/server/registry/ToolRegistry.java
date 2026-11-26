@@ -237,7 +237,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             }
             return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
         } catch (Exception ex) {
-            throw mcpError(ex);
+            throw mcpError(method, ex);
         }
     }
 
