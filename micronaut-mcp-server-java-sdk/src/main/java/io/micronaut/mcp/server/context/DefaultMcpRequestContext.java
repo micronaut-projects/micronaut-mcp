@@ -33,11 +33,11 @@ import java.util.function.Supplier;
  */
 @Internal
 public final class DefaultMcpRequestContext implements McpRequestContext {
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultMcpRequestContext.class);
     /**
      * The longest progress token a request may send.
      */
     static final int MAX_PROGRESS_TOKEN_LENGTH = 256;
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultMcpRequestContext.class);
     private static final String ELICITATION = "Elicitation";
     private static final String SAMPLING = "Sampling";
     /**
