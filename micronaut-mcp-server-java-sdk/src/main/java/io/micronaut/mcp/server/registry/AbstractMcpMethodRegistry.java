@@ -197,6 +197,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         /**
          * The argument binders by parameter, resolved on the first invocation, because binders for JSON schema types
          * are registered when the specifications are built. Concurrent first invocations resolve the same binders.
+         * The binders are kept only once every parameter has one.
          */
         private final AtomicReference<ArgumentBinder<?, ?>[]> binders = new AtomicReference<>();
 
@@ -322,10 +323,15 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             ArgumentBinder<?, ?>[] resolved = binders.get();
             if (resolved == null) {
                 resolved = new ArgumentBinder<?, ?>[arguments.length];
+                boolean complete = true;
                 for (int i = 0; i < arguments.length; i++) {
                     resolved[i] = registry.findArgumentBinder((Argument<Object>) arguments[i]).orElse(null);
+                    complete &= resolved[i] != null;
                 }
-                binders.set(resolved);
+                // A missing binder is looked up again on the next invocation, in case it is registered later
+                if (complete) {
+                    binders.set(resolved);
+                }
             }
             return resolved;
         }
