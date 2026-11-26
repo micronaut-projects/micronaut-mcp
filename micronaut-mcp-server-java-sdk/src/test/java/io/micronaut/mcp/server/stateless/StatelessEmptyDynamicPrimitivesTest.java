@@ -18,11 +18,10 @@ import org.skyscreamer.jsonassert.JSONCompareMode;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * A stateless server with list-changed enabled and no static primitive starts empty, and primitives can be added to it.
+ * A stateless server with list-changed enabled and no static primitive starts empty, and tools, prompts, resources and
+ * resource templates can be added to it and removed.
  */
 @Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
@@ -50,8 +49,9 @@ class StatelessEmptyDynamicPrimitivesTest {
     }
 
     @Test
-    void primitivesCanBeAddedToAnEmptyServer() {
-        assertFalse(call("tools/list", "{}").contains("\"name\":\"added\""));
+    void primitivesCanBeAddedToAnEmptyServer() throws JSONException {
+        assertResult("tools/list", "{}", """
+            {"tools": []}""");
         server.addTool(McpStatelessServerFeatures.SyncToolSpecification.builder()
             .tool(McpSchema.Tool.builder().name("added").inputSchema(Map.of("type", "object")).build())
             .callHandler((context, request) -> McpSchema.CallToolResult.builder().addTextContent("added at runtime").build())
@@ -60,21 +60,43 @@ class StatelessEmptyDynamicPrimitivesTest {
             (context, request) -> new McpSchema.GetPromptResult(null, List.of(), null)));
         server.addResource(new McpStatelessServerFeatures.SyncResourceSpecification(McpSchema.Resource.builder("file:///added.txt", "added").build(),
             (context, request) -> new McpSchema.ReadResourceResult(List.of(new McpSchema.TextResourceContents(request.uri(), "text/plain", "added at runtime")))));
+        server.addResourceTemplate(new McpStatelessServerFeatures.SyncResourceTemplateSpecification(
+            McpSchema.ResourceTemplate.builder("file:///templates/{name}", "templates").build(),
+            (context, request) -> new McpSchema.ReadResourceResult(List.of(new McpSchema.TextResourceContents(request.uri(), "text/plain", "from a template")))));
         try {
-            assertTrue(call("tools/call", """
-                {"name": "added", "arguments": {}}""").contains("added at runtime"));
-            assertTrue(call("prompts/list", "{}").contains("\"name\":\"greeting\""));
-            assertTrue(call("resources/list", "{}").contains("\"uri\":\"file:///added.txt\""));
-            assertTrue(call("resources/read", """
-                {"uri": "file:///added.txt"}""").contains("added at runtime"));
+            assertResult("tools/call", """
+                {"name": "added", "arguments": {}}""", """
+                {"content": [{"type": "text", "text": "added at runtime"}]}""");
+            assertResult("prompts/list", "{}", """
+                {"prompts": [{"name": "greeting"}]}""");
+            assertResult("resources/list", "{}", """
+                {"resources": [{"uri": "file:///added.txt"}]}""");
+            assertResult("resources/read", """
+                {"uri": "file:///added.txt"}""", """
+                {"contents": [{"text": "added at runtime"}]}""");
+            assertResult("resources/templates/list", "{}", """
+                {"resourceTemplates": [{"uriTemplate": "file:///templates/{name}"}]}""");
+            assertResult("resources/read", """
+                {"uri": "file:///templates/one"}""", """
+                {"contents": [{"text": "from a template"}]}""");
         } finally {
             server.removeTool("added");
             server.removePrompt("greeting");
             server.removeResource("file:///added.txt");
+            server.removeResourceTemplate("file:///templates/{name}");
         }
-        assertFalse(call("tools/list", "{}").contains("\"name\":\"added\""));
-        assertFalse(call("prompts/list", "{}").contains("\"name\":\"greeting\""));
-        assertFalse(call("resources/list", "{}").contains("\"uri\":\"file:///added.txt\""));
+        assertResult("tools/list", "{}", """
+            {"tools": []}""");
+        assertResult("prompts/list", "{}", """
+            {"prompts": []}""");
+        assertResult("resources/list", "{}", """
+            {"resources": []}""");
+        assertResult("resources/templates/list", "{}", """
+            {"resourceTemplates": []}""");
+    }
+
+    private void assertResult(String method, String params, String expectedResult) throws JSONException {
+        JSONAssert.assertEquals("{\"result\": " + expectedResult + "}", call(method, params), JSONCompareMode.LENIENT);
     }
 
     private String call(String method, String params) {

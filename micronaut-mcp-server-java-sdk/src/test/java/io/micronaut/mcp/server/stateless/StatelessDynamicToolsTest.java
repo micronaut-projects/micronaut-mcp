@@ -20,9 +20,6 @@ import org.skyscreamer.jsonassert.JSONCompareMode;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
@@ -49,19 +46,26 @@ class StatelessDynamicToolsTest {
     }
 
     @Test
-    void toolsCanBeAddedAndRemovedAtRuntime() {
+    void toolsCanBeAddedNextToStaticToolsAndRemoved() throws JSONException {
         server.addTool(McpStatelessServerFeatures.SyncToolSpecification.builder()
             .tool(McpSchema.Tool.builder().name("added").inputSchema(Map.of("type", "object")).build())
             .callHandler((context, request) -> McpSchema.CallToolResult.builder().addTextContent("added at runtime").build())
             .build());
         try {
-            assertTrue(call("tools/list", "{}").contains("\"name\":\"added\""));
-            assertTrue(call("tools/call", """
-                {"name": "added", "arguments": {}}""").contains("added at runtime"));
+            assertResult("tools/list", "{}", """
+                {"tools": [{"name": "fixed"}, {"name": "added"}]}""");
+            assertResult("tools/call", """
+                {"name": "added", "arguments": {}}""", """
+                {"content": [{"type": "text", "text": "added at runtime"}]}""");
         } finally {
             server.removeTool("added");
         }
-        assertFalse(call("tools/list", "{}").contains("\"name\":\"added\""));
+        assertResult("tools/list", "{}", """
+            {"tools": [{"name": "fixed"}]}""");
+    }
+
+    private void assertResult(String method, String params, String expectedResult) throws JSONException {
+        JSONAssert.assertEquals("{\"result\": " + expectedResult + "}", call(method, params), JSONCompareMode.LENIENT);
     }
 
     private String call(String method, String params) {

@@ -16,19 +16,22 @@ import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
+import org.json.JSONException;
 import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZE;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZED;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -49,6 +52,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 class StdioEmptyListChangedCapabilitiesTest {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
+    private static final String TOOLS_LIST_CHANGED = "\"method\":\"notifications/tools/list_changed\"";
+    private static final String PROMPTS_LIST_CHANGED = "\"method\":\"notifications/prompts/list_changed\"";
+    private static final String RESOURCES_LIST_CHANGED = "\"method\":\"notifications/resources/list_changed\"";
+
+    private int requestId;
 
     @Inject
     McpSyncServer server;
@@ -66,38 +74,75 @@ class StdioEmptyListChangedCapabilitiesTest {
     }
 
     @Test
-    void addingAndRemovingAToolNotifiesTheClient() throws IOException, InterruptedException {
+    void addingAndRemovingPrimitivesNotifiesTheClient() throws IOException, InterruptedException, JSONException {
         Stdio stdio = factory.stdio;
         BufferedReader reader = new BufferedReader(new InputStreamReader(stdio.serverToClient, StandardCharsets.UTF_8));
         stdio.sendRequest(INITIALIZE);
-        assertTrue(readLine(reader).contains("\"id\":0"));
+        readUntil(reader, "\"id\":0");
         stdio.sendRequest(INITIALIZED);
 
         server.addTool(McpServerFeatures.SyncToolSpecification.builder()
             .tool(McpSchema.Tool.builder().name("added").inputSchema(Map.of("type", "object")).build())
             .callHandler((exchange, request) -> McpSchema.CallToolResult.builder().addTextContent("added at runtime").build())
             .build());
-        assertTrue(readLine(reader).contains("\"method\":\"notifications/tools/list_changed\""));
-        stdio.sendRequest("""
-            {"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}""");
-        assertTrue(readLine(reader).contains("\"name\":\"added\""));
-
+        readUntil(reader, TOOLS_LIST_CHANGED);
+        assertListed(stdio, reader, "tools/list", """
+            {"tools": [{"name": "added"}]}""");
         server.removeTool("added");
-        assertTrue(readLine(reader).contains("\"method\":\"notifications/tools/list_changed\""));
+        readUntil(reader, TOOLS_LIST_CHANGED);
+
+        server.addPrompt(new McpServerFeatures.SyncPromptSpecification(new McpSchema.Prompt("greeting", null, null, List.of()),
+            (exchange, request) -> new McpSchema.GetPromptResult(null, List.of(), null)));
+        readUntil(reader, PROMPTS_LIST_CHANGED);
+        assertListed(stdio, reader, "prompts/list", """
+            {"prompts": [{"name": "greeting"}]}""");
+        server.removePrompt("greeting");
+        readUntil(reader, PROMPTS_LIST_CHANGED);
+
+        server.addResource(new McpServerFeatures.SyncResourceSpecification(McpSchema.Resource.builder("file:///added.txt", "added").build(),
+            (exchange, request) -> new McpSchema.ReadResourceResult(List.of())));
+        readUntil(reader, RESOURCES_LIST_CHANGED);
+        assertListed(stdio, reader, "resources/list", """
+            {"resources": [{"uri": "file:///added.txt"}]}""");
+        server.removeResource("file:///added.txt");
+        readUntil(reader, RESOURCES_LIST_CHANGED);
+
+        server.addResourceTemplate(new McpServerFeatures.SyncResourceTemplateSpecification(
+            McpSchema.ResourceTemplate.builder("file:///{name}", "files").build(),
+            (exchange, request) -> new McpSchema.ReadResourceResult(List.of())));
+        readUntil(reader, RESOURCES_LIST_CHANGED);
+        assertListed(stdio, reader, "resources/templates/list", """
+            {"resourceTemplates": [{"uriTemplate": "file:///{name}"}]}""");
+        server.removeResourceTemplate("file:///{name}");
+        readUntil(reader, RESOURCES_LIST_CHANGED);
+    }
+
+    private void assertListed(Stdio stdio, BufferedReader reader, String method, String expectedResult)
+        throws IOException, InterruptedException, JSONException {
+        int id = ++requestId;
+        stdio.sendRequest("""
+            {"jsonrpc": "2.0", "id": %d, "method": "%s", "params": {}}""".formatted(id, method));
+        JSONAssert.assertEquals("{\"id\": " + id + ", \"result\": " + expectedResult + "}",
+            readUntil(reader, "\"id\":" + id), JSONCompareMode.LENIENT);
     }
 
     /**
-     * Reads the next line the server writes, on the test thread so the pipe keeps a live reader.
+     * Reads the lines the server writes until one contains the given text, on the test thread so the pipe keeps a live
+     * reader. Other messages, such as log notifications, are skipped.
      */
-    private static String readLine(BufferedReader reader) throws IOException, InterruptedException {
+    private static String readUntil(BufferedReader reader, String text) throws IOException, InterruptedException {
         long deadline = System.nanoTime() + TIMEOUT.toNanos();
-        while (!reader.ready()) {
-            if (System.nanoTime() > deadline) {
-                fail("The server wrote nothing within " + TIMEOUT);
+        while (System.nanoTime() < deadline) {
+            if (reader.ready()) {
+                String line = reader.readLine();
+                if (line.contains(text)) {
+                    return line;
+                }
+            } else {
+                TimeUnit.MILLISECONDS.sleep(20);
             }
-            TimeUnit.MILLISECONDS.sleep(20);
         }
-        return reader.readLine();
+        return fail("The server did not write " + text + " within " + TIMEOUT);
     }
 
     @Requires(property = "spec.name", value = "StdioEmptyListChangedCapabilitiesTest")
