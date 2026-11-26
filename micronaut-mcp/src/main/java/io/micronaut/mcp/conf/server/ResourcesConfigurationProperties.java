@@ -31,7 +31,9 @@ final class ResourcesConfigurationProperties implements ResourcesConfiguration {
 
     /**
      *
-     * @param subscribe whether the client can subscribe to be notified of changes to individual resources. Default value `false`.
+     * @param subscribe whether the client can subscribe to be notified of changes to individual resources. It does not advertise the
+     *                  resources capability when the server has no resources unless `list-changed` is also `true`. The HTTP
+     *                  transport always advertises `subscribe` as `false`. Default value `false`.
      */
     public void setSubscribe(boolean subscribe) {
         this.subscribe = subscribe;
@@ -44,7 +46,9 @@ final class ResourcesConfigurationProperties implements ResourcesConfiguration {
 
     /**
      *
-     * @param listChanged whether the server will emit notifications when the list of available resources changes. Default value `false`.
+     * @param listChanged whether the resources capability is advertised even when the server has no resources, so resources can be added at
+     *                    runtime, and, over STDIO, whether the server notifies clients when the list of resources changes. The HTTP
+     *                    transport always advertises `listChanged` as `false`. Default value `false`.
      */
     public void setListChanged(boolean listChanged) {
         this.listChanged = listChanged;

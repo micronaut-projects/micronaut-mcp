@@ -13,7 +13,8 @@ import jakarta.inject.Singleton
 @Singleton
 class WeatherTools {
     @Tool
-    @Icon(src = "https://example.com/sun.svg", mimeType = "image/svg+xml", sizes = "any")
+    @Icon(src = "https://example.com/sun-light.svg", mimeType = "image/svg+xml", sizes = "any", theme = "light")
+    @Icon(src = "https://example.com/sun-dark.svg", mimeType = "image/svg+xml", sizes = "any", theme = "dark")
     @Meta(key = "com.example/category", value = "weather")
     String forecast(String city) {
         return "sunny"
