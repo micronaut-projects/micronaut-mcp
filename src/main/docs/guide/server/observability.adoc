@@ -1,4 +1,10 @@
-With https://micronaut-projects.github.io/micronaut-micrometer/latest/guide/[Micronaut Micrometer] on the classpath, the server times every tool call, prompt get, resource read and completion with a timer named `mcp.server.operation.duration`, following the https://opentelemetry.io/docs/specs/semconv/gen-ai/mcp/[OpenTelemetry semantic conventions for MCP]:
+To record metrics, add https://micronaut-projects.github.io/micronaut-micrometer/latest/guide/[Micronaut Micrometer] and a meter registry, for example Prometheus:
+
+dependency:micronaut-micrometer-core[groupId=io.micronaut.micrometer]
+
+dependency:micronaut-micrometer-registry-prometheus[groupId=io.micronaut.micrometer]
+
+With a `MeterRegistry` bean, the server times every tool call, prompt get, resource read and completion with a timer named `mcp.server.operation.duration`, following the https://opentelemetry.io/docs/specs/semconv/gen-ai/mcp/[OpenTelemetry semantic conventions for MCP]:
 
 |===
 |Tag |Value
@@ -10,9 +16,9 @@ With https://micronaut-projects.github.io/micronaut-micrometer/latest/guide/[Mic
 |The name of the tool or prompt, the URI of the resource, or the URI template of the resource template
 
 |`error.type`
-|`none`, `tool_error` for a tool execution error, the JSON-RPC error code of a protocol error (for example `-32602`), or the class of the exception that ended the operation
+|`none`, `tool_error` for a tool execution error, the JSON-RPC error code of a protocol error (for example `-32602`), `cancelled` when the reactive server's result was cancelled before it produced a value, or the class of any other exception that ended the operation
 |===
 
 Disable the timer with `micronaut.mcp.server.metrics.enabled=false`.
 
-To observe operations otherwise, for example to trace them, register a bean of type `McpServerObserver`: it is notified when each operation starts and ends. Each operation is stopped exactly once, including on the reactive server, and an observer that throws is logged without failing the operation.
+To observe operations otherwise, for example to trace them, register a bean of type api:mcp.server.observability.McpServerObserver[]: it is notified when each operation starts and ends. Each operation is stopped exactly once, including on the reactive server, and an observer that throws is logged without failing the operation.
