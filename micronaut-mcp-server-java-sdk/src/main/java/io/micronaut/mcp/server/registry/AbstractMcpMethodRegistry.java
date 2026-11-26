@@ -114,16 +114,39 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     }
 
     protected McpError mcpError(Exception ex) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(ex.getMessage(), ex);
+        if (ex instanceof McpError mcpError) {
+            // An error the method throws keeps its code
+            return mcpError;
         }
         McpErrorExceptionMapper<? extends Throwable> exceptionMapper = getExceptionMapper(ex.getClass());
         if (exceptionMapper != null) {
+            // A mapped exception is an expected client error
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(ex.getMessage(), ex);
+            }
             return mapException(exceptionMapper, ex);
         }
-        // The SDK requires a message
-        String message = ex.getMessage() != null && !ex.getMessage().isBlank() ? ex.getMessage() : ex.getClass().getSimpleName();
-        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(message).build();
+        // The SDK logs only exceptions that are not an McpError, so an unmapped exception is logged here
+        if (LOG.isWarnEnabled()) {
+            LOG.warn("Unexpected error invoking an MCP method", ex);
+        }
+        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(internalErrorMessage(ex)).build();
+    }
+
+    /**
+     * The SDK requires a message: the message of the exception, otherwise the name of its type.
+     *
+     * @param ex The exception
+     * @return The message of the internal error
+     */
+    private static String internalErrorMessage(Exception ex) {
+        String message = ex.getMessage();
+        if (message != null && !message.isBlank()) {
+            return message;
+        }
+        String simpleName = ex.getClass().getSimpleName();
+        // Anonymous classes have no simple name
+        return simpleName.isEmpty() ? ex.getClass().getName() : simpleName;
     }
 
     @Nullable
@@ -158,8 +181,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         private final ExecutableMethod<B, Object> executableMethod;
         private final Argument<?>[] arguments;
         /**
-         * For each parameter, the index of the value it receives without an argument binder (0 is the transport
-         * context, then the values in the order of {@link AbstractMcpMethodRegistry#boundParameterTypes()}), or {@link #NOT_BOUND}.
+         * For each parameter, the index in {@link AbstractMcpMethodRegistry#boundParameterTypes()} of the type of the value
+         * it receives without an argument binder, or {@link #NOT_BOUND}.
          */
         private final int[] boundIndexes;
         private final AtomicReference<B> singleton = new AtomicReference<>();
@@ -173,6 +196,9 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                BeanDefinition<B> beanDefinition,
                ExecutableMethod<B, Object> method,
                Class<?>[] boundParameterTypes) {
+            if (boundParameterTypes.length == 0 || boundParameterTypes[0] != McpTransportContext.class) {
+                throw new IllegalArgumentException("The first bound parameter type must be " + McpTransportContext.class.getName());
+            }
             this.beanContext = beanContext;
             this.beanDefinition = beanDefinition;
             this.executableMethod = method;
@@ -255,7 +281,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
          * @param registry The argument binder registry
          * @param source The source of the argument binders
          * @param context The transport context or the server exchange
-         * @param values The request and any other values, in the order of {@link AbstractMcpMethodRegistry#boundParameterTypes()} after the context
+         * @param values The request and any other values: one for each of {@link AbstractMcpMethodRegistry#boundParameterTypes()}
+         *               after the transport context, in the same order
          * @param <S> The source type
          * @return The result of the method
          * @throws UnsatisfiedArgumentException If a required parameter cannot be bound

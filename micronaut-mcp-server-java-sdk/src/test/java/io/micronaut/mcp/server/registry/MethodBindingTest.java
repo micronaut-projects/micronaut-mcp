@@ -20,8 +20,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -61,20 +63,66 @@ class MethodBindingTest {
     }
 
     @Test
-    void theContextIsResolvedAndASingletonIsLookedUpOnce() {
+    void theTransportContextIsResolvedFromItsBoundIndex() {
         AbstractMcpMethodRegistry.Method<Greeter> method = method("contextual");
         assertEquals(true, method.invoke(registry(null), "request", CONTEXT, "request"));
-        assertSame(method.bean(), method.bean());
+    }
+
+    @Test
+    void aMissingBoundValueIsBoundByTheArgumentBinder() {
+        AbstractMcpMethodRegistry.Method<Greeter> method = method("contextual");
+        ArgumentBinder<Object, String> binder = (context, source) -> () -> Optional.of(CONTEXT);
+        assertEquals(true, method.invoke(registry(binder), "request", null, "request"));
+    }
+
+    @Test
+    void argumentBindersAreResolvedOnceForEveryParameter() {
+        AbstractMcpMethodRegistry.Method<Greeter> method = method("sum");
+        AtomicInteger lookups = new AtomicInteger();
+        ArgumentBinder<Object, String> binder = (context, source) -> () -> Optional.of(1);
+        ArgumentBinderRegistry<String> registry = new ArgumentBinderRegistry<>() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <T> Optional<ArgumentBinder<T, String>> findArgumentBinder(Argument<T> argument) {
+                lookups.incrementAndGet();
+                return Optional.of((ArgumentBinder<T, String>) (ArgumentBinder<?, String>) binder);
+            }
+        };
+        assertEquals(2, method.invoke(registry, "request", CONTEXT, "request"));
+        assertEquals(2, method.invoke(registry, "request", CONTEXT, "request"));
+        assertEquals(2, lookups.get());
+    }
+
+    @Test
+    void aSingletonIsLookedUpOnce() {
+        AbstractMcpMethodRegistry.Method<Greeter> method = method("contextual");
+        Greeter first = method.bean();
+        // the bean context creates a new singleton, but the method keeps invoking the one it looked up
+        beanContext.destroyBean(Greeter.class);
+        assertNotSame(first, beanContext.getBean(Greeter.class));
+        assertSame(first, method.bean());
+    }
+
+    @Test
+    void theFirstBoundParameterTypeIsTheTransportContext() {
+        BeanDefinition<Greeter> definition = beanContext.getBeanDefinition(Greeter.class);
+        ExecutableMethod<Greeter, Object> executable = executable(definition, "contextual");
+        Class<?>[] requestFirst = {String.class, McpTransportContext.class};
+        assertThrows(IllegalArgumentException.class,
+            () -> new AbstractMcpMethodRegistry.Method<>(beanContext, definition, executable, requestFirst));
+    }
+
+    private AbstractMcpMethodRegistry.Method<Greeter> method(String name) {
+        BeanDefinition<Greeter> definition = beanContext.getBeanDefinition(Greeter.class);
+        return new AbstractMcpMethodRegistry.Method<>(beanContext, definition, executable(definition, name), BOUND_PARAMETER_TYPES);
     }
 
     @SuppressWarnings("unchecked")
-    private AbstractMcpMethodRegistry.Method<Greeter> method(String name) {
-        BeanDefinition<Greeter> definition = beanContext.getBeanDefinition(Greeter.class);
-        ExecutableMethod<Greeter, Object> executable = (ExecutableMethod<Greeter, Object>) definition.getExecutableMethods().stream()
+    private static ExecutableMethod<Greeter, Object> executable(BeanDefinition<Greeter> definition, String name) {
+        return (ExecutableMethod<Greeter, Object>) definition.getExecutableMethods().stream()
             .filter(m -> m.getMethodName().equals(name))
             .findFirst()
             .orElseThrow();
-        return new AbstractMcpMethodRegistry.Method<>(beanContext, definition, executable, BOUND_PARAMETER_TYPES);
     }
 
     private static ArgumentBinderRegistry<String> registry(@Nullable ArgumentBinder<Object, String> binder) {
@@ -98,6 +146,11 @@ class MethodBindingTest {
         @Executable
         String optional(@Nullable Integer number) {
             return number == null ? "absent" : String.valueOf(number);
+        }
+
+        @Executable
+        int sum(Integer first, Integer second) {
+            return first + second;
         }
 
         @Executable

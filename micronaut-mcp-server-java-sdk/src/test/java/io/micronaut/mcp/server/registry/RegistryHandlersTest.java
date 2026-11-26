@@ -27,6 +27,7 @@ import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Invokes the handlers of every specification variant the registries build: STDIO sync and async, with server
@@ -85,6 +86,16 @@ class RegistryHandlersTest {
         var silent = find(toolRegistry.getStatelessSyncSpecs(), s -> s.tool().name().equals("silent")).callHandler();
         assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "IllegalStateException",
             () -> silent.apply(CONTEXT, new McpSchema.CallToolRequest("silent", Map.of())));
+        // an exception of an anonymous class, without a message, is reported with the name of its class
+        var anonymous = find(toolRegistry.getStatelessSyncSpecs(), s -> s.tool().name().equals("anonymous")).callHandler();
+        McpError anonymousError = assertThrows(McpError.class,
+            () -> anonymous.apply(CONTEXT, new McpSchema.CallToolRequest("anonymous", Map.of())));
+        assertEquals(McpSchema.ErrorCodes.INTERNAL_ERROR, anonymousError.getJsonRpcError().code());
+        assertTrue(anonymousError.getJsonRpcError().message().startsWith(Primitives.class.getName() + "$"));
+        // an McpError the tool throws keeps its code and message
+        var invalid = find(toolRegistry.getStatelessSyncSpecs(), s -> s.tool().name().equals("invalid")).callHandler();
+        assertError(McpSchema.ErrorCodes.INVALID_PARAMS, "bad",
+            () -> invalid.apply(CONTEXT, new McpSchema.CallToolRequest("invalid", Map.of())));
         // a missing argument, which an exception mapper maps
         var echo = find(toolRegistry.getStatelessSyncSpecs(), s -> s.tool().name().equals("echo")).callHandler();
         McpError missing = assertThrows(McpError.class, () -> echo.apply(CONTEXT, new McpSchema.CallToolRequest("echo", Map.of())));
@@ -199,6 +210,16 @@ class RegistryHandlersTest {
         @Tool
         String silent() {
             throw new IllegalStateException();
+        }
+
+        @Tool
+        String anonymous() {
+            throw new IllegalStateException() { };
+        }
+
+        @Tool
+        String invalid() {
+            throw McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS).message("bad").build();
         }
 
         @Tool
