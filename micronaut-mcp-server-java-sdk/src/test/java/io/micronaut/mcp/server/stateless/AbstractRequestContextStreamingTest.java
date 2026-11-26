@@ -1,7 +1,7 @@
 package io.micronaut.mcp.server.stateless;
 
-import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -21,7 +21,6 @@ import io.micronaut.mcp.annotations.ResourceTemplate;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -40,13 +39,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
-@Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
-@Property(name = "micronaut.mcp.server.transport", value = "HTTP")
-@Property(name = "spec.name", value = "RequestContextStreamingTest")
-@MicronautTest
-class RequestContextStreamingTest {
-    private static final String ACCEPT_BOTH = "application/json, text/event-stream";
+/**
+ * The notifications of a primitive with an {@link McpRequestContext} over HTTP. Subclasses run the scenarios on the
+ * blocking and on the reactive controller.
+ */
+abstract class AbstractRequestContextStreamingTest {
+    static final String PROPERTY = "request-context-streaming-test";
+    static final String ACCEPT_BOTH = "application/json, text/event-stream";
 
     @Inject
     @Client("/")
@@ -251,7 +250,7 @@ class RequestContextStreamingTest {
             .toList();
     }
 
-    @Requires(property = "spec.name", value = "RequestContextStreamingTest")
+    @Requires(property = PROPERTY, value = StringUtils.TRUE)
     @Singleton
     static class Primitives {
         @Tool
@@ -276,17 +275,19 @@ class RequestContextStreamingTest {
         static volatile CompletableFuture<Boolean> CANCELLED = new CompletableFuture<>();
 
         @Tool
-        String notifyUntilCancelled(McpRequestContext context) throws InterruptedException {
-            for (int i = 1; i <= 200; i++) {
-                context.progress(i);
-                if (context.isCancelled()) {
-                    CANCELLED.complete(true);
-                    return "cancelled";
+        @ExecuteOn(TaskExecutors.BLOCKING)
+        String notifyUntilCancelled(McpRequestContext context) {
+            try {
+                for (int i = 1; i <= 500 && !context.isCancelled(); i++) {
+                    context.progress(i);
+                    Thread.sleep(20);
                 }
-                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                // The reactive server interrupts a method that runs on an executor when its request is cancelled
+                Thread.currentThread().interrupt();
             }
-            CANCELLED.complete(false);
-            return "not cancelled";
+            CANCELLED.complete(context.isCancelled());
+            return "done";
         }
 
         @Tool
