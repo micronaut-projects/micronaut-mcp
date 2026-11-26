@@ -156,10 +156,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     }
 
     /**
-     * @param name The name of a primitive, as {@link #primitiveName(ExecutableMethod)} gives it
+     * @param name The name a request designates a primitive by, as {@link #primitiveName(ExecutableMethod)} gives it
      * @return Whether the primitive declares an {@link McpRequestContext} parameter, so it may send notifications while it runs
      */
-    public final boolean mayNotify(String name) {
+    public boolean mayNotify(String name) {
         Set<String> names = notifyingNames.get();
         if (names == null) {
             names = methods.stream()

@@ -153,11 +153,14 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
     }
 
     /**
+     * A request designates a resource template by the URI of a resource it matches.
+     *
      * @param uri The URI of a resource
      * @return Whether a template matching the URI declares an {@link io.micronaut.mcp.server.context.McpRequestContext}
      * parameter, so reading the resource may send notifications
      */
-    public boolean mayNotifyUri(String uri) {
+    @Override
+    public boolean mayNotify(String uri) {
         List<UriTemplateReadResourceRequest.Template> templates = notifyingTemplates.get();
         if (templates == null) {
             templates = methods.stream()

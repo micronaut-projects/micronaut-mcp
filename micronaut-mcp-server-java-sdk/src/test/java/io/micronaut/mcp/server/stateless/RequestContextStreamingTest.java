@@ -129,7 +129,9 @@ class RequestContextStreamingTest {
 
     @Test
     void aCompletionWithoutAReferencedPrimitiveStaysJson() {
-        for (String ref : List.of("{\"type\": \"ref/prompt\"}", "\"explain\"")) {
+        // Without a type, the name of a prompt reference does not designate the prompt
+        for (String ref : List.of("{\"type\": \"ref/prompt\"}", "{\"type\": \"ref/resource\"}", "{\"name\": \"explain\"}",
+                "{\"type\": \"ref/other\", \"name\": \"explain\"}", "\"explain\"")) {
             HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> post(ACCEPT_BOTH, """
                 {"jsonrpc": "2.0", "id": 24, "method": "completion/complete", "params": {"ref": %s, "argument": {"name": "topic", "value": "m"}}}"""
                 .formatted(ref)));

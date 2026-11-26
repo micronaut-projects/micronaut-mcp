@@ -44,6 +44,7 @@ final class McpStreamingPolicy {
     private static final String KEY_NAME = "name";
     private static final String KEY_URI = "uri";
     private static final String KEY_REF = "ref";
+    private static final String KEY_TYPE = "type";
 
     private final ToolRegistry toolRegistry;
     private final PromptRegistry promptRegistry;
@@ -81,7 +82,7 @@ final class McpStreamingPolicy {
             case McpSchema.METHOD_TOOLS_CALL -> name(params, KEY_NAME) instanceof String name && toolRegistry.mayNotify(name);
             case McpSchema.METHOD_PROMPT_GET -> name(params, KEY_NAME) instanceof String name && promptRegistry.mayNotify(name);
             case McpSchema.METHOD_RESOURCES_READ -> name(params, KEY_URI) instanceof String uri
-                && (resourceRegistry.mayNotify(uri) || resourceTemplateRegistry.mayNotifyUri(uri));
+                && (resourceRegistry.mayNotify(uri) || resourceTemplateRegistry.mayNotify(uri));
             case McpSchema.METHOD_COMPLETION_COMPLETE -> completionMayNotify(params.get(KEY_REF));
             default -> false;
         };
@@ -92,9 +93,12 @@ final class McpStreamingPolicy {
         if (ref == null || !ref.isObject()) {
             return false;
         }
-        // A prompt reference has a name, a resource reference a URI
-        String name = name(ref, KEY_NAME);
-        if (name == null) {
+        // A prompt reference designates the prompt by its name, a resource reference the resource by its URI
+        String type = name(ref, KEY_TYPE);
+        String name = null;
+        if (McpSchema.PromptReference.TYPE.equals(type)) {
+            name = name(ref, KEY_NAME);
+        } else if (McpSchema.ResourceReference.TYPE.equals(type)) {
             name = name(ref, KEY_URI);
         }
         return name != null && completionRegistry.mayNotify(name);
