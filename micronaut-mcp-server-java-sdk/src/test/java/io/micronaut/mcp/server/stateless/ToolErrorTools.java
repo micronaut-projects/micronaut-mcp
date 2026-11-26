@@ -14,6 +14,9 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tools shared by the tool execution error tests of both execution models.
@@ -44,6 +47,23 @@ class ToolErrorTools {
     }
 
     @Tool
+    String failingWithBlankMessage() {
+        throw new IllegalStateException("   ");
+    }
+
+    @Tool
+    CompletableFuture<String> failingAsync() {
+        return CompletableFuture.supplyAsync(() -> {
+            throw new IllegalStateException("the backend is down");
+        });
+    }
+
+    @Tool
+    CompletableFuture<String> failingNested() {
+        return CompletableFuture.failedFuture(new ExecutionException(new CompletionException(new IOException("boom"))));
+    }
+
+    @Tool
     String failingWithoutMessage() {
         throw new IllegalStateException();
     }
@@ -51,6 +71,32 @@ class ToolErrorTools {
     @Tool
     String protocolError() {
         throw McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS).message("unknown city").build();
+    }
+
+    @Tool
+    CompletableFuture<String> protocolErrorAsync() {
+        return CompletableFuture.supplyAsync(() -> {
+            throw McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS).message("unknown city").build();
+        });
+    }
+
+    @Tool
+    CompletableFuture<String> mappedAsync() {
+        return CompletableFuture.supplyAsync(() -> {
+            throw new CompletionException(new CityNotFoundException());
+        });
+    }
+
+    @Tool
+    Mono<String> mappedCallable() {
+        return Mono.fromCallable(() -> {
+            throw new CityNotFoundException();
+        });
+    }
+
+    @Tool
+    String converted(@ToolArg TimeUnit unit) {
+        return unit.name();
     }
 
     @Tool

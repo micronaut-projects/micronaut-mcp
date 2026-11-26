@@ -32,14 +32,15 @@ abstract class AbstractToolExecutionErrorsTest {
     JsonMapper jsonMapper;
 
     @ParameterizedTest
-    @ValueSource(strings = {"failing", "failingPublisher", "failingOnExecutor"})
+    @ValueSource(strings = {"failing", "failingPublisher", "failingOnExecutor", "failingAsync"})
     void aFailureWithoutAMapperIsAToolExecutionError(String tool) throws IOException {
         assertToolError("the backend is down", callTool(httpClient, jsonMapper, tool));
     }
 
-    @Test
-    void aFailureWithoutAMessageIsDescribedByItsClass() throws IOException {
-        assertToolError("Tool failingWithoutMessage failed (IllegalStateException)", callTool(httpClient, jsonMapper, "failingWithoutMessage"));
+    @ParameterizedTest
+    @ValueSource(strings = {"failingWithoutMessage", "failingWithBlankMessage"})
+    void aFailureWithoutAMessageIsDescribedByTheToolAndItsClass(String tool) throws IOException {
+        assertToolError("Tool " + tool + " failed (IllegalStateException)", callTool(httpClient, jsonMapper, tool));
     }
 
     @Test
@@ -50,7 +51,7 @@ abstract class AbstractToolExecutionErrorsTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"checkedPublisher", "checkedFuture"})
+    @ValueSource(strings = {"checkedPublisher", "checkedFuture", "failingNested"})
     void aCheckedExceptionIsUnwrapped(String tool) throws IOException {
         assertToolError("boom", callTool(httpClient, jsonMapper, tool));
     }
@@ -62,8 +63,28 @@ abstract class AbstractToolExecutionErrorsTest {
         assertToolError("count: must be less than or equal to 10", result);
     }
 
+    @Test
+    void anArgumentThatCannotBeBoundIsAToolExecutionError() throws IOException {
+        Map<String, Object> result = callTool(httpClient, jsonMapper, "converted", """
+            {"unit": "fortnights"}""");
+        assertToolError("Required argument [TimeUnit unit] not specified", result);
+    }
+
+    @Test
+    void anArgumentThatDoesNotMatchTheInputSchemaIsAToolExecutionError() throws IOException {
+        Map<String, Object> result = callTool(httpClient, jsonMapper, "limited", """
+            {"count": "eleven"}""");
+        assertToolError("Tool (limited) input validation failed: /count: string found, number expected", result);
+    }
+
+    @Test
+    void aMissingArgumentIsAToolExecutionError() throws IOException {
+        assertToolError("Tool (limited) input validation failed: required property 'count' not found",
+            callTool(httpClient, jsonMapper, "limited"));
+    }
+
     @ParameterizedTest
-    @ValueSource(strings = {"protocolError", "protocolErrorFuture"})
+    @ValueSource(strings = {"protocolError", "protocolErrorFuture", "protocolErrorAsync"})
     void anMcpErrorIsAProtocolErrorWithItsCodeAndMessage(String tool) throws IOException {
         Map<String, Object> error = callToolError(httpClient, jsonMapper, tool, HttpStatus.BAD_REQUEST);
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.get("code"));
@@ -71,7 +92,7 @@ abstract class AbstractToolExecutionErrorsTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"mapped", "mappedPublisher"})
+    @ValueSource(strings = {"mapped", "mappedPublisher", "mappedAsync", "mappedCallable"})
     void aFailureThatAnApplicationMapperMapsIsAProtocolError(String tool) throws IOException {
         Map<String, Object> error = callToolError(httpClient, jsonMapper, tool, HttpStatus.BAD_REQUEST);
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.get("code"));
@@ -83,6 +104,8 @@ abstract class AbstractToolExecutionErrorsTest {
         Map<String, Object> result = callTool(httpClient, jsonMapper, "unserializable");
         assertEquals(Boolean.TRUE, result.get("isError"));
         assertTrue(text(result).startsWith("The result of tool unserializable could not be serialized: "), text(result));
+        // the reason names the type that could not be serialized
+        assertTrue(text(result).contains("Unserializable"), text(result));
     }
 
     private static void assertToolError(String message, Map<String, Object> result) {

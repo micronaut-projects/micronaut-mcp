@@ -9,9 +9,20 @@ import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InputErrorMappersTest {
+
+    @Test
+    void theBuiltInMappersOfArgumentsAreInputErrorMappers() {
+        // A tool reports what an InputErrorMapper maps as a tool execution error, rather than a protocol error
+        assertInstanceOf(InputErrorMapper.class, new ConstraintViolationExceptionMcpErrorMapper());
+        assertInstanceOf(InputErrorMapper.class, new ConversionErrorExceptionMcpErrorMapper());
+        assertInstanceOf(InputErrorMapper.class, new InvalidFormatExceptionMcpErrorMapper());
+        assertInstanceOf(InputErrorMapper.class, new SerdeExceptionMcpErrorMapper());
+        assertInstanceOf(InputErrorMapper.class, new UnsatisfiedArgumentExceptionMcpErrorMapper());
+    }
 
     @Test
     void aValueThatCannotBeConvertedIsAnInvalidParameter() {

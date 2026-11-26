@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 final class ExecutionModelSupport {
     private ExecutionModelSupport() {
@@ -47,7 +48,10 @@ final class ExecutionModelSupport {
             assertEquals(status, e.getStatus());
             body = e.getResponse().getBody(String.class).orElseThrow();
         }
-        return (Map<String, Object>) jsonMapper.readValue(body, Argument.mapOf(String.class, Object.class)).get("error");
+        Map<String, Object> response = jsonMapper.readValue(body, Argument.mapOf(String.class, Object.class));
+        // a protocol error has no result, so it cannot also be a tool execution error
+        assertFalse(response.containsKey("result"), body);
+        return (Map<String, Object>) response.get("error");
     }
 
     @SuppressWarnings("unchecked")

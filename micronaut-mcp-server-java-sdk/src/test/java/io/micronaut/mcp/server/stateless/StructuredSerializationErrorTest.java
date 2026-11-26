@@ -44,6 +44,7 @@ class StructuredSerializationErrorTest {
         Map<String, Object> result = callTool(httpClient, jsonMapper, "notSerializable");
         assertEquals(Boolean.TRUE, result.get("isError"));
         assertTrue(text(result).startsWith("The result of tool notSerializable could not be serialized: "), text(result));
+        assertTrue(text(result).contains("Unserializable"), text(result));
     }
 
     /**
