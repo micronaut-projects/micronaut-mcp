@@ -100,6 +100,7 @@ class McpControllerTest {
             proxy(McpJsonMapper.class, (proxy, method, args) -> {
                 throw new UnsupportedOperationException(method.getName());
             }),
+            McpSchema.ServerCapabilities.builder().build(),
             // handle is given whether the response may stream, so the policy is not used
             null);
         JsonNode body = JsonNode.createObjectNode(Map.of(
@@ -256,6 +257,7 @@ class McpControllerTest {
                 throw new UnsupportedOperationException(method.getName());
             }),
             new MicronautMcpJsonMapperSupplier().get(),
+            McpSchema.ServerCapabilities.builder().build(),
             // handle is given whether the response may stream, so the policy is not used
             null);
     }
