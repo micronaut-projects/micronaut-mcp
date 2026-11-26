@@ -81,11 +81,11 @@ import java.util.stream.Stream;
  * The abstract registry.
  * @param <S> Sync Specification
  * @param <A> Async Specification
- * @param <SS> Stateless Sync Specification
- * @param <SA> Stateless Async Specification
+ * @param <T> Stateless Sync Specification
+ * @param <U> Stateless Async Specification
  */
 @Internal
-abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrimitiveRegistry<S, A, SS, SA>, BeanDestroyedEventListener<Object>
+abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimitiveRegistry<S, A, T, U>, BeanDestroyedEventListener<Object>
     permits CompletionRegistry, PromptRegistry, ResourceRegistry, ResourceTemplateRegistry, ToolRegistry {
     protected static final String MEMBER_DESCRIPTION = "description";
     protected static final String KEY_TYPE = "type";
