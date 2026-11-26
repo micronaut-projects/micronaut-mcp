@@ -107,39 +107,45 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     private <B> BiFunction<McpSyncServerExchange, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> syncHandler(
         Method<B> m
     ) {
-        return (exchange, request) -> invokeAndMap(m, exchange, request);
+        String name = observedName(m);
+        return (exchange, request) -> invokeAndMap(m, name, exchange, request);
     }
 
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> asyncHandler(
         Method<B> m
     ) {
-        return (exchange, request) -> invokeAndMapAsync(m, exchange, request);
+        String name = observedName(m);
+        return (exchange, request) -> invokeAndMapAsync(m, name, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> statelessSyncHandler(
         Method<B> m
     ) {
-        return (ctx, request) -> invokeAndMap(m, ctx, request);
+        String name = observedName(m);
+        return (ctx, request) -> invokeAndMap(m, name, ctx, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> statelessAsyncHandler(
         Method<B> m
     ) {
-        return (ctx, request) -> invokeAndMapAsync(m, ctx, request);
+        String name = observedName(m);
+        return (ctx, request) -> invokeAndMapAsync(m, name, ctx, request);
     }
 
     private <B> McpSchema.ReadResourceResult invokeAndMap(Method<B> m,
+                                                          String name,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
-        return observed(McpSchema.METHOD_RESOURCES_READ, request.uri(),
+        return observed(McpSchema.METHOD_RESOURCES_READ, name,
             () -> m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
                 mcpTransportContext, result -> map(m, request, result), this::failWithMcpError));
     }
 
     private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
+                                                                     String name,
                                                                      Object mcpTransportContext,
                                                                      McpSchema.ReadResourceRequest request) {
-        return observedAsync(McpSchema.METHOD_RESOURCES_READ, request.uri(),
+        return observedAsync(McpSchema.METHOD_RESOURCES_READ, name,
             () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
                 result -> map(m, request, result), this::failWithMcpError));
     }

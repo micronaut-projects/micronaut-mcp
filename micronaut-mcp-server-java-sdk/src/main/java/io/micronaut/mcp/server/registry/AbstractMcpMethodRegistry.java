@@ -111,7 +111,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected final List<Method<Object>> methods = new ArrayList<>();
     protected final BeanContext beanContext;
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
-    private List<McpServerObserver> observers = List.of();
+    private List<RegisteredObserver> observers = List.of();
     private final AtomicReference<Set<String>> notifyingNames = new AtomicReference<>();
     private final Map<Class<? extends Throwable>, Optional<McpErrorExceptionMapper<? extends Throwable>>> classToExceptionMapper = new ConcurrentHashMap<>();
 
@@ -126,7 +126,19 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      */
     @Inject
     void setObservers(List<McpServerObserver> observers) {
-        this.observers = List.copyOf(observers);
+        this.observers = observers.stream().map(RegisteredObserver::new).toList();
+    }
+
+    /**
+     * The name observations tag the operations of a method with: the name or URI its primitive was declared with, rather
+     * than the one in the request, so that the names stay bounded by the registered primitives whatever the SDK accepts.
+     * Captured once, when the handler of the method is built.
+     *
+     * @param method A registered method whose primitive is designated by name
+     * @return The name of its primitive
+     */
+    final String observedName(Method<?> method) {
+        return Objects.requireNonNull(primitiveName(method.method()), "The primitive of an observed method has a name");
     }
 
     /**
@@ -148,10 +160,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     // An observer that fails with an Error, such as an AssertionError or a NoClassDefFoundError of a missing tracing
     // library, must not fail the operation either; only an error of the virtual machine itself is rethrown
     @SuppressWarnings("java:S1181")
-    private static McpServerObserver.Observation start(McpServerObserver observer, String method, String name) {
+    private static McpServerObserver.Observation start(RegisteredObserver observer, String method, String name) {
         McpServerObserver.Observation observation;
         try {
-            observation = observer.start(method, name);
+            observation = observer.observer().start(method, name);
         } catch (VirtualMachineError e) {
             throw e;
         } catch (Throwable e) {
@@ -170,12 +182,13 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     }
 
     /**
-     * Logs a failing observer: with the stack trace the first time it fails, and at debug level
-     * afterwards, so that an observer that fails on every operation does not flood the log.
+     * Logs a failing observer: with the stack trace the first time it fails, and at debug level afterwards, so that an
+     * observer that fails on every operation does not flood the log. The shared map is consulted only on the first failure
+     * of the observer in this registry, so later failures take no lock.
      */
-    private static void observerFailed(McpServerObserver observer, String phase, String method, String name, Throwable e) {
-        String observerName = observer.getClass().getName();
-        if (FAILED_OBSERVERS.put(observer, Boolean.TRUE) == null) {
+    private static void observerFailed(RegisteredObserver observer, String phase, String method, String name, Throwable e) {
+        String observerName = observer.observer().getClass().getName();
+        if (observer.failed().compareAndSet(false, true) && FAILED_OBSERVERS.put(observer.observer(), Boolean.TRUE) == null) {
             if (LOG.isWarnEnabled()) {
                 LOG.warn("MCP server observer {} failed to {} the observation of {} {}, further failures are logged at debug level: {}",
                     observerName, phase, method, name, e.getMessage(), e);
@@ -873,6 +886,18 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                 throw new ConversionErrorException(argument, lastError.get());
             }
             throw new UnsatisfiedArgumentException(argument);
+        }
+    }
+
+    /**
+     * An observer of the registry, with whether it has failed in this registry.
+     *
+     * @param observer The observer
+     * @param failed Whether the observer has failed in this registry
+     */
+    private record RegisteredObserver(McpServerObserver observer, AtomicBoolean failed) {
+        RegisteredObserver(McpServerObserver observer) {
+            this(observer, new AtomicBoolean());
         }
     }
 }

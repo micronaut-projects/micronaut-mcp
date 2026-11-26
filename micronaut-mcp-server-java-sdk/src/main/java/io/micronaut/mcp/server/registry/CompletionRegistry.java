@@ -107,39 +107,45 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     private <B> BiFunction<McpSyncServerExchange, McpSchema.CompleteRequest, McpSchema.CompleteResult> syncHandler(
         Method<B> m
     ) {
-        return (exchange, request) -> invokeAndMap(m, exchange, request);
+        String name = observedName(m);
+        return (exchange, request) -> invokeAndMap(m, name, exchange, request);
     }
 
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.CompleteRequest, Mono<McpSchema.CompleteResult>> asyncHandler(
         Method<B> m
     ) {
-        return (exchange, request) -> invokeAndMapAsync(m, exchange, request);
+        String name = observedName(m);
+        return (exchange, request) -> invokeAndMapAsync(m, name, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.CompleteRequest, McpSchema.CompleteResult> statelessSyncHandler(
         Method<B> m
     ) {
-        return (ctx, request) -> invokeAndMap(m, ctx, request);
+        String name = observedName(m);
+        return (ctx, request) -> invokeAndMap(m, name, ctx, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.CompleteRequest, Mono<McpSchema.CompleteResult>> statelessAsyncHandler(
         Method<B> m
     ) {
-        return (ctx, request) -> invokeAndMapAsync(m, ctx, request);
+        String name = observedName(m);
+        return (ctx, request) -> invokeAndMapAsync(m, name, ctx, request);
     }
 
     private <B> McpSchema.CompleteResult invokeAndMap(Method<B> m,
+                                                      String name,
                                                       Object mcpTransportContext,
                                                       McpSchema.CompleteRequest request) {
-        return observed(McpSchema.METHOD_COMPLETION_COMPLETE, request.ref().identifier(),
+        return observed(McpSchema.METHOD_COMPLETION_COMPLETE, name,
             () -> m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
                 mcpTransportContext, CompletionRegistry::map, this::failWithMcpError));
     }
 
     private <B> Mono<McpSchema.CompleteResult> invokeAndMapAsync(Method<B> m,
+                                                                 String name,
                                                                  Object mcpTransportContext,
                                                                  McpSchema.CompleteRequest request) {
-        return observedAsync(McpSchema.METHOD_COMPLETION_COMPLETE, request.ref().identifier(),
+        return observedAsync(McpSchema.METHOD_COMPLETION_COMPLETE, name,
             () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
                 CompletionRegistry::map, this::failWithMcpError));
     }

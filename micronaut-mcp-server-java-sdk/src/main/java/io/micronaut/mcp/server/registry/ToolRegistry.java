@@ -178,31 +178,35 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
 
     private <B, C> BiFunction<C, McpSchema.CallToolRequest, McpSchema.CallToolResult> provideSyncCallHandler(Method<B> m,
                                                                                                              boolean structuredOutput) {
+        String name = observedName(m);
         return (mcpTransportContext, callToolRequest)
-            -> callToolToResult(m, structuredOutput, mcpTransportContext, callToolRequest);
+            -> callToolToResult(m, name, structuredOutput, mcpTransportContext, callToolRequest);
     }
 
     private <B, C> BiFunction<C, McpSchema.CallToolRequest, Mono<McpSchema.CallToolResult>> provideReactiveCallHandler(Method<B> m,
                                                                                                                        boolean structuredOutput) {
+        String name = observedName(m);
         return (mcpTransportContext, callToolRequest)
-            -> reactiveCallToolToResult(m, structuredOutput, mcpTransportContext, callToolRequest);
+            -> reactiveCallToolToResult(m, name, structuredOutput, mcpTransportContext, callToolRequest);
     }
 
     private <B> Mono<McpSchema.CallToolResult> reactiveCallToolToResult(Method<B> m,
+                                                                        String name,
                                                                         boolean structuredOutput,
                                                                         Object mcpTransportContext,
                                                                         McpSchema.CallToolRequest callToolRequest) {
-        return observedAsync(McpSchema.METHOD_TOOLS_CALL, callToolRequest.name(),
+        return observedAsync(McpSchema.METHOD_TOOLS_CALL, name,
             () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
                 result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)),
             ToolRegistry::errorType);
     }
 
     private <B> McpSchema.CallToolResult callToolToResult(Method<B> m,
+                                                          String name,
                                                           boolean structuredOutput,
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
-        return observed(McpSchema.METHOD_TOOLS_CALL, callToolRequest.name(),
+        return observed(McpSchema.METHOD_TOOLS_CALL, name,
             () -> m.call(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
                 mcpTransportContext, result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)),
             ToolRegistry::errorType);

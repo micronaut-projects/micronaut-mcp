@@ -48,8 +48,8 @@ final class MicrometerMcpServerObserver implements McpServerObserver {
 
     private final MeterRegistry meterRegistry;
     /**
-     * The timers by tags, so that an operation does not build its timer again. Only annotated primitives are observed, so
-     * the names, and with them the timers, are bounded. Removing these timers from the registry is not supported: an
+     * The timers by tags, so that an operation does not build its timer again. Only annotated primitives are observed, under
+     * the names they were declared with, so the names, and with them the timers, are bounded. Removing these timers from the registry is not supported: an
      * operation would record to the removed timer.
      */
     private final Map<TimerKey, Timer> timers = new ConcurrentHashMap<>();
