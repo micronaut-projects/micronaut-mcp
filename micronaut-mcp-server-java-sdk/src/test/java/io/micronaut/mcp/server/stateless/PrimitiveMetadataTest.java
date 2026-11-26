@@ -23,7 +23,7 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @Property(name = "micronaut.mcp.server.info.name", value = "weather")
 @Property(name = "micronaut.mcp.server.info.version", value = "1.0.0")
@@ -47,20 +47,21 @@ class PrimitiveMetadataTest {
     @Client("/")
     HttpClient httpClient;
 
+    private static final String INITIALIZE = """
+        {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "test", "version": "1"}}""";
+
     @Test
     void serverInfo() throws JSONException {
         JSONAssert.assertEquals("""
             {"result": {
               "serverInfo": {"name": "weather", "title": "Weather", "version": "1.0.0", "description": "Forecasts by city",
                              "icons": [{"src": "https://example.com/weather.png"}, {"src": "https://example.com/weather-dark.svg", "mimeType": "image/svg+xml", "sizes": ["any"], "theme": "dark"}], "websiteUrl": "https://example.com"},
-              "instructions": "Ask for a city first."}}""", call("initialize", """
-            {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "test", "version": "1"}}"""), JSONCompareMode.LENIENT);
+              "instructions": "Ask for a city first."}}""", call("initialize", INITIALIZE), JSONCompareMode.STRICT_ORDER);
     }
 
     @Test
     void emptyConfiguredIconValuesAreOmitted() throws JSONException {
-        JSONObject icon = new JSONObject(call("initialize", """
-            {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "test", "version": "1"}}"""))
+        JSONObject icon = new JSONObject(call("initialize", INITIALIZE))
             .getJSONObject("result").getJSONObject("serverInfo").getJSONArray("icons").getJSONObject(0);
         assertFalse(icon.has("mimeType"));
         assertFalse(icon.has("theme"));
@@ -69,50 +70,66 @@ class PrimitiveMetadataTest {
     @Test
     void tools() throws JSONException {
         JSONAssert.assertEquals("""
-            {"result": {"tools": [{"name": "forecast",
-              "icons": [{"src": "https://example.com/sun.svg", "mimeType": "image/svg+xml", "sizes": ["any"], "theme": "light"}],
-              "_meta": {"com.example/category": "weather"}}]}}""", call("tools/list", "{}"), JSONCompareMode.LENIENT);
+            {"name": "forecast",
+             "icons": [{"src": "https://example.com/sun-light.svg", "mimeType": "image/svg+xml", "sizes": ["any"], "theme": "light"},
+                       {"src": "https://example.com/sun-dark.svg", "theme": "dark"}],
+             "_meta": {"com.example/category": "weather", "com.example/unit": "celsius"}}""",
+            listed("tools/list", "tools", "name", "forecast"), JSONCompareMode.STRICT_ORDER);
     }
 
     @Test
     void prompts() throws JSONException {
         JSONAssert.assertEquals("""
-            {"result": {"prompts": [{"name": "plan", "icons": [{"src": "https://example.com/plan.png"}], "_meta": {"com.example/kind": "trip"}}]}}""",
-            call("prompts/list", "{}"), JSONCompareMode.LENIENT);
+            {"name": "plan", "icons": [{"src": "https://example.com/plan.png"}], "_meta": {"com.example/kind": "trip"}}""",
+            listed("prompts/list", "prompts", "name", "plan"), JSONCompareMode.STRICT_ORDER);
     }
 
     @Test
     void resources() throws JSONException {
         JSONAssert.assertEquals("""
-            {"result": {"resources": [{"uri": "weather://stations", "size": 42,
-              "annotations": {"audience": ["assistant"], "priority": 0.5},
-              "icons": [{"src": "https://example.com/station.png"}], "_meta": {"com.example/source": "noaa"}},
-              {"uri": "weather://empty", "size": 0, "annotations": {"priority": 0}}]}}""",
-            call("resources/list", "{}"), JSONCompareMode.LENIENT);
+            {"uri": "weather://stations", "size": 42, "annotations": {"audience": ["assistant"], "priority": 0.5},
+             "icons": [{"src": "https://example.com/station.png"}], "_meta": {"com.example/source": "noaa"}}""",
+            listed("resources/list", "resources", "uri", "weather://stations"), JSONCompareMode.STRICT_ORDER);
+        JSONAssert.assertEquals("""
+            {"uri": "weather://empty", "size": 0, "annotations": {"priority": 0}}""",
+            listed("resources/list", "resources", "uri", "weather://empty"), JSONCompareMode.STRICT_ORDER);
     }
 
     @Test
     void resourceTemplates() throws JSONException {
         JSONAssert.assertEquals("""
-            {"result": {"resourceTemplates": [{"uriTemplate": "weather://cities/{city}",
-              "annotations": {"audience": ["user", "assistant"]}, "_meta": {"com.example/source": "noaa"}},
-              {"uriTemplate": "weather://alerts/{region}", "annotations": {"priority": 1}, "icons": [{"src": "https://example.com/alert.png"}]}]}}""",
-            call("resources/templates/list", "{}"), JSONCompareMode.LENIENT);
+            {"uriTemplate": "weather://cities/{city}", "annotations": {"audience": ["assistant", "user"]}, "_meta": {"com.example/source": "noaa"}}""",
+            listed("resources/templates/list", "resourceTemplates", "uriTemplate", "weather://cities/{city}"), JSONCompareMode.STRICT_ORDER);
+        JSONAssert.assertEquals("""
+            {"uriTemplate": "weather://alerts/{region}", "annotations": {"priority": 1}, "icons": [{"src": "https://example.com/alert.png"}]}""",
+            listed("resources/templates/list", "resourceTemplates", "uriTemplate", "weather://alerts/{region}"), JSONCompareMode.STRICT_ORDER);
     }
 
     @Test
     void undeclaredMetadataIsOmitted() throws JSONException {
-        JSONArray templates = new JSONObject(call("resources/templates/list", "{}"))
-            .getJSONObject("result").getJSONArray("resourceTemplates");
-        JSONObject template = null;
-        for (int i = 0; i < templates.length(); i++) {
-            if (templates.getJSONObject(i).getString("uriTemplate").equals("weather://cities/{city}")) {
-                template = templates.getJSONObject(i);
+        assertOmitted(listed("tools/list", "tools", "name", "plainTool"), "icons", "_meta");
+        assertOmitted(listed("prompts/list", "prompts", "name", "plainPrompt"), "icons", "_meta");
+        assertOmitted(listed("resources/list", "resources", "uri", "weather://plain"), "icons", "_meta", "annotations", "size");
+        assertOmitted(listed("resources/list", "resources", "uri", "weather://unknown-size"), "size");
+        JSONObject template = listed("resources/templates/list", "resourceTemplates", "uriTemplate", "weather://cities/{city}");
+        assertOmitted(template, "icons");
+        assertOmitted(template.getJSONObject("annotations"), "priority");
+    }
+
+    private static void assertOmitted(JSONObject json, String... keys) {
+        for (String key : keys) {
+            assertFalse(json.has(key), () -> key + " in " + json);
+        }
+    }
+
+    private JSONObject listed(String method, String arrayKey, String idKey, String id) throws JSONException {
+        JSONArray items = new JSONObject(call(method, "{}")).getJSONObject("result").getJSONArray(arrayKey);
+        for (int i = 0; i < items.length(); i++) {
+            if (items.getJSONObject(i).getString(idKey).equals(id)) {
+                return items.getJSONObject(i);
             }
         }
-        assertNotNull(template);
-        assertFalse(template.has("icons"));
-        assertFalse(template.getJSONObject("annotations").has("priority"));
+        return fail(id + " not in " + items);
     }
 
     private String call(String method, String params) {
@@ -124,10 +141,17 @@ class PrimitiveMetadataTest {
     @Singleton
     static class Primitives {
         @Tool
-        @Icon(src = "https://example.com/sun.svg", mimeType = "image/svg+xml", sizes = "any", theme = "light")
+        @Icon(src = "https://example.com/sun-light.svg", mimeType = "image/svg+xml", sizes = "any", theme = "light")
+        @Icon(src = "https://example.com/sun-dark.svg", theme = "dark")
         @Meta(key = "com.example/category", value = "weather")
+        @Meta(key = "com.example/unit", value = "celsius")
         String forecast(String city) {
             return "sunny";
+        }
+
+        @Tool
+        String plainTool() {
+            return "plain";
         }
 
         @Prompt
@@ -137,11 +161,26 @@ class PrimitiveMetadataTest {
             return "Plan a trip";
         }
 
+        @Prompt
+        String plainPrompt() {
+            return "Plain";
+        }
+
         @Resource(uri = "weather://stations", size = 42, audience = Audience.ASSISTANT, priority = 0.5)
         @Icon(src = "https://example.com/station.png")
         @Meta(key = "com.example/source", value = "noaa")
         String stations() {
             return "KSEA";
+        }
+
+        @Resource(uri = "weather://plain")
+        String plain() {
+            return "plain";
+        }
+
+        @Resource(uri = "weather://unknown-size", size = -5)
+        String unknownSize() {
+            return "unknown";
         }
 
         @Resource(uri = "weather://empty", size = 0, priority = 0)
@@ -155,7 +194,7 @@ class PrimitiveMetadataTest {
             return region;
         }
 
-        @ResourceTemplate(uriTemplate = "weather://cities/{city}", audience = {Audience.USER, Audience.ASSISTANT})
+        @ResourceTemplate(uriTemplate = "weather://cities/{city}", audience = {Audience.ASSISTANT, Audience.USER})
         @Meta(key = "com.example/source", value = "noaa")
         String city(String city) {
             return city;

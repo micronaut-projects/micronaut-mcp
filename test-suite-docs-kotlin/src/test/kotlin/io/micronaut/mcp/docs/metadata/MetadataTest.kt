@@ -26,7 +26,7 @@ class MetadataTest {
         JSONAssert.assertEquals("""
             {"result": {"tools": [{"name": "forecast",
               "icons": [{"src": "https://example.com/sun-light.svg", "mimeType": "image/svg+xml", "sizes": ["any"], "theme": "light"}, {"src": "https://example.com/sun-dark.svg", "mimeType": "image/svg+xml", "sizes": ["any"], "theme": "dark"}],
-              "_meta": {"com.example/category": "weather"}}]}}""", result, JSONCompareMode.LENIENT)
+              "_meta": {"com.example/category": "weather"}}]}}""", result, JSONCompareMode.STRICT_ORDER)
     }
 
     @Test
@@ -35,6 +35,6 @@ class MetadataTest {
             """{"jsonrpc": "2.0", "id": 1, "method": "resources/list", "params": {}}"""))
         JSONAssert.assertEquals("""
             {"result": {"resources": [{"uri": "weather://stations", "size": 4,
-              "annotations": {"audience": ["assistant"], "priority": 0.5}}]}}""", result, JSONCompareMode.LENIENT)
+              "annotations": {"audience": ["assistant"], "priority": 0.5}}]}}""", result, JSONCompareMode.STRICT_ORDER)
     }
 }

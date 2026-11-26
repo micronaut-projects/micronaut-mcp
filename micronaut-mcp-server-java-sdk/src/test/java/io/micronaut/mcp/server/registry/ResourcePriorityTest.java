@@ -25,6 +25,12 @@ class ResourcePriorityTest {
     }
 
     @Test
+    void aPriorityJustAboveOneFailsTheStartup() {
+        assertEquals("The priority of @Resource on method " + JustAboveOnePriority.class.getName() + "#justAboveOne is 1.0000001; it must be between 0 and 1, or left out",
+            startupFailure("ResourcePriorityTest.justAboveOne"));
+    }
+
+    @Test
     void aNaNPriorityFailsTheStartup() {
         assertEquals("The priority of @ResourceTemplate on method " + NaNPriority.class.getName() + "#nan is NaN; it must be between 0 and 1, or left out", startupFailure("ResourcePriorityTest.nan"));
     }
@@ -57,6 +63,15 @@ class ResourcePriorityTest {
         @Resource(uri = "priority://negative", priority = -0.5)
         String negative() {
             return "negative";
+        }
+    }
+
+    @Requires(property = "spec.name", value = "ResourcePriorityTest.justAboveOne")
+    @Singleton
+    static class JustAboveOnePriority {
+        @Resource(uri = "priority://just-above-one", priority = 1.0000001)
+        String justAboveOne() {
+            return "justAboveOne";
         }
     }
 

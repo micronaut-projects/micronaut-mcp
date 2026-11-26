@@ -4,9 +4,13 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.annotations.Meta;
 import io.micronaut.mcp.annotations.Prompt;
+import io.micronaut.mcp.annotations.Resource;
+import io.micronaut.mcp.annotations.ResourceTemplate;
 import io.micronaut.mcp.annotations.Tool;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.Map;
 
@@ -20,10 +24,11 @@ class MetaKeyTest {
         assertEquals("The @Meta of method " + EmptyKey.class.getName() + "#tool requires a key", startupFailure("MetaKeyTest.empty"));
     }
 
-    @Test
-    void aKeyDeclaredTwiceFailsTheStartup() {
-        assertEquals("The @Meta key com.example/kind is declared twice on method " + DuplicateKey.class.getName() + "#prompt",
-            startupFailure("MetaKeyTest.duplicate"));
+    @ParameterizedTest
+    @CsvSource({"DuplicateKeyTool,tool", "DuplicateKeyPrompt,prompt", "DuplicateKeyResource,resource", "DuplicateKeyTemplate,template"})
+    void aKeyDeclaredTwiceFailsTheStartupOnEveryPrimitive(String bean, String method) {
+        assertEquals("The @Meta key com.example/kind is declared twice on method " + MetaKeyTest.class.getName() + "$" + bean + "#" + method,
+            startupFailure("MetaKeyTest." + bean));
     }
 
     private static String startupFailure(String specName) {
@@ -49,14 +54,47 @@ class MetaKeyTest {
         }
     }
 
-    @Requires(property = "spec.name", value = "MetaKeyTest.duplicate")
+    @Requires(property = "spec.name", value = "MetaKeyTest.DuplicateKeyTool")
     @Singleton
-    static class DuplicateKey {
+    static class DuplicateKeyTool {
+        @Tool
+        @Meta(key = "com.example/kind", value = "trip")
+        @Meta(key = "com.example/kind", value = "holiday")
+        String tool() {
+            return "tool";
+        }
+    }
+
+    @Requires(property = "spec.name", value = "MetaKeyTest.DuplicateKeyPrompt")
+    @Singleton
+    static class DuplicateKeyPrompt {
         @Prompt
         @Meta(key = "com.example/kind", value = "trip")
         @Meta(key = "com.example/kind", value = "holiday")
         String prompt() {
             return "Plan a trip";
+        }
+    }
+
+    @Requires(property = "spec.name", value = "MetaKeyTest.DuplicateKeyResource")
+    @Singleton
+    static class DuplicateKeyResource {
+        @Resource(uri = "meta://duplicate")
+        @Meta(key = "com.example/kind", value = "trip")
+        @Meta(key = "com.example/kind", value = "holiday")
+        String resource() {
+            return "resource";
+        }
+    }
+
+    @Requires(property = "spec.name", value = "MetaKeyTest.DuplicateKeyTemplate")
+    @Singleton
+    static class DuplicateKeyTemplate {
+        @ResourceTemplate(uriTemplate = "meta://duplicate/{id}")
+        @Meta(key = "com.example/kind", value = "trip")
+        @Meta(key = "com.example/kind", value = "holiday")
+        String template(String id) {
+            return id;
         }
     }
 }

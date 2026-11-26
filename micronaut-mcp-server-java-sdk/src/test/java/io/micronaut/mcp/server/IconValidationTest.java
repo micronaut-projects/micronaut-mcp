@@ -3,9 +3,14 @@ package io.micronaut.mcp.server;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.mcp.annotations.Icon;
+import io.micronaut.mcp.annotations.Prompt;
+import io.micronaut.mcp.annotations.Resource;
+import io.micronaut.mcp.annotations.ResourceTemplate;
 import io.micronaut.mcp.annotations.Tool;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,10 +36,11 @@ class IconValidationTest {
                 "micronaut.mcp.server.info.icons[0].theme", "purple")));
     }
 
-    @Test
-    void anIconAnnotationWithAnEmptySrcFailsTheStartup() {
-        assertEquals("The @Icon of method " + EmptySrc.class.getName() + "#tool requires a src",
-            startupFailure(Map.of("spec.name", "IconValidationTest.src")));
+    @ParameterizedTest
+    @CsvSource({"EmptySrcTool,tool", "EmptySrcPrompt,prompt", "EmptySrcResource,resource", "EmptySrcTemplate,template"})
+    void anIconAnnotationWithAnEmptySrcFailsTheStartupOnEveryPrimitive(String bean, String method) {
+        assertEquals("The @Icon of method " + IconValidationTest.class.getName() + "$" + bean + "#" + method + " requires a src",
+            startupFailure(Map.of("spec.name", "IconValidationTest." + bean)));
     }
 
     @Test
@@ -55,13 +61,43 @@ class IconValidationTest {
         return error.getMessage();
     }
 
-    @Requires(property = "spec.name", value = "IconValidationTest.src")
+    @Requires(property = "spec.name", value = "IconValidationTest.EmptySrcTool")
     @Singleton
-    static class EmptySrc {
+    static class EmptySrcTool {
         @Tool
         @Icon(src = "")
         String tool() {
             return "tool";
+        }
+    }
+
+    @Requires(property = "spec.name", value = "IconValidationTest.EmptySrcPrompt")
+    @Singleton
+    static class EmptySrcPrompt {
+        @Prompt
+        @Icon(src = "")
+        String prompt() {
+            return "prompt";
+        }
+    }
+
+    @Requires(property = "spec.name", value = "IconValidationTest.EmptySrcResource")
+    @Singleton
+    static class EmptySrcResource {
+        @Resource(uri = "icon://empty")
+        @Icon(src = "")
+        String resource() {
+            return "resource";
+        }
+    }
+
+    @Requires(property = "spec.name", value = "IconValidationTest.EmptySrcTemplate")
+    @Singleton
+    static class EmptySrcTemplate {
+        @ResourceTemplate(uriTemplate = "icon://empty/{id}")
+        @Icon(src = "")
+        String template(String id) {
+            return id;
         }
     }
 
