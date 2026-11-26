@@ -15,6 +15,8 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Singleton;
 import org.json.JSONException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.skyscreamer.jsonassert.JSONAssert;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,46 +29,77 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @MicronautTest
 class McpControllerJsonRpcTest {
 
+    private static final String INVALID_REQUEST = """
+        {
+          "jsonrpc": "2.0",
+          "id": null,
+          "error": {"code": -32600, "message": "The server accepts either JSON-RPC requests or notifications"}
+        }""";
+
     @Test
-    void aMessageWithoutJsonRpcVersionIsABadRequest(@Client("/") HttpClient httpClient) throws JSONException {
-        BlockingHttpClient client = httpClient.toBlocking();
-        HttpRequest<String> request = HttpRequest.POST("/mcp", """
+    void aMessageWithoutJsonRpcVersionIsAnInvalidRequest(@Client("/") HttpClient httpClient) throws JSONException {
+        assertInvalidRequest(httpClient, """
             {"method": "tools/list", "id": 1}""");
-        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
-        JSONAssert.assertEquals("""
-            {
-              "jsonrpc": "2.0",
-              "id": null,
-              "error": {"code": -32600, "message": "The server accepts either JSON-RPC requests or notifications"}
-            }""", ex.getResponse().getBody(String.class).orElseThrow(), true);
     }
 
     @Test
-    void aBodyThatIsNotAnObjectIsABadRequest(@Client("/") HttpClient httpClient) {
+    void aBodyThatIsNotAnObjectIsAnInvalidRequest(@Client("/") HttpClient httpClient) throws JSONException {
+        assertInvalidRequest(httpClient, """
+            [{"jsonrpc": "2.0", "method": "tools/list", "id": 1}]""");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        """
+        {"jsonrpc": 2, "method": "tools/list", "id": 1}""",
+        """
+        {"jsonrpc": "1.0", "method": "tools/list", "id": 1}""",
+        """
+        {"jsonrpc": "2.0", "method": 1, "id": 1}""",
+        """
+        {"jsonrpc": "2.0", "id": 1}""",
+        """
+        {"jsonrpc": "2.0", "id": true, "method": "ping"}""",
+        """
+        {"jsonrpc": "2.0", "id": null, "method": "ping"}""",
+        """
+        {"jsonrpc": "2.0", "id": 1.0, "method": "ping"}""",
+        """
+        {"jsonrpc": "2.0", "id": 1.5, "method": "ping"}""",
+        """
+        {"jsonrpc": "2.0", "id": 12345678901234567890, "method": "ping"}"""
+    })
+    void aMessageWithAnInvalidVersionMethodOrIdIsAnInvalidRequest(String body, @Client("/") HttpClient httpClient) throws JSONException {
+        assertInvalidRequest(httpClient, body);
+    }
+
+    @Test
+    void longIdsAreAccepted(@Client("/") HttpClient httpClient) throws JSONException {
+        BlockingHttpClient client = httpClient.toBlocking();
+        HttpResponse<String> response = client.exchange(HttpRequest.POST("/mcp", """
+            {"jsonrpc": "2.0", "id": 12345678901, "method": "ping"}"""), String.class);
+        assertEquals(HttpStatus.OK, response.getStatus());
+        JSONAssert.assertEquals("""
+            {"jsonrpc": "2.0", "id": 12345678901, "result": {}}""", response.body(), true);
+    }
+
+    @Test
+    void paramsTheSdkCannotConvertAreAJsonRpcError(@Client("/") HttpClient httpClient) throws JSONException {
         BlockingHttpClient client = httpClient.toBlocking();
         HttpRequest<String> request = HttpRequest.POST("/mcp", """
-            [{"jsonrpc": "2.0", "method": "tools/list", "id": 1}]""");
+            {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": "x"}""");
         HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatus());
+        JSONAssert.assertEquals("""
+            {"jsonrpc": "2.0", "id": 3, "error": {"code": -32603}}""", ex.getResponse().getBody(String.class).orElseThrow(), false);
     }
 
-    @Test
-    void aMessageWithAnInvalidVersionMethodOrIdIsABadRequest(@Client("/") HttpClient httpClient) {
+    private static void assertInvalidRequest(HttpClient httpClient, String body) throws JSONException {
         BlockingHttpClient client = httpClient.toBlocking();
-        for (String body : new String[] {
-            """
-            {"jsonrpc": 2, "method": "tools/list", "id": 1}""",
-            """
-            {"jsonrpc": "2.0", "method": 1, "id": 1}""",
-            """
-            {"jsonrpc": "2.0", "id": 1}""",
-            """
-            {"jsonrpc": "2.0", "id": true, "method": "ping"}"""}) {
-            HttpRequest<String> request = HttpRequest.POST("/mcp", body);
-            HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
-            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
-        }
+        HttpRequest<String> request = HttpRequest.POST("/mcp", body);
+        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        JSONAssert.assertEquals(INVALID_REQUEST, ex.getResponse().getBody(String.class).orElseThrow(), true);
     }
 
     @Test

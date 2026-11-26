@@ -118,7 +118,8 @@ final class McpController {
     @NonNull
     private Mono<HttpResponse<?>> handleJsonRpcRequest(McpSchema.@NonNull JSONRPCRequest jsonrpcRequest,
                                                        @NonNull McpTransportContext transportContext) {
-        Mono<HttpResponse<?>> mono = mcpHandler.handleRequest(transportContext, jsonrpcRequest)
+        // deferred so that a handler that throws instead of returning an error reaches the JSON-RPC error mapping
+        Mono<HttpResponse<?>> mono = Mono.defer(() -> mcpHandler.handleRequest(transportContext, jsonrpcRequest))
             .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
             .map(rsp -> HttpResponse.status(status(rsp)).body(rsp));
         return mono
@@ -132,7 +133,8 @@ final class McpController {
         }
         JsonNode jsonrpc = body.get(KEY_JSONRPC);
         JsonNode method = body.get(KEY_METHOD);
-        if (jsonrpc == null || !jsonrpc.isString() || method == null || !method.isString()) {
+        if (jsonrpc == null || !jsonrpc.isString() || !McpSchema.JSONRPC_VERSION.equals(jsonrpc.getStringValue())
+            || method == null || !method.isString()) {
             return null;
         }
         Object params;
@@ -145,11 +147,11 @@ final class McpController {
         if (id == null) {
             return new McpSchema.JSONRPCNotification(jsonrpc.getStringValue(), method.getStringValue(), params);
         }
-        if (!id.isString() && !id.isNumber()) {
-            // JSON-RPC request ids are strings or numbers
+        Object requestId = id(id);
+        if (requestId == null) {
             return null;
         }
-        return new McpSchema.JSONRPCRequest(jsonrpc.getStringValue(), method.getStringValue(), id(id), params);
+        return new McpSchema.JSONRPCRequest(jsonrpc.getStringValue(), method.getStringValue(), requestId, params);
     }
 
     private @Nullable Object params(@Nullable JsonNode params) throws IOException {
@@ -162,8 +164,18 @@ final class McpController {
         return jsonMapper.readValueFromTree(params, Object.class);
     }
 
-    private static Object id(JsonNode id) {
-        return id.isString() ? id.getStringValue() : id.getNumberValue();
+    private static @Nullable Object id(JsonNode id) {
+        if (id.isString()) {
+            return id.getStringValue();
+        }
+        if (id.isNumber()) {
+            Number number = id.getNumberValue();
+            if (number instanceof Integer || number instanceof Long) {
+                return number;
+            }
+        }
+        // MCP request ids are strings or integers
+        return null;
     }
 
     private static Map<String, Object> invalidRequest() {

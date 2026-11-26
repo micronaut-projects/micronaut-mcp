@@ -30,8 +30,10 @@ import java.util.Locale;
  * A {@link MicronautMcpTransportContext} backed by the HTTP request. Each value is read from the request when it is first
  * asked for, so requests whose handlers never read the host, the locale or the principal do not pay for resolving them.
  *
- * <p>Only the headers and the attributes of the request are read, never its body, so a context that a primitive keeps
- * and reads after the response is written still sees the values of its request.</p>
+ * <p>The context keeps the request reachable for as long as the context itself is reachable. It reads the headers and
+ * the attributes of the request, and the {@link HttpHostResolver} and {@link LocaleResolver} beans read what they need;
+ * the default resolvers read only the headers and the URI. None of them reads the body, so a context that a primitive
+ * keeps and reads after the response is written still sees the values of its request.</p>
  *
  * <p>The resolved values are memoized in plain fields: concurrent first reads may resolve a value twice, which is
  * harmless because the resolution has no side effects and always gives the same value.</p>
