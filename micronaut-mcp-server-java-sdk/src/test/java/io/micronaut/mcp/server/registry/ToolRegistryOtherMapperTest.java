@@ -3,6 +3,8 @@ package io.micronaut.mcp.server.registry;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.jsonschema.JsonSchema;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.json.MicronautMcpJsonMapperSupplier;
 import io.micronaut.mcp.server.stateless.sync.EvaluationResult;
@@ -19,6 +21,8 @@ import java.io.IOException;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * With an MCP JSON mapper other than the Micronaut one, structured results are converted to a Map first.
@@ -33,10 +37,34 @@ class ToolRegistryOtherMapperTest {
 
     @Test
     void structuredResultsAreConvertedToAMap() {
-        McpSchema.CallToolResult result = toolRegistry.getStatelessSyncSpecs().stream()
-            .filter(s -> s.tool().name().equals("evaluate")).findFirst().orElseThrow()
-            .callHandler().apply(McpTransportContext.create(Map.of()), new McpSchema.CallToolRequest("evaluate", Map.of()));
+        McpSchema.CallToolResult result = call("evaluate");
         assertEquals(Map.of("fen", "start", "evaluation", "+0.2"), result.structuredContent());
+    }
+
+    @Test
+    void structuredResultThatCannotBeConvertedIsToolError() {
+        McpSchema.CallToolResult result = call("unserializable");
+        assertTrue(result.isError());
+        assertNull(result.structuredContent());
+        assertEquals("Tool unserializable returned structured content that cannot be serialized",
+            ((McpSchema.TextContent) result.content().getFirst()).text());
+    }
+
+    private McpSchema.CallToolResult call(String name) {
+        return toolRegistry.getStatelessSyncSpecs().stream()
+            .filter(s -> s.tool().name().equals(name)).findFirst().orElseThrow()
+            .callHandler().apply(McpTransportContext.create(Map.of()), new McpSchema.CallToolRequest(name, Map.of()));
+    }
+
+    @JsonSchema
+    @Introspected
+    record Payload(Unserializable value) {
+    }
+
+    /**
+     * Has no serializable introspection.
+     */
+    static final class Unserializable {
     }
 
     @Requires(property = "spec.name", value = "ToolRegistryOtherMapperTest")
@@ -45,6 +73,11 @@ class ToolRegistryOtherMapperTest {
         @Tool
         EvaluationResult evaluate() {
             return new EvaluationResult("start", "+0.2");
+        }
+
+        @Tool
+        Payload unserializable() {
+            return new Payload(new Unserializable());
         }
     }
 

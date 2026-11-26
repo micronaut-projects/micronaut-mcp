@@ -31,12 +31,12 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.json.JsonMapper;
-import io.micronaut.mcp.server.json.MicronautMcpJsonMapper;
 import io.micronaut.jsonschema.JsonSchema;
 import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.ToolArg;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
+import io.micronaut.mcp.server.json.MicronautMcpJsonMapper;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -110,8 +110,9 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         this.jsonSchemaClassPathResourceLoader = jsonSchemaClassPathResourceLoader;
         this.mcpJsonMapper = mcpJsonMapper;
         this.jsonMapper = jsonMapper;
-        // Another MCP JSON mapper, such as Jackson databind, would serialize the result by reflection, which a native image
-        // only allows for registered types, so the result is converted to a Map with the Micronaut mapper first
+        // When the SDK uses a JSON mapper other than Micronaut's (e.g. the SDK's own Jackson mapper replacing the bean), the
+        // result is converted to a Map with the Micronaut mapper, so that the structured content on the wire matches the JSON
+        // that is validated and sent as text content, and no reflective serialization of user types is needed in a native image
         this.convertStructuredContent = !(mcpJsonMapper instanceof MicronautMcpJsonMapper);
         this.argumentBinderRegistry = argumentBinderRegistry;
     }
@@ -243,7 +244,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         }
     }
 
-    private McpSchema.CallToolResult structuredToolResult(ExecutableMethod<?, ?> method, @Nullable Object result) throws IOException {
+    private McpSchema.CallToolResult structuredToolResult(ExecutableMethod<?, ?> method, @Nullable Object result) {
         if (result == null) {
             return McpSchema.CallToolResult.builder()
                 .addTextContent("Tool " + toolName(method) + " returned no structured content")
@@ -251,9 +252,20 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                 .build();
         }
         // The SDK validates the object against the output schema and adds its JSON as text content
-        Object structuredContent = convertStructuredContent
-            ? jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), STRUCTURED_CONTENT_ARGUMENT)
-            : result;
+        Object structuredContent;
+        try {
+            structuredContent = convertStructuredContent
+                ? jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), STRUCTURED_CONTENT_ARGUMENT)
+                : result;
+        } catch (IOException e) {
+            if (LOG.isErrorEnabled()) {
+                LOG.error("Tool {} returned structured content that cannot be serialized", toolName(method), e);
+            }
+            return McpSchema.CallToolResult.builder()
+                .addTextContent("Tool " + toolName(method) + " returned structured content that cannot be serialized")
+                .isError(true)
+                .build();
+        }
         return McpSchema.CallToolResult.builder()
             .structuredContent(structuredContent)
             .isError(false)
