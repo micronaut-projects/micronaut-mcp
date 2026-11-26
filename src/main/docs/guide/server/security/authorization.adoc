@@ -1,4 +1,11 @@
-Secure the MCP endpoint with https://micronaut-projects.github.io/micronaut-security/latest/guide/[Micronaut Security]. MCP clients authenticate with OAuth 2.1 bearer tokens, so add `micronaut-security-jwt` to validate the tokens and `micronaut-security-oauth2`, which implements the https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization[authorization discovery] the specification requires:
+Secure the MCP endpoint with https://micronaut-projects.github.io/micronaut-security/latest/guide/[Micronaut Security]. MCP clients authenticate with OAuth 2.1 bearer tokens, so add `micronaut-security-jwt` to validate the tokens:
+
+dependency:micronaut-security-jwt[groupId=io.micronaut.security]
+
+and `micronaut-security-oauth2` (Micronaut Security 4.14.0 or later), which implements the https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization[authorization discovery] the specification requires:
+
+dependency:micronaut-security-oauth2[groupId=io.micronaut.security]
+
 
 - an unauthenticated request is answered with `401 Unauthorized` and a `WWW-Authenticate: Bearer resource_metadata="..."` challenge;
 - the https://www.rfc-editor.org/rfc/rfc9728[OAuth 2.0 Protected Resource Metadata] of the endpoint is served at `/.well-known/oauth-protected-resource/mcp`, naming the authorization servers of the configured OpenID clients.
@@ -9,6 +16,8 @@ micronaut:
   security:
     token:
       jwt:
+        claims-validators:
+          audience: https://mcp.example.com/mcp
         signatures:
           jwks:
             idp:
@@ -23,6 +32,10 @@ micronaut:
         access:
           - isAuthenticated()
 ----
+
+The specification requires the server to accept only tokens issued for it, so that a token issued for another service cannot be used against the MCP server. Set the audience to the canonical URL of your MCP endpoint, the same `resource` value the protected resource metadata reports.
+
+If you change `micronaut.mcp.server.endpoint`, use the same path in the `intercept-url-map` pattern. The metadata path follows the endpoint: `/.well-known/oauth-protected-resource/<endpoint>`.
 
 Tools, prompts and resources receive the authenticated principal through the <<context, transport context>>:
 

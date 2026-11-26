@@ -56,12 +56,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "micronaut.security.intercept-url-map[0].pattern", value = "/mcp")
 @Property(name = "micronaut.security.intercept-url-map[0].access[0]", value = "isAuthenticated()")
+@Property(name = "micronaut.security.token.jwt.claims-validators.audience", value = SecuredMcpServerTest.AUDIENCE)
+// Core denies non-local origins on a localhost server; pass them through to reach the MCP endpoint rules
+@Property(name = "micronaut.server.cors.localhost-pass-through", value = StringUtils.TRUE)
 @Property(name = "spec.name", value = "SecuredMcpServerTest")
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SecuredMcpServerTest implements TestPropertyProvider {
 
     private static final String KEY_ID = "idp";
+    static final String AUDIENCE = "https://mcp.example.com/mcp";
 
     private final RSAKey key = generateKey();
 
@@ -112,21 +116,40 @@ class SecuredMcpServerTest implements TestPropertyProvider {
 
     @Test
     void aCallWithATokenOfTheIdentityProviderReachesTheToolWithItsPrincipal() throws JSONException, JOSEException {
-        HttpResponse<String> response = httpClient.toBlocking().exchange(whoami().bearerAuth(token("alice")), String.class);
+        HttpResponse<String> response = httpClient.toBlocking().exchange(whoami().bearerAuth(token("alice", AUDIENCE)), String.class);
         assertEquals(HttpStatus.OK, response.getStatus());
         JSONAssert.assertEquals("""
             {"result": {"content": [{"type": "text", "text": "alice"}], "isError": false}}""", response.body(), JSONCompareMode.LENIENT);
+    }
+
+    @Test
+    void aTokenIssuedForAnotherResourceIsRejected() throws JOSEException {
+        BlockingHttpClient client = httpClient.toBlocking();
+        MutableHttpRequest<String> request = whoami().bearerAuth(token("alice", "https://other.example.com/api"));
+        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request));
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatus());
+    }
+
+    @Test
+    void aForeignOriginIsRejectedBeforeAuthentication() {
+        BlockingHttpClient client = httpClient.toBlocking();
+        MutableHttpRequest<String> request = whoami().header("Origin", "http://evil.example");
+        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
+        String body = ex.getResponse().getBody(String.class).orElseThrow();
+        assertTrue(body.contains("Origin not allowed: http://evil.example"), body);
     }
 
     private String issuer() {
         return idp.getURL().toString();
     }
 
-    private String token(String subject) throws JOSEException {
+    private String token(String subject, String audience) throws JOSEException {
         SignedJWT jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(KEY_ID).build(),
             new JWTClaimsSet.Builder()
                 .issuer(issuer())
                 .subject(subject)
+                .audience(audience)
                 .issueTime(new Date())
                 .expirationTime(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
                 .build());

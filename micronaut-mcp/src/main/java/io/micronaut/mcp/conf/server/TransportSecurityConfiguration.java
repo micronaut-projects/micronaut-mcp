@@ -22,6 +22,11 @@ import java.util.List;
 /**
  * Protection of the Streamable HTTP endpoint against DNS rebinding and unsupported clients.
  *
+ * <p>Inject it to read the configuration, which is set with the {@value #PREFIX} properties. It is not meant to be
+ * implemented: a bean that provides it instead must replace the configuration with
+ * {@code @Replaces(TransportSecurityConfiguration.class)}, and it cannot turn the validation off, which only the
+ * {@value #PROPERTY_ENABLED} property does.</p>
+ *
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#security-warning">Streamable HTTP security</a>
  * @since 2.2.0
  */

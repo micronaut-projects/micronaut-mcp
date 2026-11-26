@@ -41,7 +41,7 @@ final class TransportSecurityConfigurationProperties implements TransportSecurit
     }
 
     /**
-     * Whether the Origin and MCP-Protocol-Version request headers of the HTTP endpoint are validated. Default: true.
+     * Whether the Origin and MCP-Protocol-Version request headers of the HTTP endpoint are validated. Default value `true`.
      *
      * @param enabled Whether the headers are validated
      */
@@ -55,7 +55,7 @@ final class TransportSecurityConfigurationProperties implements TransportSecurit
     }
 
     /**
-     * Whether loopback origins (localhost, 127.0.0.1 and [::1], with any scheme and port) are allowed. Default: true.
+     * Whether loopback origins (localhost, 127.0.0.1 and [::1], with any scheme and port) are allowed. Default value `true`.
      *
      * @param allowLoopbackOrigins Whether loopback origins are allowed
      */
@@ -69,7 +69,7 @@ final class TransportSecurityConfigurationProperties implements TransportSecurit
     }
 
     /**
-     * The origins allowed besides loopback origins, such as https://app.example.com, each scheme://host[:port] without a path. * allows every origin. Default: none.
+     * The origins allowed besides loopback origins, such as https://app.example.com, each scheme://host[:port] without a path. * allows every origin. None by default.
      *
      * @param allowedOrigins The allowed origins
      */
