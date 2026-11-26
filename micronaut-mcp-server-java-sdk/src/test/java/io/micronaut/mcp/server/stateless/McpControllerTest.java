@@ -1,29 +1,62 @@
 package io.micronaut.mcp.server.stateless;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.json.tree.JsonNode;
+import io.micronaut.mcp.server.json.MicronautMcpJsonMapperSupplier;
+import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class McpControllerTest {
+    private static final String SECRET = "secret detail";
+
+    private final Logger logger = (Logger) LoggerFactory.getLogger(McpController.class);
+    private final ListAppender<ILoggingEvent> logs = new ListAppender<>();
+
+    @BeforeEach
+    void captureLogs() {
+        logs.start();
+        logger.addAppender(logs);
+    }
+
+    @AfterEach
+    void releaseLogs() {
+        logger.detachAppender(logs);
+        logs.stop();
+    }
 
     static Stream<Arguments> errorCodesAndExpectedStatuses() {
         return Stream.of(
@@ -81,6 +114,111 @@ class McpControllerTest {
         Map<?, ?> error = (Map<?, ?>) ((Map<?, ?>) response.body()).get("error");
         assertEquals(McpSchema.ErrorCodes.INVALID_REQUEST, error.get("code"));
         assertEquals("Invalid Request: \"params\" could not be read", error.get("message"));
+    }
+
+    static Stream<Arguments> idsAndFailingHandlers() {
+        Named<Function<McpSchema.JSONRPCRequest, Mono<McpSchema.JSONRPCResponse>>> throwing = Named.of("throws", request -> {
+            throw new IllegalStateException(SECRET);
+        });
+        Named<Function<McpSchema.JSONRPCRequest, Mono<McpSchema.JSONRPCResponse>>> failing =
+            Named.of("emits an error", request -> Mono.error(new IllegalStateException(SECRET)));
+        return Stream.of(
+            Arguments.of(Named.of("5", JsonNode.createNumberNode(5)), 5, throwing),
+            Arguments.of(Named.of("call-5", JsonNode.createStringNode("call-5")), "call-5", throwing),
+            Arguments.of(Named.of("12345678901", JsonNode.createNumberNode(12345678901L)), 12345678901L, throwing),
+            Arguments.of(Named.of("5", JsonNode.createNumberNode(5)), 5, failing),
+            Arguments.of(Named.of("call-5", JsonNode.createStringNode("call-5")), "call-5", failing));
+    }
+
+    @ParameterizedTest
+    @MethodSource("idsAndFailingHandlers")
+    void aRequestHandlerFailureIsAnInternalErrorThatIsLoggedButNotShown(JsonNode id, Object expectedId,
+            Function<McpSchema.JSONRPCRequest, Mono<McpSchema.JSONRPCResponse>> handler) {
+        McpController controller = controller(new StubHandler(handler, Mono::empty));
+
+        HttpResponse<?> response = controller.handlePost(HttpRequest.POST("/mcp", ""), request(id)).block();
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatus());
+        McpSchema.JSONRPCResponse rsp = (McpSchema.JSONRPCResponse) response.body();
+        assertEquals(expectedId, rsp.id());
+        assertEquals(McpSchema.ErrorCodes.INTERNAL_ERROR, rsp.error().code());
+        assertEquals("Internal error", rsp.error().message());
+        assertFalse(rsp.toString().contains(SECRET));
+        ILoggingEvent event = singleError();
+        assertTrue(event.getFormattedMessage().contains("tools/call"), event.getFormattedMessage());
+        assertNotNull(event.getThrowableProxy());
+        assertEquals(SECRET, event.getThrowableProxy().getMessage());
+    }
+
+    @Test
+    void anMcpErrorKeepsItsCodeAndMessageAndIsNotLoggedAsAnError() {
+        McpController controller = controller(new StubHandler(
+            request -> Mono.error(McpError.builder(McpSchema.ErrorCodes.METHOD_NOT_FOUND).message("Unknown tool").build()),
+            Mono::empty));
+
+        HttpResponse<?> response = controller.handlePost(HttpRequest.POST("/mcp", ""), request(JsonNode.createNumberNode(5))).block();
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
+        McpSchema.JSONRPCResponse rsp = (McpSchema.JSONRPCResponse) response.body();
+        assertEquals(5, rsp.id());
+        assertEquals(McpSchema.ErrorCodes.METHOD_NOT_FOUND, rsp.error().code());
+        assertEquals("Unknown tool", rsp.error().message());
+        assertTrue(logs.list.stream().noneMatch(e -> e.getLevel() == Level.ERROR));
+    }
+
+    @Test
+    void aNotificationHandlerFailureIsLoggedWithItsMethod() {
+        McpController controller = controller(new StubHandler(
+            request -> Mono.empty(), () -> Mono.error(new IllegalStateException(SECRET))));
+        JsonNode body = JsonNode.createObjectNode(Map.of(
+            "jsonrpc", JsonNode.createStringNode("2.0"),
+            "method", JsonNode.createStringNode("notifications/initialized")));
+
+        Mono<HttpResponse<?>> response = controller.handlePost(HttpRequest.POST("/mcp", ""), body);
+
+        // Pre-existing limitation: the error response of a notification has no id, which the SDK response type refuses
+        assertThrows(IllegalArgumentException.class, response::block);
+        ILoggingEvent event = singleError();
+        assertTrue(event.getFormattedMessage().contains("notifications/initialized"), event.getFormattedMessage());
+        assertNotNull(event.getThrowableProxy());
+    }
+
+    private ILoggingEvent singleError() {
+        List<ILoggingEvent> errors = logs.list.stream().filter(e -> e.getLevel() == Level.ERROR).toList();
+        assertEquals(1, errors.size(), errors::toString);
+        return errors.get(0);
+    }
+
+    private static JsonNode request(JsonNode id) {
+        return JsonNode.createObjectNode(Map.of(
+            "jsonrpc", JsonNode.createStringNode("2.0"),
+            "id", id,
+            "method", JsonNode.createStringNode("tools/call"),
+            "params", JsonNode.createObjectNode(Map.of("name", JsonNode.createStringNode("echo")))));
+    }
+
+    private static McpController controller(McpStatelessServerHandler handler) {
+        return new McpController(handler,
+            request -> McpTransportContext.EMPTY,
+            proxy(JsonMapper.class, (proxy, method, args) -> {
+                throw new UnsupportedOperationException(method.getName());
+            }),
+            new MicronautMcpJsonMapperSupplier().get());
+    }
+
+    private record StubHandler(Function<McpSchema.JSONRPCRequest, Mono<McpSchema.JSONRPCResponse>> onRequest,
+                               Supplier<Mono<Void>> onNotification) implements McpStatelessServerHandler {
+        @Override
+        public Mono<McpSchema.JSONRPCResponse> handleRequest(McpTransportContext transportContext, McpSchema.JSONRPCRequest request) {
+            return onRequest.apply(request);
+        }
+
+        @Override
+        public Mono<Void> handleNotification(McpTransportContext transportContext, McpSchema.JSONRPCNotification notification) {
+            return onNotification.get();
+        }
     }
 
     private static <T> T proxy(Class<T> type, InvocationHandler handler) {
