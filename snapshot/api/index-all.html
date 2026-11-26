@@ -99,6 +99,16 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#beanContext" class="member-name-link">beanContext</a> - Variable in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/server/registry/CompletionRegistry.html#boundParameterTypes()" class="member-name-link">boundParameterTypes()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/CompletionRegistry.html" title="class in io.micronaut.mcp.server.registry">CompletionRegistry</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/server/registry/PromptRegistry.html#boundParameterTypes()" class="member-name-link">boundParameterTypes()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/server/registry/ResourceRegistry.html#boundParameterTypes()" class="member-name-link">boundParameterTypes()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceRegistry</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html#boundParameterTypes()" class="member-name-link">boundParameterTypes()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceTemplateRegistry</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#boundParameterTypes()" class="member-name-link">boundParameterTypes()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/tools/fetch/FetchResponse.Builder.html#build()" class="member-name-link">build()</a> - Method in class io.micronaut.mcp.server.tools.fetch.<a href="io/micronaut/mcp/server/tools/fetch/FetchResponse.Builder.html" title="class in io.micronaut.mcp.server.tools.fetch">FetchResponse.Builder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/tools/search/SearchResult.Builder.html#build()" class="member-name-link">build()</a> - Method in class io.micronaut.mcp.server.tools.search.<a href="io/micronaut/mcp/server/tools/search/SearchResult.Builder.html" title="class in io.micronaut.mcp.server.tools.search">SearchResult.Builder</a></dt>
@@ -209,26 +219,6 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/annotations/Tool.ToolAnnotations.html#destructiveHint()" class="member-name-link">destructiveHint()</a> - Element in annotation interface io.micronaut.mcp.annotations.<a href="io/micronaut/mcp/annotations/Tool.ToolAnnotations.html" title="annotation interface in io.micronaut.mcp.annotations">Tool.ToolAnnotations</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/CompletionRegistry.html#drainMethods()" class="member-name-link">drainMethods()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/CompletionRegistry.html" title="class in io.micronaut.mcp.server.registry">CompletionRegistry</a></dt>
-<dd>
-<div class="block">Returns a stream of the methods currently stored in the registry.</div>
-</dd>
-<dt><a href="io/micronaut/mcp/server/registry/PromptRegistry.html#drainMethods()" class="member-name-link">drainMethods()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a></dt>
-<dd>
-<div class="block">Returns a stream of the methods currently stored in the registry.</div>
-</dd>
-<dt><a href="io/micronaut/mcp/server/registry/ResourceRegistry.html#drainMethods()" class="member-name-link">drainMethods()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceRegistry</a></dt>
-<dd>
-<div class="block">Returns a stream of the methods currently stored in the registry.</div>
-</dd>
-<dt><a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html#drainMethods()" class="member-name-link">drainMethods()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceTemplateRegistry</a></dt>
-<dd>
-<div class="block">Returns a stream of the methods currently stored in the registry.</div>
-</dd>
-<dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#drainMethods()" class="member-name-link">drainMethods()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
-<dd>
-<div class="block">Returns a stream of the methods currently stored in the registry.</div>
-</dd>
 </dl>
 <h2 class="title" id="I:E">E</h2>
 <dl class="index">
@@ -644,16 +634,26 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">MCP Client HTTP Configuration.</div>
 </dd>
-<dt><a href="io/micronaut/mcp/server/registry/CompletionRegistry.html#mcpError(java.lang.Exception)" class="member-name-link">mcpError(Exception)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/CompletionRegistry.html" title="class in io.micronaut.mcp.server.registry">CompletionRegistry</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/PromptRegistry.html#mcpError(java.lang.Exception)" class="member-name-link">mcpError(Exception)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/ResourceRegistry.html#mcpError(java.lang.Exception)" class="member-name-link">mcpError(Exception)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceRegistry</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html#mcpError(java.lang.Exception)" class="member-name-link">mcpError(Exception)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceTemplateRegistry</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#mcpError(java.lang.Exception)" class="member-name-link">mcpError(Exception)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
-<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/server/registry/CompletionRegistry.html#mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Exception)" class="member-name-link">mcpError(ExecutableMethod, Exception)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/CompletionRegistry.html" title="class in io.micronaut.mcp.server.registry">CompletionRegistry</a></dt>
+<dd>
+<div class="block">Converts an exception thrown while invoking a method into the error returned to the client.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/registry/PromptRegistry.html#mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Exception)" class="member-name-link">mcpError(ExecutableMethod, Exception)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a></dt>
+<dd>
+<div class="block">Converts an exception thrown while invoking a method into the error returned to the client.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/registry/ResourceRegistry.html#mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Exception)" class="member-name-link">mcpError(ExecutableMethod, Exception)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceRegistry</a></dt>
+<dd>
+<div class="block">Converts an exception thrown while invoking a method into the error returned to the client.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html#mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Exception)" class="member-name-link">mcpError(ExecutableMethod, Exception)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceTemplateRegistry</a></dt>
+<dd>
+<div class="block">Converts an exception thrown while invoking a method into the error returned to the client.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Exception)" class="member-name-link">mcpError(ExecutableMethod, Exception)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
+<dd>
+<div class="block">Converts an exception thrown while invoking a method into the error returned to the client.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/exceptions/McpErrorExceptionMapper.html" class="type-name-link" title="interface in io.micronaut.mcp.server.exceptions">McpErrorExceptionMapper&lt;T&gt;</a> - Interface in <a href="io/micronaut/mcp/server/exceptions/package-summary.html">io.micronaut.mcp.server.exceptions</a></dt>
 <dd>
 <div class="block">ApI to define mappers from exceptions to <code>McpError</code>.</div>
@@ -865,16 +865,6 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/ToolsConfiguration.html#PREFIX" class="member-name-link">PREFIX</a> - Static variable in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/ToolsConfiguration.html" title="interface in io.micronaut.mcp.conf.server">ToolsConfiguration</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/CompletionRegistry.html#prepareBoundVariables(io.micronaut.inject.ExecutableMethod,java.util.List)" class="member-name-link">prepareBoundVariables(ExecutableMethod, List)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/CompletionRegistry.html" title="class in io.micronaut.mcp.server.registry">CompletionRegistry</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/PromptRegistry.html#prepareBoundVariables(io.micronaut.inject.ExecutableMethod,java.util.List)" class="member-name-link">prepareBoundVariables(ExecutableMethod, List)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/ResourceRegistry.html#prepareBoundVariables(io.micronaut.inject.ExecutableMethod,java.util.List)" class="member-name-link">prepareBoundVariables(ExecutableMethod, List)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceRegistry</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html#prepareBoundVariables(io.micronaut.inject.ExecutableMethod,java.util.List)" class="member-name-link">prepareBoundVariables(ExecutableMethod, List)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceTemplateRegistry</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#prepareBoundVariables(io.micronaut.inject.ExecutableMethod,java.util.List)" class="member-name-link">prepareBoundVariables(ExecutableMethod, List)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/context/MicronautMcpTransportContext.html#principal()" class="member-name-link">principal()</a> - Method in interface io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/MicronautMcpTransportContext.html" title="interface in io.micronaut.mcp.server.context">MicronautMcpTransportContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/annotations/Prompt.html" class="type-name-link" title="annotation interface in io.micronaut.mcp.annotations">Prompt</a> - Annotation Interface in <a href="io/micronaut/mcp/annotations/package-summary.html">io.micronaut.mcp.annotations</a></dt>
@@ -968,16 +958,6 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html#readValue(java.lang.String,io.modelcontextprotocol.json.TypeRef)" class="member-name-link">readValue(String, TypeRef)</a> - Method in class io.micronaut.mcp.server.json.<a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html" title="class in io.micronaut.mcp.server.json">MicronautMcpJsonMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html#readValue(java.lang.String,java.lang.Class)" class="member-name-link">readValue(String, Class)</a> - Method in class io.micronaut.mcp.server.json.<a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html" title="class in io.micronaut.mcp.server.json">MicronautMcpJsonMapper</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/CompletionRegistry.html#resolveMcpTransportContext(java.lang.Object)" class="member-name-link">resolveMcpTransportContext(Object)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/CompletionRegistry.html" title="class in io.micronaut.mcp.server.registry">CompletionRegistry</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/PromptRegistry.html#resolveMcpTransportContext(java.lang.Object)" class="member-name-link">resolveMcpTransportContext(Object)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/ResourceRegistry.html#resolveMcpTransportContext(java.lang.Object)" class="member-name-link">resolveMcpTransportContext(Object)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceRegistry</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html#resolveMcpTransportContext(java.lang.Object)" class="member-name-link">resolveMcpTransportContext(Object)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceTemplateRegistry</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#resolveMcpTransportContext(java.lang.Object)" class="member-name-link">resolveMcpTransportContext(Object)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/annotations/Resource.html" class="type-name-link" title="annotation interface in io.micronaut.mcp.annotations">Resource</a> - Annotation Interface in <a href="io/micronaut/mcp/annotations/package-summary.html">io.micronaut.mcp.annotations</a></dt>
 <dd>
@@ -1109,6 +1089,26 @@ System streams.</div>
 <dd>
 <div class="block">Creates a new StdioServerTransportProvider with the specified ObjectMapper and
 streams.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/registry/CompletionRegistry.html#streamMethods()" class="member-name-link">streamMethods()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/CompletionRegistry.html" title="class in io.micronaut.mcp.server.registry">CompletionRegistry</a></dt>
+<dd>
+<div class="block">Returns a stream of the methods currently stored in the registry.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/registry/PromptRegistry.html#streamMethods()" class="member-name-link">streamMethods()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a></dt>
+<dd>
+<div class="block">Returns a stream of the methods currently stored in the registry.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/registry/ResourceRegistry.html#streamMethods()" class="member-name-link">streamMethods()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceRegistry</a></dt>
+<dd>
+<div class="block">Returns a stream of the methods currently stored in the registry.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html#streamMethods()" class="member-name-link">streamMethods()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceTemplateRegistry</a></dt>
+<dd>
+<div class="block">Returns a stream of the methods currently stored in the registry.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#streamMethods()" class="member-name-link">streamMethods()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
+<dd>
+<div class="block">Returns a stream of the methods currently stored in the registry.</div>
 </dd>
 <dt><a href="io/micronaut/mcp/primitives/utils/StringInterpolator.html" class="type-name-link" title="class in io.micronaut.mcp.primitives.utils">StringInterpolator</a> - Class in <a href="io/micronaut/mcp/primitives/utils/package-summary.html">io.micronaut.mcp.primitives.utils</a></dt>
 <dd>
