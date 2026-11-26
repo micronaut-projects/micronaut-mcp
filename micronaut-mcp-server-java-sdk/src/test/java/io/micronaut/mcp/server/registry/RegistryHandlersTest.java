@@ -136,30 +136,33 @@ class RegistryHandlersTest {
 
     @Test
     void resourceTemplateVariablesArePercentDecoded() {
-        McpSchema.ReadResourceRequest request = new McpSchema.ReadResourceRequest("handlers://pages/A%20Tale");
-        McpSchema.ReadResourceRequest malformed = new McpSchema.ReadResourceRequest("handlers://pages/%zz");
-        McpSchema.ReadResourceRequest unmatched = new McpSchema.ReadResourceRequest("handlers://pages/C++");
+        for (Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> read : readers("handlers://pages/{page}")) {
+            assertEquals("page A Tale", resource(read.apply(new McpSchema.ReadResourceRequest("handlers://pages/A%20Tale"))));
+        }
+        // The registry compiles the reserved variables of the template, so an encoded / is allowed in {+path}
+        for (Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> read : readers("handlers://files/{+path}")) {
+            assertEquals("file a/b", resource(read.apply(new McpSchema.ReadResourceRequest("handlers://files/a%2Fb"))));
+        }
+    }
+
+    @Test
+    void resourceTemplateValuesThatCannotBeDecodedAreInvalidParams() {
+        for (Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> read : readers("handlers://pages/{page}")) {
+            assertTrue(assertInvalidParams(() -> read.apply(new McpSchema.ReadResourceRequest("handlers://pages/%zz")))
+                .startsWith("Invalid percent-encoding"));
+            assertTrue(assertInvalidParams(() -> read.apply(new McpSchema.ReadResourceRequest("handlers://pages/a%2Fb")))
+                .endsWith("must not contain an encoded / (%2F)"));
+        }
+    }
+
+    @Test
+    void resourceTemplateUrisThatDoNotMatchAreInvalidParams() {
         String template = "handlers://pages/{page}";
-        var sync = spec(resourceTemplateRegistry.getSyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
-        var async = spec(resourceTemplateRegistry.getAsyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
-        var statelessSync = spec(resourceTemplateRegistry.getStatelessSyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
-        var statelessAsync = spec(resourceTemplateRegistry.getStatelessAsyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
-
-        assertEquals("page A Tale", resource(sync.apply(SYNC_EXCHANGE, request)));
-        assertEquals("page A Tale", resource(async.apply(ASYNC_EXCHANGE, request).block()));
-        assertEquals("page A Tale", resource(statelessSync.apply(CONTEXT, request)));
-        assertEquals("page A Tale", resource(statelessAsync.apply(CONTEXT, request).block()));
-
-        assertInvalidParams(() -> sync.apply(SYNC_EXCHANGE, malformed));
-        assertInvalidParams(() -> async.apply(ASYNC_EXCHANGE, malformed).block());
-        assertInvalidParams(() -> statelessSync.apply(CONTEXT, malformed));
-        assertInvalidParams(() -> statelessAsync.apply(CONTEXT, malformed).block());
-        // Not a missing argument: the URI does not match the template
-        String doesNotMatch = "The URI does not match the URI template " + template;
-        assertTrue(assertInvalidParams(() -> sync.apply(SYNC_EXCHANGE, unmatched)).startsWith(doesNotMatch));
-        assertTrue(assertInvalidParams(() -> async.apply(ASYNC_EXCHANGE, unmatched).block()).startsWith(doesNotMatch));
-        assertTrue(assertInvalidParams(() -> statelessSync.apply(CONTEXT, unmatched)).startsWith(doesNotMatch));
-        assertTrue(assertInvalidParams(() -> statelessAsync.apply(CONTEXT, unmatched).block()).startsWith(doesNotMatch));
+        for (Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> read : readers(template)) {
+            // Not a missing argument: the URI does not match the template
+            assertTrue(assertInvalidParams(() -> read.apply(new McpSchema.ReadResourceRequest("handlers://pages/C++")))
+                .startsWith("The URI does not match the URI template " + template));
+        }
     }
 
     @Test
@@ -179,6 +182,21 @@ class RegistryHandlersTest {
         } catch (McpError _) {
             return true;
         }
+    }
+
+    /**
+     * @return The handlers of the four specification variants of a resource template, blocking on the async ones
+     */
+    private List<Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult>> readers(String template) {
+        var sync = spec(resourceTemplateRegistry.getSyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
+        var async = spec(resourceTemplateRegistry.getAsyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
+        var statelessSync = spec(resourceTemplateRegistry.getStatelessSyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
+        var statelessAsync = spec(resourceTemplateRegistry.getStatelessAsyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
+        return List.of(
+            request -> sync.apply(SYNC_EXCHANGE, request),
+            request -> async.apply(ASYNC_EXCHANGE, request).block(),
+            request -> statelessSync.apply(CONTEXT, request),
+            request -> statelessAsync.apply(CONTEXT, request).block());
     }
 
     private static <S> S spec(List<S> specs, Function<S, McpSchema.ResourceTemplate> resourceTemplate, String uriTemplate) {
@@ -239,6 +257,11 @@ class RegistryHandlersTest {
         @ResourceTemplate(uriTemplate = "handlers://pages/{page}")
         String page(String page) {
             return "page " + page;
+        }
+
+        @ResourceTemplate(uriTemplate = "handlers://files/{+path}")
+        String file(String path) {
+            return "file " + path;
         }
     }
 

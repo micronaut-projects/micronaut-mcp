@@ -3,6 +3,9 @@ package io.micronaut.mcp.server.registry;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Map;
 import java.util.Set;
@@ -16,34 +19,39 @@ class UriTemplateReadResourceRequestTest {
         assertEquals(Map.of("round", "14"), m);
     }
 
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+        "book://book/A%20Tale%20of%20Two%20Cities | A Tale of Two Cities",
+        "book://book/C%2B%2B%20in%20100%25%20detail | C++ in 100% detail",
+        "book://book/Caf%C3%A9 | Café",
+        "book://book/Café%20au%20lait | Café au lait",
+        // Decoded once: an escaped % followed by hexadecimal digits is not decoded again, so %252F is not a /
+        "book://book/%2520 | %20",
+        "book://book/%252F | %2F"
+    })
+    void variablesArePercentDecoded(String uri, String title) {
+        assertEquals(Map.of("title", title), UriTemplateReadResourceRequest.arguments("book://book/{title}", uri));
+    }
+
     @Test
-    void variablesArePercentDecoded() {
-        assertEquals(Map.of("title", "A Tale of Two Cities"),
-            UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/A%20Tale%20of%20Two%20Cities"));
-        assertEquals(Map.of("title", "C++ in 100% detail"),
-            UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/C%2B%2B%20in%20100%25%20detail"));
-        assertEquals(Map.of("title", "Café"),
-            UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/Caf%C3%A9"));
-        assertEquals(Map.of("title", "Café au lait"),
-            UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/Café%20au%20lait"));
+    void onlyTheVariablesWithAnEscapeAreDecoded() {
         assertEquals(Map.of("shelf", "classics", "title", "A Tale"),
             UriTemplateReadResourceRequest.arguments("book://{shelf}/{title}", "book://classics/A%20Tale"));
     }
 
-    @Test
-    void malformedEscapesAreInvalidParams() {
-        for (String uri : new String[] {"book://book/%zz", "book://book/%E", "book://book/title%",
-            // Malformed UTF-8: an invalid byte, a truncated sequence and an overlong /
-            "book://book/%FF", "book://book/%C3", "book://book/%C0%AF",
-            // Arabic-Indic digits, which Character.digit accepts as hexadecimal
-            "book://book/%\u0663\u0663",
-            // A lone surrogate, which a JSON string can carry, next to an escape
-            "book://book/\uD800%20"}) {
-            McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("book://book/{title}", uri));
-            assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
-            assertEquals("Invalid percent-encoding in the value of URI template variable 'title': escapes must be %XX hexadecimal pairs encoding UTF-8",
-                error.getMessage());
-        }
+    @ParameterizedTest
+    @ValueSource(strings = {"book://book/%zz", "book://book/%E", "book://book/title%",
+        // Malformed UTF-8: an invalid byte, a truncated sequence and an overlong /
+        "book://book/%FF", "book://book/%C3", "book://book/%C0%AF",
+        // Arabic-Indic digits, which Character.digit accepts as hexadecimal
+        "book://book/%\u0663\u0663",
+        // A lone surrogate, which a JSON string can carry, next to an escape
+        "book://book/\uD800%20"})
+    void malformedEscapesAreInvalidParams(String uri) {
+        McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("book://book/{title}", uri));
+        assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
+        assertEquals("Invalid percent-encoding in the value of URI template variable 'title': escapes must be %XX hexadecimal pairs encoding UTF-8",
+            error.getMessage());
     }
 
     @Test
@@ -63,6 +71,19 @@ class UriTemplateReadResourceRequestTest {
     }
 
     @Test
+    void anEncodedSlashIsAllowedOnlyInTheReservedVariablesOfATemplate() {
+        assertEquals(Map.of("a", "p/q", "b", "r"), UriTemplateReadResourceRequest.arguments("x://{+a}/{b}", "x://p%2Fq/r"));
+        McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("x://{+a}/{b}", "x://p%2Fq/r%2Fs"));
+        assertEquals("The value of URI template variable 'b' must not contain an encoded / (%2F)", error.getMessage());
+    }
+
+    @Test
+    void queryVariablesAreNotBound() {
+        // UriMatchTemplate matches the path but binds no query ({?q}) variable, so there is nothing to decode
+        assertEquals(Map.of(), UriTemplateReadResourceRequest.arguments("book://books{?q}", "book://books?q=a%2Fb"));
+    }
+
+    @Test
     void reservedVariablesDropPrefixAndExplodeModifiers() {
         assertEquals(Set.of("a", "b", "c"), UriTemplateReadResourceRequest.Template.compile("x://{+a:3,b*}/{+c}").reservedVariables());
     }
@@ -73,15 +94,14 @@ class UriTemplateReadResourceRequestTest {
             UriTemplateReadResourceRequest.arguments("file:///{+path}", "file:///C++%20notes.txt"));
     }
 
-    @Test
-    void aUriThatDoesNotMatchTheTemplateIsInvalidParams() {
-        // The SDK routes these URIs to the template, but a simple variable does not match a literal +, ;, &, !, ( or )
-        for (String uri : new String[] {"book://book/C++%20notes", "book://book/a;b", "book://book/a&b", "book://book/a!b", "book://book/a(b)"}) {
-            McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("book://book/{title}", uri));
-            assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
-            assertEquals("The URI does not match the URI template book://book/{title}: percent-encode reserved characters such as +, ;, &, !, ( and ) in variable values, for example + as %2B",
-                error.getMessage());
-        }
+    // The SDK routes these URIs to the template, but a simple variable does not match a literal +, ;, &, !, ( or )
+    @ParameterizedTest
+    @ValueSource(strings = {"book://book/C++%20notes", "book://book/a;b", "book://book/a&b", "book://book/a!b", "book://book/a(b)"})
+    void aUriThatDoesNotMatchTheTemplateIsInvalidParams(String uri) {
+        McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("book://book/{title}", uri));
+        assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
+        assertEquals("The URI does not match the URI template book://book/{title}: percent-encode reserved characters such as +, ;, &, !, ( and ) in variable values, for example + as %2B",
+            error.getMessage());
     }
 
     @Test
