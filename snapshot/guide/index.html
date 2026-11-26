@@ -1372,6 +1372,9 @@ class Tools {
 </li>
 </ul>
 </div>
+<div class="paragraph">
+<p>A parameter whose type is defined as the tool <a href="#toolsInputJsonSchema">input JSON Schema</a> is the whole tool input. Annotate it with <a href="../api/io/micronaut/mcp/annotations/ToolArg.html">ToolArg</a> to make it a named property of the tool input instead. The JSON Schema of its type is then used as the schema of that property.</p>
+</div>
 
 <h2 id="toolAnnotationReturnType"><a class="anchor" href="#toolAnnotationReturnType"></a>3.7.1.4.3 Tool Annotation Method Return Type</h2>
 
@@ -1786,6 +1789,12 @@ class Tools {
     }
 }</code></pre>
 </div>
+</div>
+<div class="paragraph">
+<p>If a tool with an output JSON Schema returns <code>null</code>, or a value that cannot be serialized, the client receives a tool result with <code>isError: true</code>, and the server logs the cause.</p>
+</div>
+<div class="paragraph">
+<p>The object a tool returns is validated against the output JSON Schema and then serialized in the response, so do not modify it once the tool has returned it, for example by returning an object that other threads update.</p>
 </div>
 
 <h2 id="toolsFactory"><a class="anchor" href="#toolsFactory"></a>3.7.1.7 Tools with a Factory</h2>
