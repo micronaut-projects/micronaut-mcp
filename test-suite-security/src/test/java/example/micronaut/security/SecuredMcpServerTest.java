@@ -28,11 +28,14 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
+import io.micronaut.security.token.Claims;
+import io.micronaut.security.token.jwt.validator.GenericJwtClaimsValidator;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.test.support.TestPropertyProvider;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -51,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -95,6 +99,10 @@ class SecuredMcpServerTest implements TestPropertyProvider {
         return Map.of(
             "micronaut.server.port", String.valueOf(port),
             "micronaut.security.token.jwt.claims-validators.audience", audience(),
+            "micronaut.security.token.jwt.claims-validators.issuer", issuer,
+            "micronaut.security.token.jwt.claims-validators.not-before", StringUtils.TRUE,
+            // only the resolved host the server answers to names the resource in the challenge and the metadata
+            "micronaut.server.host-resolution.allowed-hosts[0]", "http://localhost:" + port,
             "micronaut.security.token.jwt.signatures.jwks.idp.url", issuer + "/.well-known/jwks.json",
             "micronaut.security.oauth2.clients.idp.openid.issuer", issuer);
     }
@@ -147,6 +155,41 @@ class SecuredMcpServerTest implements TestPropertyProvider {
     void aTokenWithoutAnAudienceIsRejected() throws JOSEException {
         String token = token(claims().audience((String) null).build(), key);
         assertEquals(HttpStatus.UNAUTHORIZED, rejected(whoami("/mcp").bearerAuth(token)).getStatus());
+    }
+
+    @Test
+    void aTokenOfAnotherIssuerIsRejected() throws JOSEException {
+        String token = token(claims().issuer("https://evil.example").build(), key);
+        assertEquals(HttpStatus.UNAUTHORIZED, rejected(whoami("/mcp").bearerAuth(token)).getStatus());
+    }
+
+    @Test
+    void aTokenWithoutAnIssuerIsRejected() throws JOSEException {
+        String token = token(claims().issuer(null).build(), key);
+        assertEquals(HttpStatus.UNAUTHORIZED, rejected(whoami("/mcp").bearerAuth(token)).getStatus());
+    }
+
+    @Test
+    void aTokenNotValidYetIsRejected() throws JOSEException {
+        String token = token(claims().notBeforeTime(Date.from(Instant.now().plus(1, ChronoUnit.HOURS))).build(), key);
+        assertEquals(HttpStatus.UNAUTHORIZED, rejected(whoami("/mcp").bearerAuth(token)).getStatus());
+    }
+
+    @Test
+    void aTokenWithoutAnExpirationIsRejected() throws JOSEException {
+        String token = token(claims().expirationTime(null).build(), key);
+        assertEquals(HttpStatus.UNAUTHORIZED, rejected(whoami("/mcp").bearerAuth(token)).getStatus());
+    }
+
+    @Test
+    void aForgedHostDoesNotNameTheResource() {
+        HttpClientResponseException ex = rejected(whoami("/mcp").header("Host", "evil.example"));
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatus());
+        String challenge = ex.getResponse().getHeaders().get("WWW-Authenticate");
+        assertFalse(challenge.contains("evil.example"), challenge);
+        String metadata = httpClient.toBlocking().retrieve(HttpRequest.GET("/.well-known/oauth-protected-resource/mcp")
+            .header("X-Forwarded-Host", "evil.example"));
+        assertFalse(metadata.contains("evil.example"), metadata);
     }
 
     @Test
@@ -219,6 +262,20 @@ class SecuredMcpServerTest implements TestPropertyProvider {
         @Tool
         String whoami(MicronautMcpTransportContext context) {
             return context.principal() != null ? context.principal().getName() : "anonymous";
+        }
+    }
+
+    /**
+     * Micronaut Security accepts a token without an expiration; the guide recommends a validator like this one.
+     *
+     * @param <T> The request type
+     */
+    @Requires(property = "spec.name", value = "SecuredMcpServerTest")
+    @Singleton
+    static class ExpirationRequiredClaimsValidator<T> implements GenericJwtClaimsValidator<T> {
+        @Override
+        public boolean validate(Claims claims, @Nullable T request) {
+            return claims.contains(Claims.EXPIRATION_TIME);
         }
     }
 

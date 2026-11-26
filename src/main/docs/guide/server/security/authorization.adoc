@@ -18,6 +18,8 @@ micronaut:
       jwt:
         claims-validators:
           audience: https://mcp.example.com/mcp
+          issuer: https://idp.example.com
+          not-before: true
         signatures:
           jwks:
             idp:
@@ -31,9 +33,17 @@ micronaut:
       - pattern: /mcp
         access:
           - isAuthenticated()
+  server:
+    host-resolution:
+      allowed-hosts:
+        - https://mcp[.]example[.]com
 ----
 
-The specification requires the server to accept only tokens issued for it, so that a token issued for another service cannot be used against the MCP server. Set the audience to the canonical URL of your MCP endpoint, the same `resource` value the protected resource metadata reports.
+The specification requires the server to accept only tokens issued for it, so that a token issued for another service cannot be used against the MCP server. Set the audience to the canonical URL of your MCP endpoint. Validate the issuer too, so that a token of another issuer that shares the provider's keys, such as another tenant, is rejected, and the not-before time.
+
+Micronaut Security accepts a token without an expiration (`exp`). If your provider can issue such tokens, register a `GenericJwtClaimsValidator` bean whose `validate` method returns `claims.contains(Claims.EXPIRATION_TIME)`, so that a leaked token cannot be used forever.
+
+The `WWW-Authenticate` challenge and the `resource` of the protected resource metadata are built from the host the request names, in its `Host` or forwarded headers. List the hosts of the server in `micronaut.server.host-resolution.allowed-hosts`, regular expressions matched against `scheme://host[:port]`, so that a forged host, for example in a cached response, cannot send clients to another authorization server. Only let a trusted proxy set the forwarded headers. With the allowed hosts set, the `resource` is the canonical URL of the endpoint, the audience above.
 
 If you change `micronaut.mcp.server.endpoint`, use the same path in the `intercept-url-map` pattern. The metadata path follows the endpoint: `/.well-known/oauth-protected-resource/<endpoint>`.
 
