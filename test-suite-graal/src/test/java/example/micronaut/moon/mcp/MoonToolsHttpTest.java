@@ -47,7 +47,7 @@ class MoonToolsHttpTest {
             """;
         String response = assertDoesNotThrow(() -> client.retrieve(createRequest(toolsCallJson)));
         JSONAssert.assertEquals("""
-            {"jsonrpc":"2.0","id":0,"result":{"content":[{"type":"text","text":"Tool (moon-phase-at-date) input validation failed: Validation failed: structuredContent does not match tool outputSchema. Validation errors: [ValidationMessageAdapter{message=/date: does not match the date pattern must be a valid RFC 3339 full-date}]"}],"isError":true}}
+            {"jsonrpc":"2.0","id":0,"result":{"content":[{"type":"text","text":"Tool (moon-phase-at-date) input validation failed: Validation failed: content does not match the tool JSON Schema. Validation errors: [ValidationMessageAdapter{message=/date: does not match the date pattern must be a valid RFC 3339 full-date}]"}],"isError":true}}
             """, response, true);
     }
 
