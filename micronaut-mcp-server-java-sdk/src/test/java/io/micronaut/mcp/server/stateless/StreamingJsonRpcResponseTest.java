@@ -136,6 +136,65 @@ class StreamingJsonRpcResponseTest {
     }
 
     @Test
+    void largeNotificationsBeyondTheSizeBudgetAreDroppedButTheResultIsSent() {
+        AtomicReference<StreamingJsonRpcResponse> streaming = new AtomicReference<>();
+        HttpResponse<?> response = started(streaming);
+        McpSchema.JSONRPCNotification large = log("x".repeat(10_000));
+        long size = StreamingJsonRpcResponse.estimatedSize(large);
+        for (int i = 0; i < 200; i++) {
+            streaming.get().emit(large);
+        }
+        streaming.get().complete(HttpResponse.ok("result"));
+        List<Event<?>> events = events(response).collectList().block();
+        // the first, small notification, as many large ones as fit in the budget, and the result
+        long fitting = (StreamingJsonRpcResponse.BUFFER_CHARS - StreamingJsonRpcResponse.estimatedSize(NOTIFICATION)) / size;
+        assertEquals(1 + fitting + 1, events.size());
+        assertEquals("result", events.getLast().getData());
+    }
+
+    @Test
+    void notificationsTheClientReadFreeTheSizeBudget() {
+        AtomicReference<StreamingJsonRpcResponse> streaming = new AtomicReference<>();
+        HttpResponse<?> response = started(streaming);
+        List<Event<?>> received = new CopyOnWriteArrayList<>();
+        // the client reads each event as it is sent
+        events(response).subscribe(received::add);
+        McpSchema.JSONRPCNotification large = log("x".repeat(100_000));
+        for (int i = 0; i < 50; i++) {
+            streaming.get().emit(large);
+        }
+        streaming.get().complete(HttpResponse.ok("result"));
+        assertEquals(1 + 50 + 1, received.size());
+    }
+
+    @Test
+    void aNotificationLargerThanTheBudgetIsSentWhenNoneIsPending() {
+        AtomicReference<StreamingJsonRpcResponse> streaming = new AtomicReference<>();
+        HttpResponse<?> response = started(streaming);
+        List<Event<?>> received = new CopyOnWriteArrayList<>();
+        events(response).subscribe(received::add);
+        streaming.get().emit(log("x".repeat((int) StreamingJsonRpcResponse.BUFFER_CHARS * 2)));
+        streaming.get().complete(HttpResponse.ok("result"));
+        assertEquals(3, received.size());
+    }
+
+    @Test
+    void theSizeOfANotificationIsEstimatedFromItsTexts() {
+        assertEquals(128, StreamingJsonRpcResponse.estimatedSize(NOTIFICATION));
+        assertEquals(128 + 3 + 7, StreamingJsonRpcResponse.estimatedSize(new McpSchema.JSONRPCNotification(McpSchema.JSONRPC_VERSION,
+            McpSchema.METHOD_NOTIFICATION_MESSAGE, new McpSchema.LoggingMessageNotification(McpSchema.LoggingLevel.INFO, "app", "message", null))));
+        assertEquals(128 + 4, StreamingJsonRpcResponse.estimatedSize(new McpSchema.JSONRPCNotification(McpSchema.JSONRPC_VERSION,
+            McpSchema.METHOD_NOTIFICATION_PROGRESS, new McpSchema.ProgressNotification("t", 1.0, null, "half", null))));
+        assertEquals(128, StreamingJsonRpcResponse.estimatedSize(new McpSchema.JSONRPCNotification(McpSchema.JSONRPC_VERSION,
+            McpSchema.METHOD_NOTIFICATION_PROGRESS, new McpSchema.ProgressNotification("t", 1.0, null, null, null))));
+    }
+
+    private static McpSchema.JSONRPCNotification log(String message) {
+        return new McpSchema.JSONRPCNotification(McpSchema.JSONRPC_VERSION, McpSchema.METHOD_NOTIFICATION_MESSAGE,
+            new McpSchema.LoggingMessageNotification(McpSchema.LoggingLevel.INFO, null, message, null));
+    }
+
+    @Test
     void concurrentNotificationsAndResultProduceOneResponseWithTheResultLast() throws Exception {
         int threads = 8;
         ExecutorService executor = Executors.newFixedThreadPool(threads);

@@ -49,7 +49,7 @@ A request that sends no notification is answered with JSON, and so is a client t
 
 Once the response is an event stream, its HTTP status is `200 OK`, even when the request fails: the error arrives as a JSON-RPC response with an `error` member in the last event. Check that member, not the HTTP status. A request that fails before its first notification is answered with JSON and the usual error status.
 
-NOTE: Only requests for a primitive that declares an `McpRequestContext` parameter may become an event stream. A client that accepts `text/event-stream` with a quality of `0` is answered with JSON. If a slow client lets more than 256 events pile up, further notifications are dropped, but the result is always sent.
+NOTE: Only requests for a primitive that declares an `McpRequestContext` parameter may become an event stream. A client that accepts `text/event-stream` with a quality of `0` is answered with JSON. If a slow client lets more than 256 events, or notifications of more than about a million characters, pile up, further notifications are dropped, but the result is always sent.
 
 === Cancellation
 

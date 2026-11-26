@@ -32,6 +32,7 @@ import reactor.core.publisher.Sinks;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The response to a JSON-RPC request whose client accepts both JSON and an event stream. It stays a JSON response unless
@@ -52,6 +53,15 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
      * for the final result.
      */
     static final int BUFFER_SIZE = 256;
+    /**
+     * The estimated size, in characters, of the notifications a slow client may have pending. Notifications beyond it
+     * are dropped, but one notification always fits when none is pending, and there is always room for the final result.
+     */
+    static final long BUFFER_CHARS = 1024 * 1024;
+    /**
+     * The estimated size of a notification besides its text.
+     */
+    private static final int NOTIFICATION_OVERHEAD = 128;
     private static final Logger LOG = LoggerFactory.getLogger(StreamingJsonRpcResponse.class);
 
     private final MonoSink<HttpResponse<?>> response;
@@ -61,6 +71,7 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
     private @Nullable Disposable subscription;
     private boolean finished;
     private boolean overflowed;
+    private final AtomicLong pendingChars = new AtomicLong();
     private volatile boolean cancelled;
 
     StreamingJsonRpcResponse(MonoSink<HttpResponse<?>> response, McpSchema.JSONRPCRequest request) {
@@ -91,8 +102,11 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
             if (events == null) {
                 stream = startStream();
             }
-            // Keeps a slot for the result
-            if (queue.remainingCapacity() > 1) {
+            // Keeps a slot for the result, and bounds the memory the pending notifications take
+            long size = estimatedSize(notification);
+            long pending = pendingChars.get();
+            if (queue.remainingCapacity() > 1 && (pending == 0 || pending + size <= BUFFER_CHARS)) {
+                pendingChars.addAndGet(size);
                 emitEvent(notification);
             } else {
                 dropped(notification);
@@ -114,8 +128,8 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
         if (!overflowed) {
             overflowed = true;
             if (LOG.isWarnEnabled()) {
-                LOG.warn("Dropping the notifications of request {}: the client does not read the event stream fast enough, {} events are pending",
-                    request.id(), BUFFER_SIZE - 1);
+                LOG.warn("Dropping the notifications of request {}: the client does not read the event stream fast enough, {} events of about {} characters are pending",
+                    request.id(), queue.size(), pendingChars.get());
             }
         } else if (LOG.isDebugEnabled()) {
             LOG.debug("Dropped a {} notification: the client does not read the event stream fast enough", notification.method());
@@ -125,8 +139,33 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
     private HttpResponse<?> startStream() {
         queue = new ArrayBlockingQueue<>(BUFFER_SIZE);
         events = Sinks.many().unicast().onBackpressureBuffer(queue);
-        return HttpResponse.ok(events.asFlux().doOnCancel(this::cancel))
+        return HttpResponse.ok(events.asFlux().doOnNext(this::delivered).doOnCancel(this::cancel))
             .contentType(MediaType.TEXT_EVENT_STREAM_TYPE);
+    }
+
+    private void delivered(Event<Object> event) {
+        if (event.getData() instanceof McpSchema.JSONRPCNotification notification) {
+            pendingChars.addAndGet(-estimatedSize(notification));
+        }
+    }
+
+    /**
+     * @param notification A notification
+     * @return The estimated size of the notification, in characters: its texts, which a primitive chooses, and a fixed
+     * overhead for the rest
+     */
+    static long estimatedSize(McpSchema.JSONRPCNotification notification) {
+        long size = NOTIFICATION_OVERHEAD;
+        if (notification.params() instanceof McpSchema.LoggingMessageNotification log) {
+            size += length(log.logger()) + length(log.data());
+        } else if (notification.params() instanceof McpSchema.ProgressNotification progress) {
+            size += length(progress.message());
+        }
+        return size;
+    }
+
+    private static int length(@Nullable String text) {
+        return text != null ? text.length() : 0;
     }
 
     private void emitEvent(Object data) {
