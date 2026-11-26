@@ -2,6 +2,8 @@ Methods annotated with `@Tool`, `@Prompt`, `@Resource` or `@ResourceTemplate` ca
 
 snippet::io.micronaut.mcp.docs.metadata.WeatherTools[project-base="test-suite-docs", tags="imports,clazz"]
 
-`@Resource` and `@ResourceTemplate` also accept the resource annotations of the specification: the intended `audience` (`Audience.USER`, `Audience.ASSISTANT`) and a `priority` between 0 and 1. `@Resource` accepts the `size` of the content in bytes.
+Every `@Icon` requires a `src`, and its `theme`, when set, must be `light` or `dark`. The values of `@Meta` are always strings, and each key must be non-empty and declared at most once per method. The server fails to start when one of these rules is broken.
+
+`@Resource` and `@ResourceTemplate` also accept the resource annotations of the specification: the intended `audience` (`Audience.USER`, `Audience.ASSISTANT`) and a `priority` between 0 and 1. The priority defaults to `-1`, which leaves it unset; any other value outside 0 to 1 makes the server fail to start. `@Resource` accepts the `size` of the content in bytes.
 
 snippet::io.micronaut.mcp.docs.metadata.WeatherResources[project-base="test-suite-docs", tags="imports,clazz"]

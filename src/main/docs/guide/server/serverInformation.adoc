@@ -20,4 +20,6 @@ micronaut:
         instructions: Ask for a city before asking for a forecast.
 ----
 
+NOTE: `title`, `description`, `website-url`, `icons` and `instructions` take effect only when `name` and `version` are set. Every icon requires a `src`, and its `theme`, when set, must be `light` or `dark`; otherwise the server fails to start.
+
 include::{includedir}configurationProperties/io.micronaut.mcp.conf.server.McpServerInfoConfigurationProperties.adoc[]
