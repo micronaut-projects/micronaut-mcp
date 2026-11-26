@@ -51,6 +51,19 @@ class UriTemplateReadResourceRequestTest {
     }
 
     @Test
+    void reservedVariablesDropPrefixAndExplodeModifiers() {
+        assertEquals(Set.of("a", "b", "c"), UriTemplateReadResourceRequest.Template.compile("x://{+a:3,b*}{#c}").reservedVariables());
+    }
+
+    @Test
+    void aLiteralPlusIsNotDecodedAsASpace() {
+        assertEquals(Map.of("path", "C++ notes.txt"),
+            UriTemplateReadResourceRequest.arguments("file:///{+path}", "file:///C++%20notes.txt"));
+        // A simple variable does not match a literal +, so clients encode it as %2B
+        assertEquals(Map.of(), UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/C++%20notes"));
+    }
+
+    @Test
     void requestsMatchedAgainstACompiledTemplate() {
         UriTemplateReadResourceRequest.Template template = UriTemplateReadResourceRequest.Template.compile("pgn://round/{round}/pgn");
         McpSchema.ReadResourceRequest round14 = new McpSchema.ReadResourceRequest("pgn://round/14/pgn");

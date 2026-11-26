@@ -17,6 +17,7 @@ import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -132,6 +134,27 @@ class RegistryHandlersTest {
     }
 
     @Test
+    void resourceTemplateVariablesArePercentDecoded() {
+        McpSchema.ReadResourceRequest request = new McpSchema.ReadResourceRequest("handlers://pages/A%20Tale");
+        McpSchema.ReadResourceRequest malformed = new McpSchema.ReadResourceRequest("handlers://pages/%zz");
+        String template = "handlers://pages/{page}";
+        var sync = resourceTemplateRegistry.getSyncSpecs().stream().filter(s -> s.resourceTemplate().uriTemplate().equals(template)).findFirst().orElseThrow().readHandler();
+        var async = resourceTemplateRegistry.getAsyncSpecs().stream().filter(s -> s.resourceTemplate().uriTemplate().equals(template)).findFirst().orElseThrow().readHandler();
+        var statelessSync = resourceTemplateRegistry.getStatelessSyncSpecs().stream().filter(s -> s.resourceTemplate().uriTemplate().equals(template)).findFirst().orElseThrow().readHandler();
+        var statelessAsync = resourceTemplateRegistry.getStatelessAsyncSpecs().stream().filter(s -> s.resourceTemplate().uriTemplate().equals(template)).findFirst().orElseThrow().readHandler();
+
+        assertEquals("page A Tale", resource(sync.apply(SYNC_EXCHANGE, request)));
+        assertEquals("page A Tale", resource(async.apply(ASYNC_EXCHANGE, request).block()));
+        assertEquals("page A Tale", resource(statelessSync.apply(CONTEXT, request)));
+        assertEquals("page A Tale", resource(statelessAsync.apply(CONTEXT, request).block()));
+
+        assertInvalidParams(() -> sync.apply(SYNC_EXCHANGE, malformed));
+        assertInvalidParams(() -> async.apply(ASYNC_EXCHANGE, malformed).block());
+        assertInvalidParams(() -> statelessSync.apply(CONTEXT, malformed));
+        assertInvalidParams(() -> statelessAsync.apply(CONTEXT, malformed).block());
+    }
+
+    @Test
     void completions() {
         McpSchema.CompleteRequest request = new McpSchema.CompleteRequest(new McpSchema.PromptReference("greeting"),
             new McpSchema.CompleteRequest.CompleteArgument("name", "A"));
@@ -148,6 +171,11 @@ class RegistryHandlersTest {
         } catch (McpError _) {
             return true;
         }
+    }
+
+    private static void assertInvalidParams(Executable read) {
+        McpError error = assertThrows(McpError.class, read);
+        assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
     }
 
     private static String text(McpSchema.CallToolResult result) {
