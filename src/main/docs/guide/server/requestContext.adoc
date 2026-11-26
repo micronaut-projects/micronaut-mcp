@@ -53,6 +53,15 @@ Once the response is an event stream, its HTTP status is `200 OK`, even when the
 
 NOTE: Only requests for a primitive that declares an `McpRequestContext` parameter may become an event stream. A client that accepts `text/event-stream` with a quality of `0` is answered with JSON. If a slow client lets more than 256 events, or notifications of more than about a million characters, pile up, further notifications are dropped, but the result is always sent.
 
+=== Deploying a server that streams
+
+An event stream stays open while the method runs, so the components between the client and the server must let it through as it is written:
+
+- The server sends no keep-alive while a method is silent. If the method pauses between notifications for longer than an idle timeout on the path, the connection is closed and the client never receives the result. Raise `micronaut.server.idle-timeout`, `micronaut.server.read-idle-timeout`, `micronaut.server.write-idle-timeout` and the read timeout of any reverse proxy or load balancer above the longest pause, or have a long-running method send a log message or progress regularly.
+- The event stream has the headers `Cache-Control: no-cache, no-transform` and `X-Accel-Buffering: no`, which nginx honours. Turn off response buffering for the MCP endpoint in any other reverse proxy, or the events arrive at once when the method returns, and a client that goes away is not noticed.
+- A request that fails after its first notification still has the HTTP status `200 OK`, so access logs and proxy error rates do not count it; the server logs an unexpected error at the `ERROR` level.
+- A client that does not read keeps up to 256 notifications, of about a million characters at most, in memory for each request. Put a public endpoint behind authentication and a connection or rate limit.
+
 === Cancellation
 
 When the client closes the event stream, the request is cancelled and `isCancelled()` returns `true`; on the reactive server, a method that runs on an executor (`@ExecuteOn`) is also interrupted.

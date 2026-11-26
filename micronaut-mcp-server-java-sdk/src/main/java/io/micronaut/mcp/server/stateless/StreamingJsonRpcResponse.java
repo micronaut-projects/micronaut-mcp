@@ -16,6 +16,7 @@
 package io.micronaut.mcp.server.stateless;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.sse.Event;
@@ -63,6 +64,7 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
      */
     private static final int NOTIFICATION_OVERHEAD = 128;
     private static final int MAX_LOGGED_ID_LENGTH = 64;
+    private static final String X_ACCEL_BUFFERING = "X-Accel-Buffering";
     private static final Logger LOG = LoggerFactory.getLogger(StreamingJsonRpcResponse.class);
 
     private final MonoSink<HttpResponse<?>> response;
@@ -151,7 +153,10 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
         queue = new ArrayBlockingQueue<>(BUFFER_SIZE);
         events = Sinks.many().unicast().onBackpressureBuffer(queue);
         return HttpResponse.ok(events.asFlux().doOnNext(this::delivered).doOnCancel(this::cancel))
-            .contentType(MediaType.TEXT_EVENT_STREAM_TYPE);
+            .contentType(MediaType.TEXT_EVENT_STREAM_TYPE)
+            // Each event must reach the client as it is sent: no cache, and no buffering by a reverse proxy such as nginx
+            .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-transform")
+            .header(X_ACCEL_BUFFERING, "no");
     }
 
     private void delivered(Event<Object> event) {

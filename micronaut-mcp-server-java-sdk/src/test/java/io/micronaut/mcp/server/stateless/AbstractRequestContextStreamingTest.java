@@ -84,6 +84,9 @@ abstract class AbstractRequestContextStreamingTest {
             {"jsonrpc": "2.0", "id": 7, "method": "tools/call",
              "params": {"name": "importCatalog", "arguments": {"pages": 2}, "_meta": {"progressToken": "p1"}}}""");
         assertTrue(response.getContentType().map(MediaType.TEXT_EVENT_STREAM_TYPE::matches).orElse(false), response.getContentType().toString());
+        // No cache or reverse proxy may hold the events back
+        assertEquals("no-cache, no-transform", response.getHeaders().get("Cache-Control"));
+        assertEquals("no", response.getHeaders().get("X-Accel-Buffering"));
         List<String> events = data(response.body());
         assertEquals(4, events.size(), response.body());
         assertTrue(events.get(0).contains("\"method\":\"notifications/progress\"") && events.get(0).contains("\"progress\":1.0")
