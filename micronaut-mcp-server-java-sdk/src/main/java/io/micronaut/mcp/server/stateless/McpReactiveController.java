@@ -24,7 +24,6 @@ import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.json.JsonMapper;
-import io.micronaut.json.tree.JsonNode;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
@@ -50,7 +49,7 @@ final class McpReactiveController extends McpController {
     // The route returns a JSON-RPC response or an error body, so the response body type is a wildcard
     @SuppressWarnings({"java:S3740", "java:S1452"})
     @Post
-    Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable JsonNode body) {
-        return handle(request, body);
+    Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable McpRequestBody body) {
+        return handle(request, body != null ? body.value() : null);
     }
 }
