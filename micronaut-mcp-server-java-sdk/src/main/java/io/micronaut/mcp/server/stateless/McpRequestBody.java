@@ -77,12 +77,15 @@ record McpRequestBody(JsonNode value) {
         }
 
         private static @Nullable McpRequestBody wrap(@Nullable Object value) {
-            return value == null ? null : new McpRequestBody(value instanceof JsonNode node ? node : toTree(value));
+            if (value == null) {
+                return null;
+            }
+            return new McpRequestBody(value instanceof JsonNode node ? node : toTree(value));
         }
 
         private static JsonNode toTree(@Nullable Object value) {
             if (value instanceof Map<?, ?> map) {
-                Map<String, JsonNode> fields = new LinkedHashMap<>(map.size());
+                Map<String, JsonNode> fields = LinkedHashMap.newLinkedHashMap(map.size());
                 map.forEach((key, field) -> fields.put((String) key, toTree(field)));
                 return JsonNode.createObjectNode(fields);
             }
@@ -91,6 +94,9 @@ record McpRequestBody(JsonNode value) {
             }
             if (value instanceof List<?> list) {
                 return JsonNode.createArrayNode(list.stream().map(Reader::toTree).toList());
+            }
+            if (value == null) {
+                return JsonNode.nullNode();
             }
             return JsonNode.from(value);
         }
