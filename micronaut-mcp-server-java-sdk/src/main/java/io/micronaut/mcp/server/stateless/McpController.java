@@ -38,10 +38,15 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Handles the POST endpoint, in route {@value McpServerConfiguration#DEFAULT_ENDPOINT}.
@@ -58,6 +63,11 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
     private static final String KEY_ID = "id";
     private static final String KEY_JSONRPC = "jsonrpc";
     private static final String KEY_PARAMS = "params";
+    private static final String KEY_LEVEL = "level";
+    // The levels as the protocol spells them: the lower-case names of the constants
+    private static final Set<String> LOGGING_LEVELS = Arrays.stream(McpSchema.LoggingLevel.values())
+        .map(level -> level.name().toLowerCase(Locale.ROOT))
+        .collect(Collectors.toCollection(LinkedHashSet::new));
     // JSON-RPC answers a message that is not a valid request with a null id, which the SDK response type does not allow
     private static final Map<String, Object> INVALID_REQUEST = invalidRequest();
 
@@ -65,16 +75,19 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
     private final McpTransportContextExtractor<HttpRequest<?>> contextExtractor;
     private final JsonMapper jsonMapper;
     private final boolean passJsonTrees;
+    private final boolean logging;
 
     McpController(McpStatelessServerHandler mcpHandler,
                   McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
                   JsonMapper jsonMapper,
-                  McpJsonMapper mcpJsonMapper) {
+                  McpJsonMapper mcpJsonMapper,
+                  McpSchema.ServerCapabilities capabilities) {
         this.mcpHandler = mcpHandler;
         this.contextExtractor = contextExtractor;
         this.jsonMapper = jsonMapper;
         // The Micronaut MCP JSON mapper converts the parsed parameters directly; any other mapper gets them as a Map
         this.passJsonTrees = mcpJsonMapper instanceof MicronautMcpJsonMapper;
+        this.logging = capabilities.logging() != null;
     }
 
     /**
@@ -88,9 +101,9 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
         McpTransportContext transportContext = contextExtractor.extract(request);
         McpSchema.JSONRPCMessage jsonRpcMessage = jsonRpcMessage(body);
         if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
-            if (McpSchema.METHOD_LOGGING_SET_LEVEL.equals(jsonrpcRequest.method())) {
+            if (logging && McpSchema.METHOD_LOGGING_SET_LEVEL.equals(jsonrpcRequest.method())) {
                 // The SDK has no handler for it on stateless servers, which cannot remember a level between requests
-                return Mono.just(HttpResponse.ok(new McpSchema.JSONRPCResponse(McpSchema.JSONRPC_VERSION, jsonrpcRequest.id(), Map.of(), null)));
+                return Mono.just(setLevel(jsonrpcRequest, body));
             }
             if (streaming) {
                 return Mono.create(sink -> {
@@ -107,6 +120,22 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
             return handleJsonRpcNotification(notification, transportContext);
         }
         return Mono.just(HttpResponse.badRequest(INVALID_REQUEST));
+    }
+
+    /**
+     * Acknowledges a {@code logging/setLevel} request with a valid level. A stateless server cannot remember the level,
+     * so it sends every log message whatever its level.
+     */
+    @SuppressWarnings("java:S1452")
+    private static HttpResponse<?> setLevel(McpSchema.JSONRPCRequest jsonrpcRequest, @Nullable JsonNode body) {
+        JsonNode params = body != null ? body.get(KEY_PARAMS) : null;
+        JsonNode level = params != null && params.isObject() ? params.get(KEY_LEVEL) : null;
+        if (level == null || !level.isString() || !LOGGING_LEVELS.contains(level.getStringValue())) {
+            McpSchema.JSONRPCResponse rsp = JsonRrpcResponseUtils.jsonrpcResponse(
+                mcpError(McpSchema.ErrorCodes.INVALID_PARAMS, "Invalid logging level, expected one of " + LOGGING_LEVELS), jsonrpcRequest);
+            return HttpResponse.status(status(rsp)).body(rsp);
+        }
+        return HttpResponse.ok(new McpSchema.JSONRPCResponse(McpSchema.JSONRPC_VERSION, jsonrpcRequest.id(), Map.of(), null));
     }
 
     @SuppressWarnings("java:S3740")

@@ -4,9 +4,11 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.scheduling.TaskExecutors;
@@ -32,6 +34,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
@@ -144,13 +147,20 @@ class RequestContextStreamingTest {
 
     @Test
     void settingTheLogLevelIsAcknowledged() {
-        String capabilities = post(MediaType.APPLICATION_JSON, """
-            {"jsonrpc": "2.0", "id": 16, "method": "initialize",
-             "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "test", "version": "1.0"}}}""").body();
-        assertTrue(capabilities.contains("\"logging\""), capabilities);
         HttpResponse<String> response = post(MediaType.APPLICATION_JSON, """
-            {"jsonrpc": "2.0", "id": 17, "method": "logging/setLevel", "params": {"level": "error"}}""");
-        assertTrue(response.body().contains("\"id\":17") && response.body().contains("\"result\":{}") && !response.body().contains("\"error\""), response.body());
+            {"jsonrpc": "2.0", "id": 21, "method": "logging/setLevel", "params": {"level": "error"}}""");
+        assertTrue(response.body().contains("\"id\":21") && response.body().contains("\"result\":{}") && !response.body().contains("\"error\""), response.body());
+    }
+
+    @Test
+    void settingAnInvalidLogLevelIsRejected() {
+        for (String params : List.of("{\"level\": \"verbose\"}", "{\"level\": 3}", "{}")) {
+            HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> post(MediaType.APPLICATION_JSON, """
+                {"jsonrpc": "2.0", "id": 22, "method": "logging/setLevel", "params": %s}""".formatted(params)));
+            assertEquals(HttpStatus.BAD_REQUEST, e.getStatus(), params);
+            String body = e.getResponse().getBody(String.class).orElseThrow();
+            assertTrue(body.contains("\"code\":" + McpSchema.ErrorCodes.INVALID_PARAMS) && body.contains("\"id\":22"), body);
+        }
     }
 
     @Test
