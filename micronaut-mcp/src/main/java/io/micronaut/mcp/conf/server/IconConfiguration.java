@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,14 @@ public class IconConfiguration {
     private @Nullable String theme;
 
     /**
-     * @return The URI of the icon: an HTTPS URL or a {@code data:} URI
+     * @return The URI of the icon: an HTTPS URL or a {@code data:image/...} URI. An HTTP URL is accepted, for example for local development; another scheme, or a URL with a user name or password, fails the startup
      */
     public @Nullable String getSrc() {
         return src;
     }
 
     /**
-     * @param src The URI of the icon: an HTTPS URL or a {@code data:} URI
+     * @param src The URI of the icon: an HTTPS URL or a {@code data:image/...} URI. An HTTP URL is accepted, for example for local development; another scheme, or a URL with a user name or password, fails the startup
      */
     public void setSrc(@Nullable String src) {
         this.src = src;
@@ -76,14 +76,14 @@ public class IconConfiguration {
     }
 
     /**
-     * @return The theme the icon is designed for: {@code light} or {@code dark}
+     * @return The theme the icon is designed for: {@code light} or {@code dark}, in lowercase. Any other value fails the startup
      */
     public @Nullable String getTheme() {
         return theme;
     }
 
     /**
-     * @param theme The theme the icon is designed for: {@code light} or {@code dark}
+     * @param theme The theme the icon is designed for: {@code light} or {@code dark}, in lowercase. Any other value fails the startup
      */
     public void setTheme(@Nullable String theme) {
         this.theme = theme;

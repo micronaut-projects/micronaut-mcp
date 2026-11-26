@@ -11,7 +11,8 @@ from micronaut.mcp.annotations import Icon, Meta, Tool
 class WeatherTools:
 
     @Tool
-    @Icon(src="https://example.com/sun.svg", mimeType="image/svg+xml", sizes=["any"])
+    @Icon(src="https://example.com/sun-light.svg", mimeType="image/svg+xml", sizes=["any"], theme="light")
+    @Icon(src="https://example.com/sun-dark.svg", mimeType="image/svg+xml", sizes=["any"], theme="dark")
     @Meta(key="com.example/category", value="weather")
     def forecast(self, city: str) -> str:
         return "sunny"

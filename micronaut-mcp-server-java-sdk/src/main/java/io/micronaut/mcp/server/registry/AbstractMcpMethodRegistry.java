@@ -22,6 +22,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.mcp.annotations.Audience;
 import io.micronaut.mcp.annotations.Icon;
 import io.micronaut.mcp.annotations.Meta;
+import io.micronaut.mcp.server.McpIconFactory;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.bind.ArgumentBinder;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
@@ -54,6 +55,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -91,6 +93,12 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected static final String URI_TEMPLATE_PROPERTY = "uriTemplate";
     protected static final String MEMBER_NAME = "name";
     protected static final String MEMBER_TITLE = "title";
+    private static final String SRC_PROPERTY = "src";
+    private static final String SIZES_PROPERTY = "sizes";
+    private static final String THEME_PROPERTY = "theme";
+    private static final String KEY_PROPERTY = "key";
+    private static final String AUDIENCE_PROPERTY = "audience";
+    private static final String PRIORITY_PROPERTY = "priority";
     private static final double UNSET_PRIORITY = -1;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMcpMethodRegistry.class);
     protected final List<Method<Object>> methods = new ArrayList<>();
@@ -221,6 +229,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     /**
      * @param method The method
      * @return The icons declared with {@link Icon}, or {@code null} when there are none
+     * @throws IllegalStateException If an icon has a blank {@code src} or a theme other than {@code light} or {@code dark}
      */
     protected static @Nullable List<McpSchema.Icon> icons(ExecutableMethod<?, ?> method) {
         List<AnnotationValue<Icon>> values = method.getAnnotationValuesByType(Icon.class);
@@ -229,12 +238,11 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
         List<McpSchema.Icon> icons = new ArrayList<>(values.size());
         for (AnnotationValue<Icon> value : values) {
-            String[] sizes = value.stringValues("sizes");
-            icons.add(new McpSchema.Icon(
-                value.stringValue("src").orElseThrow(),
-                value.stringValue(MIME_TYPE_PROPERTY).filter(StringUtils::isNotEmpty).orElse(null),
-                sizes.length == 0 ? null : List.of(sizes),
-                value.stringValue("theme").filter(StringUtils::isNotEmpty).orElse(null)));
+            icons.add(McpIconFactory.icon("The @Icon of method " + methodName(method),
+                value.stringValue(SRC_PROPERTY).orElse(null),
+                value.stringValue(MIME_TYPE_PROPERTY).orElse(null),
+                List.of(value.stringValues(SIZES_PROPERTY)),
+                value.stringValue(THEME_PROPERTY).orElse(null)));
         }
         return icons;
     }
@@ -242,6 +250,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     /**
      * @param method The method
      * @return The {@code _meta} entries declared with {@link Meta}, or {@code null} when there are none
+     * @throws IllegalStateException If a key is empty or declared twice
      */
     protected static @Nullable Map<String, Object> meta(ExecutableMethod<?, ?> method) {
         List<AnnotationValue<Meta>> values = method.getAnnotationValuesByType(Meta.class);
@@ -250,24 +259,30 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
         Map<String, Object> meta = LinkedHashMap.newLinkedHashMap(values.size());
         for (AnnotationValue<Meta> value : values) {
-            meta.put(value.stringValue("key").orElseThrow(), value.stringValue().orElse(""));
+            String key = value.stringValue(KEY_PROPERTY).filter(StringUtils::isNotEmpty).orElseThrow(() ->
+                new IllegalStateException("The @Meta of method " + methodName(method) + " requires a key"));
+            if (meta.put(key, value.stringValue().orElse("")) != null) {
+                throw new IllegalStateException("The @Meta key " + key + " is declared twice on method " + methodName(method));
+            }
         }
         return meta;
     }
 
     /**
-     * @param annotation A resource or resource template annotation
+     * @param method The method
+     * @param annotationType The resource or resource template annotation
      * @return The resource annotations it declares, or {@code null} when it declares none
      * @throws IllegalStateException If the priority is set and is not between 0 and 1
      */
-    protected static McpSchema.@Nullable Annotations resourceAnnotations(AnnotationValue<?> annotation) {
-        Audience[] audience = annotation.enumValues("audience", Audience.class);
-        double priority = annotation.doubleValue("priority").orElse(UNSET_PRIORITY);
+    protected static McpSchema.@Nullable Annotations resourceAnnotations(ExecutableMethod<?, ?> method, Class<? extends Annotation> annotationType) {
+        AnnotationValue<?> annotation = method.findAnnotation(annotationType).orElseThrow();
+        Audience[] audience = annotation.enumValues(AUDIENCE_PROPERTY, Audience.class);
+        double priority = annotation.doubleValue(PRIORITY_PROPERTY).orElse(UNSET_PRIORITY);
         boolean hasPriority = Double.compare(priority, UNSET_PRIORITY) != 0;
         // NaN fails the range check too
         if (hasPriority && !(priority >= 0 && priority <= 1)) {
-            String resource = annotation.stringValue(URI_PROPERTY).or(() -> annotation.stringValue(URI_TEMPLATE_PROPERTY)).orElse("");
-            throw new IllegalStateException("The priority of resource " + resource + " is " + priority + ", but it must be between 0 and 1");
+            throw new IllegalStateException("The priority of @" + annotationType.getSimpleName() + " on method " + methodName(method)
+                + " is " + priority + "; it must be between 0 and 1, or left out");
         }
         if (audience.length == 0 && !hasPriority) {
             return null;
@@ -279,8 +294,15 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         return new McpSchema.Annotations(roles, hasPriority ? priority : null);
     }
 
+    private static String methodName(ExecutableMethod<?, ?> method) {
+        return method.getDeclaringType().getName() + "#" + method.getMethodName();
+    }
+
     private static McpSchema.Role role(Audience audience) {
-        return audience == Audience.USER ? McpSchema.Role.USER : McpSchema.Role.ASSISTANT;
+        return switch (audience) {
+            case USER -> McpSchema.Role.USER;
+            case ASSISTANT -> McpSchema.Role.ASSISTANT;
+        };
     }
 
     /**

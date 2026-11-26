@@ -35,6 +35,7 @@ import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -51,7 +52,6 @@ import java.util.List;
  */
 @Internal
 public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
-
     /**
      * Retrieves a list of tools from the provided {@link ToolRegistry}.
      *
@@ -65,21 +65,31 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
      *
      * @param configuration The server information configuration
      * @return The server implementation
+     * @throws IllegalStateException If an icon is invalid, or if the website URL is not an https or http URL without a user
+     * name or password
      * @since 2.2.0
      */
     protected static McpSchema.Implementation serverInfo(McpServerInfoConfiguration configuration) {
-        List<McpSchema.Icon> icons = configuration.getIcons().isEmpty() ? null : configuration.getIcons().stream()
-            .map(AbstractMcpServerFactory::icon)
-            .toList();
+        List<IconConfiguration> configuredIcons = configuration.getIcons();
+        List<McpSchema.Icon> icons = null;
+        if (!configuredIcons.isEmpty()) {
+            icons = new ArrayList<>(configuredIcons.size());
+            for (int i = 0; i < configuredIcons.size(); i++) {
+                IconConfiguration icon = configuredIcons.get(i);
+                icons.add(McpIconFactory.icon("The icon " + McpServerInfoConfiguration.PREFIX + ".icons[" + i + "]",
+                    icon.getSrc(), icon.getMimeType(), icon.getSizes(), icon.getTheme()));
+            }
+        }
         return new McpSchema.Implementation(configuration.getName(), configuration.getTitle(), configuration.getVersion(),
-            configuration.getDescription(), icons, configuration.getWebsiteUrl());
+            configuration.getDescription(), icons, websiteUrl(configuration.getWebsiteUrl()));
     }
 
-    private static McpSchema.Icon icon(IconConfiguration icon) {
-        if (StringUtils.isEmpty(icon.getSrc())) {
-            throw new IllegalStateException("Every icon in " + McpServerInfoConfiguration.PREFIX + ".icons requires a src");
+    private static @Nullable String websiteUrl(@Nullable String websiteUrl) {
+        if (StringUtils.isEmpty(websiteUrl)) {
+            return null;
         }
-        return new McpSchema.Icon(icon.getSrc(), icon.getMimeType(), icon.getSizes().isEmpty() ? null : icon.getSizes(), icon.getTheme());
+        McpIconFactory.checkUrl("The " + McpServerInfoConfiguration.PREFIX + ".website-url", "a value", websiteUrl, false);
+        return websiteUrl;
     }
 
     /**
