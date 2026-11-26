@@ -16,6 +16,8 @@
 package io.micronaut.mcp.server.registry;
 
 import io.micronaut.context.BeanContext;
+import io.micronaut.context.event.BeanDestroyedEvent;
+import io.micronaut.context.event.BeanDestroyedEventListener;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.StringUtils;
@@ -83,7 +85,7 @@ import java.util.stream.Stream;
  * @param <SA> Stateless Async Specification
  */
 @Internal
-abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrimitiveRegistry<S, A, SS, SA>
+abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrimitiveRegistry<S, A, SS, SA>, BeanDestroyedEventListener<Object>
     permits CompletionRegistry, PromptRegistry, ResourceRegistry, ResourceTemplateRegistry, ToolRegistry {
     protected static final String MEMBER_DESCRIPTION = "description";
     protected static final String KEY_TYPE = "type";
@@ -103,6 +105,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     private static final String PRIORITY_PROPERTY = "priority";
     private static final double UNSET_PRIORITY = -1;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMcpMethodRegistry.class);
+    private static final String INTERNAL_ERROR_MESSAGE = "Internal error";
     protected final List<Method<Object>> methods = new ArrayList<>();
     protected final BeanContext beanContext;
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
@@ -158,6 +161,19 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         return methods.stream();
     }
 
+    /**
+     * Forgets the instance of a destroyed singleton bean, so that its methods are invoked on the instance that replaces it.
+     *
+     * @param event The event of the destroyed bean
+     */
+    @Override
+    public final void onDestroyed(BeanDestroyedEvent<Object> event) {
+        BeanDefinition<?> definition = event.getBeanDefinition();
+        for (Method<Object> method : methods) {
+            method.forget(definition);
+        }
+    }
+
     @Override
     public boolean isNotEmpty() {
         return !methods.isEmpty();
@@ -199,12 +215,14 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                 }
             }
         }
-        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(errorMessage(throwable)).build();
+        // The message of an unexpected exception may tell internal details, such as those of a database, so it stays in
+        // the server log
+        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(INTERNAL_ERROR_MESSAGE).build();
     }
 
     /**
-     * The message sent to the client for a failure that no mapper handles. The SDK requires a message, so a failure
-     * without one is described by the simple name of its class.
+     * The text of a failure that no mapper handles, as a tool execution error tells it to the model. A failure without
+     * a message is described by the simple name of its class.
      *
      * @param throwable The failure
      * @return The message of the failure, or the simple name of its class (its name for an anonymous class) when it has no message
@@ -365,13 +383,18 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      */
     protected static final class Method<B> {
         private static final int NOT_BOUND = -1;
+        /**
+         * A parameter declared as an application interface, which receives the transport context when the context
+         * implements it, and is bound by its argument binder otherwise.
+         */
+        private static final int CONTEXT_IF_INSTANCE = -2;
         private final BeanContext beanContext;
         private final BeanDefinition<B> beanDefinition;
         private final ExecutableMethod<B, Object> executableMethod;
         private final Argument<?>[] arguments;
         /**
          * For each parameter, the index in {@link AbstractMcpMethodRegistry#boundParameterTypes()} of the type of the value
-         * it receives without an argument binder, or {@link #NOT_BOUND}.
+         * it receives without an argument binder, or {@link #NOT_BOUND}, or {@link #CONTEXT_IF_INSTANCE}.
          */
         private final int[] boundIndexes;
         private final boolean collectsValues;
@@ -419,6 +442,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                         boundIndexes[a] = i;
                         break;
                     }
+                }
+                if (boundIndexes[a] == NOT_BOUND && type.isInterface() && !type.getName().startsWith("java.")) {
+                    // A custom transport context may implement an interface of the application, which only the value tells
+                    boundIndexes[a] = CONTEXT_IF_INSTANCE;
                 }
             }
             this.collectsValues = collectsValues(method, collectsValues);
@@ -474,13 +501,12 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
          * @return Whether the parameter receives the transport context, the request or another value bound without an argument binder
          */
         public boolean isBound(int argumentIndex) {
-            return boundIndexes[argumentIndex] != NOT_BOUND;
+            return boundIndexes[argumentIndex] >= 0;
         }
 
         /**
-         * The bean to invoke the method on. A singleton is looked up once and kept, so a singleton that is destroyed
-         * or refreshed in the bean context afterwards (with {@code destroyBean} or {@code refreshBean}) is still the
-         * instance that is invoked.
+         * The bean to invoke the method on. A singleton is looked up once and kept until the bean context destroys it, see
+         * {@link #forget(BeanDefinition)}.
          *
          * @return The bean to invoke the method on
          */
@@ -494,6 +520,17 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                 singleton.set(bean);
             }
             return bean;
+        }
+
+        /**
+         * Forgets the kept singleton if it is an instance of the given bean definition, which the context destroyed.
+         *
+         * @param definition The definition of a destroyed bean
+         */
+        void forget(BeanDefinition<?> definition) {
+            if (beanDefinition.equals(definition)) {
+                singleton.set(null);
+            }
         }
 
         @Nullable
@@ -665,7 +702,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                 Argument<?> argument = arguments[i];
                 int index = boundIndexes[i];
                 if (index != NOT_BOUND) {
-                    Object value = index == 0 ? resolveMcpTransportContext(context) : values[index - 1];
+                    Object value = index <= 0 ? resolveMcpTransportContext(context) : values[index - 1];
                     if (argument.getType().isInstance(value)) {
                         argumentValues[i] = value;
                         continue;

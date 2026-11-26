@@ -36,6 +36,7 @@ import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -122,6 +123,16 @@ class RegistryHandlersTest {
         assertTrue(result.isError());
         // an anonymous class has no simple name
         assertTrue(text(result).startsWith("Tool anonymous failed (" + Primitives.class.getName() + "$"));
+    }
+
+    @Test
+    void aDestroyedSingletonIsReplaced() {
+        var instance = toolHandler("instance");
+        McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("instance", Map.of());
+        String first = text(instance.apply(CONTEXT, request));
+        assertEquals(first, text(instance.apply(CONTEXT, request)));
+        beanContext.destroyBean(Rotating.class);
+        assertNotEquals(first, text(instance.apply(CONTEXT, request)));
     }
 
     @Test
@@ -479,6 +490,18 @@ class RegistryHandlersTest {
         int canMapCalls(Class<?> clazz) {
             AtomicInteger calls = canMapCalls.get(clazz);
             return calls == null ? 0 : calls.get();
+        }
+    }
+
+    @Requires(property = "spec.name", value = "RegistryHandlersTest")
+    @Singleton
+    static class Rotating {
+        private static final AtomicInteger INSTANCES = new AtomicInteger();
+        private final int instance = INSTANCES.incrementAndGet();
+
+        @Tool
+        String instance() {
+            return String.valueOf(instance);
         }
     }
 
