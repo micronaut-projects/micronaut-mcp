@@ -214,38 +214,45 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             throw mcpError;
         }
         McpErrorExceptionMapper<? extends Throwable> mapper = getExceptionMapper(error.getClass());
+        String name = toolName(m.method());
         String message;
-        if (mapper instanceof InputErrorMapper<?>) {
-            message = mapException(mapper, error).getMessage();
+        if (mapper instanceof InputErrorMapper<?> inputErrorMapper) {
+            // Only the message is needed, so no McpError, with its stack trace, is built
+            message = inputErrorMessage(inputErrorMapper, error);
             // Classified by the type of the exception, which may also be thrown by the tool body
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Tool {} failed with an input error: {}", toolName(m.method()), message, error);
+                LOG.debug("Tool {} failed with an input error: {}", name, message, error);
             }
         } else if (mapper != null) {
             // The SDK does not log the protocol errors it sends
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Tool {} failed with a mapped protocol error", toolName(m.method()), error);
+                LOG.debug("Tool {} failed with a mapped protocol error", name, error);
             }
             throw mapException(mapper, error);
         } else {
-            message = toolErrorMessage(m, error);
+            message = toolErrorMessage(name, error);
             if (LOG.isWarnEnabled()) {
-                LOG.warn("Tool {} failed: {}", toolName(m.method()), message, error);
+                LOG.warn("Tool {} failed: {}", name, message, error);
             }
         }
         return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> String inputErrorMessage(InputErrorMapper<?> mapper, T error) {
+        return ((InputErrorMapper<T>) mapper).message(error);
     }
 
     /**
      * The text of the tool execution error of a failure without a mapper: its message, or, when it has none, which tool
      * failed and the class of the failure, so that the model is not left with a bare class name.
      */
-    private static <B> String toolErrorMessage(Method<B> m, Throwable error) {
+    private static String toolErrorMessage(String name, Throwable error) {
         String message = error.getMessage();
         if (message != null && !message.isBlank()) {
             return message;
         }
-        return "Tool " + toolName(m.method()) + " failed (" + errorMessage(error) + ")";
+        return "Tool " + name + " failed (" + errorMessage(error) + ")";
     }
 
     private <B> McpSchema.CallToolResult toCallToolResult(Method<B> m, boolean structuredOutput, @Nullable Object result) {

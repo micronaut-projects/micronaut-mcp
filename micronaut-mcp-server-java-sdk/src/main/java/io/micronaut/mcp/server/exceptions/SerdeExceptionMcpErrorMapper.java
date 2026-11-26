@@ -18,8 +18,6 @@ package io.micronaut.mcp.server.exceptions;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.serde.exceptions.SerdeException;
-import io.modelcontextprotocol.spec.McpError;
-import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 
 /**
@@ -35,11 +33,8 @@ final class SerdeExceptionMcpErrorMapper implements InputErrorMapper<SerdeExcept
     }
 
     @Override
-    public McpError map(SerdeException exception) {
-        String message = conciseMessage(exception);
-        return McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS)
-            .message(message)
-            .build();
+    public String message(SerdeException exception) {
+        return conciseMessage(exception);
     }
 
     /**

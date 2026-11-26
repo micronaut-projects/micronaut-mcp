@@ -16,8 +16,6 @@
 package io.micronaut.mcp.server.exceptions;
 
 import io.micronaut.core.annotation.Internal;
-import io.modelcontextprotocol.spec.McpError;
-import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -39,11 +37,8 @@ class ConstraintViolationExceptionMcpErrorMapper implements InputErrorMapper<Con
     }
 
     @Override
-    public McpError map(ConstraintViolationException exception) {
-        String message = conciseMessage(exception);
-        return McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS)
-            .message(message)
-            .build();
+    public String message(ConstraintViolationException exception) {
+        return conciseMessage(exception);
     }
 
     private static String conciseMessage(ConstraintViolationException e) {

@@ -17,8 +17,6 @@ package io.micronaut.mcp.server.exceptions;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
-import io.modelcontextprotocol.spec.McpError;
-import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 
 /**
@@ -34,9 +32,7 @@ final class ConversionErrorExceptionMcpErrorMapper implements InputErrorMapper<C
     }
 
     @Override
-    public McpError map(ConversionErrorException exception) {
-        return McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS)
-            .message(exception.getMessage())
-            .build();
+    public String message(ConversionErrorException exception) {
+        return exception.getMessage();
     }
 }

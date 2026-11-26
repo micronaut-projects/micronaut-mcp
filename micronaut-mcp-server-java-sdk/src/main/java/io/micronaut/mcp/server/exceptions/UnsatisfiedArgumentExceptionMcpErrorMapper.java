@@ -18,8 +18,6 @@ package io.micronaut.mcp.server.exceptions;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.exceptions.UnsatisfiedArgumentException;
-import io.modelcontextprotocol.spec.McpError;
-import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 
 /**
@@ -35,10 +33,7 @@ class UnsatisfiedArgumentExceptionMcpErrorMapper implements InputErrorMapper<Uns
     }
 
     @Override
-    public McpError map(UnsatisfiedArgumentException exception) {
-        String message = exception.getMessage();
-        return McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS)
-            .message(message)
-            .build();
+    public String message(UnsatisfiedArgumentException exception) {
+        return exception.getMessage();
     }
 }
