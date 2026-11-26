@@ -161,12 +161,12 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
 
     /**
      * @param result The result of a completion method
-     * @return The result as a list of strings
-     * @throws IllegalArgumentException If the result is not a list of strings
+     * @return The result as a list of strings, with the text of each {@link CharSequence}
+     * @throws IllegalArgumentException If the result is not a list of character sequences
      */
     public static List<String> asStringList(Object result) {
-        if (result instanceof List<?> list && list.stream().allMatch(String.class::isInstance)) {
-            return list.stream().map(String.class::cast).toList();
+        if (result instanceof List<?> list && list.stream().allMatch(CharSequence.class::isInstance)) {
+            return list.stream().map(Object::toString).toList();
         }
         throw new IllegalArgumentException("Not a List<String>");
     }

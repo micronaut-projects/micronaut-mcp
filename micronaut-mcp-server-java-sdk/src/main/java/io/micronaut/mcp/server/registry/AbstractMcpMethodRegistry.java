@@ -40,6 +40,7 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.server.context.DefaultMcpRequestContext;
 import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
+import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
@@ -422,6 +423,17 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         private final boolean declaresRequestContext;
         private final boolean collectsValues;
         private final @Nullable ExecutorService executor;
+        /**
+         * The executor a synchronous server invokes the method on: none when it is the executor the server already
+         * calls the method on, since waiting for a task queued on the executor that runs the waiting thread can
+         * exhaust a fixed-size pool.
+         */
+        private final @Nullable ExecutorService callExecutor;
+        /**
+         * Whether the declared return type admits a reactive type or a {@link CompletionStage}, so that a plain value
+         * of a declared class other than Object is mapped without looking for a reactive type that it could be converted to.
+         */
+        private final boolean mayBeDeferred;
         private final @Nullable Scheduler scheduler;
         private final AtomicReference<B> singleton = new AtomicReference<>();
         /**
@@ -466,6 +478,16 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             String executorName = method.stringValue(ExecuteOn.class).orElse(null);
             this.executor = executorName != null ? beanContext.getBean(ExecutorService.class, Qualifiers.byName(executorName)) : null;
             this.scheduler = executor != null ? Schedulers.fromExecutorService(executor) : null;
+            // The synchronous servers call the methods on the blocking executor
+            this.callExecutor = executor != null
+                && executor == beanContext.findBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING)).orElse(null)
+                ? null : executor;
+            this.mayBeDeferred = mayBeDeferred(method.getReturnType());
+        }
+
+        private static boolean mayBeDeferred(ReturnType<?> returnType) {
+            Class<?> type = returnType.getType();
+            return returnType.isAsyncOrReactive() || type == Object.class || type.isInterface();
         }
 
         private static boolean collectsValues(ExecutableMethod<?, ?> method, boolean collectsValues) {
@@ -558,11 +580,11 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                           Function<Throwable, R> errorHandler) {
             try {
                 Object value;
-                if (executor == null) {
+                if (callExecutor == null) {
                     value = await(invocation.get(), context);
                 } else {
                     Supplier<@Nullable Object> task = () -> await(invocation.get(), context);
-                    value = CompletableFuture.supplyAsync(PropagatedContext.wrapCurrent(task), executor).join();
+                    value = CompletableFuture.supplyAsync(PropagatedContext.wrapCurrent(task), callExecutor).join();
                 }
                 return mapper.apply(value);
             } catch (Exception e) {
@@ -626,8 +648,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             }
         }
 
-        private static boolean isDeferred(@Nullable Object result) {
-            return result instanceof Publisher<?> || result instanceof CompletionStage<?> || Publishers.isConvertibleToPublisher(result);
+        private boolean isDeferred(@Nullable Object result) {
+            return mayBeDeferred && result != null && (result instanceof Publisher<?> || result instanceof CompletionStage<?> || Publishers.isConvertibleToPublisher(result));
         }
 
         /**
