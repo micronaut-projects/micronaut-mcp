@@ -52,13 +52,12 @@ final class CallToolRequestArgumentBinderRegistry implements ArgumentBinderRegis
 
     @Override
     public <T> Optional<ArgumentBinder<T, McpSchema.CallToolRequest>> findArgumentBinder(Argument<T> argument) {
-        TypedCallToRequestArgumentBinder<T> binder = byType.get(argument.typeHashCode());
-        // The binder registered for a tool whose whole input is of this type does not apply to an argument annotated with
-        // ToolArg, which is a named property of the input
-        if (binder == null || binder instanceof JsonMapperTypedCallToRequestArgumentBinder<?> && argument.getAnnotationMetadata().hasAnnotation(ToolArg.class)) {
-            return Optional.ofNullable(defaultBinder);
-        }
-        return Optional.of(binder);
+        // A typed binder binds the whole input of a tool, so it does not apply to an argument annotated with ToolArg, which is
+        // a named property of the input, even when another tool takes the same type as its whole input
+        TypedCallToRequestArgumentBinder<T> binder = argument.getAnnotationMetadata().hasAnnotation(ToolArg.class)
+            ? null
+            : byType.get(argument.typeHashCode());
+        return binder != null ? Optional.of(binder) : Optional.ofNullable(defaultBinder);
     }
 
     private <T> void addBinder(ArgumentBinder<T, McpSchema.CallToolRequest> binder) {
