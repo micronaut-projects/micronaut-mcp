@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Internal
 @Requires(classes = MeterRegistry.class)
 @Requires(beans = MeterRegistry.class)
-@Requires(property = MetricsConfigurationProperties.PROPERTY_ENABLED, notEquals = StringUtils.FALSE)
+@Requires(property = MetricsConfigurationProperties.PROPERTY_ENABLED, defaultValue = StringUtils.TRUE, pattern = MetricsConfigurationProperties.ENABLED_PATTERN)
 final class MicrometerMcpServerObserver implements McpServerObserver {
     static final String METER_NAME = "mcp.server.operation.duration";
     static final String TAG_METHOD = "mcp.method.name";

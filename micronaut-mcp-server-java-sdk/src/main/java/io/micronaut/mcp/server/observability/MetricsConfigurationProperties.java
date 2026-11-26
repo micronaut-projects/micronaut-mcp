@@ -20,15 +20,21 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.Toggleable;
 
 /**
- * The configuration of the metrics of the MCP server. {@link MicrometerMcpServerObserver} requires its property rather
- * than this bean, so that disabling the metrics leaves no observer; this class makes the property known to the
- * configuration reference and to IDEs.
+ * The configuration of the metrics of the MCP server. {@link MicrometerMcpServerObserver} requires its property to be
+ * enabled, with the same conversion as this bean, so that disabling the metrics leaves no observer.
  */
 @ConfigurationProperties(MetricsConfigurationProperties.PREFIX)
 @Internal
 final class MetricsConfigurationProperties implements Toggleable {
     static final String PREFIX = "micronaut.mcp.server.metrics";
     static final String PROPERTY_ENABLED = PREFIX + ".enabled";
+    /**
+     * The values of the enabled property that convert to {@code true}, as Micronaut converts a string to a boolean:
+     * {@link MicrometerMcpServerObserver} requires the property to match it, so that it is disabled exactly when this
+     * bean is, for example by {@code FALSE} or {@code off} as well as {@code false}. A bean property requirement would
+     * say this directly, but it only checks that the bean exists.
+     */
+    static final String ENABLED_PATTERN = "(?i)true|yes|y|on";
     private static final boolean DEFAULT_ENABLED = true;
 
     private boolean enabled = DEFAULT_ENABLED;
