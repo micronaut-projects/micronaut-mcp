@@ -105,6 +105,7 @@ class ReactiveRequestContextStreamingTest {
 
     @Test
     void notificationsReachTheClientWhileTheToolRuns() throws Exception {
+        Primitives.CLIENT_GOT_PROGRESS = new CountDownLatch(1);
         java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder(URI.create(server.getURL() + "/mcp"))
             .header("Content-Type", MediaType.APPLICATION_JSON)
             .header("Accept", ACCEPT_BOTH)
@@ -152,7 +153,8 @@ class ReactiveRequestContextStreamingTest {
             return "done";
         }
 
-        static final CountDownLatch CLIENT_GOT_PROGRESS = new CountDownLatch(1);
+        // Counted down once per run of the test, which replaces it
+        static volatile CountDownLatch CLIENT_GOT_PROGRESS = new CountDownLatch(1);
 
         @Tool
         @ExecuteOn(TaskExecutors.BLOCKING)
