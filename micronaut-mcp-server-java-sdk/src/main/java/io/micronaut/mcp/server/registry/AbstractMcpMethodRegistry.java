@@ -22,6 +22,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.mcp.annotations.Audience;
 import io.micronaut.mcp.annotations.Icon;
 import io.micronaut.mcp.annotations.Meta;
+import io.micronaut.mcp.server.McpIconFactory;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.bind.ArgumentBinder;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
@@ -56,6 +57,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -96,6 +98,12 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected static final String URI_TEMPLATE_PROPERTY = "uriTemplate";
     protected static final String MEMBER_NAME = "name";
     protected static final String MEMBER_TITLE = "title";
+    private static final String SRC_PROPERTY = "src";
+    private static final String SIZES_PROPERTY = "sizes";
+    private static final String THEME_PROPERTY = "theme";
+    private static final String KEY_PROPERTY = "key";
+    private static final String AUDIENCE_PROPERTY = "audience";
+    private static final String PRIORITY_PROPERTY = "priority";
     private static final double UNSET_PRIORITY = -1;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMcpMethodRegistry.class);
     protected final List<Method<Object>> methods = new ArrayList<>();
@@ -103,6 +111,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
     private final AtomicReference<Set<String>> notifyingNames = new AtomicReference<>();
     private final Map<Class<? extends Throwable>, Optional<McpErrorExceptionMapper<? extends Throwable>>> classToExceptionMapper = new ConcurrentHashMap<>();
+    /**
+     * The methods and unmapped exception types already logged with a stack trace.
+     */
+    private final Set<Map.Entry<ExecutableMethod<?, ?>, Class<? extends Throwable>>> loggedUnmappedExceptions = ConcurrentHashMap.newKeySet();
 
     AbstractMcpMethodRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
                               BeanContext beanContext) {
@@ -146,7 +158,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      *
      * @return a stream of methods from the registry
      */
-    protected final Stream<Method<Object>> drainMethods() {
+    protected final Stream<Method<Object>> streamMethods() {
         return methods.stream();
     }
 
@@ -196,37 +208,71 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     }
 
     /**
-     * Maps a failure to the protocol error sent to the client: an {@link McpError} is returned unchanged, other exceptions
-     * are mapped by the matching {@link McpErrorExceptionMapper}, or become an internal error.
+     * Maps a failure of a method to the protocol error sent to the client: an {@link McpError} is returned unchanged,
+     * other exceptions are mapped by the matching {@link McpErrorExceptionMapper}, or become an internal error.
      *
+     * @param method The method that was invoked
      * @param throwable The failure
      * @return The protocol error
      */
-    protected McpError mcpError(Throwable throwable) {
+    protected McpError mcpError(ExecutableMethod<?, ?> method, Throwable throwable) {
         if (throwable instanceof McpError mcpError) {
+            // An error the method throws keeps its code
             return mcpError;
-        }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(throwable.getMessage(), throwable);
         }
         McpErrorExceptionMapper<? extends Throwable> exceptionMapper = getExceptionMapper(throwable.getClass());
         if (exceptionMapper != null) {
+            // A mapped exception is an expected client error
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(throwable.getMessage(), throwable);
+            }
             return mapException(exceptionMapper, throwable);
         }
-        // The SDK requires a message
-        String message = throwable.getMessage() != null && !throwable.getMessage().isBlank() ? throwable.getMessage() : throwable.getClass().getSimpleName();
-        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(message).build();
+        // The SDK logs only exceptions that are not an McpError, so an unmapped exception is logged here
+        if (LOG.isWarnEnabled()) {
+            // The stack trace is logged once per method and exception type, so a method that keeps failing does not flood
+            // the log, and a failure of one method does not hide the stack trace of another
+            if (loggedUnmappedExceptions.add(Map.entry(method, throwable.getClass()))) {
+                LOG.warn("MCP method {}#{} threw an exception that no McpErrorExceptionMapper maps, so it is returned as an internal error",
+                    method.getDeclaringType().getName(), method.getMethodName(), throwable);
+            } else {
+                LOG.warn("MCP method {}#{} threw {} again, returned as an internal error", method.getDeclaringType().getName(),
+                    method.getMethodName(), throwable.getClass().getName());
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Repeated exception of MCP method {}#{}", method.getDeclaringType().getName(), method.getMethodName(), throwable);
+                }
+            }
+        }
+        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(errorMessage(throwable)).build();
+    }
+
+    /**
+     * The message sent to the client for a failure that no mapper handles. The SDK requires a message, so a failure
+     * without one is described by the simple name of its class.
+     *
+     * @param throwable The failure
+     * @return The message of the failure, or the simple name of its class (its name for an anonymous class) when it has no message
+     */
+    static String errorMessage(Throwable throwable) {
+        String message = throwable.getMessage();
+        if (message != null && !message.isBlank()) {
+            return message;
+        }
+        // An anonymous class has no simple name
+        String simpleName = throwable.getClass().getSimpleName();
+        return simpleName.isEmpty() ? throwable.getClass().getName() : simpleName;
     }
 
     /**
      * An error handler for {@link Method#call} and {@link Method#callAsync} that fails with the protocol error of the failure.
      *
+     * @param m The method that was invoked
      * @param throwable The failure
      * @param <R> The result type
      * @return Never returns
      */
-    protected final <R> R failWithMcpError(Throwable throwable) {
-        throw mcpError(throwable);
+    protected final <R> R failWithMcpError(Method<?> m, Throwable throwable) {
+        throw mcpError(m.method(), throwable);
     }
 
     /**
@@ -267,6 +313,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     /**
      * @param method The method
      * @return The icons declared with {@link Icon}, or {@code null} when there are none
+     * @throws IllegalStateException If an icon has a blank {@code src} or a theme other than {@code light} or {@code dark}
      */
     protected static @Nullable List<McpSchema.Icon> icons(ExecutableMethod<?, ?> method) {
         List<AnnotationValue<Icon>> values = method.getAnnotationValuesByType(Icon.class);
@@ -275,12 +322,11 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
         List<McpSchema.Icon> icons = new ArrayList<>(values.size());
         for (AnnotationValue<Icon> value : values) {
-            String[] sizes = value.stringValues("sizes");
-            icons.add(new McpSchema.Icon(
-                value.stringValue("src").orElseThrow(),
-                value.stringValue(MIME_TYPE_PROPERTY).filter(StringUtils::isNotEmpty).orElse(null),
-                sizes.length == 0 ? null : List.of(sizes),
-                value.stringValue("theme").filter(StringUtils::isNotEmpty).orElse(null)));
+            icons.add(McpIconFactory.icon("The @Icon of method " + methodName(method),
+                value.stringValue(SRC_PROPERTY).orElse(null),
+                value.stringValue(MIME_TYPE_PROPERTY).orElse(null),
+                List.of(value.stringValues(SIZES_PROPERTY)),
+                value.stringValue(THEME_PROPERTY).orElse(null)));
         }
         return icons;
     }
@@ -288,6 +334,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     /**
      * @param method The method
      * @return The {@code _meta} entries declared with {@link Meta}, or {@code null} when there are none
+     * @throws IllegalStateException If a key is empty or declared twice
      */
     protected static @Nullable Map<String, Object> meta(ExecutableMethod<?, ?> method) {
         List<AnnotationValue<Meta>> values = method.getAnnotationValuesByType(Meta.class);
@@ -296,24 +343,30 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
         Map<String, Object> meta = LinkedHashMap.newLinkedHashMap(values.size());
         for (AnnotationValue<Meta> value : values) {
-            meta.put(value.stringValue("key").orElseThrow(), value.stringValue().orElse(""));
+            String key = value.stringValue(KEY_PROPERTY).filter(StringUtils::isNotEmpty).orElseThrow(() ->
+                new IllegalStateException("The @Meta of method " + methodName(method) + " requires a key"));
+            if (meta.put(key, value.stringValue().orElse("")) != null) {
+                throw new IllegalStateException("The @Meta key " + key + " is declared twice on method " + methodName(method));
+            }
         }
         return meta;
     }
 
     /**
-     * @param annotation A resource or resource template annotation
+     * @param method The method
+     * @param annotationType The resource or resource template annotation
      * @return The resource annotations it declares, or {@code null} when it declares none
      * @throws IllegalStateException If the priority is set and is not between 0 and 1
      */
-    protected static McpSchema.@Nullable Annotations resourceAnnotations(AnnotationValue<?> annotation) {
-        Audience[] audience = annotation.enumValues("audience", Audience.class);
-        double priority = annotation.doubleValue("priority").orElse(UNSET_PRIORITY);
+    protected static McpSchema.@Nullable Annotations resourceAnnotations(ExecutableMethod<?, ?> method, Class<? extends Annotation> annotationType) {
+        AnnotationValue<?> annotation = method.findAnnotation(annotationType).orElseThrow();
+        Audience[] audience = annotation.enumValues(AUDIENCE_PROPERTY, Audience.class);
+        double priority = annotation.doubleValue(PRIORITY_PROPERTY).orElse(UNSET_PRIORITY);
         boolean hasPriority = Double.compare(priority, UNSET_PRIORITY) != 0;
         // NaN fails the range check too
         if (hasPriority && !(priority >= 0 && priority <= 1)) {
-            String resource = annotation.stringValue(URI_PROPERTY).or(() -> annotation.stringValue(URI_TEMPLATE_PROPERTY)).orElse("");
-            throw new IllegalStateException("The priority of resource " + resource + " is " + priority + ", but it must be between 0 and 1");
+            throw new IllegalStateException("The priority of @" + annotationType.getSimpleName() + " on method " + methodName(method)
+                + " is " + priority + "; it must be between 0 and 1, or left out");
         }
         if (audience.length == 0 && !hasPriority) {
             return null;
@@ -325,8 +378,15 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         return new McpSchema.Annotations(roles, hasPriority ? priority : null);
     }
 
+    private static String methodName(ExecutableMethod<?, ?> method) {
+        return method.getDeclaringType().getName() + "#" + method.getMethodName();
+    }
+
     private static McpSchema.Role role(Audience audience) {
-        return audience == Audience.USER ? McpSchema.Role.USER : McpSchema.Role.ASSISTANT;
+        return switch (audience) {
+            case USER -> McpSchema.Role.USER;
+            case ASSISTANT -> McpSchema.Role.ASSISTANT;
+        };
     }
 
     /**
@@ -336,7 +396,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @return The error the mapper maps the failure to
      */
     @SuppressWarnings("unchecked")
-    protected static <T extends Throwable> McpError mapException(McpErrorExceptionMapper<? extends Throwable> mapper, T ex) {
+    static <T extends Throwable> McpError mapException(McpErrorExceptionMapper<? extends Throwable> mapper, T ex) {
         return ((McpErrorExceptionMapper<T>) mapper).map(ex);
     }
 
@@ -355,8 +415,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         private final ExecutableMethod<B, Object> executableMethod;
         private final Argument<?>[] arguments;
         /**
-         * For each parameter, the index of the value it receives without an argument binder (0 is the transport
-         * context, then the values in the order of {@link #boundParameterTypes()}), or {@link #NOT_BOUND}.
+         * For each parameter, the index in {@link AbstractMcpMethodRegistry#boundParameterTypes()} of the type of the value
+         * it receives without an argument binder, or {@link #NOT_BOUND}.
          */
         private final int[] boundIndexes;
         private final boolean collectsValues;
@@ -366,6 +426,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         /**
          * The argument binders by parameter, resolved on the first invocation, because binders for JSON schema types
          * are registered when the specifications are built. Concurrent first invocations resolve the same binders.
+         * The binders are kept only once every parameter has one.
          */
         private final AtomicReference<ArgumentBinder<?, ?>[]> binders = new AtomicReference<>();
 
@@ -374,6 +435,9 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                ExecutableMethod<B, Object> method,
                Class<?>[] boundParameterTypes,
                boolean collectsValues) {
+            if (boundParameterTypes.length == 0 || boundParameterTypes[0] != McpTransportContext.class) {
+                throw new IllegalArgumentException("The first bound parameter type must be " + McpTransportContext.class.getName());
+            }
             this.beanContext = beanContext;
             this.beanDefinition = beanDefinition;
             this.executableMethod = method;
@@ -612,7 +676,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
          * @param registry The argument binder registry
          * @param source The source of the argument binders
          * @param context The transport context or the server exchange
-         * @param values The request and any other values, in the order of {@link #boundParameterTypes()} after the context
+         * @param values The request and any other values: one for each of {@link AbstractMcpMethodRegistry#boundParameterTypes()}
+         *               after the transport context, in the same order
          * @param <S> The source type
          * @return The result of the method
          * @throws UnsatisfiedArgumentException If a required parameter cannot be bound
@@ -650,10 +715,15 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             ArgumentBinder<?, ?>[] resolved = binders.get();
             if (resolved == null) {
                 resolved = new ArgumentBinder<?, ?>[arguments.length];
+                boolean complete = true;
                 for (int i = 0; i < arguments.length; i++) {
                     resolved[i] = registry.findArgumentBinder((Argument<Object>) arguments[i]).orElse(null);
+                    complete &= resolved[i] != null;
                 }
-                binders.set(resolved);
+                // A missing binder is looked up again on the next invocation, in case it is registered later
+                if (complete) {
+                    binders.set(resolved);
+                }
             }
             return resolved;
         }

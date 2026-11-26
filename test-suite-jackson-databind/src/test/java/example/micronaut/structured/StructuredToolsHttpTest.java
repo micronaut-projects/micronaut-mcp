@@ -28,7 +28,7 @@ class StructuredToolsHttpTest {
     void nullStructuredResultIsToolError(@Client("/") HttpClient httpClient) throws JSONException {
         String result = call(httpClient, "missingEvaluation");
         JSONAssert.assertEquals("""
-            {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"Tool missingEvaluation returned no structured content"}],"isError":true}}""",
+            {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"Tool missingEvaluation produced no result. This is a server-side error; retrying with the same arguments will not help."}],"isError":true}}""",
             result, true);
     }
 

@@ -22,7 +22,7 @@ class MetadataTest:
             "/mcp", '{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}'))))
         tool = result["result"]["tools"][0]
         assert tool["name"] == "forecast"
-        assert tool["icons"] == [{"src": "https://example.com/sun.svg", "mimeType": "image/svg+xml", "sizes": ["any"]}]
+        assert tool["icons"] == [{"src": "https://example.com/sun-light.svg", "mimeType": "image/svg+xml", "sizes": ["any"], "theme": "light"}, {"src": "https://example.com/sun-dark.svg", "mimeType": "image/svg+xml", "sizes": ["any"], "theme": "dark"}]
         assert tool["_meta"] == {"com.example/category": "weather"}
 
     @Test
