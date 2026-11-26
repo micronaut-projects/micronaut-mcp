@@ -24,11 +24,21 @@ class UriTemplateReadResourceRequestTest {
             UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/C%2B%2B%20in%20100%25%20detail"));
         assertEquals(Map.of("title", "Café"),
             UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/Caf%C3%A9"));
+        assertEquals(Map.of("title", "Café au lait"),
+            UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/Café%20au%20lait"));
+        assertEquals(Map.of("shelf", "classics", "title", "A Tale"),
+            UriTemplateReadResourceRequest.arguments("book://{shelf}/{title}", "book://classics/A%20Tale"));
     }
 
     @Test
     void malformedEscapesAreInvalidParams() {
-        for (String uri : new String[] {"book://book/%zz", "book://book/%E", "book://book/title%"}) {
+        for (String uri : new String[] {"book://book/%zz", "book://book/%E", "book://book/title%",
+            // Malformed UTF-8: an invalid byte, a truncated sequence and an overlong /
+            "book://book/%FF", "book://book/%C3", "book://book/%C0%AF",
+            // Arabic-Indic digits, which Character.digit accepts as hexadecimal
+            "book://book/%\u0663\u0663",
+            // A lone surrogate, which a JSON string can carry, next to an escape
+            "book://book/\uD800%20"}) {
             McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("book://book/{title}", uri));
             assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
             assertEquals("Invalid percent-encoding in the value of URI template variable title", error.getMessage());
@@ -47,12 +57,13 @@ class UriTemplateReadResourceRequestTest {
     void reservedVariablesMayContainASlash() {
         assertEquals(Map.of("path", "docs/read me.txt"),
             UriTemplateReadResourceRequest.arguments("file:///{+path}", "file:///docs%2Fread%20me.txt"));
-        assertEquals(Set.of("path", "fragment"), UriTemplateReadResourceRequest.Template.compile("file:///{+path}{#fragment}").reservedVariables());
+        // UriMatchTemplate does not match fragment ({#var}) expressions, so they are not reserved
+        assertEquals(Set.of("path"), UriTemplateReadResourceRequest.Template.compile("file:///{+path}{#fragment}").reservedVariables());
     }
 
     @Test
     void reservedVariablesDropPrefixAndExplodeModifiers() {
-        assertEquals(Set.of("a", "b", "c"), UriTemplateReadResourceRequest.Template.compile("x://{+a:3,b*}{#c}").reservedVariables());
+        assertEquals(Set.of("a", "b", "c"), UriTemplateReadResourceRequest.Template.compile("x://{+a:3,b*}/{+c}").reservedVariables());
     }
 
     @Test

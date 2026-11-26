@@ -106,7 +106,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
     }
 
     private static <B> McpSchema.ResourceTemplate toResourceTemplate(ExecutableMethod<B, Object> method) {
-        String uri = method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY).orElseThrow();
+        String uri = uriTemplateValue(method);
         String name = method.stringValue(ResourceTemplate.class, NAME_PROPERTY).orElse(ResourceTemplate.ELEMENT_NAME);
         if (ResourceTemplate.ELEMENT_NAME.equals(name)) {
             name = method.getName();
@@ -151,9 +151,12 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
     }
 
     private static UriTemplateReadResourceRequest.Template uriTemplate(ExecutableMethod<?, ?> method) {
-        String uriTemplate = method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY)
+        return UriTemplateReadResourceRequest.Template.compile(uriTemplateValue(method));
+    }
+
+    private static String uriTemplateValue(ExecutableMethod<?, ?> method) {
+        return method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY)
             .orElseThrow(() -> new ConfigurationException("Missing required member uriTemplate in @ResourceTemplate annotation"));
-        return UriTemplateReadResourceRequest.Template.compile(uriTemplate);
     }
 
     private static String mimeType(ExecutableMethod<?, ?> method) {

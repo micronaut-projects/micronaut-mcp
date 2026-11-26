@@ -22,6 +22,7 @@ import org.junit.jupiter.api.function.Executable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -138,10 +139,10 @@ class RegistryHandlersTest {
         McpSchema.ReadResourceRequest request = new McpSchema.ReadResourceRequest("handlers://pages/A%20Tale");
         McpSchema.ReadResourceRequest malformed = new McpSchema.ReadResourceRequest("handlers://pages/%zz");
         String template = "handlers://pages/{page}";
-        var sync = resourceTemplateRegistry.getSyncSpecs().stream().filter(s -> s.resourceTemplate().uriTemplate().equals(template)).findFirst().orElseThrow().readHandler();
-        var async = resourceTemplateRegistry.getAsyncSpecs().stream().filter(s -> s.resourceTemplate().uriTemplate().equals(template)).findFirst().orElseThrow().readHandler();
-        var statelessSync = resourceTemplateRegistry.getStatelessSyncSpecs().stream().filter(s -> s.resourceTemplate().uriTemplate().equals(template)).findFirst().orElseThrow().readHandler();
-        var statelessAsync = resourceTemplateRegistry.getStatelessAsyncSpecs().stream().filter(s -> s.resourceTemplate().uriTemplate().equals(template)).findFirst().orElseThrow().readHandler();
+        var sync = spec(resourceTemplateRegistry.getSyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
+        var async = spec(resourceTemplateRegistry.getAsyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
+        var statelessSync = spec(resourceTemplateRegistry.getStatelessSyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
+        var statelessAsync = spec(resourceTemplateRegistry.getStatelessAsyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
 
         assertEquals("page A Tale", resource(sync.apply(SYNC_EXCHANGE, request)));
         assertEquals("page A Tale", resource(async.apply(ASYNC_EXCHANGE, request).block()));
@@ -171,6 +172,10 @@ class RegistryHandlersTest {
         } catch (McpError _) {
             return true;
         }
+    }
+
+    private static <S> S spec(List<S> specs, Function<S, McpSchema.ResourceTemplate> resourceTemplate, String uriTemplate) {
+        return specs.stream().filter(s -> resourceTemplate.apply(s).uriTemplate().equals(uriTemplate)).findFirst().orElseThrow();
     }
 
     private static void assertInvalidParams(Executable read) {
