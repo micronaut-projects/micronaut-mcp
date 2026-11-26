@@ -25,6 +25,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * An entry of the {@code _meta} of an MCP tool, prompt, resource or resource template, declared on the annotated method.
+ * It is ignored unless the method is also annotated with {@link Tool}, {@link Prompt}, {@link Resource} or
+ * {@link ResourceTemplate}.
  *
  * <pre>
  * &#64;Tool
@@ -42,12 +44,15 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface Meta {
 
     /**
-     * @return The key, optionally prefixed by a reverse DNS name and a slash. Prefixes containing {@code modelcontextprotocol} or {@code mcp} are reserved.
+     * @return The key. It may start with a prefix: a reverse DNS name followed by {@code /}. Prefixes whose second label is
+     * {@code modelcontextprotocol} or {@code mcp}, such as {@code io.modelcontextprotocol/}, are reserved by the specification;
+     * this is not checked. An empty key, or a key repeated on the same method, fails the startup.
      */
     String key();
 
     /**
-     * @return The value, which is always a string: the {@code _meta} entry cannot be a number, a boolean or an object
+     * @return The value, which is always a string: the {@code _meta} entry cannot be a number, a boolean or an object. For
+     * those, define the primitive with a factory and set its {@code _meta} there.
      */
     String value();
 }

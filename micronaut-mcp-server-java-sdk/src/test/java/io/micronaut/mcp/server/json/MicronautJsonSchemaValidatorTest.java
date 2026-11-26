@@ -6,6 +6,7 @@ import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,8 +37,28 @@ class MicronautJsonSchemaValidatorTest {
     void everyViolationIsReported() {
         JsonSchemaValidator.ValidationResponse response = validator.validate(SCHEMA, Map.of("age", "thirty"));
         assertFalse(response.valid());
-        assertTrue(response.errorMessage().contains("name") && response.errorMessage().contains("age")
-            && response.errorMessage().contains("; "), response.errorMessage());
+        // Sorted, and the error on the root object has no location
+        assertEquals("/age: string found, integer expected; required property 'name' not found", response.errorMessage());
+    }
+
+    @Test
+    void theViolationsAreSorted() {
+        // The validator reports the errors in the order of the schema, which is not the order of the messages
+        Map<String, Object> properties = new LinkedHashMap<>();
+        properties.put("zeta", Map.of("type", "string"));
+        properties.put("beta", Map.of("type", "integer"));
+        properties.put("alpha", Map.of("type", "boolean"));
+        Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("required", List.of("omega"));
+        schema.put("type", "object");
+        schema.put("properties", properties);
+        Map<String, Object> content = new LinkedHashMap<>();
+        content.put("zeta", 1);
+        content.put("beta", "two");
+        content.put("alpha", "three");
+        JsonSchemaValidator.ValidationResponse response = validator.validate(schema, content);
+        assertEquals("/alpha: string found, boolean expected; /beta: string found, integer expected; "
+            + "/zeta: integer found, string expected; required property 'omega' not found", response.errorMessage());
     }
 
     @Test
