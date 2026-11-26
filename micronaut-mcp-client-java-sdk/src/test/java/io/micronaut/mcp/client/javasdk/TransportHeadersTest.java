@@ -67,7 +67,7 @@ class TransportHeadersTest {
     @Test
     void theHeadersProvidersDoNotSeeTheRequestOfTheCurrentThreadWithoutAPropagatedContext() {
         McpClientHeadersProvider provider = connection -> Map.of("X-Request", String.valueOf(ServerRequestContext.currentRequest().isPresent()));
-        try (var _ = ServerHttpRequestContext.withRequest(PropagatedContext.empty(), HttpRequest.GET("/other-user")).propagate()) {
+        try (var _ = PropagatedContext.empty().plus(new ServerHttpRequestContext(HttpRequest.GET("/other-user"))).propagate()) {
             assertTrue(ServerRequestContext.currentRequest().isPresent());
             assertEquals(Map.of("X-Static", "static", "X-Request", "false"),
                 TransportHeaders.headers(CONNECTION, List.of(provider), McpTransportContext.EMPTY, Context.empty()));
