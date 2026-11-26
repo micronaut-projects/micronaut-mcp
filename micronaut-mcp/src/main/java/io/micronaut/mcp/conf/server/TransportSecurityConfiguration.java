@@ -49,7 +49,8 @@ public interface TransportSecurityConfiguration {
 
     /**
      * @return The origins allowed besides loopback origins, such as {@code https://app.example.com}. {@code *} allows
-     * every origin. Requests without an {@code Origin} header, which browsers always send, are allowed.
+     * every origin. Requests without an {@code Origin} header are always allowed: browsers send one with every
+     * {@code POST} request, so only non-browser clients omit it.
      */
     @NonNull
     List<String> getAllowedOrigins();
