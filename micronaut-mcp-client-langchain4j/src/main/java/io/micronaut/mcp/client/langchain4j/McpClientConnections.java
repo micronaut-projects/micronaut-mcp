@@ -18,12 +18,14 @@ package io.micronaut.mcp.client.langchain4j;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.Named;
+import io.micronaut.mcp.client.langchain4j.stdio.LegacyMcpClientStdioConfiguration;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.micronaut.mcp.conf.client.McpClientStdioConfiguration;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -43,18 +45,27 @@ public final class McpClientConnections {
      * @throws ConfigurationException When two connections have the same name
      */
     public static List<McpClientConnectionConfiguration> requireUniqueNames(List<McpClientConnectionConfiguration> connections) {
-        Map<String, Long> counts = connections.stream()
-            .collect(Collectors.groupingBy(Named::getName, Collectors.counting()));
-        List<String> duplicates = counts.entrySet().stream()
-            .filter(entry -> entry.getValue() > 1)
-            .map(Map.Entry::getKey)
-            .sorted()
+        Map<String, List<String>> declarations = connections.stream()
+            .collect(Collectors.groupingBy(Named::getName, TreeMap::new,
+                Collectors.mapping(McpClientConnections::declaration, Collectors.toList())));
+        List<String> clashes = declarations.entrySet().stream()
+            .filter(entry -> entry.getValue().size() > 1)
+            .map(entry -> String.join(" and ", entry.getValue().stream().sorted().toList()) + " have the same name '" + entry.getKey() + "'")
             .toList();
-        if (!duplicates.isEmpty()) {
-            throw new ConfigurationException("The MCP connection names " + duplicates + " are declared more than once. "
-                + "Each connection of " + McpClientHttpConfiguration.PREFIX + " and " + McpClientStdioConfiguration.PREFIX
-                + " needs a unique name, and the deprecated langchain4j.mcp.client.transport.stdio.commands declares one named stdio.");
+        if (!clashes.isEmpty()) {
+            throw new ConfigurationException("Each MCP connection needs a unique name, but " + String.join(", ", clashes) + ". Rename one of them.");
         }
         return connections;
+    }
+
+    private static String declaration(McpClientConnectionConfiguration connection) {
+        if (connection instanceof McpClientHttpConfiguration) {
+            return McpClientHttpConfiguration.PREFIX + "." + connection.getName();
+        } else if (connection instanceof McpClientStdioConfiguration) {
+            return connection instanceof LegacyMcpClientStdioConfiguration
+                ? LegacyMcpClientStdioConfiguration.PROPERTY
+                : McpClientStdioConfiguration.PREFIX + "." + connection.getName();
+        }
+        return "the bean " + connection.getClass().getName();
     }
 }

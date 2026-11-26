@@ -84,7 +84,7 @@ class UnreachableServersTest implements TestPropertyProvider {
         assertEquals("DOWN", assertInstanceOf(Map.class, details.get("unreachable")).get("status"));
         Map<?, ?> hanging = assertInstanceOf(Map.class, details.get("hanging"));
         assertEquals("DOWN", hanging.get("status"));
-        assertEquals("No answer within 1000 ms", hanging.get("error"));
+        assertEquals("No answer within 1s, the client may still be connecting to its server. See endpoints.health.mcp.timeout", hanging.get("error"));
         assertFalse(hangingServerRunning(), "The process of a client that could not be created is stopped");
     }
 

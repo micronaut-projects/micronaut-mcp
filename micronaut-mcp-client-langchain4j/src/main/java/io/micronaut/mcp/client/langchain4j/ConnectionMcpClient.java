@@ -29,6 +29,8 @@ import dev.langchain4j.service.tool.ToolExecutionResult;
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @Internal
 final class ConnectionMcpClient implements McpClient {
+    private static final Logger LOG = LoggerFactory.getLogger(ConnectionMcpClient.class);
     private final String name;
     private final BeanContext beanContext;
     private final AtomicReference<McpClient> client = new AtomicReference<>();
@@ -54,7 +57,13 @@ final class ConnectionMcpClient implements McpClient {
     private McpClient client() {
         McpClient current = client.get();
         if (current == null) {
-            current = beanContext.getBean(McpClient.class, Qualifiers.byName(name));
+            try {
+                current = beanContext.getBean(McpClient.class, Qualifiers.byName(name));
+            } catch (RuntimeException e) {
+                // Names the connection, which the errors of the tool provider do not
+                LOG.warn("The client of the MCP connection {} could not be created, it is created again on the next call: {}", name, e.getMessage());
+                throw e;
+            }
             client.compareAndSet(null, current);
         }
         return current;

@@ -18,7 +18,6 @@ package io.micronaut.mcp.client.langchain4j.health;
 import dev.langchain4j.mcp.client.McpClient;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.health.HealthStatus;
@@ -55,16 +54,8 @@ import java.util.concurrent.TimeoutException;
 @Requires(classes = HealthEndpoint.class)
 @Requires(beans = HealthEndpoint.class)
 @Requires(beans = McpClientConnectionConfiguration.class)
-@Requires(property = McpClientHealthIndicator.PROPERTY_ENABLED, notEquals = StringUtils.FALSE)
+@Requires(property = McpClientHealthConfiguration.PROPERTY_ENABLED, notEquals = StringUtils.FALSE)
 final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String, Object>> {
-    /**
-     * The property that disables the indicator.
-     */
-    static final String PROPERTY_ENABLED = HealthEndpoint.PREFIX + ".mcp.enabled";
-    /**
-     * The property that sets how long to wait for all the servers to answer.
-     */
-    static final String PROPERTY_TIMEOUT = HealthEndpoint.PREFIX + ".mcp.timeout";
     private static final String NAME = "mcp";
     private static final String STATUS = "status";
     private static final String ERROR = "error";
@@ -78,11 +69,11 @@ final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String,
     McpClientHealthIndicator(List<McpClientConnectionConfiguration> connections,
                              BeanContext beanContext,
                              @Named(TaskExecutors.BLOCKING) ExecutorService blockingExecutor,
-                             @Value("${" + PROPERTY_TIMEOUT + ":10s}") Duration timeout) {
+                             McpClientHealthConfiguration configuration) {
         this.connections = McpClientConnections.requireUniqueNames(connections);
         this.beanContext = beanContext;
         this.blockingExecutor = blockingExecutor;
-        this.timeout = timeout;
+        this.timeout = configuration.getTimeout();
     }
 
     @Override
@@ -126,7 +117,8 @@ final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String,
         Throwable cause = error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
         String message;
         if (cause instanceof TimeoutException) {
-            message = "No answer within " + timeout.toMillis() + " ms";
+            message = "No answer within " + format(timeout) + ", the client may still be connecting to its server. See "
+                + McpClientHealthConfiguration.PREFIX + ".timeout";
         } else if (cause.getMessage() != null) {
             message = cause.getMessage();
         } else {
@@ -134,6 +126,11 @@ final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String,
             message = cause.getClass().getName();
         }
         return Map.of(STATUS, HealthStatus.DOWN.getName(), ERROR, message);
+    }
+
+    private static String format(Duration duration) {
+        long millis = duration.toMillis();
+        return millis % 1000 == 0 ? (millis / 1000) + "s" : millis + "ms";
     }
 
     @Override

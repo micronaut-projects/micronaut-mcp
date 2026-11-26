@@ -53,7 +53,7 @@ class McpClientHealthIndicatorTest {
              ExecutorService executor = Executors.newCachedThreadPool()) {
             context.registerSingleton(McpClient.class, slow, Qualifiers.byName("slow"));
             McpClientHealthIndicator indicator = indicator(context, executor, Duration.ofMillis(100), "slow");
-            Map<String, Object> down = Map.of("slow", Map.of("status", "DOWN", "error", "No answer within 100 ms"));
+            Map<String, Object> down = Map.of("slow", Map.of("status", "DOWN", "error", "No answer within 100ms, the client may still be connecting to its server. See endpoints.health.mcp.timeout"));
             try {
                 assertEquals(down, indicator.getHealthInformation());
                 assertEquals(down, indicator.getHealthInformation());
@@ -73,8 +73,8 @@ class McpClientHealthIndicatorTest {
              ExecutorService executor = Executors.newSingleThreadExecutor()) {
             List<McpClientConnectionConfiguration> connections = List.of(connection, connection);
             ConfigurationException e = assertThrows(ConfigurationException.class,
-                () -> new McpClientHealthIndicator(connections, context, executor, Duration.ofSeconds(1)));
-            assertTrue(e.getMessage().contains("[twice]"), e.getMessage());
+                () -> new McpClientHealthIndicator(connections, context, executor, configuration(Duration.ofSeconds(1))));
+            assertTrue(e.getMessage().contains("have the same name 'twice'"), e.getMessage());
         }
     }
 
@@ -108,7 +108,13 @@ class McpClientHealthIndicatorTest {
 
     private static McpClientHealthIndicator indicator(ApplicationContext context, ExecutorService executor, Duration timeout, String name) {
         McpClientConnectionConfiguration connection = () -> name;
-        return new McpClientHealthIndicator(List.of(connection), context, executor, timeout);
+        return new McpClientHealthIndicator(List.of(connection), context, executor, configuration(timeout));
+    }
+
+    private static McpClientHealthConfiguration configuration(Duration timeout) {
+        McpClientHealthConfiguration configuration = new McpClientHealthConfiguration();
+        configuration.setTimeout(timeout);
+        return configuration;
     }
 
     private static McpClient client(InvocationHandler handler) {
