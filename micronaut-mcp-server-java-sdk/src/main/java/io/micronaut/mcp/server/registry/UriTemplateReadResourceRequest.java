@@ -24,6 +24,7 @@ import io.modelcontextprotocol.spec.McpSchema;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
@@ -110,6 +111,8 @@ record UriTemplateReadResourceRequest(
     private static String percentDecode(String name, String value) {
         // A char takes at most 3 UTF-8 bytes, and an escape of 3 chars decodes to a single byte
         ByteBuffer bytes = ByteBuffer.allocate(value.length() * 3);
+        // Created for the first non-ASCII char only
+        CharsetEncoder encoder = null;
         int i = 0;
         try {
             while (i < value.length()) {
@@ -121,15 +124,20 @@ record UriTemplateReadResourceRequest(
                     }
                     bytes.put((byte) ((high << 4) | low));
                     i += 3;
+                } else if (value.charAt(i) < 0x80) {
+                    bytes.put((byte) value.charAt(i));
+                    i++;
                 } else {
-                    int end = value.indexOf('%', i);
-                    if (end < 0) {
-                        end = value.length();
+                    int end = i + 1;
+                    while (end < value.length() && value.charAt(end) >= 0x80) {
+                        end++;
                     }
-                    bytes.put(StandardCharsets.UTF_8.newEncoder()
-                        .onMalformedInput(CodingErrorAction.REPORT)
-                        .onUnmappableCharacter(CodingErrorAction.REPORT)
-                        .encode(CharBuffer.wrap(value, i, end)));
+                    if (encoder == null) {
+                        encoder = StandardCharsets.UTF_8.newEncoder()
+                            .onMalformedInput(CodingErrorAction.REPORT)
+                            .onUnmappableCharacter(CodingErrorAction.REPORT);
+                    }
+                    bytes.put(encoder.encode(CharBuffer.wrap(value, i, end)));
                     i = end;
                 }
             }

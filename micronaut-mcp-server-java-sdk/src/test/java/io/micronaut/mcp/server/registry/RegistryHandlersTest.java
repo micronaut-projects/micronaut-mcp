@@ -1,5 +1,7 @@
 package io.micronaut.mcp.server.registry;
 
+import io.micronaut.context.annotation.Bean;
+import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
@@ -8,6 +10,7 @@ import io.micronaut.mcp.annotations.PromptCompletion;
 import io.micronaut.mcp.annotations.Resource;
 import io.micronaut.mcp.annotations.ResourceTemplate;
 import io.micronaut.mcp.annotations.Tool;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
@@ -15,16 +18,23 @@ import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -56,6 +66,10 @@ class RegistryHandlersTest {
 
     @Inject
     CompletionRegistry completionRegistry;
+
+    @Inject
+    @Named("counting")
+    CountingExecutor countingExecutor;
 
     @Test
     void tools() {
@@ -166,6 +180,24 @@ class RegistryHandlersTest {
     }
 
     @Test
+    void aRejectedUriDoesNotTakeAThreadOfTheExecutor() {
+        McpSchema.ReadResourceRequest malformed = new McpSchema.ReadResourceRequest("handlers://counted/%zz");
+        for (Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> read : readers("handlers://counted/{page}")) {
+            assertInvalidParams(() -> read.apply(malformed));
+        }
+        assertEquals(0, countingExecutor.submitted.get());
+        // The async handlers return the error instead of throwing it
+        var async = spec(resourceTemplateRegistry.getAsyncSpecs(), s -> s.resourceTemplate(), "handlers://counted/{page}").readHandler();
+        Mono<McpSchema.ReadResourceResult> result = assertDoesNotThrow(() -> async.apply(ASYNC_EXCHANGE, malformed));
+        assertInvalidParams(result::block);
+
+        for (Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> read : readers("handlers://counted/{page}")) {
+            assertEquals("counted 7", resource(read.apply(new McpSchema.ReadResourceRequest("handlers://counted/7"))));
+        }
+        assertEquals(4, countingExecutor.submitted.get());
+    }
+
+    @Test
     void completions() {
         McpSchema.CompleteRequest request = new McpSchema.CompleteRequest(new McpSchema.PromptReference("greeting"),
             new McpSchema.CompleteRequest.CompleteArgument("name", "A"));
@@ -262,6 +294,40 @@ class RegistryHandlersTest {
         @ResourceTemplate(uriTemplate = "handlers://files/{+path}")
         String file(String path) {
             return "file " + path;
+        }
+
+        @ExecuteOn("counting")
+        @ResourceTemplate(uriTemplate = "handlers://counted/{page}")
+        String counted(String page) {
+            return "counted " + page;
+        }
+    }
+
+    /**
+     * An executor that counts the tasks submitted to it.
+     */
+    static final class CountingExecutor extends ThreadPoolExecutor {
+        final AtomicInteger submitted = new AtomicInteger();
+
+        CountingExecutor() {
+            super(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+        }
+
+        @Override
+        public void execute(Runnable command) {
+            submitted.incrementAndGet();
+            super.execute(command);
+        }
+    }
+
+    @Requires(property = "spec.name", value = "RegistryHandlersTest")
+    @Factory
+    static class CountingExecutorFactory {
+        @Singleton
+        @Named("counting")
+        @Bean(preDestroy = "shutdown")
+        CountingExecutor countingExecutor() {
+            return new CountingExecutor();
         }
     }
 
