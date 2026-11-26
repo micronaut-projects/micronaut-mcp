@@ -1,1 +1,3 @@
 Micronaut MCP ships api:mcp.server.context.MicronautMcpTransportContext[], an extension to `io.modelcontextprotocol.common.McpTransportContext`, which allows you to access concepts such as the authenticated user, locale, host, etc.
+
+With the HTTP transport, the context reads its values from the HTTP request the first time they are asked for, and it keeps the request reachable for as long as the context is reachable. Do not keep the context after the request is handled, for example in a cache or a background task: copy the values you need instead.
