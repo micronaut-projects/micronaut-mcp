@@ -6,12 +6,15 @@ dependency:micronaut-micrometer-core[groupId=io.micronaut.micrometer]
 
 dependency:micronaut-micrometer-registry-prometheus[groupId=io.micronaut.micrometer]
 
-To expose the metrics at `/prometheus`, also add Micronaut Management and make the endpoint available without authentication, as the https://micronaut-projects.github.io/micronaut-micrometer/latest/guide/[Micronaut Micrometer guide] describes:
+To expose the metrics at `/prometheus`, as the https://micronaut-projects.github.io/micronaut-micrometer/latest/guide/[Micronaut Micrometer guide] describes, also add Micronaut Management:
 
 dependency:micronaut-management[groupId=io.micronaut]
 
+WARNING: The metrics name every tool, prompt and resource of the server and show how often each is used and fails. The MCP endpoint is reachable by remote clients, and management endpoints share its port by default, so do not make `/prometheus` available without authentication on that port. Either keep the endpoint sensitive and have the scraper authenticate (with Micronaut Security, a sensitive endpoint requires an authenticated request), or serve the management endpoints on a separate port that only the monitoring network can reach:
+
 [source,properties]
 ----
+endpoints.all.port=8081
 endpoints.prometheus.sensitive=false
 ----
 
@@ -35,6 +38,7 @@ The server then times these operations with a timer named `mcp.server.operation.
 a|* `none` on success.
 * `tool_error` when a tool call returns a tool execution error: the tool threw an exception, or the model sent arguments that could not be bound or validated.
 * Otherwise, the JSON-RPC error code of the protocol error the operation ended with. An exception thrown by a prompt, resource or completion method is `-32603` (internal error), unless an `McpErrorExceptionMapper` maps it to another code; so is an exception thrown by a tool that such a mapper maps.
+* `_OTHER` for a protocol error whose code is outside the range JSON-RPC reserves (-32768 to -32000), which holds every code of JSON-RPC and MCP. Such a code is defined by the application and may come from a remote peer, for example a tool that relays the errors of another MCP server, so it is not reported, to keep the number of timers bounded.
 * `cancelled` when the reactive server cancelled the result before it produced a value.
 * The fully qualified class name of a JVM `Error` the method threw, for example `java.lang.StackOverflowError`. An `Error` that reaches the server through a returned publisher or future, or that a method declaring `@ExecuteOn` throws on the synchronous server, is handled like an exception.
 |===
@@ -59,7 +63,7 @@ The timer is based on the https://github.com/open-telemetry/semantic-conventions
 
 * The conventions name the primitive with `gen_ai.tool.name`, `gen_ai.prompt.name` or the opt-in `mcp.resource.uri`, depending on the operation. The timer always uses `mcp.primitive.name`, a tag Micronaut MCP defines, not the conventions, because the Prometheus registry requires every timer of a name to have the same tag keys.
 * The conventions leave `error.type` out on success. The timer sets it to `none`, for the same reason.
-* The conventions do not count some JSON-RPC error codes as errors, for example `-32602` (invalid params). The timer records every code in `error.type`, so that a dashboard can tell them apart from successes.
+* The conventions do not count some JSON-RPC error codes as errors, for example `-32602` (invalid params). The timer records every reserved code in `error.type`, so that a dashboard can tell them apart from successes.
 * The conventions time a request from when it is received until its response is sent. The timer covers only the method of the primitive: from when the server invokes it, including any wait for the executor of `@ExecuteOn`, until its result is mapped. The JSON-RPC parsing, the input validation of the SDK and the serialization of the response are not included.
 
 With a meter registry that accepts different tag keys for one meter name, a https://docs.micrometer.io/micrometer/reference/concepts/meter-filters.html[Micrometer `MeterFilter`] bean can map `mcp.primitive.name` to the attribute names of the conventions.
