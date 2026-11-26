@@ -1,31 +1,21 @@
 package io.micronaut.mcp.server.stateless;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.client.HttpClient;
-import io.micronaut.http.client.annotation.Client;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.PromptCompletion;
 import io.micronaut.mcp.annotations.Resource;
+import io.micronaut.mcp.annotations.ResourceCompletion;
 import io.micronaut.mcp.annotations.ResourceTemplate;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.observability.McpServerObserver;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Property(name = "micronaut.mcp.server.info.name", value = "mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value = "0.0.1")
@@ -33,74 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Property(name = "micronaut.mcp.server.reactive", value = "true")
 @Property(name = "spec.name", value = "ReactiveOperationMetricsTest")
 @MicronautTest
-class ReactiveOperationMetricsTest {
-
-    @Inject
-    @Client("/")
-    HttpClient httpClient;
-
-    @Inject
-    MeterRegistry meterRegistry;
-
-    @Test
-    void operationsAreTimedOnceWithTheirOutcome() {
-        call("tools/call", """
-            {"name": "add", "arguments": {"a": 1, "b": 2}}""");
-        call("tools/call", """
-            {"name": "add", "arguments": {"a": 1, "b": 2}}""");
-        call("tools/call", """
-            {"name": "broken", "arguments": {}}""");
-        call("prompts/get", """
-            {"name": "greet", "arguments": {}}""");
-        call("completion/complete", """
-            {"ref": {"type": "ref/prompt", "name": "translate"}, "argument": {"name": "language", "value": "py"}}""");
-        call("resources/read", """
-            {"uri": "metrics://cities/paris"}""");
-        call("resources/read", """
-            {"uri": "metrics://cities/rome"}""");
-        callFailing("resources/read", """
-            {"uri": "metrics://broken"}""");
-
-        assertEquals(2, timer("tools/call", "add", "none").count());
-        assertEquals(1, timer("tools/call", "broken", "tool_error").count());
-        assertEquals(1, timer("prompts/get", "greet", "none").count());
-        assertEquals(1, timer("completion/complete", "translate", "none").count());
-        // a template read is named by its template, so the expanded URIs do not multiply the timers
-        assertEquals(2, timer("resources/read", "metrics://cities/{city}", "none").count());
-        // an unmapped checked exception is an internal error
-        assertEquals(1, timer("resources/read", "metrics://broken", "-32603").count());
-        // the server cancels the result once it has its value, which is not recorded as a cancellation
-        assertTrue(meterRegistry.find("mcp.server.operation.duration").tag("error.type", "cancelled").timers().isEmpty(),
-            String.valueOf(meterRegistry.getMeters()));
-    }
-
-    private Timer timer(String method, String name, String errorType) {
-        Timer timer = meterRegistry.find("mcp.server.operation.duration")
-            .tag("mcp.method.name", method)
-            .tag("mcp.primitive.name", name)
-            .tag("error.type", errorType)
-            .timer();
-        assertNotNull(timer, method + " " + name + " " + errorType + " in " + meterRegistry.getMeters());
-        return timer;
-    }
-
-    private void call(String method, String params) {
-        httpClient.toBlocking().retrieve(request(method, params));
-    }
-
-    private void callFailing(String method, String params) {
-        HttpRequest<String> request = request(method, params);
-        try {
-            httpClient.toBlocking().retrieve(request);
-        } catch (HttpClientResponseException _) {
-            // a protocol error
-        }
-    }
-
-    private static HttpRequest<String> request(String method, String params) {
-        return HttpRequest.POST("/mcp", """
-            {"jsonrpc": "2.0", "id": 1, "method": "%s", "params": %s}""".formatted(method, params));
-    }
+class ReactiveOperationMetricsTest extends AbstractOperationMetricsTest {
 
     @Requires(property = "spec.name", value = "ReactiveOperationMetricsTest")
     @Singleton
@@ -111,13 +34,33 @@ class ReactiveOperationMetricsTest {
         }
 
         @Tool
-        String broken() {
-            throw new IllegalStateException("broken");
+        Mono<String> broken() {
+            return Mono.error(new IllegalStateException("broken"));
+        }
+
+        @Tool
+        Mono<String> invalid() {
+            return Mono.error(invalidParams());
+        }
+
+        @Tool
+        Mono<String> slow() {
+            return Mono.delay(Duration.ofMillis(SLOW_MILLIS)).thenReturn("done");
         }
 
         @Prompt
         String greet() {
             return "Hello";
+        }
+
+        @Prompt
+        Mono<String> brokenPrompt() {
+            return Mono.error(new IllegalStateException("broken"));
+        }
+
+        @Prompt
+        Mono<String> count(int n) {
+            return Mono.just("Count to " + n);
         }
 
         @Prompt
@@ -135,6 +78,11 @@ class ReactiveOperationMetricsTest {
             return Mono.just(city);
         }
 
+        @ResourceCompletion(uri = "metrics://cities/{city}")
+        Mono<List<String>> cities() {
+            return Mono.just(List.of("paris"));
+        }
+
         @Resource(uri = "metrics://broken")
         String brokenResource() throws IOException {
             throw new IOException("unreadable");
@@ -142,7 +90,7 @@ class ReactiveOperationMetricsTest {
     }
 
     /**
-     * An observer that fails, which must neither fail the operations nor record them twice.
+     * An observer that fails to stop, which must neither fail the operations nor record them twice.
      */
     @Requires(property = "spec.name", value = "ReactiveOperationMetricsTest")
     @Singleton

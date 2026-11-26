@@ -49,7 +49,7 @@ class ObservedOperationsTest {
     }
 
     @Test
-    void anOperationCancelledAfterItsValueIsRecordedOnce() {
+    void aValueIsRecordedAsASuccess() {
         assertEquals("value", registry.observedAsync("prompts/get", "fast", () -> Mono.just("value")).block());
 
         assertEquals(List.of("prompts/get fast null"), observer.stops);
