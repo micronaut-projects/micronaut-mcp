@@ -87,8 +87,9 @@ final class McpClientConnectionsValidator implements ApplicationEventListener<St
         }
     }
 
+    // The interface declares the URL non-null, but a connection declared without it binds none, so the check is not always false
+    @SuppressWarnings("java:S2583")
     private static void requireUrl(McpClientHttpConfiguration http) {
-        // The interface declares the URL non-null, but a connection declared without it binds none
         if (http.getUrl() == null) {
             throw new ConfigurationException("The MCP HTTP connection " + http.getName() + " has no url, set "
                 + McpClientHttpConfiguration.PREFIX + "." + http.getName() + ".url");
