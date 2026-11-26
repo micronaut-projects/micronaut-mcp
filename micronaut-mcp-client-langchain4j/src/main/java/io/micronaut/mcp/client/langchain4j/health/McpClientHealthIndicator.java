@@ -113,9 +113,15 @@ final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String,
 
     private Object down(Throwable error) {
         Throwable cause = error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
-        String message = cause instanceof TimeoutException
-            ? "No answer within " + timeout
-            : String.valueOf(cause.getMessage());
+        String message;
+        if (cause instanceof TimeoutException) {
+            message = "No answer within " + timeout;
+        } else if (cause.getMessage() != null) {
+            message = cause.getMessage();
+        } else {
+            // Some errors have no message, their type still tells what failed
+            message = cause.getClass().getName();
+        }
         return Map.of(STATUS, HealthStatus.DOWN.getName(), ERROR, message);
     }
 
