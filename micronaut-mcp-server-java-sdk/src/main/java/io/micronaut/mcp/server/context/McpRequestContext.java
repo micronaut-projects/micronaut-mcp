@@ -25,7 +25,7 @@ import org.jspecify.annotations.Nullable;
  *
  * <pre>
  * &#64;Tool
- * String importCatalog(String url, McpRequestContext context) {
+ * String importCatalog(String url, int pages, McpRequestContext context) {
  *     for (int i = 0; i &lt; pages; i++) {
  *         importPage(url, i);
  *         context.progress(i + 1, pages, "Imported page " + (i + 1));
@@ -34,9 +34,10 @@ import org.jspecify.annotations.Nullable;
  * }
  * </pre>
  *
- * <p>Over the HTTP transport a request whose client accepts {@code text/event-stream} is answered with a stream as soon
- * as the method sends a notification, and the notifications and the result are sent as events. Without notifications,
- * or when the client only accepts JSON, the result is sent as JSON and notifications are dropped.</p>
+ * <p>Over the HTTP transport a request whose client accepts both {@code application/json} and {@code text/event-stream}
+ * is answered with a stream as soon as the method sends a notification, and the notifications and the result are sent
+ * as events. Without notifications, or when the client does not accept both, the result is sent as JSON and
+ * notifications are dropped.</p>
  *
  * @since 2.2.0
  */
@@ -48,7 +49,10 @@ public interface McpRequestContext {
     McpTransportContext transportContext();
 
     /**
-     * @return The progress token the client sent with the request, or {@code null} if it did not ask for progress
+     * The progress token the client sent with the request: a string of at most 256 characters, or an integer, as the
+     * protocol allows. A token of another type, or a longer one, is ignored.
+     *
+     * @return The progress token, or {@code null} if the client did not ask for progress
      */
     @Nullable
     Object progressToken();
@@ -62,6 +66,17 @@ public interface McpRequestContext {
      * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/utilities/progress">Progress</a>
      */
     void progress(double progress, @Nullable Double total, @Nullable String message);
+
+    /**
+     * Reports progress, if the client asked for it with a progress token.
+     *
+     * @param progress The progress so far, which must increase with each call
+     * @param total The total progress
+     * @param message A human-readable description of the progress
+     */
+    default void progress(double progress, double total, @Nullable String message) {
+        progress(progress, Double.valueOf(total), message);
+    }
 
     /**
      * Reports progress, if the client asked for it with a progress token.
@@ -93,26 +108,52 @@ public interface McpRequestContext {
     }
 
     /**
-     * @return Whether the client stopped waiting for the result, for example by closing the stream of an HTTP request
+     * Whether the client stopped waiting for the result. Over the HTTP transport, that is when the client closes the
+     * event stream of the response, so only once the response has become an event stream with the first notification:
+     * the server does not detect a client that goes away before. It is always {@code false} over STDIO, and when the
+     * response is sent as JSON: the {@code notifications/cancelled} message of the protocol is not handled on either
+     * transport.
+     *
+     * @return Whether the client stopped waiting for the result
      */
     boolean isCancelled();
 
     /**
      * Asks the user for information through the client. Only the STDIO transport can send requests to the client.
+     * The method waits for the answer, so on a reactive server, which invokes a method without an executor on the thread
+     * that reads the messages of the client, it must run on a blocking executor, for example with
+     * {@code @ExecuteOn(TaskExecutors.BLOCKING)}; otherwise it fails with an {@link IllegalStateException}.
+     *
+     * <pre>
+     * &#64;Tool
+     * &#64;ExecuteOn(TaskExecutors.BLOCKING)
+     * String greet(McpRequestContext context) {
+     *     McpSchema.ElicitResult answer = context.elicit(McpSchema.ElicitRequest.builder()
+     *         .message("What is your name?")
+     *         .requestedSchema(Map.of("type", "object", "properties", Map.of("name", Map.of("type", "string"))))
+     *         .build());
+     *     return answer.action() == McpSchema.ElicitResult.Action.ACCEPT ? "Hello " + answer.content().get("name") : "Hello";
+     * }
+     * </pre>
      *
      * @param request The elicitation request
      * @return The user's answer
      * @throws UnsupportedOperationException over the stateless HTTP transport
+     * @throws IllegalStateException on a reactive server, in a method without an executor
      * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation">Elicitation</a>
      */
     McpSchema.ElicitResult elicit(McpSchema.ElicitRequest request);
 
     /**
      * Asks the client to sample a language model. Only the STDIO transport can send requests to the client.
+     * The method waits for the answer, so on a reactive server, which invokes a method without an executor on the thread
+     * that reads the messages of the client, it must run on a blocking executor, for example with
+     * {@code @ExecuteOn(TaskExecutors.BLOCKING)}; otherwise it fails with an {@link IllegalStateException}.
      *
      * @param request The sampling request
      * @return The model's answer
      * @throws UnsupportedOperationException over the stateless HTTP transport
+     * @throws IllegalStateException on a reactive server, in a method without an executor
      * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/client/sampling">Sampling</a>
      */
     McpSchema.CreateMessageResult sample(McpSchema.CreateMessageRequest request);

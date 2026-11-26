@@ -32,9 +32,10 @@ import org.jspecify.annotations.Nullable;
 import java.util.Locale;
 
 /**
- * Decides whether the response to a request may become an event stream: the client accepts one, and the request
- * designates a primitive that declares an {@link io.micronaut.mcp.server.context.McpRequestContext}, so it may send
- * notifications while it runs. Other requests are answered with JSON without building a streaming response.
+ * Decides whether the response to a request may become an event stream: the client accepts both JSON and an event
+ * stream, as the Streamable HTTP transport requires, and the request designates a primitive that declares an
+ * {@link io.micronaut.mcp.server.context.McpRequestContext}, so it may send notifications while it runs. Other requests
+ * are answered with JSON without building a streaming response.
  */
 @Singleton
 @Internal
@@ -44,6 +45,7 @@ final class McpStreamingPolicy {
     private static final String KEY_NAME = "name";
     private static final String KEY_URI = "uri";
     private static final String KEY_REF = "ref";
+    private static final String KEY_TYPE = "type";
 
     private final ToolRegistry toolRegistry;
     private final PromptRegistry promptRegistry;
@@ -77,23 +79,32 @@ final class McpStreamingPolicy {
         if (method == null || !method.isString() || params == null || !params.isObject()) {
             return false;
         }
-        boolean mayNotify = switch (method.getStringValue()) {
-            case McpSchema.METHOD_TOOLS_CALL -> name(params, KEY_NAME) instanceof String name && toolRegistry.mayNotify(name);
-            case McpSchema.METHOD_PROMPT_GET -> name(params, KEY_NAME) instanceof String name && promptRegistry.mayNotify(name);
-            case McpSchema.METHOD_RESOURCES_READ -> name(params, KEY_URI) instanceof String uri
-                && (resourceRegistry.mayNotify(uri) || resourceTemplateRegistry.mayNotifyUri(uri));
-            case McpSchema.METHOD_COMPLETION_COMPLETE -> completionMayNotify(params.get(KEY_REF));
+        return switch (method.getStringValue()) {
+            case McpSchema.METHOD_TOOLS_CALL -> name(params, KEY_NAME) instanceof String name && toolRegistry.mayNotify(name)
+                && acceptsJsonAndEventStream(request);
+            case McpSchema.METHOD_PROMPT_GET -> name(params, KEY_NAME) instanceof String name && promptRegistry.mayNotify(name)
+                && acceptsJsonAndEventStream(request);
+            // Matching the URI templates costs more than parsing the Accept header, so it comes last
+            case McpSchema.METHOD_RESOURCES_READ -> name(params, KEY_URI) instanceof String uri && acceptsJsonAndEventStream(request)
+                && (resourceRegistry.mayNotify(uri) || resourceTemplateRegistry.mayNotify(uri));
+            case McpSchema.METHOD_COMPLETION_COMPLETE -> completionMayNotify(params.get(KEY_REF)) && acceptsJsonAndEventStream(request);
             default -> false;
         };
-        return mayNotify && acceptsEventStream(request);
     }
 
     private boolean completionMayNotify(@Nullable JsonNode ref) {
         if (ref == null || !ref.isObject()) {
             return false;
         }
-        String name = name(ref, KEY_NAME);
-        return completionRegistry.mayNotify(name != null ? name : String.valueOf(name(ref, KEY_URI)));
+        // A prompt reference designates the prompt by its name, a resource reference the resource by its URI
+        String type = name(ref, KEY_TYPE);
+        String name = null;
+        if (McpSchema.PromptReference.TYPE.equals(type)) {
+            name = name(ref, KEY_NAME);
+        } else if (McpSchema.ResourceReference.TYPE.equals(type)) {
+            name = name(ref, KEY_URI);
+        }
+        return name != null && completionRegistry.mayNotify(name);
     }
 
     private static @Nullable String name(JsonNode node, String key) {
@@ -103,12 +114,17 @@ final class McpStreamingPolicy {
 
     /**
      * @param request The request
-     * @return Whether the {@code Accept} header of the request accepts an event stream, with a quality other than 0
+     * @return Whether the {@code Accept} header of the request lists both JSON and an event stream, with a quality other
+     * than 0, as the Streamable HTTP transport requires of a POST request
      */
-    static boolean acceptsEventStream(HttpRequest<?> request) {
+    static boolean acceptsJsonAndEventStream(HttpRequest<?> request) {
+        return accepts(request, MediaType.APPLICATION_JSON) && accepts(request, MediaType.TEXT_EVENT_STREAM);
+    }
+
+    private static boolean accepts(HttpRequest<?> request, String mediaType) {
         for (String accept : request.getHeaders().getAll(HttpHeaders.ACCEPT)) {
             for (String range : accept.split(",")) {
-                if (isEventStream(range)) {
+                if (isAccepted(range, mediaType)) {
                     return true;
                 }
             }
@@ -116,9 +132,9 @@ final class McpStreamingPolicy {
         return false;
     }
 
-    private static boolean isEventStream(String range) {
+    private static boolean isAccepted(String range, String mediaType) {
         String[] parts = range.split(";");
-        if (!parts[0].trim().equalsIgnoreCase(MediaType.TEXT_EVENT_STREAM)) {
+        if (!parts[0].trim().equalsIgnoreCase(mediaType)) {
             return false;
         }
         for (int i = 1; i < parts.length; i++) {

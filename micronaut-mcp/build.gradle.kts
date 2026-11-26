@@ -10,9 +10,9 @@ dependencies {
     compileOnly(mn.micronaut.http.client.core)
     compileOnly(mn.micronaut.context)
     compileOnly(mn.reactor)
+    testAnnotationProcessor(mn.micronaut.inject.java)
     testImplementation(mn.micronaut.http)
     testImplementation(mnSerde.micronaut.serde.jackson)
-    testAnnotationProcessor(mn.micronaut.inject.java)
     testImplementation(mnLogging.logback.classic)
 }
 micronautBuild {

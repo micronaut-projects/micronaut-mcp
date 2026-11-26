@@ -34,6 +34,10 @@ final class ExecutionModelAssertions {
         Map<String, Object> error = callToolError(httpClient, jsonMapper, "invalidParams", HttpStatus.BAD_REQUEST);
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.get("code"));
         assertEquals("bad params", error.get("message"));
+        // and so is an McpError that fails a CompletionStage, unwrapped from the CompletionException
+        Map<String, Object> futureError = callToolError(httpClient, jsonMapper, "failedFuture", HttpStatus.BAD_REQUEST);
+        assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, futureError.get("code"));
+        assertEquals("bad future params", futureError.get("message"));
         // the transport context is in the Reactor context
         assertEquals("true", text(callTool(httpClient, jsonMapper, "reactorContext")));
         // an empty publisher of structured content is a tool error
@@ -44,5 +48,7 @@ final class ExecutionModelAssertions {
         assertEquals("true true", text(callTool(httpClient, jsonMapper, "onIo")));
         // a publisher of completion values is collected
         assertEquals(List.of("Alice", "Bob"), complete(httpClient, jsonMapper, "greet"));
+        // the text of any CharSequence is a completion value
+        assertEquals(List.of("Carol"), complete(httpClient, jsonMapper, "farewell"));
     }
 }
