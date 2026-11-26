@@ -85,7 +85,7 @@ final class McpServerInfoConfigurationProperties implements McpServerInfoConfigu
     }
 
     /**
-     * @param websiteUrl The URL of the website of the server. It must be an https or http URL, or the startup fails.
+     * @param websiteUrl The URL of the website of the server. It must be an https or http URL without a user name or password, or the startup fails.
      */
     public void setWebsiteUrl(@Nullable String websiteUrl) {
         this.websiteUrl = websiteUrl;
@@ -97,7 +97,7 @@ final class McpServerInfoConfigurationProperties implements McpServerInfoConfigu
     }
 
     /**
-     * @param icons The icons of the server. Each icon has a required src (an HTTPS URL or a data: URI; an HTTP URL is accepted, any other scheme fails the startup) and an optional mime-type, sizes (for example 48x48 or any) and theme (light or dark, in lowercase).
+     * @param icons The icons of the server. Each icon has a required src (an HTTPS URL or a data:image/... URI; an HTTP URL is accepted, another scheme or a URL with a user name or password fails the startup) and an optional mime-type, sizes (for example 48x48 or any) and theme (light or dark, in lowercase).
      */
     public void setIcons(@Nullable List<IconConfiguration> icons) {
         this.icons = icons != null ? icons : List.of();

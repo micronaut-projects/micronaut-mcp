@@ -34,14 +34,14 @@ public class IconConfiguration {
     private @Nullable String theme;
 
     /**
-     * @return The URI of the icon: an HTTPS URL or a {@code data:} URI. An HTTP URL is accepted, for example for local development; any other scheme fails the startup
+     * @return The URI of the icon: an HTTPS URL or a {@code data:image/...} URI. An HTTP URL is accepted, for example for local development; another scheme, or a URL with a user name or password, fails the startup
      */
     public @Nullable String getSrc() {
         return src;
     }
 
     /**
-     * @param src The URI of the icon: an HTTPS URL or a {@code data:} URI. An HTTP URL is accepted, for example for local development; any other scheme fails the startup
+     * @param src The URI of the icon: an HTTPS URL or a {@code data:image/...} URI. An HTTP URL is accepted, for example for local development; another scheme, or a URL with a user name or password, fails the startup
      */
     public void setSrc(@Nullable String src) {
         this.src = src;

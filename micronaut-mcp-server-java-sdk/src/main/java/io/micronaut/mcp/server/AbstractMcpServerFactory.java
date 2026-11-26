@@ -52,8 +52,6 @@ import java.util.List;
  */
 @Internal
 public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
-    private static final List<String> WEBSITE_URL_SCHEMES = List.of("https:", "http:");
-
     /**
      * Retrieves a list of tools from the provided {@link ToolRegistry}.
      *
@@ -67,7 +65,8 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
      *
      * @param configuration The server information configuration
      * @return The server implementation
-     * @throws IllegalStateException If an icon is invalid, or if the website URL is neither an https nor an http URL
+     * @throws IllegalStateException If an icon is invalid, or if the website URL is not an https or http URL without a user
+     * name or password
      * @since 2.2.0
      */
     protected static McpSchema.Implementation serverInfo(McpServerInfoConfiguration configuration) {
@@ -89,10 +88,7 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
         if (StringUtils.isEmpty(websiteUrl)) {
             return null;
         }
-        if (!McpIconFactory.hasScheme(websiteUrl, WEBSITE_URL_SCHEMES)) {
-            throw new IllegalStateException("The " + McpServerInfoConfiguration.PREFIX + ".website-url " + websiteUrl
-                + " must be an https or http URL");
-        }
+        McpIconFactory.checkUrl("The " + McpServerInfoConfiguration.PREFIX + ".website-url", "a value", websiteUrl, false);
         return websiteUrl;
     }
 

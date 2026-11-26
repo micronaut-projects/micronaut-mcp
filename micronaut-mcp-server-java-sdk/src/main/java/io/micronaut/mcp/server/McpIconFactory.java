@@ -20,14 +20,17 @@ import io.micronaut.core.util.StringUtils;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.jspecify.annotations.Nullable;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 /**
  * Builds the MCP icons declared with {@code @Icon} or configured under {@code micronaut.mcp.server.info.icons}, so both
- * follow the same rules: a {@code src} with the scheme {@code https}, {@code http} or {@code data} is required, the theme
- * is {@code light} or {@code dark}, and empty values are left out.
+ * follow the same rules: a {@code src} that is an https or http URL without a user name or password, or a {@code data:}
+ * URI of an image, is required, the theme is {@code light} or {@code dark}, and empty values are left out. Error messages
+ * never repeat the rejected {@code src}, which could hold a credential or a large payload.
  *
  * @since 2.2.0
  */
@@ -35,7 +38,8 @@ import java.util.Set;
 public final class McpIconFactory {
 
     private static final Set<String> THEMES = Set.of("light", "dark");
-    private static final List<String> SRC_SCHEMES = List.of("https:", "http:", "data:");
+    private static final Set<String> URL_SCHEMES = Set.of("https", "http");
+    private static final String IMAGE_DATA_PREFIX = "data:image/";
 
     private McpIconFactory() {
     }
@@ -47,16 +51,14 @@ public final class McpIconFactory {
      * @param sizes The sizes of the icon
      * @param theme The theme of the icon
      * @return The icon
-     * @throws IllegalStateException If the {@code src} is blank or has another scheme than {@code https}, {@code http} or
-     * {@code data}, or if the theme is neither {@code light} nor {@code dark}
+     * @throws IllegalStateException If the {@code src} is blank, is neither an https or http URL nor a {@code data:} URI of
+     * an image, or has a user name or password, or if the theme is neither {@code light} nor {@code dark}
      */
     public static McpSchema.Icon icon(String owner, @Nullable String src, @Nullable String mimeType, List<String> sizes, @Nullable String theme) {
         if (src == null || src.isBlank()) {
             throw new IllegalStateException(owner + " requires a src");
         }
-        if (!hasScheme(src, SRC_SCHEMES)) {
-            throw new IllegalStateException(owner + " has the src " + src + ", but it must be an https or http URL, or a data: URI");
-        }
+        checkUrl(owner, "a src", src, true);
         String nonEmptyTheme = StringUtils.isNotEmpty(theme) ? theme : null;
         if (nonEmptyTheme != null && !THEMES.contains(nonEmptyTheme)) {
             throw new IllegalStateException(owner + " has the theme " + nonEmptyTheme + ", but it must be light or dark");
@@ -68,12 +70,35 @@ public final class McpIconFactory {
     }
 
     /**
-     * @param uri A URI
-     * @param schemes The accepted schemes, in lowercase and followed by a colon
-     * @return Whether the URI starts with one of the schemes, ignoring case
+     * Checks that a value is an https or http URL with a host and without a user name or password, or, when allowed, a
+     * {@code data:} URI of an image. The messages do not repeat the value.
+     *
+     * @param owner What declares the value, for the error messages
+     * @param noun How the messages call the value, for example {@code a src}
+     * @param url The value
+     * @param imageDataAllowed Whether a {@code data:} URI of an image is accepted
+     * @throws IllegalStateException If the value is not accepted
      */
-    static boolean hasScheme(String uri, List<String> schemes) {
-        String lowerCase = uri.toLowerCase(Locale.ROOT);
-        return schemes.stream().anyMatch(lowerCase::startsWith);
+    static void checkUrl(String owner, String noun, String url, boolean imageDataAllowed) {
+        if (imageDataAllowed && url.toLowerCase(Locale.ROOT).startsWith(IMAGE_DATA_PREFIX)) {
+            return;
+        }
+        String authority = httpAuthority(url);
+        if (StringUtils.isEmpty(authority)) {
+            throw new IllegalStateException(owner + " has " + noun + " that is not "
+                + (imageDataAllowed ? "an https or http URL, or a data: URI of an image" : "an https or http URL"));
+        }
+        if (authority.contains("@")) {
+            throw new IllegalStateException(owner + " has " + noun + " with a user name or password, which every client would receive");
+        }
+    }
+
+    private static @Nullable String httpAuthority(String url) {
+        try {
+            URI uri = new URI(url);
+            return uri.getScheme() != null && URL_SCHEMES.contains(uri.getScheme().toLowerCase(Locale.ROOT)) ? uri.getRawAuthority() : null;
+        } catch (URISyntaxException e) {
+            return null;
+        }
     }
 }

@@ -2,9 +2,9 @@ Methods annotated with `@Tool`, `@Prompt`, `@Resource` or `@ResourceTemplate` ca
 
 snippet::io.micronaut.mcp.docs.metadata.WeatherTools[project-base="test-suite-docs", tags="imports,clazz"]
 
-Every `@Icon` requires a `src` that is an HTTPS URL or a `data:` URI (an HTTP URL is accepted, for example for local development), and its `theme`, when set, must be `light` or `dark` in lowercase. Each `@Meta` key must be non-empty and declared at most once per method. The server fails to start when one of these rules is broken.
+Every `@Icon` requires a `src` that is an HTTPS URL or a `data:image/...` URI (an HTTP URL is accepted, for example for local development) without a user name or password, and its `theme`, when set, must be `light` or `dark` in lowercase. Each `@Meta` key must be non-empty and declared at most once per method. The server fails to start when one of these rules is broken.
 
-TIP: Icons are repeated in every list response that includes their primitive. When many primitives share an icon, prefer an HTTPS URL over a `data:` URI to keep the responses small.
+TIP: Icons are repeated in every list response that includes their primitive. When many primitives share an icon, prefer an HTTPS URL over a `data:` URI to keep the responses small. Clients should treat icons, SVG ones in particular, as untrusted content.
 
 A `@Meta` key may start with a prefix: a reverse DNS name followed by `/`. Prefixes whose second label is `modelcontextprotocol` or `mcp`, such as `io.modelcontextprotocol/`, are reserved by the specification; this is not checked.
 
