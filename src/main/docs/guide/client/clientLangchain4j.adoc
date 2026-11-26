@@ -30,6 +30,8 @@ micronaut:
           auto-health-check: false
 ----
 
+The name of a connection declared in configuration is normalized to kebab case: `micronaut.mcp.client.http.internalAdmin` declares the connection `internal-admin`, which is also the key of its client. The `embeddedServer` connection keeps its name.
+
 Each connection needs a name that is unique across `micronaut.mcp.client.http` and `micronaut.mcp.client.stdio`. The application fails to start when two connections have the same name, when an HTTP connection has no `url`, or when a STDIO connection has no `command`.
 
 .Settings of a connection
@@ -60,16 +62,18 @@ For each connection there is a `dev.langchain4j.mcp.client.McpClient` bean, qual
 
 A `dev.langchain4j.mcp.McpToolProvider` bean provides the tools of every connection to LangChain4j AI services. A `McpToolProvider` bean qualified by the name of a connection provides only the tools of that connection. An `McpClient` bean that your application declares itself is not part of the tool providers.
 
-LangChain4j AI services reject two tools with the same name, so when two servers have a tool with the same name, rename them with an `McpToolNameMapper`.
+WARNING: LangChain4j rejects two tools with the same name, and the primary `McpToolProvider` gives the tools of every connection under their own names. When two servers have a tool with the same name, every call that uses the primary provider fails, and a server can cause it at any time by renaming or adding a tool. Unless you trust every server, prefix the tools with the name of their connection with an `McpToolNameMapper`, as shown below, or use the provider of each connection.
+
+WARNING: The primary `McpToolProvider` gives the model the tools, and the tool descriptions, of every connection at once. A server you do not fully trust can use its descriptions to steer the model into calling the tools of another connection. Give an AI service the `McpToolProvider` qualified by the name of the connection it needs, or restrict the tools with an `McpToolFilter`, rather than the primary provider.
 
 === Customizing the tools
 
-Declare one bean of each of these types to customize the tools of all the tool providers. Use the key of the client, the name of its connection, to treat connections differently:
+Declare one bean of each of these types to customize the tools of all the tool providers. Use the key of the client, the normalized name of its connection, to treat connections differently. Prefer a filter that lists the connections it allows to one that lists those it rejects, so that a name that does not match hides tools rather than exposes them:
 
 - `io.micronaut.mcp.client.langchain4j.McpToolFilter` selects the tools that the tool providers provide.
 - `io.micronaut.mcp.client.langchain4j.McpToolNameMapper` names them.
 
-For example, the following beans prefix every tool with the name of its connection, so that the tools of different servers cannot clash, and leave out the tools of the `embeddedServer` connection of an application that is itself an MCP server:
+For example, the following beans prefix every tool with the name of its connection, so that the tools of different servers cannot clash, and only provide the tools of the connections they list, which leaves out, for example, the `embeddedServer` connection of an application that is itself an MCP server:
 
 [source,java]
 ----
@@ -78,12 +82,12 @@ class McpToolsFactory {
 
     @Singleton
     McpToolNameMapper prefixWithConnection() {
-        return (client, tool) -> client.key() + "_" + tool.name();
+        return (client, tool) -> client.key() + "__" + tool.name();
     }
 
     @Singleton
-    McpToolFilter withoutOwnTools() {
-        return (client, tool) -> !"embeddedServer".equals(client.key());
+    McpToolFilter onlyListedConnections() {
+        return (client, tool) -> Set.of("weather", "files").contains(client.key());
     }
 }
 ----
@@ -98,7 +102,7 @@ for `DefaultMcpClient.Builder`, `StreamableHttpMcpTransport.Builder` or `StdioMc
 
 A client is created when it is first used, which initializes the connection to its server, and starts the process of a STDIO server. The `McpToolProvider` beans skip the servers that cannot be reached, so an unreachable server does not prevent the application from starting. Creating a client that failed is attempted again the next time the tools are provided. A warning names the connection when its client cannot be created, and an information message when it is created again; the failures in between are logged at debug level.
 
-Only one attempt to create the client of a connection runs at a time. The requests made while it runs do not wait for it: they get no tools from that server. The request that makes an attempt waits up to the `initialization-timeout` of the connection, once for each connection whose server cannot be reached, so set a short `initialization-timeout` for servers that may be unavailable. Each attempt to create the client of a STDIO connection starts a new server process.
+Only one attempt to create the client of a connection runs at a time. The requests made while it runs do not wait for it: they get no tools from that server. The request that makes an attempt waits up to twice the `initialization-timeout` of the connection, as the client tries two versions of the protocol, once for each connection whose server cannot be reached, so set a short `initialization-timeout` for servers that may be unavailable. Each attempt to create the client of a STDIO connection starts a new server process.
 
 By default, each client checks its server periodically with a thread of its own, see `auto-health-check`.
 
