@@ -67,7 +67,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpServerFeatures.SyncResourceTemplateSpecification> getSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpServerFeatures.SyncResourceTemplateSpecification(
                 toResourceTemplate(m.method()),
                 syncHandler(m)
@@ -77,7 +77,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpServerFeatures.AsyncResourceTemplateSpecification> getAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpServerFeatures.AsyncResourceTemplateSpecification(
                 toResourceTemplate(m.method()),
                 asyncHandler(m)
@@ -87,7 +87,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpStatelessServerFeatures.SyncResourceTemplateSpecification> getStatelessSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpStatelessServerFeatures.SyncResourceTemplateSpecification(
                 toResourceTemplate(m.method()),
                 statelessSyncHandler(m)
@@ -97,7 +97,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpStatelessServerFeatures.AsyncResourceTemplateSpecification> getStatelessAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpStatelessServerFeatures.AsyncResourceTemplateSpecification(
                 toResourceTemplate(m.method()),
                 statelessAsyncHandler(m)

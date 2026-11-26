@@ -65,7 +65,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpServerFeatures.SyncCompletionSpecification> getSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpServerFeatures.SyncCompletionSpecification(
                 toCompletion(m.method()),
                 syncHandler(m)
@@ -75,7 +75,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpServerFeatures.AsyncCompletionSpecification> getAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpServerFeatures.AsyncCompletionSpecification(
                 toCompletion(m.method()),
                 asyncHandler(m)
@@ -85,7 +85,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpStatelessServerFeatures.SyncCompletionSpecification> getStatelessSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpStatelessServerFeatures.SyncCompletionSpecification(
                 toCompletion(m.method()),
                 statelessSyncHandler(m)
@@ -95,7 +95,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpStatelessServerFeatures.AsyncCompletionSpecification> getStatelessAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpStatelessServerFeatures.AsyncCompletionSpecification(
                 toCompletion(m.method()),
                 statelessAsyncHandler(m)

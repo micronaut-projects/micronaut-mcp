@@ -118,7 +118,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
 
     @Override
     public List<McpServerFeatures.SyncToolSpecification> getSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(toolMethod -> {
                 McpSchema.Tool tool = tool(toolMethod);
                 return McpServerFeatures.SyncToolSpecification.builder()
@@ -131,7 +131,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
 
     @Override
     public List<McpServerFeatures.AsyncToolSpecification> getAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(toolMethod -> {
                 McpSchema.Tool tool = tool(toolMethod);
                 return McpServerFeatures.AsyncToolSpecification.builder()
@@ -144,7 +144,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
 
     @Override
     public List<McpStatelessServerFeatures.SyncToolSpecification> getStatelessSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(toolMethod -> {
                 McpSchema.Tool tool = tool(toolMethod);
                 return McpStatelessServerFeatures.SyncToolSpecification.builder()
@@ -157,7 +157,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
 
     @Override
     public List<McpStatelessServerFeatures.AsyncToolSpecification> getStatelessAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(toolMethod -> {
                 McpSchema.Tool tool = tool(toolMethod);
                 return McpStatelessServerFeatures.AsyncToolSpecification.builder()

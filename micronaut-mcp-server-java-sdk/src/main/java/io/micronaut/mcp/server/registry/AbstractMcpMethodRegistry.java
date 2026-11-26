@@ -104,7 +104,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      *
      * @return a stream of methods from the registry
      */
-    protected final Stream<Method<Object>> drainMethods() {
+    protected final Stream<Method<Object>> streamMethods() {
         return methods.stream();
     }
 
@@ -159,7 +159,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         private final Argument<?>[] arguments;
         /**
          * For each parameter, the index of the value it receives without an argument binder (0 is the transport
-         * context, then the values in the order of {@link #boundParameterTypes()}), or {@link #NOT_BOUND}.
+         * context, then the values in the order of {@link AbstractMcpMethodRegistry#boundParameterTypes()}), or {@link #NOT_BOUND}.
          */
         private final int[] boundIndexes;
         private final AtomicReference<B> singleton = new AtomicReference<>();
@@ -255,7 +255,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
          * @param registry The argument binder registry
          * @param source The source of the argument binders
          * @param context The transport context or the server exchange
-         * @param values The request and any other values, in the order of {@link #boundParameterTypes()} after the context
+         * @param values The request and any other values, in the order of {@link AbstractMcpMethodRegistry#boundParameterTypes()} after the context
          * @param <S> The source type
          * @return The result of the method
          * @throws UnsatisfiedArgumentException If a required parameter cannot be bound
