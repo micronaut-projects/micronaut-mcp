@@ -236,21 +236,23 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
             this.arguments = method.getArguments();
             this.boundIndexes = new int[arguments.length];
             for (int a = 0; a < arguments.length; a++) {
-                Class<?> type = arguments[a].getType();
-                boundIndexes[a] = NOT_BOUND;
-                for (int i = 0; i < boundParameterTypes.length; i++) {
-                    Class<?> boundType = boundParameterTypes[i];
-                    // A parameter declared as a subtype of a bound type is bound when the value is an instance of it
-                    if (type.isAssignableFrom(boundType) || boundType.isAssignableFrom(type)) {
-                        boundIndexes[a] = i;
-                        break;
-                    }
-                }
-                if (boundIndexes[a] == NOT_BOUND && type.isInterface() && !type.getName().startsWith("java.")) {
-                    // A custom transport context may implement an interface of the application, which only the value tells
-                    boundIndexes[a] = CONTEXT_IF_INSTANCE;
+                boundIndexes[a] = boundIndex(arguments[a].getType(), boundParameterTypes);
+            }
+        }
+
+        private static int boundIndex(Class<?> type, Class<?>[] boundParameterTypes) {
+            for (int i = 0; i < boundParameterTypes.length; i++) {
+                Class<?> boundType = boundParameterTypes[i];
+                // A parameter declared as a subtype of a bound type is bound when the value is an instance of it
+                if (type.isAssignableFrom(boundType) || boundType.isAssignableFrom(type)) {
+                    return i;
                 }
             }
+            if (type.isInterface() && !type.getName().startsWith("java.")) {
+                // A custom transport context may implement an interface of the application, which only the value tells
+                return CONTEXT_IF_INSTANCE;
+            }
+            return NOT_BOUND;
         }
 
         /**
