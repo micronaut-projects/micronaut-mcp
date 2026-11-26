@@ -6,7 +6,10 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
+import io.micronaut.context.annotation.Replaces;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
+import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -14,12 +17,15 @@ import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.mcp.conf.server.TransportSecurityConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
@@ -38,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Property(name = "micronaut.mcp.server.transport-security.allowed-origins[0]", value = "https://app.example.com")
 @Property(name = "micronaut.mcp.server.transport-security.allowed-origins[1]", value = "https://secure.example.com:443")
 @Property(name = "micronaut.mcp.server.transport-security.allowed-origins[2]", value = "http://plain.example.com:80/")
-@Property(name = "micronaut.mcp.server.transport-security.allowed-origins[3]", value = "https://port.example.com:8443")
+@Property(name = "micronaut.mcp.server.transport-security.allowed-origins[3]", value = "HTTPS://PORT.example.com:8443")
 // Core denies non-local origins on a localhost server; pass them through to test the MCP endpoint rules
 @Property(name = "micronaut.server.cors.localhost-pass-through", value = "true")
 @MicronautTest
@@ -58,6 +64,7 @@ class TransportSecurityTest {
         assertEquals(HttpStatus.OK, status(ping().header("Origin", "http://localhost:6274")));
         assertEquals(HttpStatus.OK, status(ping().header("Origin", "http://127.0.0.1:3000")));
         assertEquals(HttpStatus.OK, status(ping().header("Origin", "http://[::1]")));
+        assertEquals(HttpStatus.OK, status(ping().header("Origin", "HTTP://LOCALHOST:1")));
         assertEquals(HttpStatus.OK, status(ping().header("Origin", "https://APP.example.com/")));
     }
 
@@ -94,6 +101,28 @@ class TransportSecurityTest {
         // a DNS rebinding attacker's own name, even if it resolves to a loopback address
         assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://localhost.evil.example")));
         assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "null")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "")));
+    }
+
+    @Test
+    void repeatedHeadersAreRejected() {
+        // the second value must not pass for the first, whatever their order
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "https://app.example.com").header("Origin", "http://evil.example")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://localhost:6274").header("Origin", "http://localhost:6274")));
+        assertEquals(HttpStatus.BAD_REQUEST, status(ping().header("MCP-Protocol-Version", "2025-11-25").header("MCP-Protocol-Version", "1999-01-01")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"GET", "POST", "DELETE", "PUT"})
+    void everyMethodOnTheEndpointIsValidated(String method) {
+        assertEquals(HttpStatus.FORBIDDEN, status(HttpRequest.create(HttpMethod.parse(method), "/mcp").header("Origin", "http://evil.example")));
+        assertEquals(HttpStatus.BAD_REQUEST, status(HttpRequest.create(HttpMethod.parse(method), "/mcp")
+            .header("Origin", "http://localhost:6274").header("MCP-Protocol-Version", "1999-01-01")));
+    }
+
+    @Test
+    void theHeadersAreValidatedBeforeTheBodyIsRead() {
+        assertEquals(HttpStatus.FORBIDDEN, status(HttpRequest.POST("/mcp", "{not json").header("Origin", "http://evil.example")));
     }
 
     @Test
@@ -108,6 +137,7 @@ class TransportSecurityTest {
         assertEquals(HttpStatus.OK, status(ping().header("MCP-Protocol-Version", "2025-06-18")));
         assertEquals(HttpStatus.OK, status(ping().header("MCP-Protocol-Version", "2025-11-25")));
         assertEquals(HttpStatus.BAD_REQUEST, status(ping().header("MCP-Protocol-Version", "1999-01-01")));
+        assertEquals(HttpStatus.BAD_REQUEST, status(ping().header("MCP-Protocol-Version", "")));
     }
 
     @Test
@@ -144,6 +174,26 @@ class TransportSecurityTest {
             assertEquals(HttpStatus.OK, status(client, ping().header("Origin", "null")));
             // The protocol version is still validated
             assertEquals(HttpStatus.BAD_REQUEST, status(client, ping().header("MCP-Protocol-Version", "1999-01-01")));
+        }
+    }
+
+    @Test
+    void aWildcardAmongOtherEntriesAllowsEveryOriginEvenWithoutLoopbackOrigins() {
+        try (EmbeddedServer server = mcpServer(Map.of(
+                "micronaut.mcp.server.transport-security.allow-loopback-origins", false,
+                "micronaut.mcp.server.transport-security.allowed-origins", List.of("https://a.example", "*")));
+             HttpClient client = server.getApplicationContext().createBean(HttpClient.class, server.getURL())) {
+            assertEquals(HttpStatus.OK, status(client, ping().header("Origin", "http://evil.example")));
+            assertEquals(HttpStatus.OK, status(client, ping().header("Origin", "http://localhost:6274")));
+        }
+    }
+
+    @Test
+    void aReplacedConfigurationDrivesTheFilter() {
+        try (EmbeddedServer server = mcpServer(Map.of("spec.name", "TransportSecurityTestReplacement"));
+             HttpClient client = server.getApplicationContext().createBean(HttpClient.class, server.getURL())) {
+            assertEquals(HttpStatus.FORBIDDEN, status(client, ping().header("Origin", "http://localhost:6274")));
+            assertEquals(HttpStatus.OK, status(client, ping().header("Origin", "https://replaced.example.com")));
         }
     }
 
@@ -238,8 +288,15 @@ class TransportSecurityTest {
         logger.setLevel(Level.DEBUG);
         logger.addAppender(appender);
         try {
+            // nothing below DEBUG level is logged
+            logger.setLevel(Level.INFO);
+            status(ping().header("Origin", "http://evil.example"));
+            assertEquals(List.of(), appender.list);
+            logger.setLevel(Level.DEBUG);
             status(ping().header("Origin", "http://evil.example\tforged"));
+            status(ping().header("Origin", "http://localhost:1").header("Origin", "http://localhost:2"));
             status(ping().header("MCP-Protocol-Version", "1999-01-01"));
+            status(ping().header("MCP-Protocol-Version", "2025-11-25").header("MCP-Protocol-Version", "2025-11-25"));
         } finally {
             logger.detachAppender(appender);
             logger.setLevel(level);
@@ -247,8 +304,10 @@ class TransportSecurityTest {
         assertEquals(List.of(
             "Rejected request to /mcp: Origin 'http://evil.example?forged' is not listed in "
                 + "micronaut.mcp.server.transport-security.allowed-origins and is not a loopback origin",
+            "Rejected request to /mcp: 2 Origin headers",
             "Rejected request to /mcp: MCP-Protocol-Version '1999-01-01' is not supported (supported: "
-                + "[2025-03-26, 2025-06-18, 2025-11-25])"),
+                + "[2025-03-26, 2025-06-18, 2025-11-25])",
+            "Rejected request to /mcp: 2 MCP-Protocol-Version headers"),
             appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList());
     }
 
@@ -258,6 +317,17 @@ class TransportSecurityTest {
                 "micronaut.mcp.server.transport-security.enabled", false));
              HttpClient client = server.getApplicationContext().createBean(HttpClient.class, server.getURL())) {
             assertEquals(HttpStatus.OK, status(client, ping().header("Origin", "http://evil.example")));
+            // both checks are off
+            assertEquals(HttpStatus.OK, status(client, ping().header("MCP-Protocol-Version", "1999-01-01")));
+        }
+    }
+
+    @Test
+    void invalidAllowedOriginsDoNotFailTheStartupWhenValidationIsDisabled() {
+        try (EmbeddedServer server = mcpServer(Map.of(
+                "micronaut.mcp.server.transport-security.enabled", false,
+                "micronaut.mcp.server.transport-security.allowed-origins", List.of("app.example.com")))) {
+            assertTrue(server.isRunning());
         }
     }
 
@@ -287,6 +357,21 @@ class TransportSecurityTest {
         properties.put("micronaut.mcp.server.transport", "HTTP");
         properties.put("micronaut.server.cors.localhost-pass-through", true);
         return ApplicationContext.run(EmbeddedServer.class, properties);
+    }
+
+    @Requires(property = "spec.name", value = "TransportSecurityTestReplacement")
+    @Replaces(TransportSecurityConfiguration.class)
+    @Singleton
+    static class ReplacedTransportSecurityConfiguration implements TransportSecurityConfiguration {
+        @Override
+        public List<String> getAllowedOrigins() {
+            return List.of("https://replaced.example.com");
+        }
+
+        @Override
+        public boolean isAllowLoopbackOrigins() {
+            return false;
+        }
     }
 
     private static MutableHttpRequest<String> ping() {

@@ -96,7 +96,13 @@ final class McpTransportSecurityFilter implements Ordered {
     @RequestFilter
     @Nullable HttpResponse<?> filter(HttpRequest<?> request) {
         HttpHeaders headers = request.getHeaders();
-        String origin = headers.get(HttpHeaders.ORIGIN);
+        List<String> origins = headers.getAll(HttpHeaders.ORIGIN);
+        if (origins.size() > 1) {
+            // A browser sends one Origin; with several, another value could pass for the one that is checked
+            LOG.debug("Rejected request to {}: {} Origin headers", request.getPath(), origins.size());
+            return error(HttpStatus.FORBIDDEN, "Multiple Origin headers");
+        }
+        String origin = origins.isEmpty() ? null : origins.get(0);
         if (origin != null && !isAllowed(origin)) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Rejected request to {}: Origin '{}' is not listed in {}{}", request.getPath(), sanitize(origin),
@@ -104,7 +110,12 @@ final class McpTransportSecurityFilter implements Ordered {
             }
             return error(HttpStatus.FORBIDDEN, "Origin not allowed: " + origin);
         }
-        String protocolVersion = headers.get(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION);
+        List<String> versions = headers.getAll(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION);
+        if (versions.size() > 1) {
+            LOG.debug("Rejected request to {}: {} MCP-Protocol-Version headers", request.getPath(), versions.size());
+            return error(HttpStatus.BAD_REQUEST, "Multiple MCP-Protocol-Version headers");
+        }
+        String protocolVersion = versions.isEmpty() ? null : versions.get(0);
         if (protocolVersion != null && !protocolVersions.contains(protocolVersion)) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Rejected request to {}: MCP-Protocol-Version '{}' is not supported (supported: {})",
