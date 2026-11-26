@@ -10,6 +10,7 @@ import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.test.support.TestPropertyProvider;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -43,6 +44,10 @@ class UnreachableServersTest implements TestPropertyProvider {
     McpToolProvider toolProvider;
 
     @Inject
+    @Named("unreachable")
+    McpToolProvider unreachableToolProvider;
+
+    @Inject
     List<HealthIndicator> healthIndicators;
 
     @Override
@@ -63,6 +68,11 @@ class UnreachableServersTest implements TestPropertyProvider {
     void theToolProviderSkipsTheServersThatCannotBeReached() {
         assertEquals(Set.of("forecast"), toolNames(toolProvider));
         assertFalse(hangingServerRunning(), "The process of a client that could not be created is stopped");
+    }
+
+    @Test
+    void theToolProviderOfAClientWhoseServerCannotBeReachedProvidesNoTools() {
+        assertEquals(Set.of(), toolNames(unreachableToolProvider));
     }
 
     @Test

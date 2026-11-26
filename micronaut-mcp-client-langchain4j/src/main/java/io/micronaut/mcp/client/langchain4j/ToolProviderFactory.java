@@ -46,12 +46,9 @@ final class ToolProviderFactory {
     @Prototype
     @Primary
     McpToolProvider.Builder toolProviderBuilder(List<McpClientConnectionConfiguration> connections, BeanContext beanContext) {
-        // The clients are resolved when the tools are provided, so that a server that cannot be reached is skipped
-        // instead of failing the creation of the tool provider
-        List<McpClient> clients = connections.stream()
-            .<McpClient>map(connection -> new ConnectionMcpClient(connection.getName(), beanContext))
-            .toList();
-        return builder(clients);
+        return builder(connections.stream()
+            .map(connection -> client(connection, beanContext))
+            .toList());
     }
 
     @Singleton
@@ -60,10 +57,18 @@ final class ToolProviderFactory {
         return builder.build();
     }
 
-    @EachBean(McpClient.class)
+    @EachBean(McpClientConnectionConfiguration.class)
     @Singleton
-    McpToolProvider clientToolProvider(McpClient client) {
-        return builder(List.of(client)).build();
+    McpToolProvider clientToolProvider(McpClientConnectionConfiguration connection, BeanContext beanContext) {
+        return builder(List.of(client(connection, beanContext))).build();
+    }
+
+    /**
+     * The clients are resolved when the tools are provided, so that a server that cannot be reached is skipped
+     * instead of failing the creation of the tool provider.
+     */
+    private static McpClient client(McpClientConnectionConfiguration connection, BeanContext beanContext) {
+        return new ConnectionMcpClient(connection.getName(), beanContext);
     }
 
     private McpToolProvider.Builder builder(List<McpClient> clients) {
