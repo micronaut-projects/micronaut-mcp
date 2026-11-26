@@ -22,7 +22,7 @@ micronaut:
           command:
             - npx
             - -y
-            - "@modelcontextprotocol/server-filesystem"
+            - "@modelcontextprotocol/server-filesystem@<version>"
             - /tmp
           environment:
             DEBUG: "false"
@@ -52,7 +52,7 @@ Each connection needs a name that is unique across `micronaut.mcp.client.http` a
 
 NOTE: Keys of `headers` and `environment` keep their case when set in a configuration file. When they are set with environment variables, such as `MICRONAUT_MCP_CLIENT_STDIO_FILES_ENVIRONMENT_DEBUG`, they are lower-cased, so the server process receives `debug` rather than `DEBUG`. Set keys whose case matters in a configuration file.
 
-NOTE: The process of a STDIO connection inherits the environment of the application, in addition to its `environment`. Applications that keep secrets in their environment make them available to that process, so only start servers you trust.
+NOTE: The process of a STDIO connection inherits the environment of the application, in addition to its `environment`. Applications that keep secrets in their environment make them available to that process, so only start servers you trust, pin their version, for example `@modelcontextprotocol/server-filesystem@<version>` rather than the latest release that `npx` would download, and consider starting them with a cleared environment, for example `command: [env, -i, "PATH=/usr/bin:/bin", npx, ...]`. Pass secrets to a server in its `environment` rather than in its `command`, as the command is logged at debug level.
 
 For STDIO connections, a reconnection by `auto-health-check` starts a new server process, so consider disabling it for servers that are slow to start, such as those started with `npx`, or that cannot run twice.
 
@@ -112,22 +112,24 @@ With Micronaut Management, the `mcp` health indicator pings every server concurr
 
 The first health check creates the clients that are not created yet, so it starts the processes of the STDIO servers, for example an `npx` download. While a request is creating the client of a connection, the health check reports that connection down without waiting.
 
+WARNING: Health checks are not authenticated by default, so anyone who can reach the health endpoint can make the indicator attempt to create the clients that failed, which starts the process of a STDIO server again. Require authentication with `endpoints.health.sensitive=true`, or serve the management endpoints on a separate port with `endpoints.all.port`, when the health endpoint is reachable from untrusted networks.
+
 WARNING: When any server cannot be reached, the `mcp` indicator is down, so the `/health` and `/health/readiness` endpoints answer `503 Service Unavailable`; `/health/liveness` is not affected. A readiness probe on these endpoints takes the application out of service when a server that it can do without is down. The indicator also pings the `embeddedServer` connection of an application that is itself an MCP server, without credentials, so it is down when that endpoint requires authentication. In these cases, disable the indicator.
 
 === Migrating from 2.1
 
-The `micronaut.mcp.client.transport` property is deprecated and has no effect: the transport of a connection is set by where it is declared, and connections of both transports can be used together. In particular, `micronaut.mcp.client.transport: STDIO` no longer removes the `embeddedServer` connection of an application that is itself an HTTP MCP server, so the tool providers provide the application's own tools; leave them out with an `McpToolFilter`, as shown above.
+The `micronaut.mcp.client.transport` property is deprecated and no longer selects the transport: the transport of a connection is set by where it is declared, and connections of both transports can be used together. Its only remaining effect is described below. In particular, `micronaut.mcp.client.transport: STDIO` no longer removes the `embeddedServer` connection of an application that is itself an HTTP MCP server, so the tool providers provide the application's own tools; leave them out with an `McpToolFilter`, as shown above.
 
-The `langchain4j.mcp.client.transport.stdio.commands` property is deprecated: it declares a STDIO connection named `stdio`, whatever the value of `micronaut.mcp.client.transport`. Declare the connection under `micronaut.mcp.client.stdio` instead, and note that the property there is `command`, not `commands`:
+The `langchain4j.mcp.client.transport.stdio.commands` property is deprecated: as in 2.1, it declares a STDIO connection named `stdio` only when `micronaut.mcp.client.transport` is `STDIO`, and it is ignored otherwise. Declare the connection under `micronaut.mcp.client.stdio` instead, and note that the property there is `command`, not `commands`:
 
 [source,yaml]
 ----
 # Before
 micronaut.mcp.client.transport: STDIO
-langchain4j.mcp.client.transport.stdio.commands: [npx, -y, "@modelcontextprotocol/server-filesystem", /tmp]
+langchain4j.mcp.client.transport.stdio.commands: [npx, -y, "@modelcontextprotocol/server-filesystem@<version>", /tmp]
 
 # After
-micronaut.mcp.client.stdio.stdio.command: [npx, -y, "@modelcontextprotocol/server-filesystem", /tmp]
+micronaut.mcp.client.stdio.stdio.command: [npx, -y, "@modelcontextprotocol/server-filesystem@<version>", /tmp]
 ----
 
 The application logs a warning when it uses either deprecated property. See also the <<breaks, breaking changes>>.
