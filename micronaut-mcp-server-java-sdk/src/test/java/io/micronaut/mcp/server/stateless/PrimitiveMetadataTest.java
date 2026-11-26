@@ -16,9 +16,12 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @Property(name = "micronaut.mcp.server.info.name", value = "weather")
 @Property(name = "micronaut.mcp.server.info.version", value = "1.0.0")
@@ -80,6 +83,14 @@ class PrimitiveMetadataTest {
             {"result": {"resourceTemplates": [{"uriTemplate": "weather://cities/{city}",
               "annotations": {"audience": ["user", "assistant"]}, "_meta": {"com.example/source": "noaa"}}]}}""",
             call("resources/templates/list", "{}"), JSONCompareMode.LENIENT);
+    }
+
+    @Test
+    void undeclaredMetadataIsOmitted() throws JSONException {
+        JSONObject template = new JSONObject(call("resources/templates/list", "{}"))
+            .getJSONObject("result").getJSONArray("resourceTemplates").getJSONObject(0);
+        assertFalse(template.has("icons"));
+        assertFalse(template.getJSONObject("annotations").has("priority"));
     }
 
     private String call(String method, String params) {
