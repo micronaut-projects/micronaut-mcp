@@ -42,7 +42,13 @@ final class SerdeExceptionMcpErrorMapper implements InputErrorMapper<SerdeExcept
             .build();
     }
 
+    /**
+     * The message of the cause, which says what was wrong with the value, or the message of the exception when the
+     * cause has none, because the SDK requires a message.
+     */
     private static String conciseMessage(SerdeException e) {
-        return e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+        Throwable cause = e.getCause();
+        String causeMessage = cause != null ? cause.getMessage() : null;
+        return causeMessage != null && !causeMessage.isBlank() ? causeMessage : e.getMessage();
     }
 }
