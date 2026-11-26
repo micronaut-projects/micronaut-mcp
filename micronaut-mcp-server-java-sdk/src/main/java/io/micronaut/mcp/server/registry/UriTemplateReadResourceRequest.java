@@ -44,16 +44,6 @@ record UriTemplateReadResourceRequest(
         return new UriTemplateReadResourceRequest(arguments(uriTemplate, request.uri()), request);
     }
 
-    /**
-     * variable values extracted by matching the `uriTemplate` against the supplied `uri`.
-     * @param uriTemplate URI template
-     * @param uri Uri
-     * @return the variable values
-     */
-    static Map<String, Object> arguments(String uriTemplate, String uri) {
-        return arguments(UriMatchTemplate.of(uriTemplate), uri);
-    }
-
     private static Map<String, Object> arguments(UriMatchTemplate uriMatchTemplate, String uri) {
         Optional<UriMatchInfo> matchOptional = uriMatchTemplate.match(uri);
         if (matchOptional.isEmpty()) {

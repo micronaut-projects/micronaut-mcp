@@ -37,7 +37,7 @@ final class ExecutionModelAssertions {
         // an empty publisher of structured content is a tool error
         Map<String, Object> empty = callTool(httpClient, jsonMapper, "emptyStructured");
         assertEquals(Boolean.TRUE, empty.get("isError"));
-        assertEquals("Tool emptyStructured returned no structured content", text(empty));
+        assertEquals("Tool emptyStructured produced no result. This is a server-side error; retrying with the same arguments will not help.", text(empty));
         // @ExecuteOn is honoured, with the request in scope
         assertEquals("true true", text(callTool(httpClient, jsonMapper, "onIo")));
         // a publisher of completion values is collected
