@@ -283,7 +283,9 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
                     mcpError = e;
                 } else {
                     // The message of an unexpected error may tell internal details, so it stays in the server log
-                    LOG.error("Failed to handle request {} after its event stream started", printable(request.id()), error);
+                    if (LOG.isErrorEnabled()) {
+                        LOG.error("Failed to handle request {} after its event stream started", printable(request.id()), error);
+                    }
                     mcpError = McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message("Internal error").build();
                 }
                 emitEvent(JsonRrpcResponseUtils.jsonrpcResponse(mcpError, request));
