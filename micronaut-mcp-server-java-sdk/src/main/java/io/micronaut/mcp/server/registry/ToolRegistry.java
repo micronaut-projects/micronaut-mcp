@@ -123,7 +123,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                 McpSchema.Tool tool = tool(toolMethod.method());
                 return McpServerFeatures.SyncToolSpecification.builder()
                     .tool(tool)
-                    .callHandler(provideSyncCallHandler(toolMethod.beanDefinition(), toolMethod.method(), hasOutputSchema(tool)))
+                    .callHandler(provideSyncCallHandler(toolMethod, tool))
                     .build();
             })
             .toList();
@@ -136,7 +136,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                 McpSchema.Tool tool = tool(toolMethod.method());
                 return McpServerFeatures.AsyncToolSpecification.builder()
                     .tool(tool)
-                    .callHandler(provideReactiveCallHandler(toolMethod.beanDefinition(), toolMethod.method(), hasOutputSchema(tool)))
+                    .callHandler(provideReactiveCallHandler(toolMethod, tool))
                     .build();
             })
             .toList();
@@ -149,7 +149,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                 McpSchema.Tool tool = tool(toolMethod.method());
                 return McpStatelessServerFeatures.SyncToolSpecification.builder()
                     .tool(tool)
-                    .callHandler(provideSyncCallHandler(toolMethod.beanDefinition(), toolMethod.method(), hasOutputSchema(tool)))
+                    .callHandler(provideSyncCallHandler(toolMethod, tool))
                     .build();
             })
             .toList();
@@ -162,7 +162,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                 McpSchema.Tool tool = tool(toolMethod.method());
                 return McpStatelessServerFeatures.AsyncToolSpecification.builder()
                     .tool(tool)
-                    .callHandler(provideReactiveCallHandler(toolMethod.beanDefinition(), toolMethod.method(), hasOutputSchema(tool)))
+                    .callHandler(provideReactiveCallHandler(toolMethod, tool))
                     .build();
             })
             .toList();
@@ -180,18 +180,18 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return CollectionUtils.isNotEmpty(tool.outputSchema());
     }
 
-    private <B, C> BiFunction<C, McpSchema.CallToolRequest, McpSchema.CallToolResult> provideSyncCallHandler(BeanDefinition<B> beanDefinition,
-                                                                                                             ExecutableMethod<B, Object> method,
-                                                                                                             boolean structuredOutput) {
+    private <B, C> BiFunction<C, McpSchema.CallToolRequest, McpSchema.CallToolResult> provideSyncCallHandler(Method<B> toolMethod,
+                                                                                                             McpSchema.Tool tool) {
+        boolean structuredOutput = hasOutputSchema(tool);
         return (mcpTransportContext, callToolRequest)
-            -> callToolToResult(beanDefinition, method, structuredOutput, mcpTransportContext, callToolRequest);
+            -> callToolToResult(toolMethod.beanDefinition(), toolMethod.method(), structuredOutput, mcpTransportContext, callToolRequest);
     }
 
-    private <B, C> BiFunction<C, McpSchema.CallToolRequest, Mono<McpSchema.CallToolResult>> provideReactiveCallHandler(BeanDefinition<B> beanDefinition,
-                                                                                                                       ExecutableMethod<B, Object> method,
-                                                                                                                       boolean structuredOutput) {
+    private <B, C> BiFunction<C, McpSchema.CallToolRequest, Mono<McpSchema.CallToolResult>> provideReactiveCallHandler(Method<B> toolMethod,
+                                                                                                                       McpSchema.Tool tool) {
+        boolean structuredOutput = hasOutputSchema(tool);
         return (mcpTransportContext, callToolRequest)
-            -> reactiveCallToolToResult(beanDefinition, method, structuredOutput, mcpTransportContext, callToolRequest);
+            -> reactiveCallToolToResult(toolMethod.beanDefinition(), toolMethod.method(), structuredOutput, mcpTransportContext, callToolRequest);
     }
 
     private <B> Mono<McpSchema.CallToolResult> reactiveCallToolToResult(BeanDefinition<B> beanDefinition,
@@ -222,20 +222,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             if (returnClass.isAssignableFrom(McpSchema.CallToolResult.class)) {
                 return (McpSchema.CallToolResult) result;
             } else if (structuredOutput) {
-                if (result == null) {
-                    return McpSchema.CallToolResult.builder()
-                        .addTextContent("Tool " + toolName(method) + " returned no structured content")
-                        .isError(true)
-                        .build();
-                }
-                // The SDK validates the object against the output schema and adds its JSON as text content
-                Object structuredContent = convertStructuredContent
-                    ? jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), STRUCTURED_CONTENT_ARGUMENT)
-                    : result;
-                return McpSchema.CallToolResult.builder()
-                    .structuredContent(structuredContent)
-                    .isError(false)
-                    .build();
+                return structuredToolResult(method, result);
             } else if (returnClass.isAssignableFrom(String.class)) {
                 text = result.toString();
             } else if (Enum.class.isAssignableFrom(result.getClass())) {
@@ -254,6 +241,23 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         } catch (Exception ex) {
             throw mcpError(ex);
         }
+    }
+
+    private McpSchema.CallToolResult structuredToolResult(ExecutableMethod<?, ?> method, @Nullable Object result) throws IOException {
+        if (result == null) {
+            return McpSchema.CallToolResult.builder()
+                .addTextContent("Tool " + toolName(method) + " returned no structured content")
+                .isError(true)
+                .build();
+        }
+        // The SDK validates the object against the output schema and adds its JSON as text content
+        Object structuredContent = convertStructuredContent
+            ? jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), STRUCTURED_CONTENT_ARGUMENT)
+            : result;
+        return McpSchema.CallToolResult.builder()
+            .structuredContent(structuredContent)
+            .isError(false)
+            .build();
     }
 
     private <B> McpSchema.Tool tool(ExecutableMethod<B, Object> method) {
