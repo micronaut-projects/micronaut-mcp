@@ -34,6 +34,7 @@ import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -197,9 +198,10 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
         // ServerCapabilitiesFactory decides which capabilities the server advertises
         McpSchema.ServerCapabilities capabilities = capabilitiesProvider.get();
         if (!sendsNotifications()) {
-            if (advertisesNotifications(capabilities)) {
-                LOG.debug("The server cannot send notifications outside the response to a request, so it advertises listChanged and subscribe as false. Configured capabilities: {}",
-                    capabilities);
+            List<String> notifications = advertisedNotifications(capabilities);
+            if (!notifications.isEmpty()) {
+                LOG.debug("The server cannot send notifications outside the response to a request, so it advertises listChanged and subscribe as false instead of true for: {}",
+                    notifications);
             }
             capabilities = withoutNotifications(capabilities);
         }
@@ -207,16 +209,26 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
     }
 
     /**
-     * Whether the capabilities advertise list changes or resource subscriptions.
+     * The list changes and resource subscriptions the capabilities advertise.
      *
      * @param capabilities The capabilities
-     * @return Whether any of them is {@code true}
+     * @return The names of the flags that are {@code true}
      */
-    private static boolean advertisesNotifications(McpSchema.ServerCapabilities capabilities) {
-        return (capabilities.tools() != null && Boolean.TRUE.equals(capabilities.tools().listChanged()))
-            || (capabilities.prompts() != null && Boolean.TRUE.equals(capabilities.prompts().listChanged()))
-            || (capabilities.resources() != null
-                && (Boolean.TRUE.equals(capabilities.resources().listChanged()) || Boolean.TRUE.equals(capabilities.resources().subscribe())));
+    private static List<String> advertisedNotifications(McpSchema.ServerCapabilities capabilities) {
+        List<String> notifications = new ArrayList<>(4);
+        if (capabilities.tools() != null && Boolean.TRUE.equals(capabilities.tools().listChanged())) {
+            notifications.add("tools.listChanged");
+        }
+        if (capabilities.prompts() != null && Boolean.TRUE.equals(capabilities.prompts().listChanged())) {
+            notifications.add("prompts.listChanged");
+        }
+        if (capabilities.resources() != null && Boolean.TRUE.equals(capabilities.resources().listChanged())) {
+            notifications.add("resources.listChanged");
+        }
+        if (capabilities.resources() != null && Boolean.TRUE.equals(capabilities.resources().subscribe())) {
+            notifications.add("resources.subscribe");
+        }
+        return notifications;
     }
 
     /**

@@ -59,16 +59,15 @@ class StatelessNotificationsLogTest {
 
     static Stream<Arguments> configuredNotifications() {
         return Stream.of(false, true).flatMap(reactive -> Stream.of(
-                "micronaut.mcp.server.tools.list-changed",
-                "micronaut.mcp.server.prompts.list-changed",
-                "micronaut.mcp.server.resources.list-changed",
-                "micronaut.mcp.server.resources.subscribe")
-            .map(property -> Arguments.of(reactive, property)));
+                Arguments.of(reactive, "micronaut.mcp.server.tools.list-changed", "[tools.listChanged]"),
+                Arguments.of(reactive, "micronaut.mcp.server.prompts.list-changed", "[prompts.listChanged]"),
+                Arguments.of(reactive, "micronaut.mcp.server.resources.list-changed", "[resources.listChanged]"),
+                Arguments.of(reactive, "micronaut.mcp.server.resources.subscribe", "[resources.subscribe]")));
     }
 
     @ParameterizedTest
     @MethodSource("configuredNotifications")
-    void configuredNotificationsAreLogged(boolean reactive, String property) {
+    void configuredNotificationsAreLogged(boolean reactive, String property, String flags) {
         Map<String, Object> properties = new HashMap<>(Map.of(property, StringUtils.TRUE));
         if (property.endsWith("subscribe")) {
             // subscribe alone does not advertise the resources capability on a server without resources
@@ -77,6 +76,7 @@ class StatelessNotificationsLogTest {
         List<String> messages = messagesWhileStarting(reactive, properties);
         assertEquals(1, messages.size());
         assertTrue(messages.get(0).contains(MESSAGE));
+        assertTrue(messages.get(0).endsWith(flags), messages.get(0));
     }
 
     @ParameterizedTest
