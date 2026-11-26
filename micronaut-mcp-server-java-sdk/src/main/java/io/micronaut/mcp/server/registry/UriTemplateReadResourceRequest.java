@@ -51,7 +51,8 @@ record UriTemplateReadResourceRequest(
      * @param request Read Resource Request
      * @return the request with the matched variables
      * @throws McpError An invalid params error when the URI does not match the template, when a variable value is not a
-     * valid percent-encoded UTF-8 value, or when the value of a simple variable contains a {@code /} once decoded
+     * valid percent-encoded UTF-8 value or contains an unpaired surrogate, or when the value of a simple variable
+     * contains a {@code /} once decoded
      */
     static UriTemplateReadResourceRequest of(Template uriTemplate, McpSchema.ReadResourceRequest request) {
         return new UriTemplateReadResourceRequest(arguments(uriTemplate, request.uri()), request);
@@ -69,18 +70,23 @@ record UriTemplateReadResourceRequest(
     }
 
     private static Map<String, Object> arguments(Template uriTemplate, String uri) {
-        Optional<UriMatchInfo> matchOptional = uriTemplate.matchTemplate().match(uri);
+        // The SDK routes the request with a laxer matcher, which accepts characters such as + that a simple variable
+        // does not match. UriMatchTemplate backtracks over every split point before it fails, which takes seconds for a
+        // long URI and a template with several variables in a segment, such as log://{year}-{month}-{day}, so such a
+        // URI is rejected without matching it.
+        Optional<UriMatchInfo> matchOptional = uriTemplate.simpleVariablesOnly() && hasUnmatchableChar(uri)
+            ? Optional.empty()
+            : uriTemplate.matchTemplate().match(uri);
         if (matchOptional.isEmpty()) {
-            // The SDK routes the request with a laxer matcher, which accepts characters such as + that a simple
-            // variable does not match. Binding nothing would report the variables as missing, or bind null.
+            // Binding nothing would report the variables as missing, or bind null
             throw invalidParams("The URI does not match the URI template " + uriTemplate.matchTemplate()
                 + ": percent-encode reserved characters such as +, ;, &, !, ( and ) in variable values, for example + as %2B");
         }
         Map<String, Object> variables = matchOptional.get().getVariableValues();
-        // Copied only when a value contains an escape
+        // Copied only when a value contains an escape, or a surrogate that must be validated
         Map<String, Object> decoded = null;
         for (Map.Entry<String, Object> variable : variables.entrySet()) {
-            if (variable.getValue() instanceof String value && value.indexOf('%') >= 0) {
+            if (variable.getValue() instanceof String value && (value.indexOf('%') >= 0 || hasSurrogate(value))) {
                 if (decoded == null) {
                     decoded = new LinkedHashMap<>(variables);
                 }
@@ -88,6 +94,33 @@ record UriTemplateReadResourceRequest(
             }
         }
         return decoded == null ? variables : decoded;
+    }
+
+    /**
+     * @return Whether the path of the URI, before the query, contains a character that neither a simple variable nor
+     * the literal text of a {@link Template#simpleVariablesOnly()} template matches
+     */
+    private static boolean hasUnmatchableChar(String uri) {
+        for (int i = 0; i < uri.length(); i++) {
+            char c = uri.charAt(i);
+            if (c == '?') {
+                // UriMatchTemplate does not match the query
+                return false;
+            }
+            if (Template.UNMATCHABLE_CHARS.indexOf(c) >= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasSurrogate(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (Character.isSurrogate(value.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -137,7 +170,11 @@ record UriTemplateReadResourceRequest(
                             .onMalformedInput(CodingErrorAction.REPORT)
                             .onUnmappableCharacter(CodingErrorAction.REPORT);
                     }
-                    bytes.put(encoder.encode(CharBuffer.wrap(value, i, end)));
+                    try {
+                        bytes.put(encoder.encode(CharBuffer.wrap(value, i, end)));
+                    } catch (CharacterCodingException _) {
+                        throw invalidParams("The value of URI template variable '" + name + "' contains an unpaired surrogate");
+                    }
                     i = end;
                 }
             }
@@ -182,8 +219,18 @@ record UriTemplateReadResourceRequest(
      *
      * @param matchTemplate The template the URIs are matched against
      * @param reservedVariables The names of the variables expanded with the reserved ({@code +}) operator
+     * @param simpleVariablesOnly Whether every expression is a list of simple variables without a modifier, and the
+     * literal text contains none of the {@link #UNMATCHABLE_CHARS}, so that a URI that contains one cannot match
      */
-    record Template(UriMatchTemplate matchTemplate, Set<String> reservedVariables) {
+    record Template(UriMatchTemplate matchTemplate, Set<String> reservedVariables, boolean simpleVariablesOnly) {
+        /**
+         * The characters that the pattern of a simple variable in {@link UriMatchTemplate} does not match, besides
+         * {@code /} and {@code ?}.
+         */
+        static final String UNMATCHABLE_CHARS = "#(!{)&;+";
+        private static final Pattern SIMPLE_EXPRESSION = Pattern.compile("\\{[A-Za-z0-9_,]+}");
+        private static final Pattern EXPRESSION = Pattern.compile("\\{[^}]*}");
+
         // An expression ends at its first }, so a regular expression with braces, such as {+p:[a-z]{1,3}}, is not
         // parsed correctly. The names it adds by mistake match no variable, so they do no harm.
         private static final Pattern RESERVED_EXPRESSION = Pattern.compile("\\{\\+([^}]*)}");
@@ -201,7 +248,23 @@ record UriTemplateReadResourceRequest(
                     reserved.add(variable.replaceAll("[:*].*$", "").trim());
                 }
             }
-            return new Template(UriMatchTemplate.of(uriTemplate), Set.copyOf(reserved));
+            return new Template(UriMatchTemplate.of(uriTemplate), Set.copyOf(reserved), simpleVariablesOnly(uriTemplate));
+        }
+
+        private static boolean simpleVariablesOnly(String uriTemplate) {
+            Matcher expressions = EXPRESSION.matcher(uriTemplate);
+            while (expressions.find()) {
+                if (!SIMPLE_EXPRESSION.matcher(expressions.group()).matches()) {
+                    return false;
+                }
+            }
+            String literal = expressions.replaceAll("");
+            for (int i = 0; i < literal.length(); i++) {
+                if (literal.charAt(i) == '?' || UNMATCHABLE_CHARS.indexOf(literal.charAt(i)) >= 0) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

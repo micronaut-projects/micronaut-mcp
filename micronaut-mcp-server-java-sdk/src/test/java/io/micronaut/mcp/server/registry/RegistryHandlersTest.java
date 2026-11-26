@@ -180,21 +180,18 @@ class RegistryHandlersTest {
     }
 
     @Test
-    void aRejectedUriDoesNotTakeAThreadOfTheExecutor() {
+    void theUriIsMatchedOnTheExecutorOfTheMethod() {
+        // A match of an untrusted URI can be slow, so it runs where the method runs rather than on the transport thread
         McpSchema.ReadResourceRequest malformed = new McpSchema.ReadResourceRequest("handlers://counted/%zz");
         for (Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> read : readers("handlers://counted/{page}")) {
             assertInvalidParams(() -> read.apply(malformed));
         }
-        assertEquals(0, countingExecutor.submitted.get());
+        assertEquals(4, countingExecutor.submitted.get());
         // The async handlers return the error instead of throwing it
         var async = spec(resourceTemplateRegistry.getAsyncSpecs(), s -> s.resourceTemplate(), "handlers://counted/{page}").readHandler();
         Mono<McpSchema.ReadResourceResult> result = assertDoesNotThrow(() -> async.apply(ASYNC_EXCHANGE, malformed));
         assertInvalidParams(result::block);
-
-        for (Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> read : readers("handlers://counted/{page}")) {
-            assertEquals("counted 7", resource(read.apply(new McpSchema.ReadResourceRequest("handlers://counted/7"))));
-        }
-        assertEquals(4, countingExecutor.submitted.get());
+        assertEquals(5, countingExecutor.submitted.get());
     }
 
     @Test

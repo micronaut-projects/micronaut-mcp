@@ -1,5 +1,6 @@
 package io.micronaut.mcp.server.registry;
 
+import io.micronaut.http.uri.UriMatchTemplate;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
@@ -7,6 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,14 +46,64 @@ class UriTemplateReadResourceRequestTest {
         // Malformed UTF-8: an invalid byte, a truncated sequence and an overlong /
         "book://book/%FF", "book://book/%C3", "book://book/%C0%AF",
         // Arabic-Indic digits, which Character.digit accepts as hexadecimal
-        "book://book/%\u0663\u0663",
-        // A lone surrogate, which a JSON string can carry, next to an escape
-        "book://book/\uD800%20"})
+        "book://book/%\u0663\u0663"})
     void malformedEscapesAreInvalidParams(String uri) {
         McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("book://book/{title}", uri));
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
         assertEquals("Invalid percent-encoding in the value of URI template variable 'title': escapes must be %XX hexadecimal pairs encoding UTF-8",
             error.getMessage());
+    }
+
+    // A JSON string can carry an unpaired surrogate, with or without an escape next to it
+    @ParameterizedTest
+    @ValueSource(strings = {"book://book/\uD800", "book://book/\uDC00x", "book://book/\uD800%20"})
+    void anUnpairedSurrogateIsInvalidParams(String uri) {
+        McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("book://book/{title}", uri));
+        assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
+        assertEquals("The value of URI template variable 'title' contains an unpaired surrogate", error.getMessage());
+    }
+
+    @Test
+    void aSurrogatePairIsBound() {
+        assertEquals(Map.of("title", "\uD83D\uDE00"), UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/\uD83D\uDE00"));
+        assertEquals(Map.of("title", "\uD83D\uDE00"), UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/%F0%9F%98%80"));
+    }
+
+    // The pre-check only rejects what UriMatchTemplate cannot match: this pins that it does not match these characters
+    @ParameterizedTest
+    @ValueSource(chars = {'#', '(', '!', '{', ')', '&', ';', '+'})
+    void aCharacterThatASimpleVariableDoesNotMatchIsRejectedWithoutMatching(char c) {
+        for (String template : new String[] {"book://book/{title}", "log://{year}-{month}-{day}"}) {
+            String uri = template.startsWith("book") ? "book://book/a" + c + "b" : "log://2024-01-0" + c + "2";
+            assertTrue(UriMatchTemplate.of(template).match(uri).isEmpty(), uri);
+            McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments(template, uri));
+            assertTrue(error.getMessage().startsWith("The URI does not match the URI template " + template), error.getMessage());
+        }
+    }
+
+    @Test
+    void aLongUriThatDoesNotMatchIsRejectedQuickly() {
+        // UriMatchTemplate takes seconds to fail on such a URI, as it backtracks over every split point
+        String uri = "log://" + "-".repeat(2000) + "+";
+        assertTimeout(Duration.ofSeconds(1),
+            () -> assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("log://{year}-{month}-{day}", uri)));
+    }
+
+    @Test
+    void theQueryIsNotPreChecked() {
+        assertEquals(Map.of("title", "a"), UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/a?b+c"));
+    }
+
+    @Test
+    void onlyTemplatesOfSimpleVariablesArePreChecked() {
+        assertTrue(UriTemplateReadResourceRequest.Template.compile("book://book/{title}").simpleVariablesOnly());
+        assertTrue(UriTemplateReadResourceRequest.Template.compile("log://{year}-{month}-{day}").simpleVariablesOnly());
+        assertTrue(UriTemplateReadResourceRequest.Template.compile("x://{a,b}").simpleVariablesOnly());
+        for (String template : new String[] {"file:///{+path}", "x://{id:[0-9]+}", "x://{id:3}", "search://books{?q}", "x://a(b)/{id}", "x://a?b={id}"}) {
+            assertFalse(UriTemplateReadResourceRequest.Template.compile(template).simpleVariablesOnly(), template);
+        }
+        // A literal ( in the template is matched by UriMatchTemplate
+        assertEquals(Map.of("id", "7"), UriTemplateReadResourceRequest.arguments("x://a(b)/{id}", "x://a(b)/7"));
     }
 
     @Test

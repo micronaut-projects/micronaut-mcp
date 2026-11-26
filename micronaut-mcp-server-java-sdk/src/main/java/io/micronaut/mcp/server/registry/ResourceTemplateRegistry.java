@@ -29,7 +29,6 @@ import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
-import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 import io.micronaut.mcp.annotations.ResourceTemplate;
@@ -170,9 +169,9 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                           String mimeType,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
-        // Matched before the method is called, so that a rejected URI does not take a thread of its executor
-        UriTemplateReadResourceRequest source = UriTemplateReadResourceRequest.of(uriTemplate, request);
-        return m.call(() -> m.invoke(argumentBinderRegistry, source, mcpTransportContext, request),
+        // Matched where the method runs, on its executor if it declares one, so that a slow match of an untrusted URI
+        // does not run on the transport thread
+        return m.call(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
             mcpTransportContext, result -> map(mimeType, request, result), this::failWithMcpError);
     }
 
@@ -181,14 +180,8 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                                      String mimeType,
                                                                      Object mcpTransportContext,
                                                                      McpSchema.ReadResourceRequest request) {
-        // Matched before the method is scheduled, so that a rejected URI does not take a thread of its scheduler
-        UriTemplateReadResourceRequest source;
-        try {
-            source = UriTemplateReadResourceRequest.of(uriTemplate, request);
-        } catch (McpError e) {
-            return Mono.error(e);
-        }
-        return m.callAsync(() -> m.invoke(argumentBinderRegistry, source, mcpTransportContext, request),
+        // Matched where the method runs, see invokeAndMap
+        return m.callAsync(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
             result -> map(mimeType, request, result), this::failWithMcpError);
     }
 
