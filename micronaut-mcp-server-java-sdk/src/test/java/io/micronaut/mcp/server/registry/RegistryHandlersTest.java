@@ -158,6 +158,13 @@ class RegistryHandlersTest {
     }
 
     @Test
+    void aRegisteredMapperTakesPrecedenceOverMcpErrorPassthrough() {
+        var request = new McpSchema.CallToolRequest("mappedMcpError", Map.of());
+        assertError(McpSchema.ErrorCodes.INVALID_REQUEST, "mapped MCP error",
+            () -> toolHandler("mappedMcpError").apply(CONTEXT, request));
+    }
+
+    @Test
     void mappedExceptionsAreMappedByTheirMapper() {
         assertToolError("Required argument [String text] not specified",
             () -> toolHandler("echo").apply(CONTEXT, new McpSchema.CallToolRequest("echo", Map.of())));
@@ -520,6 +527,11 @@ class RegistryHandlersTest {
         }
 
         @Tool
+        String mappedMcpError() {
+            throw new MappedMcpError("mapped MCP error");
+        }
+
+        @Tool
         String optional(@Nullable String text) {
             return text == null ? "absent" : text;
         }
@@ -597,19 +609,25 @@ class RegistryHandlersTest {
         }
     }
 
+    static class MappedMcpError extends McpError {
+        MappedMcpError(String message) {
+            super(new McpSchema.JSONRPCResponse.JSONRPCError(McpSchema.ErrorCodes.INVALID_PARAMS, message));
+        }
+    }
+
     @Requires(property = "spec.name", value = "RegistryHandlersTest")
     @Singleton
-    static class CountingMapper implements McpErrorExceptionMapper<MappedException> {
+    static class CountingMapper implements McpErrorExceptionMapper<RuntimeException> {
         private final Map<Class<?>, AtomicInteger> canMapCalls = new ConcurrentHashMap<>();
 
         @Override
         public boolean canMap(Class<? extends Throwable> clazz) {
             canMapCalls.computeIfAbsent(clazz, c -> new AtomicInteger()).incrementAndGet();
-            return MappedException.class.isAssignableFrom(clazz);
+            return MappedException.class.isAssignableFrom(clazz) || MappedMcpError.class.isAssignableFrom(clazz);
         }
 
         @Override
-        public McpError map(MappedException exception) {
+        public McpError map(RuntimeException exception) {
             return McpError.builder(McpSchema.ErrorCodes.INVALID_REQUEST).message(exception.getMessage()).build();
         }
 

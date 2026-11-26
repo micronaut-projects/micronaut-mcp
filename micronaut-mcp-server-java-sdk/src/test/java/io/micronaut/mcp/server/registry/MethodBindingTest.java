@@ -19,6 +19,7 @@ import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
+import java.security.Principal;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -123,13 +124,11 @@ class MethodBindingTest {
     }
 
     @Test
-    void aSingletonIsLookedUpOnceUntilItIsDestroyed() {
+    void aNewSingletonIsResolvedAfterThePreviousInstanceIsDestroyed() {
         AbstractMcpMethodRegistry.Method<Greeter> method = method("contextual");
         Greeter first = method.bean();
         assertSame(first, method.bean());
-        // the registries forget the singleton when the bean context destroys it, so the replacement is invoked
         beanContext.destroyBean(Greeter.class);
-        method.forget(beanContext.getBeanDefinition(Greeter.class));
         Greeter second = method.bean();
         assertNotSame(first, second);
         assertSame(beanContext.getBean(Greeter.class), second);
@@ -150,6 +149,21 @@ class MethodBindingTest {
         assertEquals("acme", method.invoke(registry(null), "request", new TenantContext("acme"), "request"));
         // another context is no tenant, so the parameter is left to its binder
         assertThrows(UnsatisfiedArgumentException.class, () -> method.invoke(registry(null), "request", CONTEXT, "request"));
+    }
+
+    @Test
+    void aCustomContextCanImplementAJavaInterface() {
+        AbstractMcpMethodRegistry.Method<Greeter> method = method("principal");
+        assertEquals("acme", method.invoke(registry(null), "request", new TenantContext("acme"), "request"));
+    }
+
+    @Test
+    void aCompatibleContextTakesPrecedenceOverACompatibleRequest() {
+        Class<?>[] boundParameterTypes = {McpTransportContext.class, Principal.class};
+        AbstractMcpMethodRegistry.Method<Greeter> method = method(Greeter.class, "principal", boundParameterTypes);
+        Principal request = () -> "request";
+        assertEquals("acme", method.invoke(registry(null), "request", new TenantContext("acme"), request));
+        assertEquals("request", method.invoke(registry(null), "request", CONTEXT, request));
     }
 
     private AbstractMcpMethodRegistry.Method<Greeter> method(String name) {
@@ -202,7 +216,12 @@ class MethodBindingTest {
         String tenantId();
     }
 
-    record TenantContext(String tenantId) implements McpTransportContext, Tenant {
+    record TenantContext(String tenantId) implements McpTransportContext, Tenant, Principal {
+        @Override
+        public String getName() {
+            return tenantId;
+        }
+
         @Override
         public @Nullable Object get(String key) {
             return null;
@@ -240,6 +259,11 @@ class MethodBindingTest {
         @Executable
         String tenant(Tenant tenant) {
             return tenant.tenantId();
+        }
+
+        @Executable
+        String principal(Principal principal) {
+            return principal.getName();
         }
     }
 }
