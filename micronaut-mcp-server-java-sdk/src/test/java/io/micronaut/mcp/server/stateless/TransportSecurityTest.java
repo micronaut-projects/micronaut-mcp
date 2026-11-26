@@ -1,5 +1,9 @@
 package io.micronaut.mcp.server.stateless;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.exceptions.ConfigurationException;
@@ -15,7 +19,8 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -177,15 +182,74 @@ class TransportSecurityTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"app.example.com", "https://app.example.com/ui", "https://", "null", "https://user@app.example.com"})
-    void anAllowedOriginThatCanNeverMatchFailsTheStartup(String entry) {
+    @CsvSource(delimiter = '|', value = {
+        "app.example.com | expected * or an origin, scheme://host[:port], without a path, for example 'https://app.example.com'",
+        "https://app.example.com/ui | for example 'https://app.example.com'",
+        "https:// | expected * or an origin, scheme://host[:port], without a path",
+        "https://[] | expected * or an origin, scheme://host[:port], without a path",
+        "https://user@app.example.com | expected * or an origin, scheme://host[:port], without a path",
+        "https://app example.com | expected * or an origin, scheme://host[:port], without a path",
+        "https://[::g1] | expected * or an origin, scheme://host[:port], without a path",
+        "null | clients that send Origin: null, such as file:// pages and sandboxed iframes, can only be allowed with *",
+        "https://*.example.com | wildcards are not supported in an origin; list each origin, for example https://app.example.com, or use * to allow every origin",
+        "http://localhost:* | wildcards are not supported in an origin"})
+    void anAllowedOriginThatCanNeverMatchFailsTheStartup(String entry, String hint) {
         Map<String, Object> properties = Map.of("micronaut.mcp.server.transport-security.allowed-origins", List.of(entry));
         Throwable failure = assertThrows(RuntimeException.class, () -> mcpServer(properties).close());
         while (!(failure instanceof ConfigurationException) && failure.getCause() != null) {
             failure = failure.getCause();
         }
         assertInstanceOf(ConfigurationException.class, failure);
-        assertTrue(failure.getMessage().contains("'" + entry + "'"), failure.getMessage());
+        String message = failure.getMessage();
+        assertTrue(message.contains("Invalid micronaut.mcp.server.transport-security.allowed-origins entry '" + entry + "': "), message);
+        assertTrue(message.contains(hint), message);
+        if (!hint.contains("for example")) {
+            assertFalse(message.contains("for example '"), message);
+        }
+    }
+
+    @Test
+    void anOriginAllowedByCorsButNotByTheEndpointGetsAReadableRejection() {
+        String origin = "https://app.example.com";
+        try (EmbeddedServer server = mcpServer(Map.of(
+                "micronaut.server.cors.enabled", true,
+                "micronaut.server.cors.configurations.web.allowed-origins", List.of(origin)));
+             HttpClient client = server.getApplicationContext().createBean(HttpClient.class, server.getURL())) {
+            // CORS answers the preflight on its own
+            HttpResponse<?> preflight = client.toBlocking().exchange(HttpRequest.OPTIONS("/mcp")
+                .header("Origin", origin)
+                .header("Access-Control-Request-Method", "POST"));
+            assertEquals(HttpStatus.OK, preflight.getStatus());
+            HttpClientResponseException e = assertThrows(HttpClientResponseException.class,
+                () -> client.toBlocking().exchange(ping().header("Origin", origin), String.class));
+            assertEquals(HttpStatus.FORBIDDEN, e.getStatus());
+            // so the browser can read the rejection
+            assertEquals(origin, e.getResponse().getHeaders().get("Access-Control-Allow-Origin"));
+            assertTrue(e.getResponse().getBody(String.class).orElseThrow().contains("Origin not allowed: " + origin));
+        }
+    }
+
+    @Test
+    void rejectionsAreLoggedAtDebugLevel() {
+        Logger logger = (Logger) LoggerFactory.getLogger(McpTransportSecurityFilter.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        Level level = logger.getLevel();
+        logger.setLevel(Level.DEBUG);
+        logger.addAppender(appender);
+        try {
+            status(ping().header("Origin", "http://evil.example\tforged"));
+            status(ping().header("MCP-Protocol-Version", "1999-01-01"));
+        } finally {
+            logger.detachAppender(appender);
+            logger.setLevel(level);
+        }
+        assertEquals(List.of(
+            "Rejected request to /mcp: Origin 'http://evil.example?forged' is not listed in "
+                + "micronaut.mcp.server.transport-security.allowed-origins and is not a loopback origin",
+            "Rejected request to /mcp: MCP-Protocol-Version '1999-01-01' is not supported (supported: "
+                + "[2025-03-26, 2025-06-18, 2025-11-25])"),
+            appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList());
     }
 
     @Test

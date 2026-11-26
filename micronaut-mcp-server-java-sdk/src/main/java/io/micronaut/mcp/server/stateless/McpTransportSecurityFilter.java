@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.order.Ordered;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
@@ -26,10 +27,13 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.RequestFilter;
 import io.micronaut.http.annotation.ServerFilter;
+import io.micronaut.http.filter.ServerFilterPhase;
 import io.micronaut.mcp.conf.server.TransportSecurityConfiguration;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpStatelessServerTransport;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -42,8 +46,11 @@ import java.util.stream.Collectors;
 /**
  * Validates the {@code Origin} and {@code MCP-Protocol-Version} headers of requests to the MCP endpoint. As a filter it
  * runs on the thread that received the request, before the body is read and before a blocking server hands the
- * request to the blocking executor. It is created with the context, so that an allowed origin that could never match
- * fails the startup.
+ * request to the blocking executor. It runs just before the security filter: after the CORS filter, so that a browser
+ * can read the rejection and the preflight is answered by CORS alone, and after the metrics and tracing filters, so
+ * that they record rejected requests, but before authentication, so that a request from a foreign origin is answered
+ * with 403 rather than 401. It is created with the context, so that an allowed origin that could never match fails the
+ * startup.
  *
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#security-warning">Streamable HTTP security</a>
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#protocol-version-header">Protocol version header</a>
@@ -52,8 +59,10 @@ import java.util.stream.Collectors;
 @Context
 @Requires(property = TransportSecurityConfiguration.PROPERTY_ENABLED, notEquals = StringUtils.FALSE)
 @Internal
-final class McpTransportSecurityFilter {
+final class McpTransportSecurityFilter implements Ordered {
+    private static final Logger LOG = LoggerFactory.getLogger(McpTransportSecurityFilter.class);
     private static final String WILDCARD = "*";
+    private static final String ALLOWED_ORIGINS = TransportSecurityConfiguration.PREFIX + ".allowed-origins";
     private static final String SCHEME_SEPARATOR = "://";
     private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "[::1]");
 
@@ -73,6 +82,11 @@ final class McpTransportSecurityFilter {
         this.protocolVersions = transport.protocolVersions();
     }
 
+    @Override
+    public int getOrder() {
+        return ServerFilterPhase.SECURITY.before();
+    }
+
     /**
      * @param request The request
      * @return The response rejecting the request, or {@code null} when it is valid
@@ -84,10 +98,18 @@ final class McpTransportSecurityFilter {
         HttpHeaders headers = request.getHeaders();
         String origin = headers.get(HttpHeaders.ORIGIN);
         if (origin != null && !isAllowed(origin)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Rejected request to {}: Origin '{}' is not listed in {}{}", request.getPath(), sanitize(origin),
+                    ALLOWED_ORIGINS, allowLoopbackOrigins ? " and is not a loopback origin" : "");
+            }
             return error(HttpStatus.FORBIDDEN, "Origin not allowed: " + origin);
         }
         String protocolVersion = headers.get(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION);
         if (protocolVersion != null && !protocolVersions.contains(protocolVersion)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Rejected request to {}: MCP-Protocol-Version '{}' is not supported (supported: {})",
+                    request.getPath(), sanitize(protocolVersion), protocolVersions);
+            }
             return error(HttpStatus.BAD_REQUEST, "Unsupported protocol version: " + protocolVersion + ", supported versions: " + protocolVersions);
         }
         return null;
@@ -160,11 +182,71 @@ final class McpTransportSecurityFilter {
      */
     private static String allowedOrigin(String entry) {
         String origin = normalize(entry);
-        if (!origin.equals(WILDCARD) && (origin.indexOf(SCHEME_SEPARATOR) < 1 || host(origin).isEmpty())) {
-            throw new ConfigurationException("Invalid " + TransportSecurityConfiguration.PREFIX + ".allowed-origins entry '"
-                + entry + "': expected * or an origin, scheme://host[:port], without a path");
+        if (origin.equals(WILDCARD) || isOrigin(origin)) {
+            return origin;
         }
-        return origin;
+        String prefix = "Invalid " + ALLOWED_ORIGINS + " entry '" + entry + "': ";
+        if (origin.equals("null")) {
+            throw new ConfigurationException(prefix + "clients that send Origin: null, such as file:// pages and sandboxed "
+                + "iframes, can only be allowed with *");
+        }
+        if (origin.indexOf('*') >= 0) {
+            throw new ConfigurationException(prefix + "wildcards are not supported in an origin; list each origin, for "
+                + "example https://app.example.com, or use * to allow every origin");
+        }
+        String example = example(origin);
+        throw new ConfigurationException(prefix + "expected * or an origin, scheme://host[:port], without a path"
+            + (example != null ? ", for example '" + example + "'" : ""));
+    }
+
+    private static boolean isOrigin(String origin) {
+        return origin.indexOf(SCHEME_SEPARATOR) > 0 && isHost(host(origin));
+    }
+
+    /**
+     * Whether the host, as {@link #host(String)} returns it, is a host name, an IPv4 address or a bracketed IPv6 address,
+     * in the ASCII form browsers send.
+     */
+    private static boolean isHost(String host) {
+        boolean ipv6 = host.startsWith("[");
+        if (host.length() < (ipv6 ? 3 : 1)) {
+            return false;
+        }
+        for (int i = ipv6 ? 1 : 0; i < host.length() - (ipv6 ? 1 : 0); i++) {
+            char c = host.charAt(i);
+            boolean valid = ipv6
+                ? (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || c == ':' || c == '.'
+                : (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || c == '-' || c == '.' || c == '_';
+            if (!valid) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The origin that an invalid entry most likely meant: with {@code https://} added when it has no scheme, and
+     * without its path.
+     */
+    private static @Nullable String example(String entry) {
+        String candidate = entry.contains(SCHEME_SEPARATOR) ? entry : "https://" + entry;
+        int path = candidate.indexOf('/', candidate.indexOf(SCHEME_SEPARATOR) + SCHEME_SEPARATOR.length());
+        if (path >= 0) {
+            candidate = candidate.substring(0, path);
+        }
+        return isOrigin(candidate) ? candidate : null;
+    }
+
+    /**
+     * A request header value without control characters, so that it cannot forge log lines.
+     */
+    private static String sanitize(String value) {
+        StringBuilder sanitized = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            sanitized.append(c < ' ' || c == 0x7f ? '?' : c);
+        }
+        return sanitized.toString();
     }
 
     /**
