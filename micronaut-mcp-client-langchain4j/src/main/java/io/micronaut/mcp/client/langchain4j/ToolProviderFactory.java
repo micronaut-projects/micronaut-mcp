@@ -18,6 +18,7 @@ package io.micronaut.mcp.client.langchain4j;
 import dev.langchain4j.mcp.McpToolProvider;
 import dev.langchain4j.mcp.client.McpClient;
 import io.micronaut.context.BeanContext;
+import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Parameter;
@@ -44,12 +45,27 @@ final class ToolProviderFactory {
         this.nameMapper = nameMapper;
     }
 
+    /**
+     * The client of a connection, shared by the tool providers and the health indicator. It resolves the client bean
+     * when the tools are provided, so that a server that cannot be reached is skipped instead of failing the creation
+     * of the tool providers.
+     *
+     * @param connection The connection
+     * @param beanContext The bean context
+     * @return The client of the connection
+     */
+    @EachBean(McpClientConnectionConfiguration.class)
+    @Singleton
+    @Bean(typed = ConnectionMcpClient.class)
+    ConnectionMcpClient connectionClient(McpClientConnectionConfiguration connection, BeanContext beanContext) {
+        return new ConnectionMcpClient(connection.getName(), beanContext);
+    }
+
     @Prototype
     @Primary
-    McpToolProvider.Builder toolProviderBuilder(List<McpClientConnectionConfiguration> connections, BeanContext beanContext) {
-        return builder(McpClientConnections.requireUniqueNames(connections).stream()
-            .map(connection -> client(connection, beanContext))
-            .toList());
+    McpToolProvider.Builder toolProviderBuilder(List<McpClientConnectionConfiguration> connections, List<ConnectionMcpClient> clients) {
+        McpClientConnections.requireUniqueNames(connections);
+        return builder(List.copyOf(clients));
     }
 
     @Singleton
@@ -60,22 +76,14 @@ final class ToolProviderFactory {
 
     @EachBean(McpClientConnectionConfiguration.class)
     @Prototype
-    McpToolProvider.Builder clientToolProviderBuilder(McpClientConnectionConfiguration connection, BeanContext beanContext) {
-        return builder(List.of(client(connection, beanContext)));
+    McpToolProvider.Builder clientToolProviderBuilder(@Parameter ConnectionMcpClient client) {
+        return builder(List.of(client));
     }
 
     @EachBean(McpClientConnectionConfiguration.class)
     @Singleton
     McpToolProvider clientToolProvider(@Parameter McpToolProvider.Builder builder) {
         return builder.build();
-    }
-
-    /**
-     * The clients are resolved when the tools are provided, so that a server that cannot be reached is skipped
-     * instead of failing the creation of the tool provider.
-     */
-    private static McpClient client(McpClientConnectionConfiguration connection, BeanContext beanContext) {
-        return new ConnectionMcpClient(connection.getName(), beanContext);
     }
 
     private McpToolProvider.Builder builder(List<McpClient> clients) {

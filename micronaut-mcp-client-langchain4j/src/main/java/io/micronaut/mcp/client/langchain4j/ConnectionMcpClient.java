@@ -35,19 +35,29 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * An {@link McpClient} that resolves the client bean of a connection when it is first used, so that a server that cannot
- * be reached fails the calls to its client, which the tool provider skips, instead of the creation of the tool provider.
- * The creation of the client is attempted again on the next call until it succeeds.
+ * be reached fails the calls to its client, which the tool providers skip, instead of the creation of the tool providers.
+ * There is one per connection, shared by the tool providers and the health indicator.
+ * <p>
+ * Only one attempt to create the client runs at a time: the calls made while it runs fail at once with a
+ * {@link McpClientConnectingException} instead of waiting for it, and a failed attempt is made again by the next call.
+ * A failure is logged as a warning when the connection becomes unavailable, and its recovery when it becomes available
+ * again.
+ *
+ * @since 2.2.0
  */
 @Internal
-final class ConnectionMcpClient implements McpClient {
+public final class ConnectionMcpClient implements McpClient {
     private static final Logger LOG = LoggerFactory.getLogger(ConnectionMcpClient.class);
     private final String name;
     private final BeanContext beanContext;
     private final AtomicReference<McpClient> client = new AtomicReference<>();
+    private final AtomicBoolean connecting = new AtomicBoolean();
+    private volatile boolean unavailable;
 
     ConnectionMcpClient(String name, BeanContext beanContext) {
         this.name = name;
@@ -56,17 +66,32 @@ final class ConnectionMcpClient implements McpClient {
 
     private McpClient client() {
         McpClient current = client.get();
-        if (current == null) {
-            try {
-                current = beanContext.getBean(McpClient.class, Qualifiers.byName(name));
-            } catch (RuntimeException e) {
-                // Names the connection, which the errors of the tool provider do not
-                LOG.warn("The client of the MCP connection {} could not be created, it is created again on the next call: {}", name, e.getMessage());
-                throw e;
-            }
-            client.compareAndSet(null, current);
+        if (current != null) {
+            return current;
         }
-        return current;
+        if (!connecting.compareAndSet(false, true)) {
+            throw new McpClientConnectingException(name);
+        }
+        try {
+            current = beanContext.getBean(McpClient.class, Qualifiers.byName(name));
+            client.set(current);
+            if (unavailable) {
+                unavailable = false;
+                LOG.info("The client of the MCP connection {} is created", name);
+            }
+            return current;
+        } catch (RuntimeException e) {
+            // Names the connection, which the errors of the tool provider do not
+            if (unavailable) {
+                LOG.debug("The client of the MCP connection {} could not be created again: {}", name, e.getMessage());
+            } else {
+                unavailable = true;
+                LOG.warn("The client of the MCP connection {} could not be created, it is created again on the next call: {}", name, e.getMessage());
+            }
+            throw e;
+        } finally {
+            connecting.set(false);
+        }
     }
 
     @Override

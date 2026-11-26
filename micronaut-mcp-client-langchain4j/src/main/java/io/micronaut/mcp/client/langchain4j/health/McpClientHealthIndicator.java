@@ -15,7 +15,6 @@
  */
 package io.micronaut.mcp.client.langchain4j.health;
 
-import dev.langchain4j.mcp.client.McpClient;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
@@ -24,6 +23,8 @@ import io.micronaut.health.HealthStatus;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.management.endpoint.health.HealthEndpoint;
 import io.micronaut.management.health.indicator.AbstractHealthIndicator;
+import io.micronaut.management.health.indicator.HealthResult;
+import io.micronaut.mcp.client.langchain4j.ConnectionMcpClient;
 import io.micronaut.mcp.client.langchain4j.McpClientConnections;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import io.micronaut.scheduling.TaskExecutors;
@@ -78,6 +79,29 @@ final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String,
 
     @Override
     protected Map<String, Object> getHealthInformation() {
+        Map<String, Object> details = details();
+        healthStatus = status(details);
+        return details;
+    }
+
+    /**
+     * Builds the result from the status of this check, rather than from the field shared by concurrent checks.
+     *
+     * @return The result of the check
+     */
+    @Override
+    protected HealthResult getHealthResult() {
+        Map<String, Object> details = details();
+        return HealthResult.builder(NAME, status(details)).details(details).build();
+    }
+
+    private static HealthStatus status(Map<String, Object> details) {
+        boolean up = details.values().stream()
+            .allMatch(detail -> detail instanceof Map<?, ?> map && HealthStatus.UP.getName().equals(map.get(STATUS)));
+        return up ? HealthStatus.UP : HealthStatus.DOWN;
+    }
+
+    private Map<String, Object> details() {
         Map<String, CompletableFuture<Map<String, String>>> checks = LinkedHashMap.newLinkedHashMap(connections.size());
         for (McpClientConnectionConfiguration connection : connections) {
             String name = connection.getName();
@@ -88,15 +112,9 @@ final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String,
         }
         CompletableFuture.allOf(checks.values().toArray(CompletableFuture[]::new)).join();
         Map<String, Object> details = LinkedHashMap.newLinkedHashMap(checks.size());
-        HealthStatus status = HealthStatus.UP;
         for (Map.Entry<String, CompletableFuture<Map<String, String>>> check : checks.entrySet()) {
-            Map<String, String> detail = check.getValue().join();
-            if (!HealthStatus.UP.getName().equals(detail.get(STATUS))) {
-                status = HealthStatus.DOWN;
-            }
-            details.put(check.getKey(), detail);
+            details.put(check.getKey(), check.getValue().join());
         }
-        healthStatus = status;
         return details;
     }
 
@@ -107,9 +125,9 @@ final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String,
     }
 
     private Map<String, String> check(String name) {
-        // The client is created on first use, which fails when the server cannot be reached
-        McpClient client = beanContext.getBean(McpClient.class, Qualifiers.byName(name));
-        client.checkHealth();
+        // The client is created on first use, which fails when the server cannot be reached, and fails at once while
+        // another call is creating it
+        beanContext.getBean(ConnectionMcpClient.class, Qualifiers.byName(name)).checkHealth();
         return Map.of(STATUS, HealthStatus.UP.getName());
     }
 

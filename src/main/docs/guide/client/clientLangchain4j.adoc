@@ -96,15 +96,17 @@ for `DefaultMcpClient.Builder`, `StreamableHttpMcpTransport.Builder` or `StdioMc
 
 === Unreachable servers
 
-A client is created when it is first used, which initializes the connection to its server, and starts the process of a STDIO server. The `McpToolProvider` beans skip the servers that cannot be reached, so an unreachable server does not prevent the application from starting. A warning names the connection whose client could not be created, and creating it is attempted again the next time the tools are provided.
+A client is created when it is first used, which initializes the connection to its server, and starts the process of a STDIO server. The `McpToolProvider` beans skip the servers that cannot be reached, so an unreachable server does not prevent the application from starting. Creating a client that failed is attempted again the next time the tools are provided. A warning names the connection when its client cannot be created, and an information message when it is created again; the failures in between are logged at debug level.
 
-Each attempt waits up to the `initialization-timeout` of the connection, so while a server cannot be reached every request that provides the tools takes that much longer. Set a short `initialization-timeout` for servers that may be unavailable.
+Only one attempt to create the client of a connection runs at a time. The requests made while it runs do not wait for it: they get no tools from that server. The request that makes an attempt waits up to the `initialization-timeout` of the connection, once for each connection whose server cannot be reached, so set a short `initialization-timeout` for servers that may be unavailable. Each attempt to create the client of a STDIO connection starts a new server process.
+
+By default, each client checks its server periodically with a thread of its own, see `auto-health-check`.
 
 === Health
 
 With Micronaut Management, the `mcp` health indicator pings every server concurrently, and reports each connection whose server cannot be reached, or whose client cannot be created, as down. The servers that do not answer within `endpoints.health.mcp.timeout` (default `10s`) are reported down. Disable the indicator with `endpoints.health.mcp.enabled=false`.
 
-The first health check creates the clients that are not created yet, so it starts the processes of the STDIO servers, for example an `npx` download.
+The first health check creates the clients that are not created yet, so it starts the processes of the STDIO servers, for example an `npx` download. While a request is creating the client of a connection, the health check reports that connection down without waiting.
 
 WARNING: When any server cannot be reached, the `mcp` indicator is down, so the `/health` and `/health/readiness` endpoints answer `503 Service Unavailable`; `/health/liveness` is not affected. A readiness probe on these endpoints takes the application out of service when a server that it can do without is down. The indicator also pings the `embeddedServer` connection of an application that is itself an MCP server, without credentials, so it is down when that endpoint requires authentication. In these cases, disable the indicator.
 

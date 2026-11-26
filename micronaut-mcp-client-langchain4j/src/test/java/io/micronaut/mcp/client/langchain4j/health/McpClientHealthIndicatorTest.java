@@ -5,6 +5,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.management.health.indicator.HealthIndicator;
+import io.micronaut.mcp.client.langchain4j.ConnectionMcpClients;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import org.junit.jupiter.api.Test;
 
@@ -32,6 +33,7 @@ class McpClientHealthIndicatorTest {
         try (ApplicationContext context = ApplicationContext.run();
              ExecutorService executor = Executors.newSingleThreadExecutor()) {
             context.registerSingleton(McpClient.class, failing, Qualifiers.byName("broken"));
+            ConnectionMcpClients.register(context, "broken");
             McpClientHealthIndicator indicator = indicator(context, executor, Duration.ofSeconds(10), "broken");
             assertEquals(Map.of("broken", Map.of("status", "DOWN", "error", IllegalStateException.class.getName())),
                 indicator.getHealthInformation());
@@ -52,6 +54,7 @@ class McpClientHealthIndicatorTest {
         try (ApplicationContext context = ApplicationContext.run();
              ExecutorService executor = Executors.newCachedThreadPool()) {
             context.registerSingleton(McpClient.class, slow, Qualifiers.byName("slow"));
+            ConnectionMcpClients.register(context, "slow");
             McpClientHealthIndicator indicator = indicator(context, executor, Duration.ofMillis(100), "slow");
             Map<String, Object> down = Map.of("slow", Map.of("status", "DOWN", "error", "No answer within 100ms, the client may still be connecting to its server. See endpoints.health.mcp.timeout"));
             try {
