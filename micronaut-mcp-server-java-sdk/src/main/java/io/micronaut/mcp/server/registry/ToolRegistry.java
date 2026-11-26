@@ -46,7 +46,6 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -218,10 +217,15 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         String message;
         if (mapper instanceof InputErrorMapper<?>) {
             message = mapException(mapper, error).getMessage();
+            // Classified by the type of the exception, which may also be thrown by the tool body
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Invalid arguments for tool {}: {}", toolName(m.method()), message, error);
+                LOG.debug("Tool {} failed with an input error: {}", toolName(m.method()), message, error);
             }
         } else if (mapper != null) {
+            // The SDK does not log the protocol errors it sends
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Tool {} failed with a mapped protocol error", toolName(m.method()), error);
+            }
             throw mapException(mapper, error);
         } else {
             message = errorMessage(error);
@@ -236,6 +240,19 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         if (result instanceof McpSchema.CallToolResult callToolResult) {
             return callToolResult;
         }
+        try {
+            return serialize(m, structuredOutput, result);
+        } catch (IOException e) {
+            // Reported like an output that does not match the output schema: a tool execution error with the reason
+            String message = "The result of tool " + toolName(m.method()) + " could not be serialized: " + e.getMessage();
+            if (LOG.isWarnEnabled()) {
+                LOG.warn(message, e);
+            }
+            return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
+        }
+    }
+
+    private <B> McpSchema.CallToolResult serialize(Method<B> m, boolean structuredOutput, @Nullable Object result) throws IOException {
         if (structuredOutput) {
             if (result == null) {
                 return McpSchema.CallToolResult.builder()
@@ -253,29 +270,16 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         if (result instanceof CharSequence || result instanceof Enum<?>) {
             text = result.toString();
         } else if (result != null) {
-            try {
-                text = jsonMapper.writeValueAsString(result);
-            } catch (IOException e) {
-                // Reported like an output that does not match the output schema: a tool execution error with the reason
-                String message = "The result of tool " + toolName(m.method()) + " could not be serialized: " + e.getMessage();
-                if (LOG.isWarnEnabled()) {
-                    LOG.warn(message, e);
-                }
-                return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
-            }
+            text = jsonMapper.writeValueAsString(result);
         }
         return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
     }
 
-    private Object structuredContent(Object result) {
+    private Object structuredContent(Object result) throws IOException {
         if (!convertStructuredContent) {
             return result;
         }
-        try {
-            return jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), STRUCTURED_CONTENT_ARGUMENT);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), STRUCTURED_CONTENT_ARGUMENT);
     }
 
     private <B> McpSchema.Tool tool(Method<B> toolMethod) {
