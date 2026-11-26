@@ -15,14 +15,20 @@
  */
 package io.micronaut.mcp.server.observability;
 
+import io.micronaut.core.annotation.Experimental;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Observes the operations of the MCP server: tool calls, prompt gets, resource reads and completions. Every bean of this
- * type is notified when an operation starts and when it ends.
+ * Observes the operations of the MCP server: calls of annotated tools, gets of annotated prompts, reads of annotated
+ * resources and resource templates, and annotated completions. Every bean of this type is notified when an operation
+ * starts and when it ends. Primitives added at runtime through the MCP Java SDK server, and requests the SDK rejects
+ * before dispatching them, are not observed.
+ *
+ * <p>This interface is experimental: it may change, for example to give observers the context of the request.</p>
  *
  * @since 2.2.0
  */
+@Experimental
 public interface McpServerObserver {
 
     /**
@@ -48,6 +54,7 @@ public interface McpServerObserver {
     /**
      * The observation of an operation.
      */
+    @FunctionalInterface
     interface Observation {
 
         /**

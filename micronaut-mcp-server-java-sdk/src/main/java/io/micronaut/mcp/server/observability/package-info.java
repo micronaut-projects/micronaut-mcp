@@ -16,4 +16,7 @@
 /**
  * Observability of the MCP server.
  */
+@NullMarked
 package io.micronaut.mcp.server.observability;
+
+import org.jspecify.annotations.NullMarked;
