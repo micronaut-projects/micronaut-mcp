@@ -30,6 +30,7 @@ server:
         toolAnnotationsHints: Tool Hints
         toolAnnotationParameter: Tool Annotation Method Parameters
         toolAnnotationReturnType: Tool Annotation Method Return Type
+        toolErrors: Tool Errors
       toolsInputJsonSchema: Tools Input JSON Schema
       toolsOutputJsonSchema: Tools Output JSON Schema
       toolsFactory: Tools with a Factory

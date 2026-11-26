@@ -62,6 +62,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -105,6 +106,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected final BeanContext beanContext;
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
     private final Map<Class<? extends Throwable>, Optional<McpErrorExceptionMapper<? extends Throwable>>> classToExceptionMapper = new ConcurrentHashMap<>();
+    /**
+     * The methods and unmapped exception types already logged with a stack trace.
+     */
+    private final Set<Map.Entry<ExecutableMethod<?, ?>, Class<? extends Throwable>>> loggedUnmappedExceptions = ConcurrentHashMap.newKeySet();
 
     AbstractMcpMethodRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
                               BeanContext beanContext) {
@@ -148,7 +153,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      *
      * @return a stream of methods from the registry
      */
-    protected final Stream<Method<Object>> drainMethods() {
+    protected final Stream<Method<Object>> streamMethods() {
         return methods.stream();
     }
 
@@ -158,37 +163,71 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     }
 
     /**
-     * Maps a failure to the protocol error sent to the client: an {@link McpError} is returned unchanged, other exceptions
-     * are mapped by the matching {@link McpErrorExceptionMapper}, or become an internal error.
+     * Maps a failure of a method to the protocol error sent to the client: an {@link McpError} is returned unchanged,
+     * other exceptions are mapped by the matching {@link McpErrorExceptionMapper}, or become an internal error.
      *
+     * @param method The method that was invoked
      * @param throwable The failure
      * @return The protocol error
      */
-    protected McpError mcpError(Throwable throwable) {
+    protected McpError mcpError(ExecutableMethod<?, ?> method, Throwable throwable) {
         if (throwable instanceof McpError mcpError) {
+            // An error the method throws keeps its code
             return mcpError;
-        }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(throwable.getMessage(), throwable);
         }
         McpErrorExceptionMapper<? extends Throwable> exceptionMapper = getExceptionMapper(throwable.getClass());
         if (exceptionMapper != null) {
+            // A mapped exception is an expected client error
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(throwable.getMessage(), throwable);
+            }
             return mapException(exceptionMapper, throwable);
         }
-        // The SDK requires a message
-        String message = throwable.getMessage() != null && !throwable.getMessage().isBlank() ? throwable.getMessage() : throwable.getClass().getSimpleName();
-        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(message).build();
+        // The SDK logs only exceptions that are not an McpError, so an unmapped exception is logged here
+        if (LOG.isWarnEnabled()) {
+            // The stack trace is logged once per method and exception type, so a method that keeps failing does not flood
+            // the log, and a failure of one method does not hide the stack trace of another
+            if (loggedUnmappedExceptions.add(Map.entry(method, throwable.getClass()))) {
+                LOG.warn("MCP method {}#{} threw an exception that no McpErrorExceptionMapper maps, so it is returned as an internal error",
+                    method.getDeclaringType().getName(), method.getMethodName(), throwable);
+            } else {
+                LOG.warn("MCP method {}#{} threw {} again, returned as an internal error", method.getDeclaringType().getName(),
+                    method.getMethodName(), throwable.getClass().getName());
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Repeated exception of MCP method {}#{}", method.getDeclaringType().getName(), method.getMethodName(), throwable);
+                }
+            }
+        }
+        return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(errorMessage(throwable)).build();
+    }
+
+    /**
+     * The message sent to the client for a failure that no mapper handles. The SDK requires a message, so a failure
+     * without one is described by the simple name of its class.
+     *
+     * @param throwable The failure
+     * @return The message of the failure, or the simple name of its class (its name for an anonymous class) when it has no message
+     */
+    static String errorMessage(Throwable throwable) {
+        String message = throwable.getMessage();
+        if (message != null && !message.isBlank()) {
+            return message;
+        }
+        // An anonymous class has no simple name
+        String simpleName = throwable.getClass().getSimpleName();
+        return simpleName.isEmpty() ? throwable.getClass().getName() : simpleName;
     }
 
     /**
      * An error handler for {@link Method#call} and {@link Method#callAsync} that fails with the protocol error of the failure.
      *
+     * @param m The method that was invoked
      * @param throwable The failure
      * @param <R> The result type
      * @return Never returns
      */
-    protected final <R> R failWithMcpError(Throwable throwable) {
-        throw mcpError(throwable);
+    protected final <R> R failWithMcpError(Method<?> m, Throwable throwable) {
+        throw mcpError(m.method(), throwable);
     }
 
     /**
@@ -312,7 +351,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @return The error the mapper maps the failure to
      */
     @SuppressWarnings("unchecked")
-    protected static <T extends Throwable> McpError mapException(McpErrorExceptionMapper<? extends Throwable> mapper, T ex) {
+    static <T extends Throwable> McpError mapException(McpErrorExceptionMapper<? extends Throwable> mapper, T ex) {
         return ((McpErrorExceptionMapper<T>) mapper).map(ex);
     }
 
@@ -330,8 +369,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         private final ExecutableMethod<B, Object> executableMethod;
         private final Argument<?>[] arguments;
         /**
-         * For each parameter, the index of the value it receives without an argument binder (0 is the transport
-         * context, then the values in the order of {@link #boundParameterTypes()}), or {@link #NOT_BOUND}.
+         * For each parameter, the index in {@link AbstractMcpMethodRegistry#boundParameterTypes()} of the type of the value
+         * it receives without an argument binder, or {@link #NOT_BOUND}.
          */
         private final int[] boundIndexes;
         private final boolean collectsValues;
@@ -341,6 +380,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         /**
          * The argument binders by parameter, resolved on the first invocation, because binders for JSON schema types
          * are registered when the specifications are built. Concurrent first invocations resolve the same binders.
+         * The binders are kept only once every parameter has one.
          */
         private final AtomicReference<ArgumentBinder<?, ?>[]> binders = new AtomicReference<>();
 
@@ -349,6 +389,9 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                ExecutableMethod<B, Object> method,
                Class<?>[] boundParameterTypes,
                boolean collectsValues) {
+            if (boundParameterTypes.length == 0 || boundParameterTypes[0] != McpTransportContext.class) {
+                throw new IllegalArgumentException("The first bound parameter type must be " + McpTransportContext.class.getName());
+            }
             this.beanContext = beanContext;
             this.beanDefinition = beanDefinition;
             this.executableMethod = method;
@@ -583,7 +626,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
          * @param registry The argument binder registry
          * @param source The source of the argument binders
          * @param context The transport context or the server exchange
-         * @param values The request and any other values, in the order of {@link #boundParameterTypes()} after the context
+         * @param values The request and any other values: one for each of {@link AbstractMcpMethodRegistry#boundParameterTypes()}
+         *               after the transport context, in the same order
          * @param <S> The source type
          * @return The result of the method
          * @throws UnsatisfiedArgumentException If a required parameter cannot be bound
@@ -615,10 +659,15 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             ArgumentBinder<?, ?>[] resolved = binders.get();
             if (resolved == null) {
                 resolved = new ArgumentBinder<?, ?>[arguments.length];
+                boolean complete = true;
                 for (int i = 0; i < arguments.length; i++) {
                     resolved[i] = registry.findArgumentBinder((Argument<Object>) arguments[i]).orElse(null);
+                    complete &= resolved[i] != null;
                 }
-                binders.set(resolved);
+                // A missing binder is looked up again on the next invocation, in case it is registered later
+                if (complete) {
+                    binders.set(resolved);
+                }
             }
             return resolved;
         }
