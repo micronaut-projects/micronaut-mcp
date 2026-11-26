@@ -80,6 +80,7 @@ class McpControllerTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
         Map<?, ?> error = (Map<?, ?>) ((Map<?, ?>) response.body()).get("error");
         assertEquals(McpSchema.ErrorCodes.INVALID_REQUEST, error.get("code"));
+        assertEquals("Invalid Request: \"params\" could not be read", error.get("message"));
     }
 
     private static <T> T proxy(Class<T> type, InvocationHandler handler) {

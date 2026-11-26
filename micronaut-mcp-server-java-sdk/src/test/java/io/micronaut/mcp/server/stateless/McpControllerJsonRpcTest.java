@@ -16,8 +16,11 @@ import jakarta.inject.Singleton;
 import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.skyscreamer.jsonassert.JSONAssert;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,48 +32,53 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @MicronautTest
 class McpControllerJsonRpcTest {
 
-    private static final String INVALID_REQUEST = """
-        {
-          "jsonrpc": "2.0",
-          "id": null,
-          "error": {"code": -32600, "message": "The server accepts either JSON-RPC requests or notifications"}
-        }""";
-
-    @Test
-    void aMessageWithoutJsonRpcVersionIsAnInvalidRequest(@Client("/") HttpClient httpClient) throws JSONException {
-        assertInvalidRequest(httpClient, """
-            {"method": "tools/list", "id": 1}""");
-    }
-
-    @Test
-    void aBodyThatIsNotAnObjectIsAnInvalidRequest(@Client("/") HttpClient httpClient) throws JSONException {
-        assertInvalidRequest(httpClient, """
-            [{"jsonrpc": "2.0", "method": "tools/list", "id": 1}]""");
+    static Stream<Arguments> invalidRequests() {
+        String jsonrpc = "Invalid Request: \\\"jsonrpc\\\" must be \\\"2.0\\\"";
+        String method = "Invalid Request: \\\"method\\\" must be a string";
+        String id = "Invalid Request: \\\"id\\\" must be a string or an integer";
+        String params = "Invalid Request: \\\"params\\\" must be an object or an array";
+        return Stream.of(
+            Arguments.of("""
+                [{"jsonrpc": "2.0", "method": "tools/list", "id": 1}]""",
+                "Invalid Request: batches are not supported, send one JSON-RPC message per request"),
+            Arguments.of("\"ping\"", "Invalid Request: the body must be a JSON object"),
+            Arguments.of("""
+                {"method": "tools/list", "id": 1}""", jsonrpc),
+            Arguments.of("""
+                {"jsonrpc": 2, "method": "tools/list", "id": 1}""", jsonrpc),
+            Arguments.of("""
+                {"jsonrpc": "1.0", "method": "tools/list", "id": 1}""", jsonrpc),
+            Arguments.of("""
+                {"jsonrpc": "2.0", "method": 1, "id": 1}""", method),
+            Arguments.of("""
+                {"jsonrpc": "2.0", "id": 1}""", method),
+            Arguments.of("""
+                {"jsonrpc": "2.0", "id": true, "method": "ping"}""", id),
+            Arguments.of("""
+                {"jsonrpc": "2.0", "id": null, "method": "ping"}""", id),
+            Arguments.of("""
+                {"jsonrpc": "2.0", "id": 1.0, "method": "ping"}""", id),
+            Arguments.of("""
+                {"jsonrpc": "2.0", "id": 1.5, "method": "ping"}""", id),
+            Arguments.of("""
+                {"jsonrpc": "2.0", "id": 12345678901234567890, "method": "ping"}""", id),
+            Arguments.of("""
+                {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": "x"}""", params),
+            Arguments.of("""
+                {"jsonrpc": "2.0", "method": "notifications/initialized", "params": 1}""", params));
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        """
-        {"jsonrpc": 2, "method": "tools/list", "id": 1}""",
-        """
-        {"jsonrpc": "1.0", "method": "tools/list", "id": 1}""",
-        """
-        {"jsonrpc": "2.0", "method": 1, "id": 1}""",
-        """
-        {"jsonrpc": "2.0", "id": 1}""",
-        """
-        {"jsonrpc": "2.0", "id": true, "method": "ping"}""",
-        """
-        {"jsonrpc": "2.0", "id": null, "method": "ping"}""",
-        """
-        {"jsonrpc": "2.0", "id": 1.0, "method": "ping"}""",
-        """
-        {"jsonrpc": "2.0", "id": 1.5, "method": "ping"}""",
-        """
-        {"jsonrpc": "2.0", "id": 12345678901234567890, "method": "ping"}"""
-    })
-    void aMessageWithAnInvalidVersionMethodOrIdIsAnInvalidRequest(String body, @Client("/") HttpClient httpClient) throws JSONException {
-        assertInvalidRequest(httpClient, body);
+    @MethodSource("invalidRequests")
+    void aMessageThatIsNotAValidRequestOrNotificationIsAnInvalidRequest(String body, String message,
+                                                                         @Client("/") HttpClient httpClient) throws JSONException {
+        BlockingHttpClient client = httpClient.toBlocking();
+        HttpRequest<String> request = HttpRequest.POST("/mcp", body);
+        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        JSONAssert.assertEquals("""
+            {"jsonrpc": "2.0", "id": null, "error": {"code": -32600, "message": "%s"}}""".formatted(message),
+            ex.getResponse().getBody(String.class).orElseThrow(), true);
     }
 
     @Test
@@ -84,22 +92,15 @@ class McpControllerJsonRpcTest {
     }
 
     @Test
-    void paramsTheSdkCannotConvertAreAJsonRpcError(@Client("/") HttpClient httpClient) throws JSONException {
+    void paramsTheSdkCannotConvertAreAnInternalErrorWithoutItsMessage(@Client("/") HttpClient httpClient) throws JSONException {
         BlockingHttpClient client = httpClient.toBlocking();
         HttpRequest<String> request = HttpRequest.POST("/mcp", """
-            {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": "x"}""");
+            {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": [1, 2]}""");
         HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatus());
         JSONAssert.assertEquals("""
-            {"jsonrpc": "2.0", "id": 3, "error": {"code": -32603}}""", ex.getResponse().getBody(String.class).orElseThrow(), false);
-    }
-
-    private static void assertInvalidRequest(HttpClient httpClient, String body) throws JSONException {
-        BlockingHttpClient client = httpClient.toBlocking();
-        HttpRequest<String> request = HttpRequest.POST("/mcp", body);
-        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
-        JSONAssert.assertEquals(INVALID_REQUEST, ex.getResponse().getBody(String.class).orElseThrow(), true);
+            {"jsonrpc": "2.0", "id": 3, "error": {"code": -32603, "message": "Internal error"}}""",
+            ex.getResponse().getBody(String.class).orElseThrow(), true);
     }
 
     @Test
