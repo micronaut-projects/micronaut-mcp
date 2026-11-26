@@ -61,9 +61,10 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
         if (structuredContent == null) {
             throw new IllegalArgumentException("Structured content must not be null");
         }
-        // Serialized once and reused by the SDK as text content. DefaultJsonSchemaValidator reads a String value
-        // as JSON text rather than as a JSON string literal; that contract is documented by
-        // micronaut-projects/micronaut-json-schema#425, as the validator API has no dedicated JSON text overload.
+        // Serialized once and reused by the SDK as text content. The Micronaut JSON Schema validators (the built-in one and
+        // the NetworkNT one, which replaces it when present) read a String value as JSON text rather than as a JSON string
+        // literal; that contract is documented by micronaut-projects/micronaut-json-schema#425, as the validator API has no
+        // dedicated JSON text overload.
         String jsonStructuredOutput;
         try {
             jsonStructuredOutput = jsonMapper.writeValueAsString(structuredContent);
