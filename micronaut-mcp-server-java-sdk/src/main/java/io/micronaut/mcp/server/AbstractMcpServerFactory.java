@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.mcp.conf.server.IconConfiguration;
 import io.micronaut.mcp.conf.server.McpServerInfoConfiguration;
 import io.micronaut.mcp.conf.server.PromptsConfiguration;
@@ -51,6 +52,7 @@ import java.util.List;
  */
 @Internal
 public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
+    private static final List<String> WEBSITE_URL_SCHEMES = List.of("https:", "http:");
 
     /**
      * Retrieves a list of tools from the provided {@link ToolRegistry}.
@@ -65,6 +67,7 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
      *
      * @param configuration The server information configuration
      * @return The server implementation
+     * @throws IllegalStateException If an icon is invalid, or if the website URL is neither an https nor an http URL
      * @since 2.2.0
      */
     protected static McpSchema.Implementation serverInfo(McpServerInfoConfiguration configuration) {
@@ -79,7 +82,18 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
             }
         }
         return new McpSchema.Implementation(configuration.getName(), configuration.getTitle(), configuration.getVersion(),
-            configuration.getDescription(), icons, configuration.getWebsiteUrl());
+            configuration.getDescription(), icons, websiteUrl(configuration.getWebsiteUrl()));
+    }
+
+    private static @Nullable String websiteUrl(@Nullable String websiteUrl) {
+        if (StringUtils.isEmpty(websiteUrl)) {
+            return null;
+        }
+        if (!McpIconFactory.hasScheme(websiteUrl, WEBSITE_URL_SCHEMES)) {
+            throw new IllegalStateException("The " + McpServerInfoConfiguration.PREFIX + ".website-url " + websiteUrl
+                + " must be an https or http URL");
+        }
+        return websiteUrl;
     }
 
     /**

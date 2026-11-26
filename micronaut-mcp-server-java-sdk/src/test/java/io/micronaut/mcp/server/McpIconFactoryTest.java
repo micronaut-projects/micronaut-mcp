@@ -37,6 +37,19 @@ class McpIconFactoryTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = {"https://example.com/sun.svg", "HTTPS://example.com/sun.svg", "http://localhost:8080/sun.svg", "data:image/png;base64,iVBORw0KGgo="})
+    void httpsHttpAndDataSourcesAreAccepted(String src) {
+        assertEquals(src, McpIconFactory.icon(OWNER, src, null, List.of(), null).src());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"javascript:alert(1)", "file:///etc/passwd", "ftp://example.com/sun.svg", "example.com/sun.svg", "httpx://example.com"})
+    void otherSchemesAreRejected(String src) {
+        IllegalStateException error = assertThrows(IllegalStateException.class, () -> McpIconFactory.icon(OWNER, src, null, List.of(), null));
+        assertEquals("The icon has the src " + src + ", but it must be an https or http URL, or a data: URI", error.getMessage());
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = {"Dark", "LIGHT", "purple", " dark"})
     void aThemeOtherThanLowercaseLightOrDarkIsRejected(String theme) {
         IllegalStateException error = assertThrows(IllegalStateException.class, () -> McpIconFactory.icon(OWNER, SRC, null, List.of(), theme));

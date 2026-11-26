@@ -20,6 +20,8 @@ micronaut:
         instructions: Ask for a city before asking for a forecast.
 ----
 
-NOTE: Without `name` and `version`, clients receive the default server information of the MCP Java SDK, and the other properties on this page are ignored: the server logs a warning at startup. Every icon requires a `src`, and its `theme`, when set, must be `light` or `dark` in lowercase; otherwise the server fails to start.
+NOTE: Without `name` and `version`, clients receive the default server information of the MCP Java SDK, and the other properties on this page are ignored: the server logs a warning at startup. Every icon requires a `src` that is an HTTPS URL or a `data:` URI (an HTTP URL is accepted, for example for local development), the `website-url` must be an HTTPS or HTTP URL, and an icon `theme`, when set, must be `light` or `dark` in lowercase; otherwise the server fails to start.
+
+WARNING: Every client that connects reads the server information and the instructions in the response to `initialize`, and clients may add the instructions to the model's prompt. Do not put secrets or internal details in them.
 
 include::{includedir}configurationProperties/io.micronaut.mcp.conf.server.McpServerInfoConfigurationProperties.adoc[]

@@ -11,6 +11,7 @@ import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +27,33 @@ class IconValidationTest {
             startupFailure(Map.of(
                 "micronaut.mcp.server.info.icons[0].src", "https://example.com/weather.png",
                 "micronaut.mcp.server.info.icons[1].mime-type", "image/png")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"HTTP", "STDIO"})
+    void aConfiguredIconWithoutSrcFailsTheStartupWithEveryTransport(String transport) {
+        assertEquals("The icon micronaut.mcp.server.info.icons[0] requires a src",
+            startupFailure(Map.of("micronaut.mcp.server.transport", transport, "micronaut.mcp.server.info.icons[0].theme", "dark")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"HTTP", "STDIO"})
+    void anIconAnnotationWithAnEmptySrcFailsTheStartupWithEveryTransport(String transport) {
+        assertEquals("The @Icon of method " + EmptySrcTool.class.getName() + "#tool requires a src",
+            startupFailure(Map.of("micronaut.mcp.server.transport", transport, "spec.name", "IconValidationTest.EmptySrcTool")));
+    }
+
+    @Test
+    void aConfiguredIconWithAJavascriptSrcFailsTheStartup() {
+        assertEquals("The icon micronaut.mcp.server.info.icons[0] has the src javascript:alert(1), but it must be an https or http URL, or a data: URI",
+            startupFailure(Map.of("micronaut.mcp.server.info.icons[0].src", "javascript:alert(1)")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"javascript:alert(1)", "file:///etc/passwd", "example.com"})
+    void aWebsiteUrlThatIsNotAnHttpUrlFailsTheStartup(String websiteUrl) {
+        assertEquals("The micronaut.mcp.server.info.website-url " + websiteUrl + " must be an https or http URL",
+            startupFailure(Map.of("micronaut.mcp.server.info.website-url", websiteUrl)));
     }
 
     @Test
@@ -53,7 +81,7 @@ class IconValidationTest {
         Map<String, Object> properties = new HashMap<>(extraProperties);
         properties.put("micronaut.mcp.server.info.name", "mcp-server");
         properties.put("micronaut.mcp.server.info.version", "0.0.1");
-        properties.put("micronaut.mcp.server.transport", "HTTP");
+        properties.putIfAbsent("micronaut.mcp.server.transport", "HTTP");
         Throwable error = assertThrows(RuntimeException.class, () -> ApplicationContext.run(properties));
         while (error.getCause() != null && !(error instanceof IllegalStateException)) {
             error = error.getCause();

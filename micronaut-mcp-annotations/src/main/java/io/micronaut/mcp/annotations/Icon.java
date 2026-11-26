@@ -43,7 +43,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface Icon {
 
     /**
-     * @return The URI of the icon: an HTTPS URL or a {@code data:} URI. A blank value fails the startup.
+     * @return The URI of the icon: an HTTPS URL or a {@code data:} URI. An HTTP URL is accepted, for example for local development. A blank value, or any other scheme, fails the startup.
      */
     String src();
 

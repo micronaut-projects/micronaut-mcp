@@ -85,7 +85,7 @@ final class McpServerInfoConfigurationProperties implements McpServerInfoConfigu
     }
 
     /**
-     * @param websiteUrl The URL of the website of the server
+     * @param websiteUrl The URL of the website of the server. It must be an https or http URL, or the startup fails.
      */
     public void setWebsiteUrl(@Nullable String websiteUrl) {
         this.websiteUrl = websiteUrl;
@@ -97,7 +97,7 @@ final class McpServerInfoConfigurationProperties implements McpServerInfoConfigu
     }
 
     /**
-     * @param icons The icons of the server. Each icon has a required src (an HTTPS URL or a data: URI) and an optional mime-type, sizes (for example 48x48 or any) and theme (light or dark, in lowercase).
+     * @param icons The icons of the server. Each icon has a required src (an HTTPS URL or a data: URI; an HTTP URL is accepted, any other scheme fails the startup) and an optional mime-type, sizes (for example 48x48 or any) and theme (light or dark, in lowercase).
      */
     public void setIcons(@Nullable List<IconConfiguration> icons) {
         this.icons = icons != null ? icons : List.of();
@@ -109,7 +109,7 @@ final class McpServerInfoConfigurationProperties implements McpServerInfoConfigu
     }
 
     /**
-     * @param instructions Instructions describing how to use the server and its features, which clients may add to the model's prompt
+     * @param instructions Instructions describing how to use the server and its features, which clients may add to the model's prompt. Every client that connects can read them, so do not put secrets in them.
      */
     public void setInstructions(@Nullable String instructions) {
         this.instructions = instructions;
