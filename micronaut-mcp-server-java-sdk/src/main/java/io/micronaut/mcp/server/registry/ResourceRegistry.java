@@ -68,7 +68,7 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpServerFeatures.SyncResourceSpecification> getSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpServerFeatures.SyncResourceSpecification(
                 toResource(m.method()),
                 syncHandler(m)
@@ -78,7 +78,7 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpServerFeatures.AsyncResourceSpecification> getAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpServerFeatures.AsyncResourceSpecification(
                 toResource(m.method()),
                 asyncHandler(m)
@@ -88,7 +88,7 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpStatelessServerFeatures.SyncResourceSpecification> getStatelessSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpStatelessServerFeatures.SyncResourceSpecification(
                 toResource(m.method()),
                 statelessSyncHandler(m)
@@ -98,7 +98,7 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpStatelessServerFeatures.AsyncResourceSpecification> getStatelessAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpStatelessServerFeatures.AsyncResourceSpecification(
                 toResource(m.method()),
                 statelessAsyncHandler(m)
@@ -134,14 +134,14 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
         return m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
-            mcpTransportContext, result -> map(m, request, result), this::failWithMcpError);
+            mcpTransportContext, result -> map(m, request, result), e -> failWithMcpError(m, e));
     }
 
     private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
                                                                      Object mcpTransportContext,
                                                                      McpSchema.ReadResourceRequest request) {
         return m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
-            result -> map(m, request, result), this::failWithMcpError);
+            result -> map(m, request, result), e -> failWithMcpError(m, e));
     }
 
     private <B> McpSchema.ReadResourceResult map(Method<B> m, McpSchema.ReadResourceRequest request, @Nullable Object result) {

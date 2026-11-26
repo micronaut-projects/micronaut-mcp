@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinder;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.core.type.Argument;
+import io.micronaut.mcp.annotations.ToolArg;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 
@@ -51,11 +52,12 @@ final class CallToolRequestArgumentBinderRegistry implements ArgumentBinderRegis
 
     @Override
     public <T> Optional<ArgumentBinder<T, McpSchema.CallToolRequest>> findArgumentBinder(Argument<T> argument) {
-        TypedCallToRequestArgumentBinder<T> binder = byType.get(argument.typeHashCode());
-        if (binder != null) {
-            return Optional.ofNullable(byType.get(argument.typeHashCode()));
-        }
-        return Optional.ofNullable(defaultBinder);
+        // A typed binder binds the whole input of a tool, so it does not apply to an argument annotated with ToolArg, which is
+        // a named property of the input, even when another tool takes the same type as its whole input
+        TypedCallToRequestArgumentBinder<T> binder = argument.getAnnotationMetadata().hasAnnotation(ToolArg.class)
+            ? null
+            : byType.get(argument.typeHashCode());
+        return binder != null ? Optional.of(binder) : Optional.ofNullable(defaultBinder);
     }
 
     private <T> void addBinder(ArgumentBinder<T, McpSchema.CallToolRequest> binder) {
