@@ -1,5 +1,6 @@
 package io.micronaut.mcp.server.registry;
 
+import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
@@ -7,10 +8,15 @@ import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.PromptCompletion;
 import io.micronaut.mcp.annotations.Resource;
 import io.micronaut.mcp.annotations.ResourceTemplate;
+import io.micronaut.core.bind.exceptions.UnsatisfiedArgumentException;
+import io.micronaut.jsonschema.JsonSchema;
 import io.micronaut.mcp.annotations.Tool;
+import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
+import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
+import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -23,9 +29,14 @@ import org.junit.jupiter.api.function.Executable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -57,6 +68,18 @@ class RegistryHandlersTest {
     @Inject
     CompletionRegistry completionRegistry;
 
+    @Inject
+    CompleteRequestArgumentBinderRegistry completeRequestArgumentBinderRegistry;
+
+    @Inject
+    BeanContext beanContext;
+
+    @Inject
+    Primitives primitives;
+
+    @Inject
+    CountingMapper countingMapper;
+
     @Test
     void tools() {
         McpSchema.CallToolRequest echo = new McpSchema.CallToolRequest("echo", Map.of("text", "hi"));
@@ -76,30 +99,70 @@ class RegistryHandlersTest {
     }
 
     @Test
-    void failingToolsAreErrors() {
-        var failing = find(toolRegistry.getStatelessSyncSpecs(), s -> s.tool().name().equals("failing")).callHandler();
-        McpSchema.CallToolRequest failingRequest = new McpSchema.CallToolRequest("failing", Map.of());
-        // an exception without a mapper, twice, so the second lookup hits the cached miss
-        assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "failing", () -> failing.apply(CONTEXT, failingRequest));
-        assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "failing", () -> failing.apply(CONTEXT, failingRequest));
-        // an exception without a message is reported with its type, because the SDK requires a message
-        var silent = find(toolRegistry.getStatelessSyncSpecs(), s -> s.tool().name().equals("silent")).callHandler();
+    void unmappedExceptionsAreInternalErrorsWithTheirMessage() {
+        var failing = toolHandler("failing");
+        McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("failing", Map.of());
+        // twice, so the second lookup hits the cached miss
+        assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "failing", () -> failing.apply(CONTEXT, request));
+        assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "failing", () -> failing.apply(CONTEXT, request));
+    }
+
+    @Test
+    void exceptionsWithoutAMessageAreReportedWithTheirType() {
+        // the SDK requires a message
         assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "IllegalStateException",
-            () -> silent.apply(CONTEXT, new McpSchema.CallToolRequest("silent", Map.of())));
-        // an exception of an anonymous class, without a message, is reported with the name of its class
-        var anonymous = find(toolRegistry.getStatelessSyncSpecs(), s -> s.tool().name().equals("anonymous")).callHandler();
-        McpError anonymousError = assertThrows(McpError.class,
-            () -> anonymous.apply(CONTEXT, new McpSchema.CallToolRequest("anonymous", Map.of())));
-        assertEquals(McpSchema.ErrorCodes.INTERNAL_ERROR, anonymousError.getJsonRpcError().code());
-        assertTrue(anonymousError.getJsonRpcError().message().startsWith(Primitives.class.getName() + "$"));
-        // an McpError the tool throws keeps its code and message
-        var invalid = find(toolRegistry.getStatelessSyncSpecs(), s -> s.tool().name().equals("invalid")).callHandler();
+            () -> toolHandler("silent").apply(CONTEXT, new McpSchema.CallToolRequest("silent", Map.of())));
+        assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "IllegalStateException",
+            () -> toolHandler("blank").apply(CONTEXT, new McpSchema.CallToolRequest("blank", Map.of())));
+    }
+
+    @Test
+    void exceptionsOfAnAnonymousClassWithoutAMessageAreReportedWithTheNameOfTheirClass() {
+        McpError error = assertThrows(McpError.class,
+            () -> toolHandler("anonymous").apply(CONTEXT, new McpSchema.CallToolRequest("anonymous", Map.of())));
+        assertEquals(McpSchema.ErrorCodes.INTERNAL_ERROR, error.getJsonRpcError().code());
+        // an anonymous class has no simple name
+        assertTrue(error.getJsonRpcError().message().startsWith(Primitives.class.getName() + "$"));
+    }
+
+    @Test
+    void anMcpErrorKeepsItsCodeAndMessage() {
         assertError(McpSchema.ErrorCodes.INVALID_PARAMS, "bad",
-            () -> invalid.apply(CONTEXT, new McpSchema.CallToolRequest("invalid", Map.of())));
-        // a missing argument, which an exception mapper maps
-        var echo = find(toolRegistry.getStatelessSyncSpecs(), s -> s.tool().name().equals("echo")).callHandler();
-        McpError missing = assertThrows(McpError.class, () -> echo.apply(CONTEXT, new McpSchema.CallToolRequest("echo", Map.of())));
-        assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, missing.getJsonRpcError().code());
+            () -> toolHandler("invalid").apply(CONTEXT, new McpSchema.CallToolRequest("invalid", Map.of())));
+    }
+
+    @Test
+    void mappedExceptionsAreMappedByTheirMapper() {
+        assertError(McpSchema.ErrorCodes.INVALID_PARAMS, "Required argument [String text] not specified",
+            () -> toolHandler("echo").apply(CONTEXT, new McpSchema.CallToolRequest("echo", Map.of())));
+        var mapped = toolHandler("mapped");
+        McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("mapped", Map.of());
+        assertError(McpSchema.ErrorCodes.INVALID_REQUEST, "mapped", () -> mapped.apply(CONTEXT, request));
+        assertError(McpSchema.ErrorCodes.INVALID_REQUEST, "mapped", () -> mapped.apply(CONTEXT, request));
+    }
+
+    @Test
+    void theMappersAreAskedOncePerExceptionType() {
+        McpSchema.CallToolRequest failing = new McpSchema.CallToolRequest("failing", Map.of());
+        McpSchema.CallToolRequest mapped = new McpSchema.CallToolRequest("mapped", Map.of());
+        for (int i = 0; i < 2; i++) {
+            assertThrows(McpError.class, () -> toolHandler("failing").apply(CONTEXT, failing));
+            assertThrows(McpError.class, () -> toolHandler("mapped").apply(CONTEXT, mapped));
+        }
+        assertEquals(1, countingMapper.canMapCalls(IllegalStateException.class));
+        assertEquals(1, countingMapper.canMapCalls(MappedException.class));
+    }
+
+    @Test
+    void jsonSchemaArgumentsAreBoundOnEveryVariantWhateverTheOrderTheSpecificationsAreBuilt() {
+        toolRegistry.getStatelessSyncSpecs();
+        McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("area", Map.of("width", 2, "height", 3));
+        assertEquals("6", text(toolHandler("area").apply(CONTEXT, request)));
+        assertEquals("6", text(find(toolRegistry.getSyncSpecs(), s -> s.tool().name().equals("area")).callHandler().apply(SYNC_EXCHANGE, request)));
+        assertEquals("6", text(find(toolRegistry.getStatelessAsyncSpecs(), s -> s.tool().name().equals("area")).callHandler().apply(CONTEXT, request).block()));
+        // a value of the wrong type is a missing argument
+        assertError(McpSchema.ErrorCodes.INVALID_PARAMS, "Required argument [HandlersRectangle rectangle] not specified",
+            () -> toolHandler("area").apply(CONTEXT, new McpSchema.CallToolRequest("area", Map.of("width", "two", "height", 3))));
     }
 
     @Test
@@ -115,6 +178,66 @@ class RegistryHandlersTest {
         // an Object parameter is bound to the transport context, so it is not advertised in the input schema
         assertEquals(Set.of("text"), ((Map<?, ?>) spec.tool().inputSchema().get("properties")).keySet());
         assertEquals("hi true", text(spec.callHandler().apply(CONTEXT, new McpSchema.CallToolRequest("contextual", Map.of("text", "hi")))));
+    }
+
+    @Test
+    void boundParametersAreLeftOutOfTheInputSchemaWhereverTheyAreDeclared() {
+        var spec = find(toolRegistry.getStatelessSyncSpecs(), s -> s.tool().name().equals("mixed"));
+        assertEquals(Set.of("a", "b"), ((Map<?, ?>) spec.tool().inputSchema().get("properties")).keySet());
+        assertEquals(List.of("a", "b"), spec.tool().inputSchema().get("required"));
+        McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("mixed", Map.of("a", "x", "b", 1));
+        assertEquals("true x mixed 1", text(spec.callHandler().apply(CONTEXT, request)));
+    }
+
+    @Test
+    void promptsReceiveTheRequestAndTheTransportContext() {
+        McpSchema.GetPromptRequest request = new McpSchema.GetPromptRequest("introduce", Map.of());
+        find(promptRegistry.getSyncSpecs(), s -> s.prompt().name().equals("introduce")).promptHandler().apply(SYNC_EXCHANGE, request);
+        assertReceived(request, CONTEXT);
+        find(promptRegistry.getAsyncSpecs(), s -> s.prompt().name().equals("introduce")).promptHandler().apply(ASYNC_EXCHANGE, request).block();
+        assertReceived(request, CONTEXT);
+        find(promptRegistry.getStatelessSyncSpecs(), s -> s.prompt().name().equals("introduce")).promptHandler().apply(CONTEXT, request);
+        assertReceived(request, CONTEXT);
+        find(promptRegistry.getStatelessAsyncSpecs(), s -> s.prompt().name().equals("introduce")).promptHandler().apply(CONTEXT, request).block();
+        assertReceived(request, CONTEXT);
+    }
+
+    @Test
+    void resourcesReceiveTheRequestAndTheTransportContext() {
+        McpSchema.ReadResourceRequest request = new McpSchema.ReadResourceRequest("handlers://request");
+        find(resourceRegistry.getSyncSpecs(), s -> s.resource().uri().equals("handlers://request")).readHandler().apply(SYNC_EXCHANGE, request);
+        assertReceived(request, CONTEXT);
+        find(resourceRegistry.getStatelessSyncSpecs(), s -> s.resource().uri().equals("handlers://request")).readHandler().apply(CONTEXT, request);
+        assertReceived(request, CONTEXT);
+    }
+
+    @Test
+    void resourceTemplatesReceiveTheRequest() {
+        String template = "handlers://requests/{id}";
+        McpSchema.ReadResourceRequest request = new McpSchema.ReadResourceRequest("handlers://requests/1");
+        find(resourceTemplateRegistry.getSyncSpecs(), s -> s.resourceTemplate().uriTemplate().equals(template)).readHandler().apply(SYNC_EXCHANGE, request);
+        assertReceived(request, CONTEXT);
+        find(resourceTemplateRegistry.getStatelessSyncSpecs(), s -> s.resourceTemplate().uriTemplate().equals(template)).readHandler().apply(CONTEXT, request);
+        assertReceived(request, CONTEXT);
+    }
+
+    @Test
+    void aResourceTemplateHandlerMatchesEveryRequestAgainstItsTemplate() {
+        var handler = find(resourceTemplateRegistry.getStatelessSyncSpecs(), s -> s.resourceTemplate().uriTemplate().equals("handlers://pages/{page}")).readHandler();
+        assertEquals("page 7", resource(handler.apply(CONTEXT, new McpSchema.ReadResourceRequest("handlers://pages/7"))));
+        assertEquals("page 8", resource(handler.apply(CONTEXT, new McpSchema.ReadResourceRequest("handlers://pages/8"))));
+        // a URI that does not match the template has no variables, so the page is missing
+        assertThrows(UnsatisfiedArgumentException.class, () -> handler.apply(CONTEXT, new McpSchema.ReadResourceRequest("handlers://other/7")));
+    }
+
+    @Test
+    void registriesWithMethodsAreNotEmpty() {
+        assertTrue(toolRegistry.isNotEmpty());
+        assertTrue(promptRegistry.isNotEmpty());
+        assertTrue(resourceRegistry.isNotEmpty());
+        assertTrue(resourceTemplateRegistry.isNotEmpty());
+        assertTrue(completionRegistry.isNotEmpty());
+        assertFalse(new CompletionRegistry(List.of(), beanContext, completeRequestArgumentBinderRegistry).isNotEmpty());
     }
 
     @Test
@@ -165,6 +288,21 @@ class RegistryHandlersTest {
         assertEquals(List.of("Alice"), completionRegistry.getAsyncSpecs().getFirst().completionHandler().apply(ASYNC_EXCHANGE, request).block().completion().values());
         assertEquals(List.of("Alice"), completionRegistry.getStatelessSyncSpecs().getFirst().completionHandler().apply(CONTEXT, request).completion().values());
         assertEquals(List.of("Alice"), completionRegistry.getStatelessAsyncSpecs().getFirst().completionHandler().apply(CONTEXT, request).block().completion().values());
+        assertSame(request, primitives.request);
+        assertSame(request.argument(), primitives.argument);
+    }
+
+    private McpStatelessServerFeatures.SyncToolSpecification toolSpec(String name) {
+        return find(toolRegistry.getStatelessSyncSpecs(), s -> s.tool().name().equals(name));
+    }
+
+    private BiFunction<McpTransportContext, McpSchema.CallToolRequest, McpSchema.CallToolResult> toolHandler(String name) {
+        return toolSpec(name).callHandler();
+    }
+
+    private void assertReceived(Object request, McpTransportContext context) {
+        assertSame(request, primitives.request);
+        assertSame(context, primitives.context);
     }
 
     private static <T> T find(List<T> specs, Predicate<T> predicate) {
@@ -192,9 +330,54 @@ class RegistryHandlersTest {
     @Requires(property = "spec.name", value = "RegistryHandlersTest")
     @Singleton
     static class Primitives {
+        volatile Object request;
+        volatile Object context;
+        volatile Object argument;
+
         @Tool
         String echo(String text) {
             return text;
+        }
+
+        @Tool
+        String mixed(Object context, String a, McpSchema.CallToolRequest request, Integer b) {
+            return (context instanceof McpTransportContext) + " " + a + " " + request.name() + " " + b;
+        }
+
+        @Tool
+        String area(HandlersRectangle rectangle) {
+            return String.valueOf(rectangle.width() * rectangle.height());
+        }
+
+        @Tool
+        String blank() {
+            throw new IllegalStateException("  ");
+        }
+
+        @Tool
+        String mapped() {
+            throw new MappedException("mapped");
+        }
+
+        @Prompt
+        String introduce(McpSchema.GetPromptRequest request, McpTransportContext context) {
+            this.request = request;
+            this.context = context;
+            return "Hello";
+        }
+
+        @Resource(uri = "handlers://request")
+        String requestResource(McpSchema.ReadResourceRequest request, McpTransportContext context) {
+            this.request = request;
+            this.context = context;
+            return "request";
+        }
+
+        @ResourceTemplate(uriTemplate = "handlers://requests/{id}")
+        String requestTemplate(String id, McpSchema.ReadResourceRequest request, McpTransportContext context) {
+            this.request = request;
+            this.context = context;
+            return "request " + id;
         }
 
         @Tool
@@ -233,7 +416,9 @@ class RegistryHandlersTest {
         }
 
         @PromptCompletion(name = "greeting")
-        List<String> greetingCompletion(McpSchema.CompleteRequest.CompleteArgument argument) {
+        List<String> greetingCompletion(McpSchema.CompleteRequest request, McpSchema.CompleteRequest.CompleteArgument argument) {
+            this.request = request;
+            this.argument = argument;
             return List.of("Alice");
         }
 
@@ -245,6 +430,39 @@ class RegistryHandlersTest {
         @ResourceTemplate(uriTemplate = "handlers://pages/{page}")
         String page(String page) {
             return "page " + page;
+        }
+    }
+
+    @JsonSchema
+    @Serdeable
+    record HandlersRectangle(int width, int height) {
+    }
+
+    static class MappedException extends RuntimeException {
+        MappedException(String message) {
+            super(message);
+        }
+    }
+
+    @Requires(property = "spec.name", value = "RegistryHandlersTest")
+    @Singleton
+    static class CountingMapper implements McpErrorExceptionMapper<MappedException> {
+        private final Map<Class<?>, AtomicInteger> canMapCalls = new ConcurrentHashMap<>();
+
+        @Override
+        public boolean canMap(Class<? extends Throwable> clazz) {
+            canMapCalls.computeIfAbsent(clazz, c -> new AtomicInteger()).incrementAndGet();
+            return MappedException.class.isAssignableFrom(clazz);
+        }
+
+        @Override
+        public McpError map(MappedException exception) {
+            return McpError.builder(McpSchema.ErrorCodes.INVALID_REQUEST).message(exception.getMessage()).build();
+        }
+
+        int canMapCalls(Class<?> clazz) {
+            AtomicInteger calls = canMapCalls.get(clazz);
+            return calls == null ? 0 : calls.get();
         }
     }
 
