@@ -90,7 +90,7 @@ class StdioAndHttpClientsTest implements TestPropertyProvider {
     void theHealthIndicatorPingsEveryServer() {
         HealthResult mcp = mcpHealth(healthIndicators);
         assertEquals(HealthStatus.UP, mcp.getStatus());
-        assertEquals(Map.of("embeddedServer", "UP", "local", "UP"), mcp.getDetails());
+        assertEquals(Map.of("embeddedServer", Map.of("status", "UP"), "local", Map.of("status", "UP")), mcp.getDetails());
     }
 
     @Requires(property = "spec.name", value = "StdioAndHttpClientsTest")
