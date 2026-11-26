@@ -101,6 +101,9 @@ public final class DefaultMcpRequestContext implements McpRequestContext {
     @Override
     public void progress(double progress, @Nullable Double total, @Nullable String message) {
         if (progressToken == null) {
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Dropped a progress notification: the client sent no progress token");
+            }
             return;
         }
         McpSchema.ProgressNotification notification = new McpSchema.ProgressNotification(progressToken, progress, total, message, null);
@@ -108,8 +111,8 @@ public final class DefaultMcpRequestContext implements McpRequestContext {
             syncExchange.progressNotification(notification);
         } else if (asyncExchange != null) {
             asyncExchange.progressNotification(notification).subscribe(null, DefaultMcpRequestContext::notificationFailed);
-        } else if (emitter != null) {
-            emitter.emit(new McpSchema.JSONRPCNotification(McpSchema.JSONRPC_VERSION, McpSchema.METHOD_NOTIFICATION_PROGRESS, notification));
+        } else {
+            emit(McpSchema.METHOD_NOTIFICATION_PROGRESS, notification);
         }
     }
 
@@ -120,8 +123,16 @@ public final class DefaultMcpRequestContext implements McpRequestContext {
             syncExchange.loggingNotification(notification);
         } else if (asyncExchange != null) {
             asyncExchange.loggingNotification(notification).subscribe(null, DefaultMcpRequestContext::notificationFailed);
-        } else if (emitter != null) {
-            emitter.emit(new McpSchema.JSONRPCNotification(McpSchema.JSONRPC_VERSION, McpSchema.METHOD_NOTIFICATION_MESSAGE, notification));
+        } else {
+            emit(McpSchema.METHOD_NOTIFICATION_MESSAGE, notification);
+        }
+    }
+
+    private void emit(String method, Object notification) {
+        if (emitter != null) {
+            emitter.emit(new McpSchema.JSONRPCNotification(McpSchema.JSONRPC_VERSION, method, notification));
+        } else if (LOG.isTraceEnabled()) {
+            LOG.trace("Dropped a {} notification: the response is sent as JSON, because the client does not accept text/event-stream", method);
         }
     }
 

@@ -55,14 +55,15 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
     private static final Logger LOG = LoggerFactory.getLogger(StreamingJsonRpcResponse.class);
 
     private final MonoSink<HttpResponse<?>> response;
-    private final McpSchema.JSONRPCMessage request;
+    private final McpSchema.JSONRPCRequest request;
     private @Nullable BlockingQueue<Event<Object>> queue;
     private Sinks.@Nullable Many<Event<Object>> events;
     private @Nullable Disposable subscription;
     private boolean finished;
+    private boolean overflowed;
     private volatile boolean cancelled;
 
-    StreamingJsonRpcResponse(MonoSink<HttpResponse<?>> response, McpSchema.JSONRPCMessage request) {
+    StreamingJsonRpcResponse(MonoSink<HttpResponse<?>> response, McpSchema.JSONRPCRequest request) {
         this.response = response;
         this.request = request;
         // Only cancels the response itself: once it succeeds with the stream, cancelling the stream cancels the request
@@ -93,14 +94,31 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
             // Keeps a slot for the result
             if (queue.remainingCapacity() > 1) {
                 emitEvent(notification);
-            } else if (LOG.isDebugEnabled()) {
-                LOG.debug("Dropped a {} notification: the client does not read the event stream fast enough", notification.method());
+            } else {
+                dropped(notification);
             }
         }
         if (stream != null) {
             // Outside the lock: the server writes the response, and runs its filters, on this thread. The unicast sink
             // keeps the events emitted until then.
             response.success(stream);
+        }
+    }
+
+    private static String message(Throwable error) {
+        String message = error.getMessage();
+        return message != null && !message.isBlank() ? message : error.getClass().getSimpleName();
+    }
+
+    private void dropped(McpSchema.JSONRPCNotification notification) {
+        if (!overflowed) {
+            overflowed = true;
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("Dropping the notifications of request {}: the client does not read the event stream fast enough, {} events are pending",
+                    request.id(), BUFFER_SIZE - 1);
+            }
+        } else if (LOG.isDebugEnabled()) {
+            LOG.debug("Dropped a {} notification: the client does not read the event stream fast enough", notification.method());
         }
     }
 
@@ -206,7 +224,7 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
             }
             if (!finishJson()) {
                 McpError mcpError = error instanceof McpError e ? e
-                    : McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message("Failed to handle request: " + error.getMessage()).build();
+                    : McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message("Failed to handle request: " + message(error)).build();
                 emitEvent(JsonRrpcResponseUtils.jsonrpcResponse(mcpError, request));
                 completeEvents();
                 return;

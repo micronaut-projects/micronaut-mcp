@@ -51,6 +51,16 @@ class StreamingJsonRpcResponseTest {
     }
 
     @Test
+    void anErrorWithoutAMessageIsNamedByItsType() {
+        AtomicReference<StreamingJsonRpcResponse> streaming = new AtomicReference<>();
+        HttpResponse<?> response = started(streaming);
+        streaming.get().fail(new IllegalStateException());
+        McpSchema.JSONRPCResponse error = assertInstanceOf(McpSchema.JSONRPCResponse.class,
+            events(response).collectList().block().getLast().getData());
+        assertEquals("Failed to handle request: IllegalStateException", error.error().message());
+    }
+
+    @Test
     void anEmptyResultCompletesTheResponseEmpty() {
         assertNull(Mono.<HttpResponse<?>>create(sink -> new StreamingJsonRpcResponse(sink, REQUEST).completeEmpty()).block());
         AtomicReference<StreamingJsonRpcResponse> streaming = new AtomicReference<>();
