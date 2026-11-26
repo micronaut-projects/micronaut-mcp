@@ -227,6 +227,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     /**
      * @param method The method
      * @return The icons declared with {@link Icon}, or {@code null} when there are none
+     * @throws IllegalStateException If an icon has an empty {@code src}
      */
     protected static @Nullable List<McpSchema.Icon> icons(ExecutableMethod<?, ?> method) {
         List<AnnotationValue<Icon>> values = method.getAnnotationValuesByType(Icon.class);
@@ -235,9 +236,11 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
         List<McpSchema.Icon> icons = new ArrayList<>(values.size());
         for (AnnotationValue<Icon> value : values) {
+            String src = value.stringValue(SRC_PROPERTY).filter(StringUtils::isNotEmpty).orElseThrow(() ->
+                new IllegalStateException("The @Icon of method " + method.getDeclaringType().getName() + "#" + method.getMethodName() + " requires a src"));
             String[] sizes = value.stringValues(SIZES_PROPERTY);
             icons.add(new McpSchema.Icon(
-                value.stringValue(SRC_PROPERTY).orElseThrow(),
+                src,
                 value.stringValue(MIME_TYPE_PROPERTY).filter(StringUtils::isNotEmpty).orElse(null),
                 sizes.length == 0 ? null : List.of(sizes),
                 value.stringValue(THEME_PROPERTY).filter(StringUtils::isNotEmpty).orElse(null)));
