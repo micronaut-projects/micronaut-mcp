@@ -218,7 +218,9 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         String message;
         if (mapper instanceof InputErrorMapper<?> inputErrorMapper) {
             // Only the message is needed, so no McpError, with its stack trace, is built
-            message = inputErrorMessage(inputErrorMapper, error);
+            String mapped = inputErrorMessage(inputErrorMapper, error);
+            // An exception without a message, such as a SerdeException without a cause, has no message to map
+            message = mapped != null && !mapped.isBlank() ? mapped : toolErrorMessage(name, error);
             // Classified by the type of the exception, which may also be thrown by the tool body
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Tool {} failed with an input error: {}", name, message, error);

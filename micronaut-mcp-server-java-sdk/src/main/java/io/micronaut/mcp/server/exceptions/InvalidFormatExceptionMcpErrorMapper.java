@@ -19,6 +19,7 @@ import tools.jackson.databind.exc.InvalidFormatException;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 import java.util.stream.Collectors;
 
@@ -35,7 +36,7 @@ class InvalidFormatExceptionMcpErrorMapper implements InputErrorMapper<InvalidFo
     }
 
     @Override
-    public String message(InvalidFormatException exception) {
+    public @Nullable String message(InvalidFormatException exception) {
         return conciseMessage(exception);
     }
 

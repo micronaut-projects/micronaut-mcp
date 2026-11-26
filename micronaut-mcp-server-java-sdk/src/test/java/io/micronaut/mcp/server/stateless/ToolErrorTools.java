@@ -5,6 +5,7 @@ import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.ToolArg;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -61,6 +62,11 @@ class ToolErrorTools {
     @Tool
     CompletableFuture<String> failingNested() {
         return CompletableFuture.failedFuture(new ExecutionException(new CompletionException(new IOException("boom"))));
+    }
+
+    @Tool
+    String failingInputErrorWithoutMessage() throws SerdeException {
+        throw new SerdeException();
     }
 
     @Tool

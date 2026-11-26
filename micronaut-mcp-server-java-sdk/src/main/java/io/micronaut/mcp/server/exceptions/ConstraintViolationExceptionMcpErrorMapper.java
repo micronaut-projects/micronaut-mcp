@@ -17,6 +17,7 @@ package io.micronaut.mcp.server.exceptions;
 
 import io.micronaut.core.annotation.Internal;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
@@ -37,7 +38,7 @@ class ConstraintViolationExceptionMcpErrorMapper implements InputErrorMapper<Con
     }
 
     @Override
-    public String message(ConstraintViolationException exception) {
+    public @Nullable String message(ConstraintViolationException exception) {
         return conciseMessage(exception);
     }
 

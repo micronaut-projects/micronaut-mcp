@@ -44,6 +44,12 @@ abstract class AbstractToolExecutionErrorsTest {
     }
 
     @Test
+    void anInputErrorWithoutAMessageIsDescribedByTheToolAndItsClass() throws IOException {
+        assertToolError("Tool failingInputErrorWithoutMessage failed (SerdeException)",
+            callTool(httpClient, jsonMapper, "failingInputErrorWithoutMessage"));
+    }
+
+    @Test
     void aFailureOfAnAnonymousClassWithoutAMessageIsDescribedByTheClassName() throws IOException {
         Map<String, Object> result = callTool(httpClient, jsonMapper, "failingAnonymously");
         assertEquals(Boolean.TRUE, result.get("isError"));

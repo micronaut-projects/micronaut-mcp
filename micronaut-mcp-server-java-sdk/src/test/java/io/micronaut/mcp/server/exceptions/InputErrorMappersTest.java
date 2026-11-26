@@ -43,6 +43,12 @@ class InputErrorMappersTest {
     }
 
     @Test
+    void anExceptionWithoutAMessageIsDescribedByItsClass() {
+        // The SDK rejects an error without a message
+        assertEquals("SerdeException", new SerdeExceptionMcpErrorMapper().map(new SerdeException()).getMessage());
+    }
+
+    @Test
     void aSerdeExceptionWhoseCauseHasNoMessageKeepsItsOwnMessage() {
         // The SDK rejects an error without a message
         SerdeExceptionMcpErrorMapper mapper = new SerdeExceptionMcpErrorMapper();

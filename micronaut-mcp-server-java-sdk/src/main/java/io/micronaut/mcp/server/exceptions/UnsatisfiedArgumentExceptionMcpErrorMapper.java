@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.exceptions.UnsatisfiedArgumentException;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 /**
  * {@link McpErrorExceptionMapper} for {@link io.micronaut.core.bind.exceptions.UnsatisfiedArgumentException}.
@@ -33,7 +34,7 @@ class UnsatisfiedArgumentExceptionMcpErrorMapper implements InputErrorMapper<Uns
     }
 
     @Override
-    public String message(UnsatisfiedArgumentException exception) {
+    public @Nullable String message(UnsatisfiedArgumentException exception) {
         return exception.getMessage();
     }
 }

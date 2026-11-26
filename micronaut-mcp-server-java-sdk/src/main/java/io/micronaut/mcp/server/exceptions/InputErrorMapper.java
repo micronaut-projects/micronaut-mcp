@@ -18,6 +18,7 @@ package io.micronaut.mcp.server.exceptions;
 import io.micronaut.core.annotation.Internal;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Marks the built-in mappers of failures to bind or validate the arguments of a primitive. A tool reports the errors
@@ -34,18 +35,20 @@ public interface InputErrorMapper<T extends Throwable> extends McpErrorException
      * The message of the error, which a tool sends as a tool execution error without building an {@link McpError}.
      *
      * @param exception The exception to map
-     * @return The message of the error, never blank, because the SDK requires a message
+     * @return The message of the error, or {@code null} when the exception has none
      */
-    String message(T exception);
+    @Nullable String message(T exception);
 
     /**
      * @param exception The exception to map
-     * @return An invalid params error with the {@link #message(Throwable) message}
+     * @return An invalid params error with the {@link #message(Throwable) message}, or the simple name of the class of
+     * the exception when it has no message, because the SDK requires a message
      */
     @Override
     default McpError map(T exception) {
+        String message = message(exception);
         return McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS)
-            .message(message(exception))
+            .message(message != null && !message.isBlank() ? message : exception.getClass().getSimpleName())
             .build();
     }
 }

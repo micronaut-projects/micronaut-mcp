@@ -18,6 +18,7 @@ package io.micronaut.mcp.server.exceptions;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 /**
  * {@link McpErrorExceptionMapper} for {@link ConversionErrorException}, thrown when the value of an argument cannot be
@@ -32,7 +33,7 @@ final class ConversionErrorExceptionMcpErrorMapper implements InputErrorMapper<C
     }
 
     @Override
-    public String message(ConversionErrorException exception) {
+    public @Nullable String message(ConversionErrorException exception) {
         return exception.getMessage();
     }
 }

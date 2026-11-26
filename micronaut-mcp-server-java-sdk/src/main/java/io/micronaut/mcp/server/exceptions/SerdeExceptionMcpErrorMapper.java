@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.serde.exceptions.SerdeException;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 /**
  * {@link McpErrorExceptionMapper} for {@link SerdeException}.
@@ -33,7 +34,7 @@ final class SerdeExceptionMcpErrorMapper implements InputErrorMapper<SerdeExcept
     }
 
     @Override
-    public String message(SerdeException exception) {
+    public @Nullable String message(SerdeException exception) {
         return conciseMessage(exception);
     }
 
