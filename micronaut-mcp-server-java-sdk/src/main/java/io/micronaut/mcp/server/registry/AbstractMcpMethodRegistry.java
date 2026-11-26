@@ -127,10 +127,6 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
      * @return The error
      */
     protected McpError mcpError(ExecutableMethod<?, ?> method, Exception ex) {
-        if (ex instanceof McpError mcpError) {
-            // An error the method throws keeps its code
-            return mcpError;
-        }
         McpErrorExceptionMapper<? extends Throwable> exceptionMapper = getExceptionMapper(ex.getClass());
         if (exceptionMapper != null) {
             // A mapped exception is an expected client error
@@ -138,6 +134,9 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
                 LOG.debug(ex.getMessage(), ex);
             }
             return mapException(exceptionMapper, ex);
+        }
+        if (ex instanceof McpError mcpError) {
+            return mcpError;
         }
         // The SDK logs only exceptions that are not an McpError, so an unmapped exception is logged here
         if (LOG.isWarnEnabled()) {
