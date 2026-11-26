@@ -15,8 +15,11 @@
  */
 package io.micronaut.mcp.server.stateless;
 
+import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.order.Ordered;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
@@ -24,10 +27,14 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.RequestFilter;
 import io.micronaut.http.annotation.ServerFilter;
+import io.micronaut.http.filter.ServerFilterPhase;
 import io.micronaut.mcp.conf.server.TransportSecurityConfiguration;
+import io.micronaut.web.router.RouteAttributes;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpStatelessServerTransport;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -38,20 +45,30 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Validates the {@code Origin} and {@code MCP-Protocol-Version} headers of requests to the MCP endpoint. As a filter it
+ * Validates the {@code Origin} and {@code MCP-Protocol-Version} headers of requests routed to the MCP endpoint. As a filter it
  * runs on the thread that received the request, before the body is read and before a blocking server hands the
- * request to the blocking executor.
+ * request to the blocking executor. It runs just before the security filter: after the CORS filter, so that a browser
+ * can read the rejection and the preflight is answered by CORS alone, and after the metrics and tracing filters, so
+ * that they record rejected requests, but before authentication, so that a request from a foreign origin is answered
+ * with 403 rather than 401. It is created with the context, so that an allowed origin that could never match fails the
+ * startup.
  *
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#security-warning">Streamable HTTP security</a>
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#protocol-version-header">Protocol version header</a>
  */
-@ServerFilter(McpController.PATH)
-@Requires(property = TransportSecurityConfiguration.PREFIX + ".enabled", notEquals = StringUtils.FALSE)
+// Every path, and the route decides: a second reading of the endpoint property as a filter pattern can disagree with
+// the controller's, for example for /mcp/ or mcp, and leave the endpoint unprotected
+@ServerFilter(ServerFilter.MATCH_ALL_PATTERN)
+@Context
+@Requires(property = TransportSecurityConfiguration.PROPERTY_ENABLED, notEquals = StringUtils.FALSE)
 @Internal
-final class McpTransportSecurityFilter {
+final class McpTransportSecurityFilter implements Ordered {
+    private static final Logger LOG = LoggerFactory.getLogger(McpTransportSecurityFilter.class);
     private static final String WILDCARD = "*";
+    private static final String ALLOWED_ORIGINS = TransportSecurityConfiguration.PREFIX + ".allowed-origins";
     private static final String SCHEME_SEPARATOR = "://";
     private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "[::1]");
+    private static final Set<String> LOOPBACK_SCHEMES = Set.of("http", "https");
 
     private final boolean anyOrigin;
     private final boolean allowLoopbackOrigins;
@@ -59,12 +76,19 @@ final class McpTransportSecurityFilter {
     private final List<String> protocolVersions;
 
     McpTransportSecurityFilter(TransportSecurityConfiguration configuration, McpStatelessServerTransport transport) {
-        this.anyOrigin = configuration.getAllowedOrigins().contains(WILDCARD);
         this.allowLoopbackOrigins = configuration.isAllowLoopbackOrigins();
         this.allowedOrigins = configuration.getAllowedOrigins().stream()
-            .map(McpTransportSecurityFilter::normalize)
+            .map(McpTransportSecurityFilter::allowedOrigin)
             .collect(Collectors.toUnmodifiableSet());
+        this.anyOrigin = allowedOrigins.contains(WILDCARD);
+        // The versions the SDK transport supports: an SDK upgrade that drops a version starts rejecting clients that
+        // send it, which TransportSecurityTest pins
         this.protocolVersions = transport.protocolVersions();
+    }
+
+    @Override
+    public int getOrder() {
+        return ServerFilterPhase.SECURITY.before();
     }
 
     /**
@@ -75,24 +99,63 @@ final class McpTransportSecurityFilter {
     @SuppressWarnings("java:S1452")
     @RequestFilter
     @Nullable HttpResponse<?> filter(HttpRequest<?> request) {
-        HttpHeaders headers = request.getHeaders();
-        String origin = headers.get(HttpHeaders.ORIGIN);
-        if (origin != null && !isAllowed(origin)) {
-            return error(HttpStatus.FORBIDDEN, "Origin not allowed: " + origin);
+        if (!isMcpRoute(request)) {
+            return null;
         }
-        String protocolVersion = headers.get(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION);
+        HttpHeaders headers = request.getHeaders();
+        List<String> origins = headers.getAll(HttpHeaders.ORIGIN);
+        if (origins.size() > 1) {
+            // A browser sends one Origin; with several, another value could pass for the one that is checked
+            LOG.debug("Rejected request to {}: {} Origin headers", request.getPath(), origins.size());
+            return error(HttpStatus.FORBIDDEN, "Multiple Origin headers");
+        }
+        String origin = origins.isEmpty() ? null : origins.get(0);
+        if (origin != null && !isAllowed(origin)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Rejected request to {}: Origin '{}' is not listed in {}{}", request.getPath(), sanitize(origin),
+                    ALLOWED_ORIGINS, allowLoopbackOrigins ? " and is not a loopback origin" : "");
+            }
+            return error(HttpStatus.FORBIDDEN, "Origin not allowed: " + sanitize(origin));
+        }
+        List<String> versions = headers.getAll(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION);
+        if (versions.size() > 1) {
+            LOG.debug("Rejected request to {}: {} MCP-Protocol-Version headers", request.getPath(), versions.size());
+            return error(HttpStatus.BAD_REQUEST, "Multiple MCP-Protocol-Version headers");
+        }
+        String protocolVersion = versions.isEmpty() ? null : versions.get(0);
         if (protocolVersion != null && !protocolVersions.contains(protocolVersion)) {
-            return error(HttpStatus.BAD_REQUEST, "Unsupported protocol version: " + protocolVersion + ", supported versions: " + protocolVersions);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Rejected request to {}: MCP-Protocol-Version '{}' is not supported (supported: {})",
+                    request.getPath(), sanitize(protocolVersion), protocolVersions);
+            }
+            return error(HttpStatus.BAD_REQUEST, "Unsupported protocol version: " + sanitize(protocolVersion) + ", supported versions: " + protocolVersions);
         }
         return null;
+    }
+
+    /**
+     * Whether the request is routed to the MCP endpoint. A request that no route of the endpoint accepts, such as a
+     * {@code GET}, reaches no MCP code, so it is left to the router.
+     */
+    private static boolean isMcpRoute(HttpRequest<?> request) {
+        return RouteAttributes.getRouteMatch(request)
+            .map(match -> McpController.class.isAssignableFrom(match.getRouteInfo().getDeclaringType()))
+            .orElse(false);
     }
 
     private boolean isAllowed(String origin) {
         if (anyOrigin || allowedOrigins.contains(normalize(origin))) {
             return true;
         }
-        // An attacker controlled name resolving to a loopback address still sends its own name as the origin
-        return allowLoopbackOrigins && LOOPBACK_HOSTS.contains(host(origin));
+        if (!allowLoopbackOrigins) {
+            return false;
+        }
+        // An attacker controlled name resolving to a loopback address still sends its own name as the origin. Only web
+        // pages are exempted: the content of web view shells, such as capacitor://localhost, must be listed
+        int separator = origin.indexOf(SCHEME_SEPARATOR);
+        return separator > 0
+            && LOOPBACK_SCHEMES.contains(origin.substring(0, separator).trim().toLowerCase(Locale.ROOT))
+            && LOOPBACK_HOSTS.contains(host(origin));
     }
 
     /**
@@ -119,15 +182,125 @@ final class McpTransportSecurityFilter {
                 end++;
             }
         }
-        if (end < origin.length() && origin.charAt(end) != ':' && origin.charAt(end) != '/') {
+        if (!isPortSuffix(origin, end) || origin.lastIndexOf('@', end) >= start) {
+            // A path, or user information, which an origin never has
             return "";
         }
         return origin.substring(start, end).toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * Whether the origin ends at the given index, or continues with nothing but a port ({@code :digits}) and an
+     * optional trailing slash.
+     */
+    private static boolean isPortSuffix(String origin, int index) {
+        int end = origin.endsWith("/") ? origin.length() - 1 : origin.length();
+        if (index == end) {
+            return true;
+        }
+        if (origin.charAt(index) != ':' || index + 1 == end) {
+            return false;
+        }
+        for (int i = index + 1; i < end; i++) {
+            char c = origin.charAt(i);
+            if (c < '0' || c > '9') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * A configured origin, normalized.
+     *
+     * @throws ConfigurationException if it is neither {@code *} nor an origin, so that it could never match
+     */
+    private static String allowedOrigin(String entry) {
+        String origin = normalize(entry);
+        if (origin.equals(WILDCARD) || isOrigin(origin)) {
+            return origin;
+        }
+        String prefix = "Invalid " + ALLOWED_ORIGINS + " entry '" + entry + "': ";
+        if (origin.equals("null")) {
+            throw new ConfigurationException(prefix + "clients that send Origin: null, such as file:// pages and sandboxed "
+                + "iframes, can only be allowed with *");
+        }
+        if (origin.indexOf('*') >= 0) {
+            throw new ConfigurationException(prefix + "wildcards are not supported in an origin; list each origin, for "
+                + "example https://app.example.com, or use * to allow every origin");
+        }
+        String example = example(origin);
+        throw new ConfigurationException(prefix + "expected * or an origin, scheme://host[:port], without a path"
+            + (example != null ? ", for example '" + example + "'" : ""));
+    }
+
+    private static boolean isOrigin(String origin) {
+        return origin.indexOf(SCHEME_SEPARATOR) > 0 && isHost(host(origin));
+    }
+
+    /**
+     * Whether the host, as {@link #host(String)} returns it, is a host name, an IPv4 address or a bracketed IPv6 address,
+     * in the ASCII form browsers send.
+     */
+    private static boolean isHost(String host) {
+        boolean ipv6 = host.startsWith("[");
+        if (host.length() < (ipv6 ? 3 : 1)) {
+            return false;
+        }
+        for (int i = ipv6 ? 1 : 0; i < host.length() - (ipv6 ? 1 : 0); i++) {
+            char c = host.charAt(i);
+            boolean valid = ipv6
+                ? (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || c == ':' || c == '.'
+                : (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || c == '-' || c == '.' || c == '_';
+            if (!valid) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The origin that an invalid entry most likely meant: with {@code https://} added when it has no scheme, and
+     * without its path.
+     */
+    private static @Nullable String example(String entry) {
+        String candidate = entry.contains(SCHEME_SEPARATOR) ? entry : "https://" + entry;
+        int path = candidate.indexOf('/', candidate.indexOf(SCHEME_SEPARATOR) + SCHEME_SEPARATOR.length());
+        if (path >= 0) {
+            candidate = candidate.substring(0, path);
+        }
+        return isOrigin(candidate) ? candidate : null;
+    }
+
+    /**
+     * A request header value without control characters (C0, DEL and C1) and line separators, so that it cannot forge
+     * log lines, here or where a client logs the error message.
+     */
+    private static String sanitize(String value) {
+        StringBuilder sanitized = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            sanitized.append(Character.isISOControl(c) || c == '\u2028' || c == '\u2029' ? '?' : c);
+        }
+        return sanitized.toString();
+    }
+
+    /**
+     * An origin in lower case, without a trailing slash and without the default port of {@code http} and {@code https},
+     * which browsers leave out.
+     */
     private static String normalize(String origin) {
         String normalized = origin.trim().toLowerCase(Locale.ROOT);
-        return normalized.endsWith("/") ? normalized.substring(0, normalized.length() - 1) : normalized;
+        if (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        if (normalized.startsWith("http://") && normalized.endsWith(":80")) {
+            return normalized.substring(0, normalized.length() - ":80".length());
+        }
+        if (normalized.startsWith("https://") && normalized.endsWith(":443")) {
+            return normalized.substring(0, normalized.length() - ":443".length());
+        }
+        return normalized;
     }
 
     private static HttpResponse<?> error(HttpStatus status, String message) {
@@ -135,7 +308,10 @@ final class McpTransportSecurityFilter {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("jsonrpc", McpSchema.JSONRPC_VERSION);
         body.put("id", null);
-        body.put("error", Map.of("code", McpSchema.ErrorCodes.INVALID_REQUEST, "message", message));
+        Map<String, Object> error = new LinkedHashMap<>();
+        error.put("code", McpSchema.ErrorCodes.INVALID_REQUEST);
+        error.put("message", message);
+        body.put("error", Collections.unmodifiableMap(error));
         return HttpResponse.status(status).body(Collections.unmodifiableMap(body));
     }
 }

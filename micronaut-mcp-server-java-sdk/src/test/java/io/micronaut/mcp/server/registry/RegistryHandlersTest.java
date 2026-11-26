@@ -1,6 +1,8 @@
 package io.micronaut.mcp.server.registry;
 
 import io.micronaut.context.BeanContext;
+import io.micronaut.context.annotation.Bean;
+import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
@@ -12,6 +14,7 @@ import io.micronaut.jsonschema.JsonSchema;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.micronaut.serde.annotation.Serdeable;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
@@ -20,20 +23,27 @@ import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -79,6 +89,10 @@ class RegistryHandlersTest {
 
     @Inject
     CountingMapper countingMapper;
+
+    @Inject
+    @Named("counting")
+    CountingExecutor countingExecutor;
 
     @Test
     void tools() {
@@ -291,6 +305,52 @@ class RegistryHandlersTest {
     }
 
     @Test
+    void resourceTemplateVariablesArePercentDecoded() {
+        for (Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> read : readers("handlers://pages/{page}")) {
+            assertEquals("page A Tale", resource(read.apply(new McpSchema.ReadResourceRequest("handlers://pages/A%20Tale"))));
+        }
+        // The registry compiles the reserved variables of the template, so an encoded / is allowed in {+path}
+        for (Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> read : readers("handlers://files/{+path}")) {
+            assertEquals("file a/b", resource(read.apply(new McpSchema.ReadResourceRequest("handlers://files/a%2Fb"))));
+        }
+    }
+
+    @Test
+    void resourceTemplateValuesThatCannotBeDecodedAreInvalidParams() {
+        for (Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> read : readers("handlers://pages/{page}")) {
+            assertTrue(assertInvalidParams(() -> read.apply(new McpSchema.ReadResourceRequest("handlers://pages/%zz")))
+                .startsWith("Invalid percent-encoding"));
+            assertTrue(assertInvalidParams(() -> read.apply(new McpSchema.ReadResourceRequest("handlers://pages/a%2Fb")))
+                .endsWith("must not contain an encoded / (%2F)"));
+        }
+    }
+
+    @Test
+    void resourceTemplateUrisThatDoNotMatchAreInvalidParams() {
+        String template = "handlers://pages/{page}";
+        for (Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> read : readers(template)) {
+            // Not a missing argument: the URI does not match the template
+            assertTrue(assertInvalidParams(() -> read.apply(new McpSchema.ReadResourceRequest("handlers://pages/C++")))
+                .startsWith("The URI does not match the URI template " + template));
+        }
+    }
+
+    @Test
+    void theUriIsMatchedOnTheExecutorOfTheMethod() {
+        // A match of an untrusted URI can be slow, so it runs where the method runs rather than on the transport thread
+        McpSchema.ReadResourceRequest malformed = new McpSchema.ReadResourceRequest("handlers://counted/%zz");
+        for (Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> read : readers("handlers://counted/{page}")) {
+            assertInvalidParams(() -> read.apply(malformed));
+        }
+        assertEquals(4, countingExecutor.submitted.get());
+        // The async handlers return the error instead of throwing it
+        var async = spec(resourceTemplateRegistry.getAsyncSpecs(), s -> s.resourceTemplate(), "handlers://counted/{page}").readHandler();
+        Mono<McpSchema.ReadResourceResult> result = assertDoesNotThrow(() -> async.apply(ASYNC_EXCHANGE, malformed));
+        assertInvalidParams(result::block);
+        assertEquals(5, countingExecutor.submitted.get());
+    }
+
+    @Test
     void completions() {
         McpSchema.CompleteRequest request = new McpSchema.CompleteRequest(new McpSchema.PromptReference("greeting"),
             new McpSchema.CompleteRequest.CompleteArgument("name", "A"));
@@ -329,6 +389,31 @@ class RegistryHandlersTest {
         McpError error = assertThrows(McpError.class, call);
         assertEquals(code, error.getJsonRpcError().code());
         assertEquals(message, error.getJsonRpcError().message());
+    }
+
+    /**
+     * @return The handlers of the four specification variants of a resource template, blocking on the async ones
+     */
+    private List<Function<McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult>> readers(String template) {
+        var sync = spec(resourceTemplateRegistry.getSyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
+        var async = spec(resourceTemplateRegistry.getAsyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
+        var statelessSync = spec(resourceTemplateRegistry.getStatelessSyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
+        var statelessAsync = spec(resourceTemplateRegistry.getStatelessAsyncSpecs(), s -> s.resourceTemplate(), template).readHandler();
+        return List.of(
+            request -> sync.apply(SYNC_EXCHANGE, request),
+            request -> async.apply(ASYNC_EXCHANGE, request).block(),
+            request -> statelessSync.apply(CONTEXT, request),
+            request -> statelessAsync.apply(CONTEXT, request).block());
+    }
+
+    private static <S> S spec(List<S> specs, Function<S, McpSchema.ResourceTemplate> resourceTemplate, String uriTemplate) {
+        return specs.stream().filter(s -> resourceTemplate.apply(s).uriTemplate().equals(uriTemplate)).findFirst().orElseThrow();
+    }
+
+    private static String assertInvalidParams(Executable read) {
+        McpError error = assertThrows(McpError.class, read);
+        assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
+        return error.getMessage();
     }
 
     private static String text(McpSchema.CallToolResult result) {
@@ -446,6 +531,45 @@ class RegistryHandlersTest {
         @ResourceTemplate(uriTemplate = "handlers://pages/{page}")
         String page(String page) {
             return "page " + page;
+        }
+
+        @ResourceTemplate(uriTemplate = "handlers://files/{+path}")
+        String file(String path) {
+            return "file " + path;
+        }
+
+        @ExecuteOn("counting")
+        @ResourceTemplate(uriTemplate = "handlers://counted/{page}")
+        String counted(String page) {
+            return "counted " + page;
+        }
+    }
+
+    /**
+     * An executor that counts the tasks submitted to it.
+     */
+    static final class CountingExecutor extends ThreadPoolExecutor {
+        final AtomicInteger submitted = new AtomicInteger();
+
+        CountingExecutor() {
+            super(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+        }
+
+        @Override
+        public void execute(Runnable command) {
+            submitted.incrementAndGet();
+            super.execute(command);
+        }
+    }
+
+    @Requires(property = "spec.name", value = "RegistryHandlersTest")
+    @Factory
+    static class CountingExecutorFactory {
+        @Singleton
+        @Named("counting")
+        @Bean(preDestroy = "shutdown")
+        CountingExecutor countingExecutor() {
+            return new CountingExecutor();
         }
     }
 
