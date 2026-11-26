@@ -81,17 +81,28 @@ class UriTemplateReadResourceRequestTest {
         }
     }
 
-    @Test
-    void aLongUriThatDoesNotMatchIsRejectedQuickly() {
-        // UriMatchTemplate takes seconds to fail on such a URI, as it backtracks over every split point
-        String uri = "log://" + "-".repeat(2000) + "+";
-        assertTimeout(Duration.ofSeconds(1),
-            () -> assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("log://{year}-{month}-{day}", uri)));
+    // UriMatchTemplate takes seconds to fail on such URIs, as it backtracks over every split point. A query lets the
+    // trailing literal of the template follow the ?, which the SDK routes and UriMatchTemplate drops.
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+        "log://{year}-{month}-{day} | +",
+        "log://{year}-{month}-{day}.log | ?.log",
+        "pair://{a}-{b}.json | ?.json"
+    })
+    void aLongUriThatDoesNotMatchIsRejectedQuickly(String template, String suffix) {
+        String uri = template.substring(0, template.indexOf("://") + 3) + "-".repeat(2000) + suffix;
+        assertTimeout(Duration.ofSeconds(1), () -> assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments(template, uri)));
     }
 
     @Test
-    void theQueryIsNotPreChecked() {
-        assertEquals(Map.of("title", "a"), UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/a?b+c"));
+    void aQueryIsInvalidParamsForATemplateOfSimpleVariables() {
+        // UriMatchTemplate drops the query, so it would bind a
+        assertTrue(UriMatchTemplate.of("book://book/{title}").match("book://book/a?b").isPresent());
+        McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/a?b"));
+        assertTrue(error.getMessage().startsWith("The URI does not match the URI template book://book/{title}"), error.getMessage());
+        assertEquals(Map.of("title", "a?b"), UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/a%3Fb"));
+        // A template that is not pre-checked, such as one with a reserved variable, still drops the query
+        assertEquals(Map.of("title", "secret"), UriTemplateReadResourceRequest.arguments("book://book/{+title}", "book://book/secret?x"));
     }
 
     @Test
@@ -152,7 +163,7 @@ class UriTemplateReadResourceRequestTest {
     void aUriThatDoesNotMatchTheTemplateIsInvalidParams(String uri) {
         McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("book://book/{title}", uri));
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
-        assertEquals("The URI does not match the URI template book://book/{title}: percent-encode reserved characters such as +, ;, &, !, ( and ) in variable values, for example + as %2B",
+        assertEquals("The URI does not match the URI template book://book/{title}: percent-encode reserved characters such as ?, +, ;, &, !, ( and ) in variable values, for example + as %2B",
             error.getMessage());
     }
 

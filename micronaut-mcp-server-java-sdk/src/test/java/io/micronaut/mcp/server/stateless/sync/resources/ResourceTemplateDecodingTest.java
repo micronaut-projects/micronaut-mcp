@@ -63,7 +63,7 @@ class ResourceTemplateDecodingTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"book://book/C++", "book://book/a;b"})
+    @ValueSource(strings = {"book://book/C++", "book://book/a;b", "book://book/a?b"})
     void aUriRoutedToTheTemplateThatDoesNotMatchItIsAnInvalidParamsError(String uri) throws IOException {
         Map<String, Object> error = error(read(uri));
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.get("code"));

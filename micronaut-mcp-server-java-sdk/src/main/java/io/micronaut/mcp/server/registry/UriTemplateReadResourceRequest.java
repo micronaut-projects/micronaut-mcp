@@ -71,16 +71,17 @@ record UriTemplateReadResourceRequest(
 
     private static Map<String, Object> arguments(Template uriTemplate, String uri) {
         // The SDK routes the request with a laxer matcher, which accepts characters such as + that a simple variable
-        // does not match. UriMatchTemplate backtracks over every split point before it fails, which takes seconds for a
-        // long URI and a template with several variables in a segment, such as log://{year}-{month}-{day}, so such a
-        // URI is rejected without matching it.
+        // does not match, and a query that UriMatchTemplate drops before it matches. UriMatchTemplate backtracks over
+        // every split point before it fails, which takes seconds for a long URI and a template with several variables in
+        // a segment, such as log://{year}-{month}-{day}.log, so such a URI is rejected without matching it. Without these
+        // characters, UriMatchTemplate matches whatever the SDK routed.
         Optional<UriMatchInfo> matchOptional = uriTemplate.simpleVariablesOnly() && hasUnmatchableChar(uri)
             ? Optional.empty()
             : uriTemplate.matchTemplate().match(uri);
         if (matchOptional.isEmpty()) {
             // Binding nothing would report the variables as missing, or bind null
             throw invalidParams("The URI does not match the URI template " + uriTemplate.matchTemplate()
-                + ": percent-encode reserved characters such as +, ;, &, !, ( and ) in variable values, for example + as %2B");
+                + ": percent-encode reserved characters such as ?, +, ;, &, !, ( and ) in variable values, for example + as %2B");
         }
         Map<String, Object> variables = matchOptional.get().getVariableValues();
         // Copied only when a value contains an escape, or a surrogate that must be validated
@@ -97,17 +98,13 @@ record UriTemplateReadResourceRequest(
     }
 
     /**
-     * @return Whether the path of the URI, before the query, contains a character that neither a simple variable nor
-     * the literal text of a {@link Template#simpleVariablesOnly()} template matches
+     * @return Whether the URI contains a character that neither a simple variable nor the literal text of a
+     * {@link Template#simpleVariablesOnly()} template matches, or a {@code ?}, which starts a query that such a template
+     * does not declare
      */
     private static boolean hasUnmatchableChar(String uri) {
         for (int i = 0; i < uri.length(); i++) {
-            char c = uri.charAt(i);
-            if (c == '?') {
-                // UriMatchTemplate does not match the query
-                return false;
-            }
-            if (Template.UNMATCHABLE_CHARS.indexOf(c) >= 0) {
+            if (Template.UNMATCHABLE_CHARS.indexOf(uri.charAt(i)) >= 0) {
                 return true;
             }
         }
@@ -225,9 +222,9 @@ record UriTemplateReadResourceRequest(
     record Template(UriMatchTemplate matchTemplate, Set<String> reservedVariables, boolean simpleVariablesOnly) {
         /**
          * The characters that the pattern of a simple variable in {@link UriMatchTemplate} does not match, besides
-         * {@code /} and {@code ?}.
+         * {@code /}, and {@code ?}, which starts a query.
          */
-        static final String UNMATCHABLE_CHARS = "#(!{)&;+";
+        static final String UNMATCHABLE_CHARS = "?#(!{)&;+";
         private static final Pattern SIMPLE_EXPRESSION = Pattern.compile("\\{[A-Za-z0-9_,]+}");
         private static final Pattern EXPRESSION = Pattern.compile("\\{[^}]*}");
 
@@ -260,7 +257,7 @@ record UriTemplateReadResourceRequest(
             }
             String literal = expressions.replaceAll("");
             for (int i = 0; i < literal.length(); i++) {
-                if (literal.charAt(i) == '?' || UNMATCHABLE_CHARS.indexOf(literal.charAt(i)) >= 0) {
+                if (UNMATCHABLE_CHARS.indexOf(literal.charAt(i)) >= 0) {
                     return false;
                 }
             }
