@@ -45,6 +45,13 @@ class MicronautJsonSchemaValidatorCacheTest {
         assertTrue(response.errorMessage().contains(Unserializable.class.getSimpleName()), response.errorMessage());
     }
 
+    @Test
+    void structuredContentThatCannotBeSerializedIsInvalid() {
+        JsonSchemaValidator.ValidationResponse response = validator.validate(Map.of("type", "object"), new Unserializable());
+        assertFalse(response.valid());
+        assertTrue(response.errorMessage().startsWith("Structured content cannot be serialized: "), response.errorMessage());
+    }
+
     /**
      * Has no serializable introspection.
      */

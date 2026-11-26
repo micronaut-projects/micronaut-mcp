@@ -41,7 +41,8 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
     /**
      * JSON text of the schemas seen so far, keyed by the identity of the schema Map. The SDK passes the same
      * input and output schema Map instances on every call, so a lookup is constant time instead of serializing
-     * and hashing the schema. The cache is bounded so that schemas of removed tools are eventually evicted.
+     * and hashing the schema. A schema Map must not be mutated after its first validation, or it is validated against
+     * stale JSON. The cache is bounded so that schemas of removed tools are eventually evicted.
      */
     private final Map<SchemaKey, String> schemaJsonCache = new ConcurrentLinkedHashMap.Builder<SchemaKey, String>()
         .maximumWeightedCapacity(SCHEMA_CACHE_CAPACITY)
@@ -61,11 +62,19 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
         if (structuredContent == null) {
             throw new IllegalArgumentException("Structured content must not be null");
         }
+        // Serialized once and reused by the SDK as text content. DefaultJsonSchemaValidator reads a String value
+        // as JSON text rather than as a JSON string literal; that contract is documented by
+        // micronaut-projects/micronaut-json-schema#425, as the validator API has no dedicated JSON text overload.
+        String jsonStructuredOutput;
         try {
-            // Serialized once and reused by the SDK as text content. DefaultJsonSchemaValidator reads a String value
-            // as JSON text rather than as a JSON string literal; that contract is documented by
-            // micronaut-projects/micronaut-json-schema#425, as the validator API has no dedicated JSON text overload.
-            String jsonStructuredOutput = jsonMapper.writeValueAsString(structuredContent);
+            jsonStructuredOutput = jsonMapper.writeValueAsString(structuredContent);
+        } catch (IOException | JacksonException e) {
+            if (LOG.isErrorEnabled()) {
+                LOG.error("Structured content cannot be serialized", e);
+            }
+            return ValidationResponse.asInvalid("Structured content cannot be serialized: " + e.getMessage());
+        }
+        try {
             Set<? extends ValidationMessage> validationResult = validator.validate(jsonStructuredOutput, schemaJson(schema));
             if (CollectionUtils.isNotEmpty(validationResult)) {
                 return ValidationResponse
@@ -87,8 +96,14 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
     }
 
     private String schemaJson(Map<String, Object> schema) throws IOException {
+        SchemaKey schemaKey = new SchemaKey(schema);
+        // A plain read first, as computeIfAbsent allocates even when the JSON is already cached
+        String json = schemaJsonCache.get(schemaKey);
+        if (json != null) {
+            return json;
+        }
         try {
-            return schemaJsonCache.computeIfAbsent(new SchemaKey(schema), key -> {
+            return schemaJsonCache.computeIfAbsent(schemaKey, key -> {
                 try {
                     return jsonMapper.writeValueAsString(key.schema());
                 } catch (IOException e) {
