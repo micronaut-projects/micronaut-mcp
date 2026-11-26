@@ -88,6 +88,13 @@ class McpClientHealthIndicatorTest {
     }
 
     @Test
+    void thereIsNoIndicatorWithoutConnections() {
+        try (ApplicationContext context = ApplicationContext.run()) {
+            assertTrue(context.getBeansOfType(HealthIndicator.class).stream().noneMatch(McpClientHealthIndicator.class::isInstance));
+        }
+    }
+
+    @Test
     void theIndicatorIsEnabledByDefault() {
         try (ApplicationContext context = ApplicationContext.run(Map.of(
             "micronaut.mcp.client.http.weather.url", "http://localhost:1/mcp"))) {

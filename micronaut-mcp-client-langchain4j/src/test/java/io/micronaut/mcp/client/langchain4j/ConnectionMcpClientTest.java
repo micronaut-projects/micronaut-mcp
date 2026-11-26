@@ -3,6 +3,9 @@ package io.micronaut.mcp.client.langchain4j;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.mcp.client.McpClient;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.RuntimeBeanDefinition;
+import io.micronaut.context.annotation.Prototype;
+import io.micronaut.context.exceptions.BeanInstantiationException;
 import io.micronaut.context.exceptions.NoSuchBeanException;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.junit.jupiter.api.Test;
@@ -10,9 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -47,13 +50,56 @@ class ConnectionMcpClientTest {
             client.getPrompt("prompt", Map.of());
             client.checkHealth();
             client.setRoots(List.of());
+            assertEquals(List.of("instructions", "listTools", "listTools", "executeTool", "executeTool", "executeToolAsync",
+                "listResources", "listResources", "listResourceTemplates", "listResourceTemplates", "readResource",
+                "readResource", "subscribeToResource", "unsubscribeFromResource", "subscribeToResources",
+                "unsubscribeFromResources", "listPrompts", "getPrompt", "checkHealth", "setRoots"), calls);
+        }
+    }
+
+    @Test
+    void closingForgetsTheClientWithoutClosingIt() {
+        List<List<String>> clients = new CopyOnWriteArrayList<>();
+        try (ApplicationContext context = ApplicationContext.run()) {
+            // A prototype, so that each resolution gives a new client
+            context.registerBeanDefinition(RuntimeBeanDefinition.builder(McpClient.class, () -> {
+                    List<String> calls = new CopyOnWriteArrayList<>();
+                    clients.add(calls);
+                    return recording(calls);
+                })
+                .qualifier(Qualifiers.byName("prototype"))
+                .scope(Prototype.class)
+                .build());
+            ConnectionMcpClient client = new ConnectionMcpClient("prototype", context);
+            client.checkHealth();
+            client.checkHealth();
+            assertEquals(1, clients.size(), "The client is resolved once");
             client.close();
             client.checkHealth();
-            assertEquals(Set.of("instructions", "listTools", "executeTool", "executeToolAsync", "listResources",
-                "listResourceTemplates", "readResource", "subscribeToResource", "unsubscribeFromResource",
-                "subscribeToResources", "unsubscribeFromResources", "listPrompts", "getPrompt", "checkHealth", "setRoots"),
-                Set.copyOf(calls));
-            assertEquals(21, calls.size());
+            assertEquals(List.of(List.of("checkHealth", "checkHealth"), List.of("checkHealth")), clients,
+                "The client is resolved again after close, and the first client is not closed");
+        }
+    }
+
+    @Test
+    void aClientWhoseCreationFailedIsCreatedAgain() {
+        AtomicInteger attempts = new AtomicInteger();
+        List<String> calls = new CopyOnWriteArrayList<>();
+        try (ApplicationContext context = ApplicationContext.run()) {
+            context.registerBeanDefinition(RuntimeBeanDefinition.builder(McpClient.class, () -> {
+                    if (attempts.incrementAndGet() == 1) {
+                        throw new IllegalStateException("The server cannot be reached");
+                    }
+                    return recording(calls);
+                })
+                .qualifier(Qualifiers.byName("flaky"))
+                .singleton(true)
+                .build());
+            ConnectionMcpClient client = new ConnectionMcpClient("flaky", context);
+            assertThrows(BeanInstantiationException.class, client::checkHealth);
+            client.checkHealth();
+            assertEquals(2, attempts.get());
+            assertEquals(List.of("checkHealth"), calls);
         }
     }
 

@@ -1,8 +1,10 @@
 package io.micronaut.mcp.client.langchain4j.http;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.mcp.McpToolProvider;
+import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpCallContext;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.McpClientListener;
@@ -20,7 +22,10 @@ import io.micronaut.mcp.client.langchain4j.McpToolFilter;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Singleton;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import java.util.List;
 import java.util.Map;
@@ -30,36 +35,88 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Checks the settings and beans that customise the clients and the tool providers of HTTP connections.
+ * Checks the settings and beans that customise the clients and the tool providers of HTTP connections, with two
+ * connections to the same server.
  */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HttpConnectionCustomisationTest {
     private static final String SERVER = "HttpConnectionCustomisationTest-server";
     private static final String CLIENT = "HttpConnectionCustomisationTest-client";
+    private static final String NO_KEY = "<none>";
 
-    @Test
-    void headersFiltersListenersAndBuilderListenersAreApplied() {
-        try (EmbeddedServer mcpServer = ApplicationContext.run(EmbeddedServer.class, Map.of(
+    private EmbeddedServer mcpServer;
+    private ApplicationContext client;
+
+    @BeforeAll
+    void start() {
+        mcpServer = ApplicationContext.run(EmbeddedServer.class, Map.of(
             "spec.name", SERVER,
             "micronaut.mcp.server.info.version", "1.0.0",
             "micronaut.mcp.server.info.name", "customisation",
-            "micronaut.mcp.server.transport", "HTTP"))) {
-            String url = mcpServer.getURL().toString() + mcpServer.getApplicationContext().getBean(McpServerConfiguration.class).getEndpoint();
-            try (ApplicationContext client = ApplicationContext.run(Map.of(
-                "spec.name", CLIENT,
-                "micronaut.mcp.client.http.remote.url", url,
-                "micronaut.mcp.client.http.remote.headers.X-Api-Key", "secret"))) {
-                McpToolProvider primary = client.getBean(McpToolProvider.class);
-                McpToolProvider remote = client.getBean(McpToolProvider.class, Qualifiers.byName("remote"));
+            "micronaut.mcp.server.transport", "HTTP"));
+        String url = mcpServer.getURL().toString() + mcpServer.getApplicationContext().getBean(McpServerConfiguration.class).getEndpoint();
+        client = ApplicationContext.run(Map.of(
+            "spec.name", CLIENT,
+            "micronaut.mcp.client.http.remote.url", url,
+            "micronaut.mcp.client.http.remote.headers.X-Api-Key", "secret",
+            "micronaut.mcp.client.http.remote.request-timeout", "500ms",
+            "micronaut.mcp.client.http.other.url", url,
+            "micronaut.mcp.client.http.other.headers.X-Api-Key", "other"));
+    }
 
-                assertEquals(Set.of("listened_forecast"), toolNames(primary), "The filter and the builder listener apply to the primary provider");
-                assertEquals(Set.of("listened_forecast"), toolNames(remote), "The filter and the builder listener apply to the provider of the connection");
-                assertTrue(mcpServer.getApplicationContext().getBean(ApiKeyRecorder.class).keys.contains("secret"), "The header of the connection is sent");
-                assertTrue(client.getBean(ToolsListCounter.class).count.get() > 0, "The listener is registered with the client");
-            }
-        }
+    @AfterAll
+    void stop() {
+        client.close();
+        mcpServer.close();
+    }
+
+    @Test
+    void theFilterAndTheBuilderListenerApplyToThePrimaryProvider() {
+        assertEquals(Set.of("listened_remote_forecast", "listened_remote_slow", "listened_other_forecast", "listened_other_slow"),
+            toolNames(client.getBean(McpToolProvider.class)));
+    }
+
+    @Test
+    void theFilterAndTheBuilderListenerApplyToTheProviderOfEachConnection() {
+        assertEquals(Set.of("listened_remote_forecast", "listened_remote_slow"),
+            toolNames(client.getBean(McpToolProvider.class, Qualifiers.byName("remote"))));
+        assertEquals(Set.of("listened_other_forecast", "listened_other_slow"),
+            toolNames(client.getBean(McpToolProvider.class, Qualifiers.byName("other"))));
+    }
+
+    @Test
+    void eachConnectionSendsItsOwnHeaderWithEveryRequest() {
+        client.getBean(McpClient.class, Qualifiers.byName("remote")).listTools();
+        client.getBean(McpClient.class, Qualifiers.byName("other")).listTools();
+        List<String> keys = mcpServer.getApplicationContext().getBean(ApiKeyRecorder.class).keys;
+        assertTrue(keys.stream().noneMatch(NO_KEY::equals), "Every request carries the header of its connection: " + keys);
+        assertEquals(Set.of("secret", "other"), Set.copyOf(keys));
+    }
+
+    @Test
+    void theListenerIsRegisteredWithTheClient() {
+        ToolsListCounter counter = client.getBean(ToolsListCounter.class);
+        DefaultMcpClient other = (DefaultMcpClient) client.getBean(McpClient.class, Qualifiers.byName("other"));
+        // The client caches the tool list
+        other.evictToolListCache();
+        int before = counter.count.get();
+        other.listTools();
+        assertEquals(before + 1, counter.count.get(), "The listener is notified once of the tool list");
+    }
+
+    @Test
+    void theRequestTimeoutLimitsAToolCall() {
+        McpClient remote = client.getBean(McpClient.class, Qualifiers.byName("remote"));
+        remote.listTools();
+        long start = System.nanoTime();
+        String result = remote.executeTool(ToolExecutionRequest.builder().name("slow").arguments("{}").build()).resultText();
+        long elapsedMillis = (System.nanoTime() - start) / 1_000_000;
+        assertNotEquals("done", result);
+        assertTrue(elapsedMillis < ServerTools.SLOW_MILLIS, "The call ends with the request timeout, after " + elapsedMillis + "ms");
     }
 
     private static Set<String> toolNames(McpToolProvider provider) {
@@ -71,6 +128,8 @@ class HttpConnectionCustomisationTest {
     @Requires(property = "spec.name", value = SERVER)
     @Singleton
     static class ServerTools {
+        static final long SLOW_MILLIS = 3000;
+
         @Tool(description = "Forecasts the weather")
         String forecast(String city) {
             return "sunny";
@@ -79,6 +138,12 @@ class HttpConnectionCustomisationTest {
         @Tool(description = "A tool that the filter hides")
         String hidden() {
             return "hidden";
+        }
+
+        @Tool(description = "A tool slower than the request timeout of a connection")
+        String slow() throws InterruptedException {
+            Thread.sleep(SLOW_MILLIS);
+            return "done";
         }
     }
 
@@ -89,7 +154,7 @@ class HttpConnectionCustomisationTest {
 
         @RequestFilter
         void record(HttpRequest<?> request) {
-            request.getHeaders().findFirst("X-Api-Key").ifPresent(keys::add);
+            keys.add(request.getHeaders().findFirst("X-Api-Key").orElse(NO_KEY));
         }
     }
 
@@ -107,7 +172,7 @@ class HttpConnectionCustomisationTest {
     static class RenamingBuilderListener implements BeanCreatedEventListener<McpToolProvider.Builder> {
         @Override
         public McpToolProvider.Builder onCreated(BeanCreatedEvent<McpToolProvider.Builder> event) {
-            return event.getBean().toolNameMapper((client, tool) -> "listened_" + tool.name());
+            return event.getBean().toolNameMapper((client, tool) -> "listened_" + client.key() + "_" + tool.name());
         }
     }
 

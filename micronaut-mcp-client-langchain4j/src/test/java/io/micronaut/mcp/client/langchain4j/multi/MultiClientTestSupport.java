@@ -4,10 +4,16 @@ import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.mcp.McpToolProvider;
 import dev.langchain4j.service.tool.ToolProviderRequest;
+import io.micronaut.json.JsonMapper;
 import io.micronaut.management.health.indicator.HealthIndicator;
 import io.micronaut.management.health.indicator.HealthResult;
+import io.micronaut.runtime.server.EmbeddedServer;
 import reactor.core.publisher.Flux;
 
+import java.io.IOException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +47,30 @@ final class MultiClientTestSupport {
             .map(indicator -> Flux.from(indicator.getResult()).blockFirst())
             .filter(result -> result != null && result.getName().equals("mcp"))
             .findFirst().orElseThrow();
+    }
+
+    /**
+     * @param server The embedded server
+     * @return The response of the health endpoint
+     * @throws IOException When the request fails
+     * @throws InterruptedException When the request is interrupted
+     */
+    static HttpResponse<String> health(EmbeddedServer server) throws IOException, InterruptedException {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            return client.send(HttpRequest.newBuilder(server.getURI().resolve("/health")).build(), HttpResponse.BodyHandlers.ofString());
+        }
+    }
+
+    /**
+     * @param jsonMapper The JSON mapper
+     * @param response The response of the health endpoint
+     * @return The details of the {@code mcp} health indicator, by connection
+     * @throws IOException When the response cannot be read
+     */
+    static Map<?, ?> mcpHealthDetails(JsonMapper jsonMapper, HttpResponse<String> response) throws IOException {
+        Map<?, ?> body = jsonMapper.readValue(response.body(), Map.class);
+        Map<?, ?> mcp = (Map<?, ?>) ((Map<?, ?>) body.get("details")).get("mcp");
+        return (Map<?, ?>) mcp.get("details");
     }
 
     /**
