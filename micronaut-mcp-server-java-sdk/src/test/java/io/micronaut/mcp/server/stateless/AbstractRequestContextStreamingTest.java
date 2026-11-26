@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -159,6 +160,33 @@ abstract class AbstractRequestContextStreamingTest {
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> post("text/event-stream", """
             {"jsonrpc": "2.0", "id": 20, "method": "tools/call", "params": {"name": "importCatalog", "arguments": {"pages": 1}}}"""));
         assertEquals(HttpStatus.NOT_ACCEPTABLE, e.getStatus());
+    }
+
+    @Test
+    void aFailureAfterANotificationIsTheLastEvent() {
+        // A tool that fails produces a tool result with an error
+        List<String> tool = data(post(ACCEPT_BOTH, """
+            {"jsonrpc": "2.0", "id": 30, "method": "tools/call", "params": {"name": "notifyThenThrow", "arguments": {}}}""").body());
+        assertEquals(2, tool.size(), String.valueOf(tool));
+        assertTrue(tool.get(0).contains("notifications/message"), tool.get(0));
+        assertTrue(tool.get(1).contains("\"id\":30") && tool.get(1).contains("\"isError\":true") && tool.get(1).contains("import failed"), tool.get(1));
+        // A prompt that fails produces a JSON-RPC error, in a response that is already a stream with the status 200
+        HttpResponse<String> response = post(ACCEPT_BOTH, """
+            {"jsonrpc": "2.0", "id": 31, "method": "prompts/get", "params": {"name": "failingPrompt", "arguments": {}}}""");
+        assertEquals(HttpStatus.OK, response.getStatus());
+        List<String> prompt = data(response.body());
+        assertEquals(2, prompt.size(), String.valueOf(prompt));
+        assertTrue(prompt.get(1).contains("\"id\":31") && prompt.get(1).contains("\"error\"") && prompt.get(1).contains("prompt failed"), prompt.get(1));
+    }
+
+    @Test
+    void elicitationAndSamplingAreNotSupportedOverHttp() {
+        for (String tool : List.of("elicitOverHttp", "sampleOverHttp")) {
+            String body = post(ACCEPT_BOTH, """
+                {"jsonrpc": "2.0", "id": 32, "method": "tools/call", "params": {"name": "%s", "arguments": {}}}""".formatted(tool)).body();
+            String result = data(body).getLast();
+            assertTrue(result.contains("\"isError\":true") && result.contains("is not supported over the stateless HTTP transport"), result);
+        }
     }
 
     @Test
@@ -296,6 +324,30 @@ abstract class AbstractRequestContextStreamingTest {
             }
             CANCELLED.complete(context.isCancelled());
             return "done";
+        }
+
+        @Tool
+        String notifyThenThrow(McpRequestContext context) {
+            context.log(McpSchema.LoggingLevel.INFO, "importing");
+            throw new IllegalStateException("import failed");
+        }
+
+        @Prompt
+        String failingPrompt(McpRequestContext context) {
+            context.log(McpSchema.LoggingLevel.INFO, "preparing");
+            throw new IllegalStateException("prompt failed");
+        }
+
+        @Tool
+        String elicitOverHttp(McpRequestContext context) {
+            context.log(McpSchema.LoggingLevel.INFO, "asking");
+            return context.elicit(McpSchema.ElicitRequest.builder().message("Name?").requestedSchema(Map.of("type", "object")).build()).toString();
+        }
+
+        @Tool
+        String sampleOverHttp(McpRequestContext context) {
+            context.log(McpSchema.LoggingLevel.INFO, "sampling");
+            return context.sample(McpSchema.CreateMessageRequest.builder().messages(List.of()).maxTokens(1).build()).toString();
         }
 
         @Tool

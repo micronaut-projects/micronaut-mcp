@@ -2,6 +2,7 @@ package io.micronaut.mcp.server.stateless;
 
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.sse.Event;
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
@@ -47,6 +48,17 @@ class StreamingJsonRpcResponseTest {
         assertEquals(7, error.id());
         assertEquals(McpSchema.ErrorCodes.INTERNAL_ERROR, error.error().code());
         assertEquals("Failed to handle request: boom", error.error().message());
+    }
+
+    @Test
+    void anMcpErrorAfterANotificationKeepsItsCode() {
+        AtomicReference<StreamingJsonRpcResponse> streaming = new AtomicReference<>();
+        HttpResponse<?> response = started(streaming);
+        streaming.get().fail(McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS).message("bad").build());
+        McpSchema.JSONRPCResponse error = assertInstanceOf(McpSchema.JSONRPCResponse.class,
+            events(response).collectList().block().getLast().getData());
+        assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.error().code());
+        assertEquals("bad", error.error().message());
     }
 
     @Test
