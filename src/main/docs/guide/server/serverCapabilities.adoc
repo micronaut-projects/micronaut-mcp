@@ -3,4 +3,4 @@ Based on the primitive beans you defined, the `list-changed` and `subscribe` pro
 Moreover, you can create a https://docs.micronaut.io/latest/guide/#events[`BeanCreatedEventListener`] for `McpSchema.ServerCapabilities.Builder`
 to further customize the definition of the capabilities.
 
-With the HTTP transport, the server cannot send notifications outside the response to a request, so it always advertises `listChanged` and `subscribe` as `false`, including when a `BeanCreatedEventListener` sets them. See <<dynamicPrimitives, Adding and Removing Primitives at Runtime>>.
+With the HTTP transport, the server cannot send notifications outside the response to a request, so it advertises `listChanged` and `subscribe` as `false`, including when a `BeanCreatedEventListener` of `McpSchema.ServerCapabilities.Builder` sets them. Only a `BeanCreatedEventListener` of the server specification that sets the capabilities itself overrides this, and clients would then wait for notifications that never arrive. See <<dynamicPrimitives, Adding and Removing Primitives at Runtime>>.

@@ -91,6 +91,12 @@ class StatelessNotificationsLogTest {
         assertEquals(List.of(), messagesWhileStarting(reactive, Map.of(CUSTOMIZER, "without-notifications")));
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void nothingIsLoggedWhenTheCapabilitiesLeaveNotificationsUnset(boolean reactive) {
+        assertEquals(List.of(), messagesWhileStarting(reactive, Map.of(CUSTOMIZER, "unset-notifications")));
+    }
+
     private List<String> messagesWhileStarting(boolean reactive, Map<String, Object> properties) {
         Map<String, Object> configuration = new HashMap<>(properties);
         configuration.put("micronaut.mcp.server.info.name", "mcp-server");
@@ -110,6 +116,15 @@ class StatelessNotificationsLogTest {
         @Override
         public McpSchema.ServerCapabilities.Builder onCreated(BeanCreatedEvent<McpSchema.ServerCapabilities.Builder> event) {
             return event.getBean().resources(true, false);
+        }
+    }
+
+    @Requires(property = CUSTOMIZER, value = "unset-notifications")
+    @Singleton
+    static class UnsetNotificationsCustomizer implements BeanCreatedEventListener<McpSchema.ServerCapabilities.Builder> {
+        @Override
+        public McpSchema.ServerCapabilities.Builder onCreated(BeanCreatedEvent<McpSchema.ServerCapabilities.Builder> event) {
+            return event.getBean().tools(null).prompts(null).resources(null, null);
         }
     }
 

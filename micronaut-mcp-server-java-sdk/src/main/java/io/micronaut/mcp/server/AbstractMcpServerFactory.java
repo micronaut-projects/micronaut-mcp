@@ -197,14 +197,26 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
         // ServerCapabilitiesFactory decides which capabilities the server advertises
         McpSchema.ServerCapabilities capabilities = capabilitiesProvider.get();
         if (!sendsNotifications()) {
-            McpSchema.ServerCapabilities advertised = withoutNotifications(capabilities);
-            if (!advertised.equals(capabilities)) {
+            if (advertisesNotifications(capabilities)) {
                 LOG.debug("The server cannot send notifications outside the response to a request, so it advertises listChanged and subscribe as false. Configured capabilities: {}",
                     capabilities);
             }
-            capabilities = advertised;
+            capabilities = withoutNotifications(capabilities);
         }
         return createMcpServerSpec(transport, jsonMapper, jsonSchemaValidator, configuration, capabilities, allTools, allCompletions, allPrompts, allResources, allResourceTemplates);
+    }
+
+    /**
+     * Whether the capabilities advertise list changes or resource subscriptions.
+     *
+     * @param capabilities The capabilities
+     * @return Whether any of them is {@code true}
+     */
+    private static boolean advertisesNotifications(McpSchema.ServerCapabilities capabilities) {
+        return (capabilities.tools() != null && Boolean.TRUE.equals(capabilities.tools().listChanged()))
+            || (capabilities.prompts() != null && Boolean.TRUE.equals(capabilities.prompts().listChanged()))
+            || (capabilities.resources() != null
+                && (Boolean.TRUE.equals(capabilities.resources().listChanged()) || Boolean.TRUE.equals(capabilities.resources().subscribe())));
     }
 
     /**
