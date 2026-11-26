@@ -64,6 +64,8 @@ public final class ConnectionMcpClient implements McpClient {
         this.beanContext = beanContext;
     }
 
+    // The failure is logged here, which names the connection, and rethrown for the tool provider, which skips the server
+    @SuppressWarnings("java:S2139")
     private McpClient client() {
         McpClient current = client.get();
         if (current != null) {
