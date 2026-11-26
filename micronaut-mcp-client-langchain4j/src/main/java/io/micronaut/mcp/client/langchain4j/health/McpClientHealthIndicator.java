@@ -137,11 +137,8 @@ final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String,
         if (cause instanceof TimeoutException) {
             message = "No answer within " + format(timeout) + ", the client may still be connecting to its server. See "
                 + McpClientHealthConfiguration.PREFIX + ".timeout";
-        } else if (cause.getMessage() != null) {
-            message = cause.getMessage();
         } else {
-            // Some errors have no message, their type still tells what failed
-            message = cause.getClass().getName();
+            message = McpClientConnections.reason(cause);
         }
         return Map.of(STATUS, HealthStatus.DOWN.getName(), ERROR, message);
     }

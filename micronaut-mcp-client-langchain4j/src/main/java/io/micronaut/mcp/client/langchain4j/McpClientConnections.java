@@ -33,7 +33,27 @@ import java.util.stream.Collectors;
  */
 @Internal
 public final class McpClientConnections {
+    private static final int MAX_REASON_LENGTH = 200;
+
     private McpClientConnections() {
+    }
+
+    /**
+     * Describes why a client could not be created or reached in one bounded line, from the root cause of the error,
+     * for the health details and the logs. The full error, partly written by the remote server, is not used, as it
+     * can span several lines and expose the internals of the application.
+     *
+     * @param error The error
+     * @return The reason, on one line of at most 200 characters
+     */
+    public static String reason(Throwable error) {
+        Throwable root = error;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        String message = root.getMessage() == null ? "" : ": " + root.getMessage();
+        String reason = (root.getClass().getSimpleName() + message).replaceAll("\\p{Cntrl}+", " ").strip();
+        return reason.length() > MAX_REASON_LENGTH ? reason.substring(0, MAX_REASON_LENGTH) : reason;
     }
 
     /**

@@ -30,8 +30,11 @@ import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * Checks the configuration of the MCP connections when the application starts, so that a mistake fails the startup
@@ -44,6 +47,7 @@ final class McpClientConnectionsValidator implements ApplicationEventListener<St
     private static final Logger LOG = LoggerFactory.getLogger(McpClientConnectionsValidator.class);
     // The deprecated property, named here so that this class does not use the deprecated constant
     private static final String TRANSPORT = McpClientConfiguration.PREFIX + ".transport";
+    private static final Set<String> CREDENTIAL_HEADERS = Set.of("authorization", "proxy-authorization", "cookie");
 
     private final BeanContext beanContext;
     private final Environment environment;
@@ -59,6 +63,7 @@ final class McpClientConnectionsValidator implements ApplicationEventListener<St
         List<McpClientConnectionConfiguration> connections = new ArrayList<>();
         for (McpClientHttpConfiguration http : beanContext.getBeansOfType(McpClientHttpConfiguration.class)) {
             requireUrl(http);
+            warnAboutCleartextCredentials(http);
             connections.add(http);
         }
         for (McpClientStdioConfiguration stdio : beanContext.getBeansOfType(McpClientStdioConfiguration.class)) {
@@ -85,6 +90,21 @@ final class McpClientConnectionsValidator implements ApplicationEventListener<St
             throw new ConfigurationException("The MCP HTTP connection " + http.getName() + " has no url, set "
                 + McpClientHttpConfiguration.PREFIX + "." + http.getName() + ".url");
         }
+    }
+
+    private static void warnAboutCleartextCredentials(McpClientHttpConfiguration http) {
+        URI url = http.getUrl();
+        boolean credentials = http.getHeaders().keySet().stream()
+            .map(header -> header.toLowerCase(Locale.ROOT))
+            .anyMatch(CREDENTIAL_HEADERS::contains);
+        if (credentials && "http".equalsIgnoreCase(url.getScheme()) && !isLoopback(url.getHost())) {
+            // Only the name, never the value of a header
+            LOG.warn("The MCP HTTP connection {} sends credentials in its headers over http, use https", http.getName());
+        }
+    }
+
+    private static boolean isLoopback(String host) {
+        return host != null && (host.equalsIgnoreCase("localhost") || host.startsWith("127.") || host.equals("[::1]"));
     }
 
     private void requireCommand(McpClientStdioConfiguration stdio) {

@@ -35,7 +35,7 @@ class McpClientHealthIndicatorTest {
             context.registerSingleton(McpClient.class, failing, Qualifiers.byName("broken"));
             ConnectionMcpClients.register(context, "broken");
             McpClientHealthIndicator indicator = indicator(context, executor, Duration.ofSeconds(10), "broken");
-            assertEquals(Map.of("broken", Map.of("status", "DOWN", "error", IllegalStateException.class.getName())),
+            assertEquals(Map.of("broken", Map.of("status", "DOWN", "error", "IllegalStateException")),
                 indicator.getHealthInformation());
         }
     }

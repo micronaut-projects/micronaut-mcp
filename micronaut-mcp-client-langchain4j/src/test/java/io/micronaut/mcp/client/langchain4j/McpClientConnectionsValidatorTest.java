@@ -101,6 +101,20 @@ class McpClientConnectionsValidatorTest {
     }
 
     @Test
+    void credentialsSentOverHttpToAnotherHostAreWarnedAbout() {
+        assertEquals(List.of("The MCP HTTP connection remote sends credentials in its headers over http, use https"),
+            warnings(Map.of(
+                "micronaut.mcp.client.http.remote.url", "http://mcp.example.com/mcp",
+                "micronaut.mcp.client.http.remote.headers.authorization", "Bearer secret",
+                "micronaut.mcp.client.http.secure.url", "https://mcp.example.com/mcp",
+                "micronaut.mcp.client.http.secure.headers.Authorization", "Bearer secret",
+                "micronaut.mcp.client.http.local.url", "http://localhost:8080/mcp",
+                "micronaut.mcp.client.http.local.headers.Cookie", "session=secret",
+                "micronaut.mcp.client.http.plain.url", "http://mcp.example.com/mcp",
+                "micronaut.mcp.client.http.plain.headers.X-Trace", "1")));
+    }
+
+    @Test
     void theDeprecatedPropertiesAreWarnedAbout() {
         assertEquals(List.of(
                     "micronaut.mcp.client.transport is deprecated and has no effect: the connections of micronaut.mcp.client.http"

@@ -83,11 +83,14 @@ public final class ConnectionMcpClient implements McpClient {
         } catch (RuntimeException e) {
             // Names the connection, which the errors of the tool provider do not
             if (unavailable) {
-                LOG.debug("The client of the MCP connection {} could not be created again: {}", name, e.getMessage());
+                LOG.debug("The client of the MCP connection {} could not be created again: {}", name, McpClientConnections.reason(e));
             } else {
                 unavailable = true;
-                LOG.warn("The client of the MCP connection {} could not be created, it is created again on the next call: {}", name, e.getMessage());
+                LOG.warn("The client of the MCP connection {} could not be created, it is created again on the next call: {}",
+                    name, McpClientConnections.reason(e));
             }
+            // The full error only at debug level, as the remote server writes part of it
+            LOG.debug("The error of the MCP connection {}", name, e);
             throw e;
         } finally {
             connecting.set(false);
