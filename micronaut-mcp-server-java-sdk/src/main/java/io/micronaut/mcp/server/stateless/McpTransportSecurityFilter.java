@@ -103,6 +103,13 @@ final class McpTransportSecurityFilter implements Ordered {
             return null;
         }
         HttpHeaders headers = request.getHeaders();
+        HttpResponse<?> rejection = checkOrigin(request, headers);
+        return rejection != null ? rejection : checkProtocolVersion(request, headers);
+    }
+
+    // The rejection body is a JSON-RPC error map, so the response body type is a wildcard
+    @SuppressWarnings("java:S1452")
+    private @Nullable HttpResponse<?> checkOrigin(HttpRequest<?> request, HttpHeaders headers) {
         List<String> origins = headers.getAll(HttpHeaders.ORIGIN);
         if (origins.size() > 1) {
             // A browser sends one Origin; with several, another value could pass for the one that is checked
@@ -117,6 +124,12 @@ final class McpTransportSecurityFilter implements Ordered {
             }
             return error(HttpStatus.FORBIDDEN, "Origin not allowed: " + sanitize(origin));
         }
+        return null;
+    }
+
+    // The rejection body is a JSON-RPC error map, so the response body type is a wildcard
+    @SuppressWarnings("java:S1452")
+    private @Nullable HttpResponse<?> checkProtocolVersion(HttpRequest<?> request, HttpHeaders headers) {
         List<String> versions = headers.getAll(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION);
         if (versions.size() > 1) {
             LOG.debug("Rejected request to {}: {} MCP-Protocol-Version headers", request.getPath(), versions.size());
@@ -235,7 +248,9 @@ final class McpTransportSecurityFilter implements Ordered {
     }
 
     private static boolean isOrigin(String origin) {
-        return origin.indexOf(SCHEME_SEPARATOR) > 0 && isHost(host(origin));
+        int schemeEnd = origin.indexOf(SCHEME_SEPARATOR);
+        // The scheme must not be empty
+        return schemeEnd > 0 && isHost(host(origin));
     }
 
     /**
@@ -248,15 +263,20 @@ final class McpTransportSecurityFilter implements Ordered {
             return false;
         }
         for (int i = ipv6 ? 1 : 0; i < host.length() - (ipv6 ? 1 : 0); i++) {
-            char c = host.charAt(i);
-            boolean valid = ipv6
-                ? (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || c == ':' || c == '.'
-                : (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || c == '-' || c == '.' || c == '_';
-            if (!valid) {
+            if (!isHostChar(host.charAt(i), ipv6)) {
                 return false;
             }
         }
         return true;
+    }
+
+    private static boolean isHostChar(char c, boolean ipv6) {
+        if ((c >= '0' && c <= '9') || c == '.') {
+            return true;
+        }
+        return ipv6
+            ? (c >= 'a' && c <= 'f') || c == ':'
+            : (c >= 'a' && c <= 'z') || c == '-' || c == '_';
     }
 
     /**

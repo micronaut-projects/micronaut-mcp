@@ -43,6 +43,8 @@ class BlockingExecutionModelTest {
     @Test
     void toolsRunOffTheEventLoopWithTheRequestInScope() throws IOException {
         assertEquals("false true", text(callTool(httpClient, jsonMapper, "where")));
+        // a method on the blocking executor, which the controller already runs on, is called without a hop
+        assertEquals("true", text(callTool(httpClient, jsonMapper, "onBlocking")));
     }
 
     @Test
