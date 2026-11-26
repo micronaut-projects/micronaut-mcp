@@ -38,6 +38,11 @@ import java.util.Locale;
  */
 @Internal
 final class HttpRequestMcpTransportContext implements MicronautMcpTransportContext {
+    /**
+     * The key of the authenticated principal, the name of the request attribute Micronaut Security stores it in.
+     */
+    static final String PRINCIPAL_KEY = "micronaut.AUTHENTICATION";
+
     private static final Object UNRESOLVED = new Object();
 
     private final HttpRequest<?> request;
@@ -63,7 +68,7 @@ final class HttpRequestMcpTransportContext implements MicronautMcpTransportConte
             case io.modelcontextprotocol.spec.HttpHeaders.LAST_EVENT_ID -> lastEventId();
             case HttpHeaders.HOST -> host();
             case HttpHeaders.ACCEPT_LANGUAGE -> locale();
-            case MicronautMcpTransportContextAdapter.PRINCIPAL_KEY -> principal();
+            case PRINCIPAL_KEY -> principal();
             default -> null;
         };
     }

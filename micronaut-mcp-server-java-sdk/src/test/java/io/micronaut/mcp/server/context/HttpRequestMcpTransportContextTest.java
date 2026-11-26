@@ -25,7 +25,7 @@ class HttpRequestMcpTransportContextTest {
             .header(io.modelcontextprotocol.spec.HttpHeaders.PROTOCOL_VERSION, ProtocolVersions.MCP_2025_06_18)
             .header(io.modelcontextprotocol.spec.HttpHeaders.MCP_SESSION_ID, "session")
             .header(io.modelcontextprotocol.spec.HttpHeaders.LAST_EVENT_ID, "event");
-        request.setAttribute(MicronautMcpTransportContextAdapter.PRINCIPAL_KEY, principal);
+        request.setAttribute(HttpRequestMcpTransportContext.PRINCIPAL_KEY, principal);
         AtomicInteger resolutions = new AtomicInteger();
         HttpRequestMcpTransportContext context = new HttpRequestMcpTransportContext(request,
             r -> {
@@ -39,7 +39,7 @@ class HttpRequestMcpTransportContextTest {
         assertEquals("event", context.get(io.modelcontextprotocol.spec.HttpHeaders.LAST_EVENT_ID));
         assertEquals("http://localhost", context.get(HttpHeaders.HOST));
         assertEquals(Locale.FRENCH, context.get(HttpHeaders.ACCEPT_LANGUAGE));
-        assertSame(principal, context.get(MicronautMcpTransportContextAdapter.PRINCIPAL_KEY));
+        assertSame(principal, context.get(HttpRequestMcpTransportContext.PRINCIPAL_KEY));
         assertNull(context.get("unknown"));
 
         // the host and the locale are resolved once
@@ -47,10 +47,9 @@ class HttpRequestMcpTransportContextTest {
         assertEquals(Locale.FRENCH, context.locale());
         assertEquals(2, resolutions.get());
 
-        // the adapter reads the same values through the keys
-        MicronautMcpTransportContextAdapter adapter = new MicronautMcpTransportContextAdapter(context);
-        assertSame(principal, adapter.principal());
-        assertEquals(Locale.FRENCH, adapter.locale());
+        // the principal is resolved once too: a later change of the request attribute is not seen
+        request.setAttribute(HttpRequestMcpTransportContext.PRINCIPAL_KEY, (Principal) () -> "bob");
+        assertSame(principal, context.principal());
     }
 
     @Test
@@ -59,7 +58,9 @@ class HttpRequestMcpTransportContextTest {
             r -> null, new FixedLocaleResolver(new AtomicInteger()));
         assertEquals(ProtocolVersions.MCP_2025_03_26, context.protocolVersion());
         assertNull(context.principal());
-        assertNull(new MicronautMcpTransportContextAdapter(context).principal());
+        assertNull(context.get(HttpRequestMcpTransportContext.PRINCIPAL_KEY));
+        assertNull(context.sessionId());
+        assertNull(context.lastEventId());
     }
 
     private record FixedLocaleResolver(AtomicInteger resolutions) implements LocaleResolver<HttpRequest<?>> {
