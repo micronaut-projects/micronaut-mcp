@@ -7,8 +7,11 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.mcp.annotations.Prompt;
+import io.micronaut.mcp.annotations.PromptCompletion;
 import io.micronaut.mcp.annotations.Resource;
+import io.micronaut.mcp.annotations.ResourceTemplate;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.observability.McpServerObserver;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -18,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -48,12 +52,21 @@ class ReactiveOperationMetricsTest {
             {"name": "broken", "arguments": {}}""");
         call("prompts/get", """
             {"name": "greet", "arguments": {}}""");
+        call("completion/complete", """
+            {"ref": {"type": "ref/prompt", "name": "translate"}, "argument": {"name": "language", "value": "py"}}""");
+        call("resources/read", """
+            {"uri": "metrics://cities/paris"}""");
+        call("resources/read", """
+            {"uri": "metrics://cities/rome"}""");
         callFailing("resources/read", """
             {"uri": "metrics://broken"}""");
 
         assertEquals(2, timer("tools/call", "add", "none").count());
         assertEquals(1, timer("tools/call", "broken", "tool_error").count());
         assertEquals(1, timer("prompts/get", "greet", "none").count());
+        assertEquals(1, timer("completion/complete", "translate", "none").count());
+        // a template read is named by its template, so the expanded URIs do not multiply the timers
+        assertEquals(2, timer("resources/read", "metrics://cities/{city}", "none").count());
         // an unmapped checked exception is an internal error
         assertEquals(1, timer("resources/read", "metrics://broken", "-32603").count());
         // the server cancels the result once it has its value, which is not recorded as a cancellation
@@ -79,7 +92,7 @@ class ReactiveOperationMetricsTest {
         HttpRequest<String> request = request(method, params);
         try {
             httpClient.toBlocking().retrieve(request);
-        } catch (io.micronaut.http.client.exceptions.HttpClientResponseException _) {
+        } catch (HttpClientResponseException _) {
             // a protocol error
         }
     }
@@ -105,6 +118,21 @@ class ReactiveOperationMetricsTest {
         @Prompt
         String greet() {
             return "Hello";
+        }
+
+        @Prompt
+        String translate(String language) {
+            return "Translate to " + language;
+        }
+
+        @PromptCompletion(name = "translate")
+        Mono<List<String>> languages() {
+            return Mono.just(List.of("python"));
+        }
+
+        @ResourceTemplate(uriTemplate = "metrics://cities/{city}")
+        Mono<String> city(String city) {
+            return Mono.just(city);
         }
 
         @Resource(uri = "metrics://broken")
