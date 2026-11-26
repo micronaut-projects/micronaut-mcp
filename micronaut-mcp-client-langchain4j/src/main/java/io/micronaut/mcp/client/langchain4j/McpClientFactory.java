@@ -24,6 +24,7 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -36,6 +37,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -56,14 +58,16 @@ final class McpClientFactory {
             .key(configuration.getName())
             .autoHealthCheck(configuration.isAutoHealthCheck())
             .addListeners(listeners);
-        if (configuration.getInitializationTimeout() != null) {
-            builder.initializationTimeout(configuration.getInitializationTimeout());
+        Duration initializationTimeout = configuration.getInitializationTimeout();
+        if (initializationTimeout != null) {
+            builder.initializationTimeout(initializationTimeout);
         }
-        if (configuration.getRequestTimeout() != null) {
-            builder.toolExecutionTimeout(configuration.getRequestTimeout())
-                .resourcesTimeout(configuration.getRequestTimeout())
-                .promptsTimeout(configuration.getRequestTimeout())
-                .pingTimeout(configuration.getRequestTimeout());
+        Duration requestTimeout = configuration.getRequestTimeout();
+        if (requestTimeout != null) {
+            builder.toolExecutionTimeout(requestTimeout)
+                .resourcesTimeout(requestTimeout)
+                .promptsTimeout(requestTimeout)
+                .pingTimeout(requestTimeout);
         }
         if (logMessageHandler != null) {
             builder.logHandler(logMessageHandler);
@@ -75,12 +79,18 @@ final class McpClientFactory {
     @Bean(preDestroy = "close")
     @Singleton
     McpClient createMcpClient(McpClientConnectionConfiguration configuration,
+                              @Parameter DefaultMcpClient.Builder builder,
                               BeanContext beanContext,
                               @Nullable MicronautHttpClientTransports micronautTransports) {
-        // The client owns its transport, which it closes, and a new one is created for each attempt to create the
-        // client, so that a failed attempt does not leave a server process running
-        DefaultMcpClient.Builder builder = beanContext.getBean(DefaultMcpClient.Builder.class, Qualifiers.byName(configuration.getName()));
-        McpTransport transport = transport(configuration, beanContext, micronautTransports);
+        return createMcpClient(configuration, builder, transport(configuration, beanContext, micronautTransports));
+    }
+
+    McpClient createMcpClient(McpClientConnectionConfiguration configuration,
+                              DefaultMcpClient.Builder builder,
+                              McpTransport transport) {
+        // The client owns its transport, which it closes. The builder and the transport are prototypes, so each attempt
+        // to create the client gets a new transport, and a failed attempt must close it so that it does not leave a
+        // server process running
         try {
             return builder.transport(transport).build();
         } catch (RuntimeException e) {

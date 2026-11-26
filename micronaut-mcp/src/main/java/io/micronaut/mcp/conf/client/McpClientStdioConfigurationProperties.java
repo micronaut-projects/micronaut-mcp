@@ -46,6 +46,8 @@ final class McpClientStdioConfigurationProperties extends AbstractMcpClientConne
     }
 
     /**
+     * The command that starts the server, and its arguments. Required.
+     *
      * @param command The command that starts the server, and its arguments
      */
     public void setCommand(@NonNull List<String> command) {
@@ -58,7 +60,9 @@ final class McpClientStdioConfigurationProperties extends AbstractMcpClientConne
     }
 
     /**
-     * @param environment The environment variables of the server process, in addition to those of this process
+     * The environment variables of the server process, in addition to those of the application.
+     *
+     * @param environment The environment variables of the server process
      */
     public void setEnvironment(@MapFormat(transformation = MapFormat.MapTransformation.FLAT, keyFormat = StringConvention.RAW) @Nullable Map<String, String> environment) {
         this.environment = environment != null ? environment : Map.of();
@@ -70,7 +74,7 @@ final class McpClientStdioConfigurationProperties extends AbstractMcpClientConne
     }
 
     /**
-     * Whether to log the messages exchanged with the server. Default value {@code false}.
+     * Whether to log the messages exchanged with the server. Default value `false`.
      *
      * @param logEvents Whether to log the messages
      */
