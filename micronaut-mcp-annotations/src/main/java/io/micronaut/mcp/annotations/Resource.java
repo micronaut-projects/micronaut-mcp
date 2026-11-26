@@ -91,7 +91,7 @@ public @interface Resource {
     Audience[] audience() default {};
 
     /**
-     * @return How important the resource is, from 0 (least) to 1 (most important). Negative when not specified.
+     * @return How important the resource is, from 0 (least) to 1 (most important). {@code -1} when not specified: any other value outside 0 to 1 fails the startup.
      * @since 2.2.0
      */
     double priority() default -1;

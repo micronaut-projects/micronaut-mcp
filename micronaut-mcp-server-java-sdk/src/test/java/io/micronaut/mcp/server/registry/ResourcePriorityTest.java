@@ -20,6 +20,11 @@ class ResourcePriorityTest {
     }
 
     @Test
+    void aNegativePriorityOtherThanTheUnsetDefaultFailsTheStartup() {
+        assertEquals("The priority of resource priority://negative is -0.5, but it must be between 0 and 1", startupFailure("ResourcePriorityTest.negative"));
+    }
+
+    @Test
     void aNaNPriorityFailsTheStartup() {
         assertEquals("The priority of resource priority://nan/{id} is NaN, but it must be between 0 and 1", startupFailure("ResourcePriorityTest.nan"));
     }
@@ -43,6 +48,15 @@ class ResourcePriorityTest {
         @Resource(uri = "priority://high", priority = 5)
         String high() {
             return "high";
+        }
+    }
+
+    @Requires(property = "spec.name", value = "ResourcePriorityTest.negative")
+    @Singleton
+    static class NegativePriority {
+        @Resource(uri = "priority://negative", priority = -0.5)
+        String negative() {
+            return "negative";
         }
     }
 
