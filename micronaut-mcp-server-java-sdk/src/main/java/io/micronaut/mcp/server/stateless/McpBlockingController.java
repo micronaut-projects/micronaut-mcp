@@ -32,6 +32,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
+import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Named;
 import org.jspecify.annotations.Nullable;
 import reactor.core.scheduler.Scheduler;
@@ -57,9 +58,10 @@ final class McpBlockingController extends McpController {
                           McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
                           JsonMapper jsonMapper,
                           McpJsonMapper mcpJsonMapper,
+                          McpSchema.ServerCapabilities capabilities,
                           McpStreamingPolicy streamingPolicy,
                           @Named(TaskExecutors.BLOCKING) ExecutorService blockingExecutor) {
-        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper);
+        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper, capabilities);
         this.streamingPolicy = streamingPolicy;
         // The propagated context of the request, with the request itself, follows the hop to another blocking thread
         this.blockingScheduler = Schedulers.fromExecutor(task -> blockingExecutor.execute(PropagatedContext.wrapCurrent(task)));

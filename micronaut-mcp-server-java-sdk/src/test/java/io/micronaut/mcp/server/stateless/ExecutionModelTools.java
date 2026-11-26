@@ -17,6 +17,8 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * Primitives shared by the blocking and the reactive execution model tests.
  */
@@ -44,6 +46,17 @@ class ExecutionModelTools {
     }
 
     @Tool
+    CompletableFuture<String> failedFuture() {
+        return CompletableFuture.failedFuture(McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS).message("bad future params").build());
+    }
+
+    @Tool
+    @ExecuteOn(TaskExecutors.BLOCKING)
+    String onBlocking() {
+        return String.valueOf(ServerRequestContext.currentRequest().isPresent());
+    }
+
+    @Tool
     Mono<String> reactorContext() {
         return Mono.deferContextual(ctx -> Mono.just(String.valueOf(ctx.hasKey(McpTransportContext.KEY))));
     }
@@ -67,5 +80,15 @@ class ExecutionModelTools {
     @PromptCompletion(name = "greet")
     Flux<String> greetCompletion() {
         return Flux.just("Alice", "Bob");
+    }
+
+    @Prompt
+    String farewell(String name) {
+        return "Goodbye " + name;
+    }
+
+    @PromptCompletion(name = "farewell")
+    Flux<CharSequence> farewellCompletion() {
+        return Flux.just(new StringBuilder("Carol"));
     }
 }

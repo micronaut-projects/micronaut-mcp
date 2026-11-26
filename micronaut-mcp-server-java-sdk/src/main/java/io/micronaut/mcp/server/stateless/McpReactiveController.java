@@ -29,6 +29,7 @@ import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
+import io.modelcontextprotocol.spec.McpSchema;
 import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Mono;
 
@@ -45,8 +46,9 @@ final class McpReactiveController extends McpController {
                           McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
                           JsonMapper jsonMapper,
                           McpJsonMapper mcpJsonMapper,
+                          McpSchema.ServerCapabilities capabilities,
                           McpStreamingPolicy streamingPolicy) {
-        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper);
+        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper, capabilities);
         this.streamingPolicy = streamingPolicy;
     }
 

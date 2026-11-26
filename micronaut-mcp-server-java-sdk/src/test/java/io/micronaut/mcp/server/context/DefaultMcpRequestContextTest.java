@@ -17,6 +17,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -56,6 +57,66 @@ class DefaultMcpRequestContextTest {
     }
 
     @Test
+    void theAsyncExchangeDoesNotWaitForTheClientOnTheReceivingThread() {
+        McpRequestContext context = DefaultMcpRequestContext.of(exchange(new RecordingSession()), REQUEST);
+        IllegalStateException elicit = assertThrows(IllegalStateException.class,
+            () -> DefaultMcpRequestContext.onReceivingThread(() -> context.elicit(ELICIT)));
+        assertTrue(elicit.getMessage().startsWith("Elicitation waits") && elicit.getMessage().contains("@ExecuteOn"), elicit.getMessage());
+        // a nested invocation keeps the outer one on the receiving thread
+        IllegalStateException sample = assertThrows(IllegalStateException.class, () -> DefaultMcpRequestContext.onReceivingThread(() -> {
+            DefaultMcpRequestContext.onReceivingThread(() -> null);
+            return context.sample(SAMPLE);
+        }));
+        assertTrue(sample.getMessage().startsWith("Sampling waits"), sample.getMessage());
+        // off the receiving thread, the request is sent
+        assertEquals(McpSchema.ElicitResult.Action.ACCEPT, context.elicit(ELICIT).action());
+    }
+
+    @Test
+    void onlyAStringOfAtMost256CharactersOrAnIntegerIsAProgressToken() {
+        assertEquals("t".repeat(256), DefaultMcpRequestContext.progressToken(withToken("t".repeat(256))));
+        assertEquals(7, DefaultMcpRequestContext.progressToken(withToken(7)));
+        assertEquals(7L, DefaultMcpRequestContext.progressToken(withToken(7L)));
+        // each progress notification would repeat a long token, or one of a type the protocol does not allow
+        assertNull(DefaultMcpRequestContext.progressToken(withToken("t".repeat(257))));
+        assertNull(DefaultMcpRequestContext.progressToken(withToken(Map.of("o", "AAAA"))));
+        assertNull(DefaultMcpRequestContext.progressToken(withToken(List.of(1, 2))));
+        assertNull(DefaultMcpRequestContext.progressToken(withToken(true)));
+        assertNull(DefaultMcpRequestContext.progressToken(withToken(1.5e300)));
+        assertNull(DefaultMcpRequestContext.progressToken("not a request"));
+        RecordingSession session = new RecordingSession();
+        McpRequestContext context = DefaultMcpRequestContext.of(exchange(session), withToken(Map.of("o", "AAAA")));
+        assertNull(context.progressToken());
+        context.progress(1);
+        assertEquals(List.of(), session.notifications);
+    }
+
+    private static McpSchema.CallToolRequest withToken(Object token) {
+        return McpSchema.CallToolRequest.builder().name("tool").arguments(Map.of()).meta(Map.of("progressToken", token)).build();
+    }
+
+    @Test
+    void withoutAProgressTokenTheExchangesSendNoProgress() {
+        McpSchema.CallToolRequest withoutToken = McpSchema.CallToolRequest.builder().name("tool").arguments(Map.of()).build();
+        RecordingSession syncSession = new RecordingSession();
+        DefaultMcpRequestContext.of(new McpSyncServerExchange(exchange(syncSession)), withoutToken).progress(1, 2, "half");
+        RecordingSession asyncSession = new RecordingSession();
+        DefaultMcpRequestContext.of(exchange(asyncSession), withoutToken).progress(1, 2, "half");
+        assertEquals(List.of(), syncSession.notifications);
+        assertEquals(List.of(), asyncSession.notifications);
+    }
+
+    @Test
+    void aNotificationTheAsyncExchangeFailsToSendDoesNotFailTheMethod() {
+        RecordingSession session = new RecordingSession();
+        session.failNotifications = true;
+        McpRequestContext context = DefaultMcpRequestContext.of(exchange(session), REQUEST);
+        assertDoesNotThrow(() -> context.progress(1));
+        assertDoesNotThrow(() -> context.log(McpSchema.LoggingLevel.INFO, "message"));
+        assertEquals(List.of(), session.notifications);
+    }
+
+    @Test
     void theEmitterOfTheHttpRequestSendsNotifications() {
         RecordingEmitter emitter = new RecordingEmitter();
         MutableHttpRequest<?> request = HttpRequest.POST("/mcp", "");
@@ -79,8 +140,10 @@ class DefaultMcpRequestContextTest {
         context.progress(1);
         context.log(McpSchema.LoggingLevel.INFO, "message");
         assertFalse(context.isCancelled());
-        assertThrows(UnsupportedOperationException.class, () -> context.elicit(ELICIT));
-        assertThrows(UnsupportedOperationException.class, () -> context.sample(SAMPLE));
+        assertEquals("Elicitation is not supported over the stateless HTTP transport",
+            assertThrows(UnsupportedOperationException.class, () -> context.elicit(ELICIT)).getMessage());
+        assertEquals("Sampling is not supported over the stateless HTTP transport",
+            assertThrows(UnsupportedOperationException.class, () -> context.sample(SAMPLE)).getMessage());
         McpRequestContext withToken = DefaultMcpRequestContext.of(McpTransportContext.EMPTY, REQUEST);
         assertEquals("token", withToken.progressToken());
         withToken.progress(1);
@@ -114,8 +177,13 @@ class DefaultMcpRequestContextTest {
             return Mono.just((T) result);
         }
 
+        private boolean failNotifications;
+
         @Override
         public Mono<Void> sendNotification(String method, Object params) {
+            if (failNotifications) {
+                return Mono.error(new IllegalStateException("the client is gone"));
+            }
             notifications.add(method);
             return Mono.empty();
         }

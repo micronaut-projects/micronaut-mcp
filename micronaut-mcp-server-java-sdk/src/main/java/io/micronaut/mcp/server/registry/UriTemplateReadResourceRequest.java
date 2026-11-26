@@ -75,9 +75,7 @@ record UriTemplateReadResourceRequest(
         // every split point before it fails, which takes seconds for a long URI and a template with several variables in
         // a segment, such as log://{year}-{month}-{day}.log, so such a URI is rejected without matching it. Without these
         // characters, UriMatchTemplate matches whatever the SDK routed.
-        Optional<UriMatchInfo> matchOptional = uriTemplate.simpleVariablesOnly() && hasUnmatchableChar(uri)
-            ? Optional.empty()
-            : uriTemplate.matchTemplate().match(uri);
+        Optional<UriMatchInfo> matchOptional = match(uriTemplate, uri);
         if (matchOptional.isEmpty()) {
             // Binding nothing would report the variables as missing, or bind null
             throw invalidParams("The URI does not match the URI template " + uriTemplate.matchTemplate()
@@ -95,6 +93,22 @@ record UriTemplateReadResourceRequest(
             }
         }
         return decoded == null ? variables : decoded;
+    }
+
+    /**
+     * @param uriTemplate A URI template
+     * @param uri A URI
+     * @return Whether the URI matches the template, without the slow match of a URI the template cannot match, see
+     * {@link #arguments(Template, String)}
+     */
+    static boolean matches(Template uriTemplate, String uri) {
+        return match(uriTemplate, uri).isPresent();
+    }
+
+    private static Optional<UriMatchInfo> match(Template uriTemplate, String uri) {
+        return uriTemplate.simpleVariablesOnly() && hasUnmatchableChar(uri)
+            ? Optional.empty()
+            : uriTemplate.matchTemplate().match(uri);
     }
 
     /**
@@ -141,44 +155,63 @@ record UriTemplateReadResourceRequest(
     private static String percentDecode(String name, String value) {
         // A char takes at most 3 UTF-8 bytes, and an escape of 3 chars decodes to a single byte
         ByteBuffer bytes = ByteBuffer.allocate(value.length() * 3);
-        // Created for the first non-ASCII char only
-        CharsetEncoder encoder = null;
         int i = 0;
-        try {
-            while (i < value.length()) {
-                if (value.charAt(i) == '%') {
-                    int high = i + 2 < value.length() ? hexDigit(value.charAt(i + 1)) : -1;
-                    int low = high >= 0 ? hexDigit(value.charAt(i + 2)) : -1;
-                    if (low < 0) {
-                        throw malformed(name);
-                    }
-                    bytes.put((byte) ((high << 4) | low));
-                    i += 3;
-                } else if (value.charAt(i) < 0x80) {
-                    bytes.put((byte) value.charAt(i));
-                    i++;
-                } else {
-                    int end = i + 1;
-                    while (end < value.length() && value.charAt(end) >= 0x80) {
-                        end++;
-                    }
-                    if (encoder == null) {
-                        encoder = StandardCharsets.UTF_8.newEncoder()
-                            .onMalformedInput(CodingErrorAction.REPORT)
-                            .onUnmappableCharacter(CodingErrorAction.REPORT);
-                    }
-                    try {
-                        bytes.put(encoder.encode(CharBuffer.wrap(value, i, end)));
-                    } catch (CharacterCodingException _) {
-                        throw invalidParams("The value of URI template variable '" + name + "' contains an unpaired surrogate");
-                    }
-                    i = end;
-                }
+        while (i < value.length()) {
+            char c = value.charAt(i);
+            if (c == '%') {
+                i = putEscape(bytes, name, value, i);
+            } else if (c < 0x80) {
+                bytes.put((byte) c);
+                i++;
+            } else {
+                i = putNonAscii(bytes, name, value, i);
             }
+        }
+        return decodeUtf8(bytes.flip(), name);
+    }
+
+    /**
+     * Puts the byte of the escape at {@code i}.
+     *
+     * @return the index after the escape
+     */
+    private static int putEscape(ByteBuffer bytes, String name, String value, int i) {
+        int high = i + 2 < value.length() ? hexDigit(value.charAt(i + 1)) : -1;
+        int low = high >= 0 ? hexDigit(value.charAt(i + 2)) : -1;
+        if (low < 0) {
+            throw malformed(name);
+        }
+        bytes.put((byte) ((high << 4) | low));
+        return i + 3;
+    }
+
+    /**
+     * Puts the UTF-8 bytes of the run of non-ASCII chars at {@code i}.
+     *
+     * @return the index after the run
+     */
+    private static int putNonAscii(ByteBuffer bytes, String name, String value, int i) {
+        int end = i + 1;
+        while (end < value.length() && value.charAt(end) >= 0x80) {
+            end++;
+        }
+        CharsetEncoder encoder = StandardCharsets.UTF_8.newEncoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT);
+        try {
+            bytes.put(encoder.encode(CharBuffer.wrap(value, i, end)));
+        } catch (CharacterCodingException _) {
+            throw invalidParams("The value of URI template variable '" + name + "' contains an unpaired surrogate");
+        }
+        return end;
+    }
+
+    private static String decodeUtf8(ByteBuffer bytes, String name) {
+        try {
             return StandardCharsets.UTF_8.newDecoder()
                 .onMalformedInput(CodingErrorAction.REPORT)
                 .onUnmappableCharacter(CodingErrorAction.REPORT)
-                .decode(bytes.flip())
+                .decode(bytes)
                 .toString();
         } catch (CharacterCodingException _) {
             throw malformed(name);
