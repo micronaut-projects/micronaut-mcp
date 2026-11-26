@@ -40,13 +40,13 @@ import io.micronaut.mcp.server.context.DefaultMcpRequestContext;
 import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.micronaut.mcp.server.observability.McpServerObserver;
-import jakarta.inject.Inject;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.inject.Inject;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
@@ -118,7 +118,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @param observers The observers of the operations of the server
      */
     @Inject
-    protected void setObservers(List<McpServerObserver> observers) {
+    void setObservers(List<McpServerObserver> observers) {
         this.observers = List.copyOf(observers);
     }
 
@@ -170,7 +170,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @param <R> The result type
      * @return The result
      */
-    protected final <R> R observed(String method, String name, Supplier<R> operation) {
+    final <R> R observed(String method, String name, Supplier<R> operation) {
         return observed(method, name, operation, result -> null);
     }
 
@@ -187,7 +187,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      */
     // Errors are recorded too, and every failure is rethrown unchanged
     @SuppressWarnings("java:S1181")
-    protected final <R> R observed(String method, String name, Supplier<R> operation, Function<? super R, @Nullable String> errorType) {
+    final <R> R observed(String method, String name, Supplier<R> operation, Function<? super R, @Nullable String> errorType) {
         if (observers.isEmpty()) {
             return operation.get();
         }
@@ -232,7 +232,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @param <R> The result type
      * @return The result
      */
-    protected final <R> Mono<R> observedAsync(String method, String name, Supplier<Mono<R>> operation) {
+    final <R> Mono<R> observedAsync(String method, String name, Supplier<Mono<R>> operation) {
         return observedAsync(method, name, operation, result -> null);
     }
 
@@ -248,14 +248,24 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @param <R> The result type
      * @return The result
      */
-    protected final <R> Mono<R> observedAsync(String method, String name, Supplier<Mono<R>> operation, Function<? super R, @Nullable String> errorType) {
+    // An Error thrown while the operation is assembled is recorded too, and rethrown unchanged
+    @SuppressWarnings("java:S1181")
+    final <R> Mono<R> observedAsync(String method, String name, Supplier<Mono<R>> operation, Function<? super R, @Nullable String> errorType) {
         if (observers.isEmpty()) {
             return operation.get();
         }
         return Mono.defer(() -> {
             McpServerObserver.Observation observation = observe(method, name);
+            Mono<R> result;
+            try {
+                result = operation.get();
+            } catch (Throwable e) {
+                // An Error thrown while the operation is assembled, which Mono.defer turns into the error signal
+                stop(observation, errorTypeOf(e));
+                throw e;
+            }
             AtomicBoolean stopped = new AtomicBoolean();
-            return operation.get()
+            return result
                 .doOnEach(signal -> {
                     if (!signal.isOnSubscribe() && stopped.compareAndSet(false, true)) {
                         Throwable error = signal.getThrowable();

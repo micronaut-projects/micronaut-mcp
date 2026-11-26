@@ -10,6 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
@@ -78,6 +79,19 @@ class ObservedOperationsTest {
         })));
 
         assertEquals(List.of("prompts/get broken java.lang.LinkageError"), observer.stops);
+    }
+
+    @Test
+    void anErrorThrownWhileAssemblingIsRecordedWithItsClassAndRethrownUnchanged() {
+        AssertionError error = new AssertionError("broken");
+
+        Throwable thrown = assertThrows(Throwable.class, () -> registry.observedAsync("prompts/get", "assembling", () -> {
+            throw error;
+        }).block());
+
+        // block() wraps a checked exception or an Error that is not fatal to the JVM
+        assertSame(error, Exceptions.unwrap(thrown));
+        assertEquals(List.of("prompts/get assembling java.lang.AssertionError"), observer.stops);
     }
 
     @Test
