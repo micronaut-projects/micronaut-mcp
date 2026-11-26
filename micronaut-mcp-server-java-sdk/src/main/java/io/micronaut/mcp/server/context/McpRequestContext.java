@@ -34,9 +34,10 @@ import org.jspecify.annotations.Nullable;
  * }
  * </pre>
  *
- * <p>Over the HTTP transport a request whose client accepts {@code text/event-stream} is answered with a stream as soon
- * as the method sends a notification, and the notifications and the result are sent as events. Without notifications,
- * or when the client only accepts JSON, the result is sent as JSON and notifications are dropped.</p>
+ * <p>Over the HTTP transport a request whose client accepts both {@code application/json} and {@code text/event-stream}
+ * is answered with a stream as soon as the method sends a notification, and the notifications and the result are sent
+ * as events. Without notifications, or when the client does not accept both, the result is sent as JSON and
+ * notifications are dropped.</p>
  *
  * @since 2.2.0
  */

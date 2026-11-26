@@ -1,6 +1,5 @@
 package io.micronaut.mcp.server.stateless;
 
-import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.sse.Event;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -111,15 +110,6 @@ class StreamingJsonRpcResponseTest {
         List<Event<?>> events = events(response).collectList().block();
         assertEquals(StreamingJsonRpcResponse.BUFFER_SIZE, events.size());
         assertEquals("result", events.getLast().getData());
-    }
-
-    @Test
-    void anEventStreamWithAZeroQualityIsNotAccepted() {
-        assertTrue(McpStreamingPolicy.acceptsEventStream(HttpRequest.POST("/mcp", "").header("Accept", "application/json, text/event-stream")));
-        assertTrue(McpStreamingPolicy.acceptsEventStream(HttpRequest.POST("/mcp", "").header("Accept", "text/event-stream;q=0.5")));
-        assertFalse(McpStreamingPolicy.acceptsEventStream(HttpRequest.POST("/mcp", "").header("Accept", "application/json, text/event-stream;q=0")));
-        assertFalse(McpStreamingPolicy.acceptsEventStream(HttpRequest.POST("/mcp", "").header("Accept", "text/event-stream; q=0.0")));
-        assertFalse(McpStreamingPolicy.acceptsEventStream(HttpRequest.POST("/mcp", "").header("Accept", "application/json")));
     }
 
     private static HttpResponse<?> started(AtomicReference<StreamingJsonRpcResponse> streaming) {

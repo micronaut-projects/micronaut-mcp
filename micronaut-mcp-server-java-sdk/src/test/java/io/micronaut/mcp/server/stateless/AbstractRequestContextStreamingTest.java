@@ -147,10 +147,18 @@ abstract class AbstractRequestContextStreamingTest {
     }
 
     @Test
-    void anEventStreamWithAZeroQualityGetsJson() {
-        HttpResponse<String> response = post("application/json, text/event-stream;q=0", """
-            {"jsonrpc": "2.0", "id": 19, "method": "tools/call", "params": {"name": "importCatalog", "arguments": {"pages": 1}}}""");
-        assertTrue(response.getContentType().map(MediaType.APPLICATION_JSON_TYPE::matches).orElse(false));
+    void aClientThatDoesNotAcceptBothGetsJson() {
+        // An event stream with a quality of 0 is not accepted, and a POST request must accept JSON too
+        for (String accept : List.of("application/json, text/event-stream;q=0", "text/event-stream, */*")) {
+            HttpResponse<String> response = post(accept, """
+                {"jsonrpc": "2.0", "id": 19, "method": "tools/call", "params": {"name": "importCatalog", "arguments": {"pages": 1}}}""");
+            assertTrue(response.getContentType().map(MediaType.APPLICATION_JSON_TYPE::matches).orElse(false), accept);
+            assertTrue(response.body().contains("\"text\":\"done\"") && !response.body().contains("notifications/"), response.body());
+        }
+        // The endpoint produces JSON, so the server refuses a client that only accepts an event stream
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> post("text/event-stream", """
+            {"jsonrpc": "2.0", "id": 20, "method": "tools/call", "params": {"name": "importCatalog", "arguments": {"pages": 1}}}"""));
+        assertEquals(HttpStatus.NOT_ACCEPTABLE, e.getStatus());
     }
 
     @Test

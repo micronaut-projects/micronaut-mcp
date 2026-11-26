@@ -32,9 +32,10 @@ import org.jspecify.annotations.Nullable;
 import java.util.Locale;
 
 /**
- * Decides whether the response to a request may become an event stream: the client accepts one, and the request
- * designates a primitive that declares an {@link io.micronaut.mcp.server.context.McpRequestContext}, so it may send
- * notifications while it runs. Other requests are answered with JSON without building a streaming response.
+ * Decides whether the response to a request may become an event stream: the client accepts both JSON and an event
+ * stream, as the Streamable HTTP transport requires, and the request designates a primitive that declares an
+ * {@link io.micronaut.mcp.server.context.McpRequestContext}, so it may send notifications while it runs. Other requests
+ * are answered with JSON without building a streaming response.
  */
 @Singleton
 @Internal
@@ -86,7 +87,7 @@ final class McpStreamingPolicy {
             case McpSchema.METHOD_COMPLETION_COMPLETE -> completionMayNotify(params.get(KEY_REF));
             default -> false;
         };
-        return mayNotify && acceptsEventStream(request);
+        return mayNotify && acceptsJsonAndEventStream(request);
     }
 
     private boolean completionMayNotify(@Nullable JsonNode ref) {
@@ -111,12 +112,17 @@ final class McpStreamingPolicy {
 
     /**
      * @param request The request
-     * @return Whether the {@code Accept} header of the request accepts an event stream, with a quality other than 0
+     * @return Whether the {@code Accept} header of the request lists both JSON and an event stream, with a quality other
+     * than 0, as the Streamable HTTP transport requires of a POST request
      */
-    static boolean acceptsEventStream(HttpRequest<?> request) {
+    static boolean acceptsJsonAndEventStream(HttpRequest<?> request) {
+        return accepts(request, MediaType.APPLICATION_JSON) && accepts(request, MediaType.TEXT_EVENT_STREAM);
+    }
+
+    private static boolean accepts(HttpRequest<?> request, String mediaType) {
         for (String accept : request.getHeaders().getAll(HttpHeaders.ACCEPT)) {
             for (String range : accept.split(",")) {
-                if (isEventStream(range)) {
+                if (isAccepted(range, mediaType)) {
                     return true;
                 }
             }
@@ -124,9 +130,9 @@ final class McpStreamingPolicy {
         return false;
     }
 
-    private static boolean isEventStream(String range) {
+    private static boolean isAccepted(String range, String mediaType) {
         String[] parts = range.split(";");
-        if (!parts[0].trim().equalsIgnoreCase(MediaType.TEXT_EVENT_STREAM)) {
+        if (!parts[0].trim().equalsIgnoreCase(mediaType)) {
             return false;
         }
         for (int i = 1; i < parts.length; i++) {
