@@ -16,6 +16,7 @@
 package io.micronaut.mcp.server.context;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.http.context.ServerRequestContext;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
@@ -65,8 +66,18 @@ public final class DefaultMcpRequestContext implements McpRequestContext {
             return new DefaultMcpRequestContext(exchange.transportContext(), null, exchange, null, progressToken);
         }
         McpTransportContext transportContext = context instanceof McpTransportContext c ? c : McpTransportContext.EMPTY;
-        McpNotificationEmitter emitter = transportContext instanceof HttpRequestMcpTransportContext http ? http.emitter() : null;
+        McpNotificationEmitter emitter = transportContext instanceof HttpRequestMcpTransportContext http ? http.emitter() : currentEmitter();
         return new DefaultMcpRequestContext(transportContext, null, null, emitter, progressToken);
+    }
+
+    /**
+     * @return The emitter of the HTTP request in scope, for a transport context that does not carry the request, such as
+     * one from a replaced {@link io.modelcontextprotocol.server.McpTransportContextExtractor}
+     */
+    private static @Nullable McpNotificationEmitter currentEmitter() {
+        return ServerRequestContext.currentRequest()
+            .flatMap(request -> request.getAttribute(McpNotificationEmitter.ATTRIBUTE, McpNotificationEmitter.class))
+            .orElse(null);
     }
 
     @Override
