@@ -17,36 +17,51 @@ import java.time.Duration;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
- * Invokes the tool handlers of the STDIO synchronous and the stateless asynchronous specifications.
+ * Invokes the tool handlers of the STDIO synchronous and asynchronous specifications and of the stateless asynchronous specifications.
  */
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "spec.name", value = "ToolRegistrySpecsTest")
 @MicronautTest(startApplication = false)
 class ToolRegistrySpecsTest {
     private static final McpTransportContext CONTEXT = McpTransportContext.create(Map.of());
-    private static final McpSyncServerExchange EXCHANGE = new McpSyncServerExchange(new McpAsyncServerExchange("session", null,
-        McpSchema.ClientCapabilities.builder().build(), new McpSchema.Implementation("client", "1.0"), CONTEXT));
+    private static final McpAsyncServerExchange ASYNC_EXCHANGE = new McpAsyncServerExchange("session", null,
+        McpSchema.ClientCapabilities.builder().build(), new McpSchema.Implementation("client", "1.0"), CONTEXT);
+    private static final McpSyncServerExchange SYNC_EXCHANGE = new McpSyncServerExchange(ASYNC_EXCHANGE);
+    private static final EvaluationResult EVALUATION = new EvaluationResult("start", "+0.2");
 
     @Inject
     ToolRegistry toolRegistry;
 
     @Test
     void synchronousSpecificationsCallTheTools() {
-        McpServerFeaturesSync specs = new McpServerFeaturesSync(toolRegistry);
-        assertEquals("hi", text(specs.call("echo", Map.of("text", "hi"))));
+        assertEquals("hi", text(sync("echo", Map.of("text", "hi"))));
         // With the Micronaut MCP JSON mapper the structured result is passed to the SDK as is
-        assertEquals(new EvaluationResult("start", "+0.2"), specs.call("evaluate", Map.of()).structuredContent());
+        assertStructured(sync("evaluate", Map.of()));
+    }
+
+    @Test
+    void asynchronousSpecificationsCallTheTools() {
+        assertEquals("hi", text(async("echo", Map.of("text", "hi"))));
+        assertStructured(async("evaluate", Map.of()));
     }
 
     @Test
     void statelessAsynchronousSpecificationsCallTheTools() {
         assertEquals("hi", text(statelessAsync("echo", Map.of("text", "hi"))));
-        McpSchema.CallToolResult result = statelessAsync("evaluate", Map.of());
-        assertNotNull(result.structuredContent());
-        assertEquals(false, result.isError());
+        assertStructured(statelessAsync("evaluate", Map.of()));
+    }
+
+    private McpSchema.CallToolResult sync(String name, Map<String, Object> arguments) {
+        return toolRegistry.getSyncSpecs().stream().filter(s -> s.tool().name().equals(name)).findFirst().orElseThrow()
+            .callHandler().apply(SYNC_EXCHANGE, new McpSchema.CallToolRequest(name, arguments));
+    }
+
+    private McpSchema.CallToolResult async(String name, Map<String, Object> arguments) {
+        return toolRegistry.getAsyncSpecs().stream().filter(s -> s.tool().name().equals(name)).findFirst().orElseThrow()
+            .callHandler().apply(ASYNC_EXCHANGE, new McpSchema.CallToolRequest(name, arguments)).block(Duration.ofSeconds(10));
     }
 
     private McpSchema.CallToolResult statelessAsync(String name, Map<String, Object> arguments) {
@@ -54,15 +69,13 @@ class ToolRegistrySpecsTest {
             .callHandler().apply(CONTEXT, new McpSchema.CallToolRequest(name, arguments)).block(Duration.ofSeconds(10));
     }
 
-    private static String text(McpSchema.CallToolResult result) {
-        return ((McpSchema.TextContent) result.content().getFirst()).text();
+    private static void assertStructured(McpSchema.CallToolResult result) {
+        assertEquals(EVALUATION, result.structuredContent());
+        assertFalse(result.isError());
     }
 
-    private record McpServerFeaturesSync(ToolRegistry registry) {
-        McpSchema.CallToolResult call(String name, Map<String, Object> arguments) {
-            return registry.getSyncSpecs().stream().filter(s -> s.tool().name().equals(name)).findFirst().orElseThrow()
-                .callHandler().apply(EXCHANGE, new McpSchema.CallToolRequest(name, arguments));
-        }
+    private static String text(McpSchema.CallToolResult result) {
+        return ((McpSchema.TextContent) result.content().getFirst()).text();
     }
 
     @Requires(property = "spec.name", value = "ToolRegistrySpecsTest")
@@ -75,7 +88,7 @@ class ToolRegistrySpecsTest {
 
         @Tool
         EvaluationResult evaluate() {
-            return new EvaluationResult("start", "+0.2");
+            return EVALUATION;
         }
     }
 }

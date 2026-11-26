@@ -21,7 +21,7 @@ class MicronautJsonSchemaValidatorCacheTest {
     JsonSchemaValidator validator;
 
     @Test
-    void schemasAreCachedByIdentity() {
+    void eachSchemaInstanceValidatesAgainstItsOwnJson() {
         Map<String, Object> schema = new HashMap<>(Map.of(
             "type", "object",
             "properties", Map.of("name", Map.of("type", "string")),
@@ -34,5 +34,20 @@ class MicronautJsonSchemaValidatorCacheTest {
         otherSchema.put("required", List.of());
         assertTrue(validator.validate(otherSchema, Map.of()).valid());
         assertFalse(validator.validate(schema, Map.of()).valid());
+    }
+
+    @Test
+    void schemaThatCannotBeSerializedIsInvalid() {
+        Map<String, Object> schema = Map.of("type", "object", "default", new Unserializable());
+        JsonSchemaValidator.ValidationResponse response = validator.validate(schema, Map.of());
+        assertFalse(response.valid());
+        assertTrue(response.errorMessage().startsWith("Unexpected validation error: "), response.errorMessage());
+        assertTrue(response.errorMessage().contains(Unserializable.class.getSimpleName()), response.errorMessage());
+    }
+
+    /**
+     * Has no serializable introspection.
+     */
+    static final class Unserializable {
     }
 }
