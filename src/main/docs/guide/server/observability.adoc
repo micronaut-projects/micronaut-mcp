@@ -10,7 +10,18 @@ To expose the metrics at `/prometheus`, as the https://micronaut-projects.github
 
 dependency:micronaut-management[groupId=io.micronaut]
 
-WARNING: The metrics name every tool, prompt and resource of the server and show how often each is used and fails. The MCP endpoint is reachable by remote clients, and management endpoints share its port by default, so do not make `/prometheus` available without authentication on that port. Either keep the endpoint sensitive and have the scraper authenticate (with Micronaut Security, a sensitive endpoint requires an authenticated request), or serve the management endpoints on a separate port that only the monitoring network can reach:
+WARNING: The metrics name every tool, prompt and resource of the server and show how often each is used and fails. Micronaut Management serves them at `/prometheus` and also at `/metrics`, which is not sensitive by default, and opens `/health` too. The MCP endpoint is reachable by remote clients, and management endpoints share its port by default, so do not leave the metrics readable without authentication on that port.
+
+Either keep both endpoints sensitive and have the scraper authenticate (with Micronaut Security, a sensitive endpoint requires an authenticated request):
+
+[source,properties]
+----
+endpoints.metrics.sensitive=true
+# or, if only Prometheus reads the metrics:
+# endpoints.metrics.enabled=false
+----
+
+Or serve the management endpoints on a separate port that only the monitoring network can reach. Apply both properties together, never `endpoints.prometheus.sensitive=false` alone. Every management endpoint moves to that port, `/health` included, so point health probes and load balancer checks at it, and restrict the port with a firewall rule or a network policy:
 
 [source,properties]
 ----
