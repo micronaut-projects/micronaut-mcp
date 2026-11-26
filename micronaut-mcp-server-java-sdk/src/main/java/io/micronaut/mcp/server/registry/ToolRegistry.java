@@ -390,6 +390,10 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
      * sees its fields, else a schema with the JSON type of the argument.
      */
     private Object propertyJsonSchema(Argument<?> argument, Function<Argument<?>, String> argumentDescription) {
+        if (!TYPE_OBJECT.equals(argumentType(argument))) {
+            // Only an object can have a JSON Schema of its own, and looking one up is costly for any other type
+            return argumentJsonSchema(argument, argumentDescription);
+        }
         return jsonSchema(argument)
             .<Object>map(json -> embeddedJsonSchema(json, argumentDescription.apply(argument)))
             .orElseGet(() -> argumentJsonSchema(argument, argumentDescription));
