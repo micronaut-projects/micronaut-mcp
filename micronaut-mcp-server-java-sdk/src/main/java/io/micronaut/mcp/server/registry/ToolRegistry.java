@@ -79,7 +79,6 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         McpSchema.CallToolRequest.class);
     private static final Argument<Map<String, Object>> JSON_OBJECT_ARGUMENT = Argument.mapOf(String.class, Object.class);
     private static final String KEY_SCHEMA = "$schema";
-    private static final String KEY_ID = "$id";
     private static final String MEMBER_ANNOTATIONS = "annotations";
     private static final String MEMBER_READ_ONLY_HINT = "readOnlyHint";
     private static final String MEMBER_DESTRUCTIVE_HINT = "destructiveHint";
@@ -406,9 +405,10 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        // The schema is embedded in the tool input schema, where its own identifier and dialect do not apply
+        // The identifier is kept: it makes the embedded schema a schema resource of its own, so that the references and
+        // anchors inside it resolve within it and not against the tool input schema. The dialect is the one of the tool
+        // input schema.
         schema.remove(KEY_SCHEMA);
-        schema.remove(KEY_ID);
         if (StringUtils.isNotEmpty(description)) {
             schema.put(MEMBER_DESCRIPTION, description);
         }

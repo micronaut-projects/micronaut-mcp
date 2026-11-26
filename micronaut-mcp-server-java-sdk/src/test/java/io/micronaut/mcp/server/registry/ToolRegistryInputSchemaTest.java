@@ -50,8 +50,8 @@ class ToolRegistryInputSchemaTest {
         assertEquals("object", move.get("type"));
         assertEquals("The move to play", move.get("description"));
         assertEquals(Map.of("from", Map.of("type", "string"), "to", Map.of("type", "string")), move.get("properties"));
-        // The identifier and dialect of the embedded schema are removed
-        assertFalse(move.containsKey("$id"));
+        // The embedded schema keeps its identifier, so that it stays a schema resource of its own, and loses its dialect
+        assertEquals("classpath:META-INF/schemas/tool-registry-input-schema-test-move.schema.json", move.get("$id"));
         assertFalse(move.containsKey("$schema"));
         assertEquals(List.of("move"), spec.tool().inputSchema().get("required"));
         assertEquals("e2-e4", call(spec, Map.of("move", Map.of("from", "e2", "to", "e4"))));
@@ -81,7 +81,7 @@ class ToolRegistryInputSchemaTest {
         McpStatelessServerFeatures.SyncToolSpecification spec = spec("line");
         @SuppressWarnings("unchecked")
         Map<String, Object> lineProperties = (Map<String, Object>) property(spec.tool(), "line").get("properties");
-        // The references are absolute, so they do not depend on the identifier removed from the embedded schema
+        // The generated references are absolute
         assertEquals(Map.of("$ref", "classpath:META-INF/schemas/tool-registry-input-schema-test-move.schema.json"),
             lineProperties.get("first"));
         assertEquals("e2", call(spec, Map.of("line", Map.of(
