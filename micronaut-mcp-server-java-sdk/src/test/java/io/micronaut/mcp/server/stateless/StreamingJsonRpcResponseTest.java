@@ -10,8 +10,19 @@ import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoSink;
+import reactor.util.context.Context;
 
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.LongConsumer;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -122,6 +133,91 @@ class StreamingJsonRpcResponseTest {
         List<Event<?>> events = events(response).collectList().block();
         assertEquals(StreamingJsonRpcResponse.BUFFER_SIZE, events.size());
         assertEquals("result", events.getLast().getData());
+    }
+
+    @Test
+    void concurrentNotificationsAndResultProduceOneResponseWithTheResultLast() throws Exception {
+        int threads = 8;
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        try {
+            for (int run = 0; run < 200; run++) {
+                RecordingSink sink = new RecordingSink();
+                StreamingJsonRpcResponse streaming = new StreamingJsonRpcResponse(sink, REQUEST);
+                CountDownLatch start = new CountDownLatch(1);
+                List<Future<?>> emitters = new ArrayList<>();
+                for (int t = 0; t < threads; t++) {
+                    emitters.add(executor.submit(() -> {
+                        start.await();
+                        for (int i = 0; i < 50; i++) {
+                            streaming.emit(NOTIFICATION);
+                        }
+                        return null;
+                    }));
+                }
+                start.countDown();
+                streaming.complete(HttpResponse.ok("result"));
+                for (Future<?> emitter : emitters) {
+                    emitter.get(10, TimeUnit.SECONDS);
+                }
+                assertEquals(1, sink.responses.size(), "exactly one response, run " + run);
+                Object body = sink.responses.getFirst().body();
+                if (body instanceof Publisher<?>) {
+                    List<Event<?>> events = events(sink.responses.getFirst()).collectList().block(Duration.ofSeconds(10));
+                    assertTrue(events.size() <= StreamingJsonRpcResponse.BUFFER_SIZE, "run " + run);
+                    assertEquals("result", events.getLast().getData(), "the result is last, run " + run);
+                    assertEquals(1, events.stream().filter(e -> "result".equals(e.getData())).count(), "run " + run);
+                } else {
+                    // The result came before any notification, so the response is JSON
+                    assertEquals("result", body, "run " + run);
+                }
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    /**
+     * Records every response the streaming response completes with, which the sink of {@code Mono.create} would not
+     * show beyond the first.
+     */
+    private static final class RecordingSink implements MonoSink<HttpResponse<?>> {
+        private final List<HttpResponse<?>> responses = new CopyOnWriteArrayList<>();
+
+        @Override
+        public void success() {
+            responses.add(HttpResponse.noContent());
+        }
+
+        @Override
+        public void success(HttpResponse<?> value) {
+            responses.add(value);
+        }
+
+        @Override
+        public void error(Throwable e) {
+            throw new AssertionError("unexpected error", e);
+        }
+
+        @Override
+        @Deprecated
+        public Context currentContext() {
+            return Context.empty();
+        }
+
+        @Override
+        public MonoSink<HttpResponse<?>> onRequest(LongConsumer consumer) {
+            return this;
+        }
+
+        @Override
+        public MonoSink<HttpResponse<?>> onCancel(Disposable disposable) {
+            return this;
+        }
+
+        @Override
+        public MonoSink<HttpResponse<?>> onDispose(Disposable disposable) {
+            return this;
+        }
     }
 
     private static HttpResponse<?> started(AtomicReference<StreamingJsonRpcResponse> streaming) {
