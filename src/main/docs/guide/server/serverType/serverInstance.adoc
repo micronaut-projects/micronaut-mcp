@@ -14,13 +14,13 @@ Based on the transport and reactive setting, an MCP Java SDK Server class instan
 
 |HTTP
 |false
-|`McpStatelessAsyncServer`
-|`McpServer.StatelessAsyncSpecification`
+|`McpStatelessSyncServer`
+|`McpServer.StatelessSyncSpecification`
 
 |HTTP
 |true
-|`McpStatelessSyncServer`
-|`McpServer.StatelessSyncSpecification`
+|`McpStatelessAsyncServer`
+|`McpServer.StatelessAsyncSpecification`
 |===
 
 `McpServer.SyncSpecification`, `McpServer.AsyncSpecification`, `McpServer.StatelessAsyncSpecification`, `McpServer.StatelessSyncSpecification` are builder classes. Thus, you can create beans of type https://docs.micronaut.io/latest/guide/#events[`BeanCreatedEventListener`] to customize the server specification and creation further.

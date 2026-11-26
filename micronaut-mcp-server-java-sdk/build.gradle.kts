@@ -17,6 +17,8 @@ dependencies {
     implementation(mnJsonSchema.micronaut.json.schema.validation)
     testImplementation(mnSecurity.micronaut.security)
     testImplementation(mnMicrometer.micronaut.micrometer.core)
+    // ListAppender, to assert how failing observers are logged
+    testImplementation(mnLogging.logback.classic)
     api(mnJsonSchema.micronaut.json.schema.utils)
     api(mnValidation.validation)
     compileOnly(mn.micronaut.http.server)
@@ -29,6 +31,7 @@ dependencies {
     testImplementation(libs.jsonassert)
     testImplementation(mn.micronaut.http.server.netty)
     testImplementation(mnTest.junit.jupiter.params)
+    testImplementation(mnLogging.logback.classic)
 }
 micronautBuild {
     testFramework = TestFramework.JUNIT6
