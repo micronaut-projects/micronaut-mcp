@@ -99,6 +99,9 @@ public interface McpRequestContext {
 
     /**
      * Asks the user for information through the client. Only the STDIO transport can send requests to the client.
+     * The method waits for the answer, so on a reactive server, which invokes a method without an executor on the thread
+     * that reads the messages of the client, it must run on a blocking executor, for example with
+     * {@code @ExecuteOn(TaskExecutors.BLOCKING)}.
      *
      * @param request The elicitation request
      * @return The user's answer
@@ -109,6 +112,9 @@ public interface McpRequestContext {
 
     /**
      * Asks the client to sample a language model. Only the STDIO transport can send requests to the client.
+     * The method waits for the answer, so on a reactive server, which invokes a method without an executor on the thread
+     * that reads the messages of the client, it must run on a blocking executor, for example with
+     * {@code @ExecuteOn(TaskExecutors.BLOCKING)}.
      *
      * @param request The sampling request
      * @return The model's answer

@@ -10,4 +10,4 @@ Over the HTTP transport, the response to a request whose client accepts both `ap
 
 When a primitive declares an `McpRequestContext` parameter, the server advertises the `logging` capability, since it may send log messages. The STDIO server applies the level a client sets with `logging/setLevel`. The HTTP server is stateless: it acknowledges `logging/setLevel`, but it cannot remember the level, so it sends every log message whatever its level.
 
-`elicit` and `sample` send requests to the client, which only the STDIO transport supports: over the stateless HTTP transport they throw `UnsupportedOperationException`.
+`elicit` and `sample` send requests to the client, which only the STDIO transport supports: over the stateless HTTP transport they throw `UnsupportedOperationException`. They wait for the answer of the client, so on a reactive STDIO server (`micronaut.mcp.server.reactive` set to `true`) a method that calls them must run on a blocking executor, for example with `@ExecuteOn(TaskExecutors.BLOCKING)`: without an executor, the reactive server invokes the method on the thread that reads the messages of the client, which then cannot read the answer.
