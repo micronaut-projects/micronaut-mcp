@@ -30,7 +30,9 @@ final class ToolsConfigurationProperties implements ToolsConfiguration {
 
     /**
      *
-     * @param listChanged whether the server will emit notifications when the list of available tools changes. Default value `false`.
+     * @param listChanged whether the server will emit notifications when the list of available tools changes. It also makes the server
+     *                    advertise the tools capability when it has no tools, so tools can be added at runtime. The HTTP transport
+     *                    cannot send these notifications, so it advertises `listChanged` as `false`. Default value `false`.
      */
     public void setListChanged(boolean listChanged) {
         this.listChanged = listChanged;

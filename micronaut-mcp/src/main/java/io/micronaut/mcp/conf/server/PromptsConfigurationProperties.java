@@ -30,7 +30,9 @@ final class PromptsConfigurationProperties implements PromptsConfiguration {
 
     /**
      *
-     * @param listChanged whether the server will emit notifications when the list of available prompts changes. Default value `false`.
+     * @param listChanged whether the server will emit notifications when the list of available prompts changes. It also makes the server
+     *                    advertise the prompts capability when it has no prompts, so prompts can be added at runtime. The HTTP transport
+     *                    cannot send these notifications, so it advertises `listChanged` as `false`. Default value `false`.
      */
     public void setListChanged(boolean listChanged) {
         this.listChanged = listChanged;
