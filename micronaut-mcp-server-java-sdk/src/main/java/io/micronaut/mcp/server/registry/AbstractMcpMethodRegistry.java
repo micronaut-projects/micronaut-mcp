@@ -229,7 +229,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     /**
      * @param method The method
      * @return The icons declared with {@link Icon}, or {@code null} when there are none
-     * @throws IllegalStateException If an icon has an empty {@code src} or a theme other than {@code light} or {@code dark}
+     * @throws IllegalStateException If an icon has a blank {@code src} or a theme other than {@code light} or {@code dark}
      */
     protected static @Nullable List<McpSchema.Icon> icons(ExecutableMethod<?, ?> method) {
         List<AnnotationValue<Icon>> values = method.getAnnotationValuesByType(Icon.class);

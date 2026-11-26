@@ -25,7 +25,7 @@ import java.util.Set;
 
 /**
  * Builds the MCP icons declared with {@code @Icon} or configured under {@code micronaut.mcp.server.info.icons}, so both
- * follow the same rules: a {@code src} is required, the theme is {@code light} or {@code dark}, and empty values are
+ * follow the same rules: a non-blank {@code src} is required, the theme is {@code light} or {@code dark}, and empty values are
  * left out.
  *
  * @since 2.2.0
@@ -45,10 +45,10 @@ public final class McpIconFactory {
      * @param sizes The sizes of the icon
      * @param theme The theme of the icon
      * @return The icon
-     * @throws IllegalStateException If the {@code src} is empty or the theme is neither {@code light} nor {@code dark}
+     * @throws IllegalStateException If the {@code src} is blank or the theme is neither {@code light} nor {@code dark}
      */
     public static McpSchema.Icon icon(String owner, @Nullable String src, @Nullable String mimeType, List<String> sizes, @Nullable String theme) {
-        if (StringUtils.isEmpty(src)) {
+        if (src == null || src.isBlank()) {
             throw new IllegalStateException(owner + " requires a src");
         }
         String nonEmptyTheme = StringUtils.isNotEmpty(theme) ? theme : null;
