@@ -29,6 +29,7 @@ dependencies {
     testImplementation(libs.jsonassert)
     testImplementation(mn.micronaut.http.server.netty)
     testImplementation(mnTest.junit.jupiter.params)
+    testImplementation(mnLogging.logback.classic)
 }
 micronautBuild {
     testFramework = TestFramework.JUNIT6

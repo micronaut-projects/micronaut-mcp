@@ -24,7 +24,7 @@ class NullStructuredOutputTest {
             {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"unknownEvaluation","arguments":{}}}""");
         String result = assertDoesNotThrow(() -> client.retrieve(req));
         JSONAssert.assertEquals("""
-            {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"Tool unknownEvaluation returned no structured content"}],"isError":true}}""",
+            {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"Tool unknownEvaluation produced no result. This is a server-side error; retrying with the same arguments will not help."}],"isError":true}}""",
             result, true);
     }
 }

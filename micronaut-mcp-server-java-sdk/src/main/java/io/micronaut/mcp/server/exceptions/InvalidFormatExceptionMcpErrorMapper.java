@@ -18,9 +18,8 @@ package io.micronaut.mcp.server.exceptions;
 import tools.jackson.databind.exc.InvalidFormatException;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.modelcontextprotocol.spec.McpError;
-import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 import java.util.stream.Collectors;
 
@@ -37,11 +36,8 @@ class InvalidFormatExceptionMcpErrorMapper implements InputErrorMapper<InvalidFo
     }
 
     @Override
-    public McpError map(InvalidFormatException exception) {
-        String message = conciseMessage(exception);
-        return McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS)
-            .message(message)
-            .build();
+    public @Nullable String message(InvalidFormatException exception) {
+        return conciseMessage(exception);
     }
 
     private static String conciseMessage(InvalidFormatException e) {

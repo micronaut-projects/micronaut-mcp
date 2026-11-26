@@ -70,7 +70,7 @@ public final class PromptRegistry
 
     @Override
     public List<McpServerFeatures.SyncPromptSpecification> getSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(method -> new McpServerFeatures.SyncPromptSpecification(
                 prompt(method.beanDefinition(), method.method()),
                 syncPromptHandler(method)
@@ -80,7 +80,7 @@ public final class PromptRegistry
 
     @Override
     public List<McpServerFeatures.AsyncPromptSpecification> getAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(method -> new McpServerFeatures.AsyncPromptSpecification(
                 prompt(method.beanDefinition(), method.method()),
                 asyncPromptHandler(method)
@@ -90,7 +90,7 @@ public final class PromptRegistry
 
     @Override
     public List<McpStatelessServerFeatures.SyncPromptSpecification> getStatelessSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(method -> new McpStatelessServerFeatures.SyncPromptSpecification(
                 prompt(method.beanDefinition(), method.method()),
                 promptHandler(method)
@@ -100,7 +100,7 @@ public final class PromptRegistry
 
     @Override
     public List<McpStatelessServerFeatures.AsyncPromptSpecification> getStatelessAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(method -> new McpStatelessServerFeatures.AsyncPromptSpecification(
                 prompt(method.beanDefinition(), method.method()),
                 reactivePromptHandler(method)
@@ -132,14 +132,14 @@ public final class PromptRegistry
                                                        Object mcpTransportContext,
                                                        McpSchema.GetPromptRequest promptRequest) {
         return observed(McpSchema.METHOD_PROMPT_GET, promptRequest.name(), () -> m.call(() -> m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest),
-            mcpTransportContext, PromptRegistry::map, this::failWithMcpError));
+            mcpTransportContext, PromptRegistry::map, e -> failWithMcpError(m, e)));
     }
 
     private <B> Mono<McpSchema.GetPromptResult> promptResultAsync(Method<B> m,
                                                                   Object mcpTransportContext,
                                                                   McpSchema.GetPromptRequest promptRequest) {
         return observedAsync(McpSchema.METHOD_PROMPT_GET, promptRequest.name(), () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest),
-            PromptRegistry::map, this::failWithMcpError));
+            PromptRegistry::map, e -> failWithMcpError(m, e)));
     }
 
     private static McpSchema.GetPromptResult map(@Nullable Object result) {

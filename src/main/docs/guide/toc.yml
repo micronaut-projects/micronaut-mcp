@@ -33,6 +33,7 @@ server:
         toolAnnotationsHints: Tool Hints
         toolAnnotationParameter: Tool Annotation Method Parameters
         toolAnnotationReturnType: Tool Annotation Method Return Type
+        toolErrors: Tool Errors
       toolsInputJsonSchema: Tools Input JSON Schema
       toolsOutputJsonSchema: Tools Output JSON Schema
       toolsFactory: Tools with a Factory
@@ -60,8 +61,8 @@ server:
           resourceTemplateAnnotationParameter: Resource Annotation Method Parameters
           resourceTemplateAnnotationReturnType: Resource Annotation Method Return Type
         resourcesTemplatesFactory: Resource Templates with a Factory
-    primitivesMetadata: Icons and Metadata
-    dynamicPrimitives: Adding Primitives at Runtime
+    primitivesMetadata: Icons, Metadata and Resource Hints
+    dynamicPrimitives: Adding and Removing Primitives at Runtime
     completions:
       title: Completions
       promptCompletionAnnotation:
