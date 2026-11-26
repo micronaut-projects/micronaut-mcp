@@ -28,13 +28,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class McpControllerJsonRpcTest {
 
     @Test
-    void aMessageWithoutJsonRpcVersionIsABadRequest(@Client("/") HttpClient httpClient) {
+    void aMessageWithoutJsonRpcVersionIsABadRequest(@Client("/") HttpClient httpClient) throws JSONException {
         BlockingHttpClient client = httpClient.toBlocking();
         HttpRequest<String> request = HttpRequest.POST("/mcp", """
             {"method": "tools/list", "id": 1}""");
         HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> client.exchange(request, String.class));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
-        assertEquals(-32600, ex.getResponse().getBody(java.util.Map.class).map(m -> ((Number) ((java.util.Map<?, ?>) m.get("error")).get("code")).intValue()).orElse(0));
+        JSONAssert.assertEquals("""
+            {
+              "jsonrpc": "2.0",
+              "id": null,
+              "error": {"code": -32600, "message": "The server accepts either JSON-RPC requests or notifications"}
+            }""", ex.getResponse().getBody(String.class).orElseThrow(), true);
     }
 
     @Test
