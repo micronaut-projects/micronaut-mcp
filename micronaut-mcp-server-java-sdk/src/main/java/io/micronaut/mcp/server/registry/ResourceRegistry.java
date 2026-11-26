@@ -170,7 +170,7 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
         String description = method.stringValue(Resource.class, DESCRIPTION_PROPERTY).orElse(null);
         String mimeType = method.stringValue(Resource.class, MIME_TYPE_PROPERTY).orElse(Resource.DEFAULT_MIME_TYPE);
         long size = method.longValue(Resource.class, SIZE_PROPERTY).orElse(UNKNOWN_SIZE);
-        McpSchema.Annotations annotations = resourceAnnotations(method.getAnnotation(Resource.class));
+        McpSchema.Annotations annotations = resourceAnnotations(method, Resource.class);
         return new McpSchema.Resource(uri, name, title, description, mimeType, size < 0 ? null : size, annotations, meta(method), icons(method));
     }
 }

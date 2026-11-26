@@ -55,6 +55,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -268,18 +269,20 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     }
 
     /**
-     * @param annotation A resource or resource template annotation
+     * @param method The method
+     * @param annotationType The resource or resource template annotation
      * @return The resource annotations it declares, or {@code null} when it declares none
      * @throws IllegalStateException If the priority is set and is not between 0 and 1
      */
-    protected static McpSchema.@Nullable Annotations resourceAnnotations(AnnotationValue<?> annotation) {
+    protected static McpSchema.@Nullable Annotations resourceAnnotations(ExecutableMethod<?, ?> method, Class<? extends Annotation> annotationType) {
+        AnnotationValue<?> annotation = method.findAnnotation(annotationType).orElseThrow();
         Audience[] audience = annotation.enumValues(AUDIENCE_PROPERTY, Audience.class);
         double priority = annotation.doubleValue(PRIORITY_PROPERTY).orElse(UNSET_PRIORITY);
         boolean hasPriority = Double.compare(priority, UNSET_PRIORITY) != 0;
         // NaN fails the range check too
         if (hasPriority && !(priority >= 0 && priority <= 1)) {
-            String resource = annotation.stringValue(URI_PROPERTY).or(() -> annotation.stringValue(URI_TEMPLATE_PROPERTY)).orElse("");
-            throw new IllegalStateException("The priority of resource " + resource + " is " + priority + ", but it must be between 0 and 1");
+            throw new IllegalStateException("The priority of @" + annotationType.getSimpleName() + " on method " + methodName(method)
+                + " is " + priority + "; it must be between 0 and 1, or left out");
         }
         if (audience.length == 0 && !hasPriority) {
             return null;

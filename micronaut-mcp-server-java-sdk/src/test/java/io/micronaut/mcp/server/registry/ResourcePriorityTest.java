@@ -16,17 +16,17 @@ class ResourcePriorityTest {
 
     @Test
     void aPriorityOutOfRangeFailsTheStartup() {
-        assertEquals("The priority of resource priority://high is 5.0, but it must be between 0 and 1", startupFailure("ResourcePriorityTest.high"));
+        assertEquals("The priority of @Resource on method " + HighPriority.class.getName() + "#high is 5.0; it must be between 0 and 1, or left out", startupFailure("ResourcePriorityTest.high"));
     }
 
     @Test
     void aNegativePriorityOtherThanTheUnsetDefaultFailsTheStartup() {
-        assertEquals("The priority of resource priority://negative is -0.5, but it must be between 0 and 1", startupFailure("ResourcePriorityTest.negative"));
+        assertEquals("The priority of @Resource on method " + NegativePriority.class.getName() + "#negative is -0.5; it must be between 0 and 1, or left out", startupFailure("ResourcePriorityTest.negative"));
     }
 
     @Test
     void aNaNPriorityFailsTheStartup() {
-        assertEquals("The priority of resource priority://nan/{id} is NaN, but it must be between 0 and 1", startupFailure("ResourcePriorityTest.nan"));
+        assertEquals("The priority of @ResourceTemplate on method " + NaNPriority.class.getName() + "#nan is NaN; it must be between 0 and 1, or left out", startupFailure("ResourcePriorityTest.nan"));
     }
 
     private static String startupFailure(String specName) {
