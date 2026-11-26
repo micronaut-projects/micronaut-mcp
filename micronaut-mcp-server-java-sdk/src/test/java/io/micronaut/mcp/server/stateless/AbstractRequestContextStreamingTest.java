@@ -104,6 +104,15 @@ abstract class AbstractRequestContextStreamingTest {
     }
 
     @Test
+    void aProgressTokenThatIsNotAStringOrAnIntegerIsIgnored() {
+        List<String> events = data(post(ACCEPT_BOTH, """
+            {"jsonrpc": "2.0", "id": 34, "method": "tools/call",
+             "params": {"name": "importCatalog", "arguments": {"pages": 2}, "_meta": {"progressToken": {"o": "AAAA"}}}}""").body());
+        assertEquals(2, events.size(), String.valueOf(events));
+        assertTrue(events.get(0).contains("notifications/message"), events.get(0));
+    }
+
+    @Test
     void aClientThatOnlyAcceptsJsonGetsJson() {
         HttpResponse<String> response = post(MediaType.APPLICATION_JSON, """
             {"jsonrpc": "2.0", "id": 9, "method": "tools/call",

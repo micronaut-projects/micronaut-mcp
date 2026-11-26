@@ -183,10 +183,10 @@ class StreamingJsonRpcResponseTest {
         assertEquals(128, StreamingJsonRpcResponse.estimatedSize(NOTIFICATION));
         assertEquals(128 + 3 + 7, StreamingJsonRpcResponse.estimatedSize(new McpSchema.JSONRPCNotification(McpSchema.JSONRPC_VERSION,
             McpSchema.METHOD_NOTIFICATION_MESSAGE, new McpSchema.LoggingMessageNotification(McpSchema.LoggingLevel.INFO, "app", "message", null))));
-        assertEquals(128 + 4, StreamingJsonRpcResponse.estimatedSize(new McpSchema.JSONRPCNotification(McpSchema.JSONRPC_VERSION,
-            McpSchema.METHOD_NOTIFICATION_PROGRESS, new McpSchema.ProgressNotification("t", 1.0, null, "half", null))));
+        assertEquals(128 + 4 + 5, StreamingJsonRpcResponse.estimatedSize(new McpSchema.JSONRPCNotification(McpSchema.JSONRPC_VERSION,
+            McpSchema.METHOD_NOTIFICATION_PROGRESS, new McpSchema.ProgressNotification("token", 1.0, null, "half", null))));
         assertEquals(128, StreamingJsonRpcResponse.estimatedSize(new McpSchema.JSONRPCNotification(McpSchema.JSONRPC_VERSION,
-            McpSchema.METHOD_NOTIFICATION_PROGRESS, new McpSchema.ProgressNotification("t", 1.0, null, null, null))));
+            McpSchema.METHOD_NOTIFICATION_PROGRESS, new McpSchema.ProgressNotification(7, 1.0, null, null, null))));
     }
 
     private static McpSchema.JSONRPCNotification log(String message) {

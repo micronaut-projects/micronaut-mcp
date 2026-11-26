@@ -49,7 +49,10 @@ public interface McpRequestContext {
     McpTransportContext transportContext();
 
     /**
-     * @return The progress token the client sent with the request, or {@code null} if it did not ask for progress
+     * The progress token the client sent with the request: a string of at most 256 characters, or an integer, as the
+     * protocol allows. A token of another type, or a longer one, is ignored.
+     *
+     * @return The progress token, or {@code null} if the client did not ask for progress
      */
     @Nullable
     Object progressToken();

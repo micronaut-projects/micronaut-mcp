@@ -10,7 +10,7 @@ The parameter is not part of the tool's input schema or of the prompt's argument
 
 === Progress
 
-`progress` sends a notification only when the client sent a progress token with the request, in `_meta.progressToken`; otherwise it does nothing. `progressToken()` returns the token, or `null`.
+`progress` sends a notification only when the client sent a progress token with the request, in `_meta.progressToken`; otherwise it does nothing. `progressToken()` returns the token, or `null`. Since every progress notification repeats it, the token must be a string of at most 256 characters or an integer, as the protocol allows; another token is ignored, as if the client had not asked for progress.
 
 === Log messages
 

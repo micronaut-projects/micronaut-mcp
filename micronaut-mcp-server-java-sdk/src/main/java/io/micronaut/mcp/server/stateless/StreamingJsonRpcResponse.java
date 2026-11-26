@@ -159,7 +159,7 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
         if (notification.params() instanceof McpSchema.LoggingMessageNotification log) {
             size += length(log.logger()) + length(log.data());
         } else if (notification.params() instanceof McpSchema.ProgressNotification progress) {
-            size += length(progress.message());
+            size += length(progress.message()) + (progress.progressToken() instanceof String token ? token.length() : 0);
         }
         return size;
     }

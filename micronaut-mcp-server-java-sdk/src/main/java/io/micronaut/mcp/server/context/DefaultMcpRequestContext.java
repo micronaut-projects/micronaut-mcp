@@ -34,6 +34,10 @@ import java.util.function.Supplier;
 @Internal
 public final class DefaultMcpRequestContext implements McpRequestContext {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultMcpRequestContext.class);
+    /**
+     * The longest progress token a request may send.
+     */
+    static final int MAX_PROGRESS_TOKEN_LENGTH = 256;
     private static final String ELICITATION = "Elicitation";
     private static final String SAMPLING = "Sampling";
     /**
@@ -66,7 +70,7 @@ public final class DefaultMcpRequestContext implements McpRequestContext {
      * @return The request context
      */
     public static McpRequestContext of(@Nullable Object context, @Nullable Object request) {
-        Object progressToken = request instanceof McpSchema.Request r ? r.progressToken() : null;
+        Object progressToken = progressToken(request);
         if (context instanceof McpSyncServerExchange exchange) {
             return new DefaultMcpRequestContext(exchange.transportContext(), exchange, null, null, progressToken);
         }
@@ -76,6 +80,22 @@ public final class DefaultMcpRequestContext implements McpRequestContext {
         McpTransportContext transportContext = context instanceof McpTransportContext c ? c : McpTransportContext.EMPTY;
         McpNotificationEmitter emitter = transportContext instanceof HttpRequestMcpTransportContext http ? http.emitter() : currentEmitter();
         return new DefaultMcpRequestContext(transportContext, null, null, emitter, progressToken);
+    }
+
+    /**
+     * Each progress notification repeats the progress token, so a token the protocol does not allow, or a long one, is
+     * ignored, as if the client had not asked for progress.
+     *
+     * @param request The request
+     * @return The progress token of the request: a string of at most {@value #MAX_PROGRESS_TOKEN_LENGTH} characters, or an
+     * integer
+     */
+    static @Nullable Object progressToken(@Nullable Object request) {
+        Object token = request instanceof McpSchema.Request r ? r.progressToken() : null;
+        if (token instanceof String text) {
+            return text.length() <= MAX_PROGRESS_TOKEN_LENGTH ? text : null;
+        }
+        return token instanceof Integer || token instanceof Long ? token : null;
     }
 
     /**

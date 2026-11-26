@@ -73,6 +73,29 @@ class DefaultMcpRequestContextTest {
     }
 
     @Test
+    void onlyAStringOfAtMost256CharactersOrAnIntegerIsAProgressToken() {
+        assertEquals("t".repeat(256), DefaultMcpRequestContext.progressToken(withToken("t".repeat(256))));
+        assertEquals(7, DefaultMcpRequestContext.progressToken(withToken(7)));
+        assertEquals(7L, DefaultMcpRequestContext.progressToken(withToken(7L)));
+        // each progress notification would repeat a long token, or one of a type the protocol does not allow
+        assertNull(DefaultMcpRequestContext.progressToken(withToken("t".repeat(257))));
+        assertNull(DefaultMcpRequestContext.progressToken(withToken(Map.of("o", "AAAA"))));
+        assertNull(DefaultMcpRequestContext.progressToken(withToken(List.of(1, 2))));
+        assertNull(DefaultMcpRequestContext.progressToken(withToken(true)));
+        assertNull(DefaultMcpRequestContext.progressToken(withToken(1.5e300)));
+        assertNull(DefaultMcpRequestContext.progressToken("not a request"));
+        RecordingSession session = new RecordingSession();
+        McpRequestContext context = DefaultMcpRequestContext.of(exchange(session), withToken(Map.of("o", "AAAA")));
+        assertNull(context.progressToken());
+        context.progress(1);
+        assertEquals(List.of(), session.notifications);
+    }
+
+    private static McpSchema.CallToolRequest withToken(Object token) {
+        return McpSchema.CallToolRequest.builder().name("tool").arguments(Map.of()).meta(Map.of("progressToken", token)).build();
+    }
+
+    @Test
     void withoutAProgressTokenTheExchangesSendNoProgress() {
         McpSchema.CallToolRequest withoutToken = McpSchema.CallToolRequest.builder().name("tool").arguments(Map.of()).build();
         RecordingSession syncSession = new RecordingSession();
