@@ -45,22 +45,6 @@ final class ToolProviderFactory {
         this.nameMapper = nameMapper;
     }
 
-    /**
-     * The client of a connection, shared by the tool providers and the health indicator. It resolves the client bean
-     * when the tools are provided, so that a server that cannot be reached is skipped instead of failing the creation
-     * of the tool providers.
-     *
-     * @param connection The connection
-     * @param beanContext The bean context
-     * @return The client of the connection
-     */
-    @EachBean(McpClientConnectionConfiguration.class)
-    @Singleton
-    @Bean(typed = ConnectionMcpClient.class)
-    ConnectionMcpClient connectionClient(McpClientConnectionConfiguration connection, BeanContext beanContext) {
-        return new ConnectionMcpClient(connection.getName(), beanContext);
-    }
-
     @Prototype
     @Primary
     McpToolProvider.Builder toolProviderBuilder(List<McpClientConnectionConfiguration> connections, List<ConnectionMcpClient> clients) {
@@ -84,6 +68,22 @@ final class ToolProviderFactory {
     @Singleton
     McpToolProvider clientToolProvider(@Parameter McpToolProvider.Builder builder) {
         return builder.build();
+    }
+
+    /**
+     * The client of a connection, shared by the tool providers and the health indicator. It resolves the client bean
+     * when the tools are provided, so that a server that cannot be reached is skipped instead of failing the creation
+     * of the tool providers.
+     *
+     * @param connection The connection
+     * @param beanContext The bean context
+     * @return The client of the connection
+     */
+    @EachBean(McpClientConnectionConfiguration.class)
+    @Singleton
+    @Bean(typed = ConnectionMcpClient.class)
+    ConnectionMcpClient connectionClient(McpClientConnectionConfiguration connection, BeanContext beanContext) {
+        return new ConnectionMcpClient(connection.getName(), beanContext);
     }
 
     private McpToolProvider.Builder builder(List<McpClient> clients) {
