@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -70,6 +71,8 @@ class StreamingJsonRpcResponseTest {
         assertTrue(subscription.isDisposed());
         // notifications of a cancelled request are dropped
         streaming.get().emit(NOTIFICATION);
+        // the client no longer reads the stream, so the result cannot be sent, and nothing fails
+        assertDoesNotThrow(() -> streaming.get().complete(HttpResponse.ok("late")));
     }
 
     @Test

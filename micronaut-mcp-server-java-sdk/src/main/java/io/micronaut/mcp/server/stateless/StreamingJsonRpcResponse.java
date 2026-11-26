@@ -81,27 +81,48 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
     }
 
     @Override
-    public synchronized void emit(McpSchema.JSONRPCNotification notification) {
-        if (finished || cancelled) {
-            return;
+    public void emit(McpSchema.JSONRPCNotification notification) {
+        HttpResponse<?> stream = null;
+        synchronized (this) {
+            if (finished || cancelled) {
+                return;
+            }
+            if (events == null) {
+                stream = startStream();
+            }
+            // Keeps a slot for the result
+            if (queue.remainingCapacity() > 1) {
+                emitEvent(notification);
+            } else if (LOG.isDebugEnabled()) {
+                LOG.debug("Dropped a {} notification: the client does not read the event stream fast enough", notification.method());
+            }
         }
-        if (events == null) {
-            startStream();
-        }
-        // Keeps a slot for the result
-        if (queue.remainingCapacity() > 1) {
-            events.tryEmitNext(Event.of(notification));
-        } else if (LOG.isDebugEnabled()) {
-            LOG.debug("Dropped a {} notification: the client does not read the event stream fast enough", notification.method());
+        if (stream != null) {
+            // Outside the lock: the server writes the response, and runs its filters, on this thread. The unicast sink
+            // keeps the events emitted until then.
+            response.success(stream);
         }
     }
 
-    private void startStream() {
+    private HttpResponse<?> startStream() {
         queue = new ArrayBlockingQueue<>(BUFFER_SIZE);
         events = Sinks.many().unicast().onBackpressureBuffer(queue);
-        HttpResponse<?> stream = HttpResponse.ok(events.asFlux().doOnCancel(this::cancel))
+        return HttpResponse.ok(events.asFlux().doOnCancel(this::cancel))
             .contentType(MediaType.TEXT_EVENT_STREAM_TYPE);
-        response.success(stream);
+    }
+
+    private void emitEvent(Object data) {
+        Sinks.EmitResult result = events.tryEmitNext(Event.of(data));
+        if (result.isFailure() && LOG.isDebugEnabled()) {
+            LOG.debug("Failed to send an event to the client: {}", result);
+        }
+    }
+
+    private void completeEvents() {
+        Sinks.EmitResult result = events.tryEmitComplete();
+        if (result.isFailure() && LOG.isDebugEnabled()) {
+            LOG.debug("Failed to end the event stream: {}", result);
+        }
     }
 
     @Override
@@ -124,57 +145,73 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
     }
 
     /**
+     * Marks the response finished.
+     *
+     * @return Whether the response is still JSON, so it is for the caller to complete, outside the lock; otherwise the
+     * event stream has started, and the response is already completed with it
+     */
+    private boolean finishJson() {
+        finished = true;
+        return events == null;
+    }
+
+    /**
      * Completes the response with the result of the request.
      *
      * @param result The response the request would have had as JSON
      */
-    synchronized void complete(HttpResponse<?> result) {
-        if (finished) {
-            return;
+    void complete(HttpResponse<?> result) {
+        synchronized (this) {
+            if (finished) {
+                return;
+            }
+            if (!finishJson()) {
+                result.getBody().ifPresent(this::emitEvent);
+                completeEvents();
+                return;
+            }
         }
-        finished = true;
-        if (events == null) {
-            response.success(result);
-        } else {
-            result.getBody().ifPresent(body -> events.tryEmitNext(Event.of(body)));
-            events.tryEmitComplete();
-        }
+        response.success(result);
     }
 
     /**
      * Completes the response when the request produced no result, as the JSON response does: with no response before
      * a notification, or by ending the event stream after one.
      */
-    synchronized void completeEmpty() {
-        if (finished) {
-            return;
+    void completeEmpty() {
+        synchronized (this) {
+            if (finished) {
+                return;
+            }
+            if (!finishJson()) {
+                completeEvents();
+                return;
+            }
         }
-        finished = true;
-        if (events == null) {
-            response.success();
-        } else {
-            events.tryEmitComplete();
-        }
+        response.success();
     }
 
     /**
      * Completes the response with an error the request did not turn into a JSON-RPC response. Once the event stream has
      * started, the error is sent as a JSON-RPC error response event, so the client gets an answer to its request.
+     * {@code McpController} turns every error of a request into a JSON-RPC response, so this is a fallback that should
+     * not normally run.
      *
      * @param error The error
      */
-    synchronized void fail(Throwable error) {
-        if (finished) {
-            return;
+    void fail(Throwable error) {
+        synchronized (this) {
+            if (finished) {
+                return;
+            }
+            if (!finishJson()) {
+                McpError mcpError = error instanceof McpError e ? e
+                    : McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message("Failed to handle request: " + error.getMessage()).build();
+                emitEvent(JsonRrpcResponseUtils.jsonrpcResponse(mcpError, request));
+                completeEvents();
+                return;
+            }
         }
-        finished = true;
-        if (events == null) {
-            response.error(error);
-        } else {
-            McpError mcpError = error instanceof McpError e ? e
-                : McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message("Failed to handle request: " + error.getMessage()).build();
-            events.tryEmitNext(Event.of(JsonRrpcResponseUtils.jsonrpcResponse(mcpError, request)));
-            events.tryEmitComplete();
-        }
+        response.error(error);
     }
 }
