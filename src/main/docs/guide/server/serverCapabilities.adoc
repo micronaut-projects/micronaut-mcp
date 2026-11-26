@@ -1,6 +1,6 @@
-Based on the primitive beans you defined, Micronaut instantiates a bean of type `McpSchema.ServerCapabilities`.
+Based on the primitive beans you defined, the `list-changed` and `subscribe` properties, and the transport, Micronaut instantiates a bean of type `McpSchema.ServerCapabilities`.
 
 Moreover, you can create a https://docs.micronaut.io/latest/guide/#events[`BeanCreatedEventListener`] for `McpSchema.ServerCapabilities.Builder`
 to further customize the definition of the capabilities.
 
-With the HTTP transport, the server cannot send notifications outside the response to a request, so it always advertises `listChanged` and `subscribe` as `false`, including when a `BeanCreatedEventListener` sets them.
+With the HTTP transport, the server cannot send notifications outside the response to a request, so it always advertises `listChanged` and `subscribe` as `false`, including when a `BeanCreatedEventListener` sets them. See <<dynamicPrimitives, Adding and Removing Primitives at Runtime>>.

@@ -30,9 +30,9 @@ final class ToolsConfigurationProperties implements ToolsConfiguration {
 
     /**
      *
-     * @param listChanged whether the server will emit notifications when the list of available tools changes. It also makes the server
-     *                    advertise the tools capability when it has no tools, so tools can be added at runtime. The HTTP transport
-     *                    cannot send these notifications, so it advertises `listChanged` as `false`. Default value `false`.
+     * @param listChanged whether the tools capability is advertised even when the server has no tools, so tools can be added at
+     *                    runtime, and, over STDIO, whether the server notifies clients when the list of tools changes. The HTTP
+     *                    transport always advertises `listChanged` as `false`. Default value `false`.
      */
     public void setListChanged(boolean listChanged) {
         this.listChanged = listChanged;

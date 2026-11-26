@@ -1,11 +1,23 @@
-Tools, prompts and resources can also be added and removed while the server runs, through the MCP Java SDK server bean of the configured transport and mode: `McpSyncServer` or `McpAsyncServer` for STDIO, and `McpStatelessSyncServer` or `McpStatelessAsyncServer` for HTTP. The asynchronous beans are the ones created when `micronaut.mcp.server.reactive` is `true`.
+Tools, prompts, resources and resource templates can also be added and removed while the server runs, through the MCP Java SDK server bean of the configured transport and `micronaut.mcp.server.reactive` setting, listed in <<serverInstance, Server Instance>>. Each bean takes the specification classes listed in <<primitivesClassesPerServerType, Primitive types per Transport>>. Completions cannot be added at runtime.
+
+A server that starts without tools, prompts or resources advertises the matching capability only when its `list-changed` property is `true`, so set it to add them at runtime. For example, for an HTTP server that adds tools:
+
+[configuration]
+----
+micronaut:
+  mcp:
+    server:
+      transport: HTTP
+      tools:
+        list-changed: true
+----
 
 snippet::io.micronaut.mcp.docs.dynamic.Plugins[project-base="test-suite-docs", tags="imports,clazz"]
 
-On `McpAsyncServer` and `McpStatelessAsyncServer`, `addTool`, `removeTool` and the other methods return a `Mono` that does nothing until it is subscribed to. Subscribe to it, or return it from a reactive method, or the primitive is neither added nor removed.
+Without it, `addTool`, `addPrompt`, `addResource` and `addResourceTemplate` fail with `IllegalStateException`, for example `Server must be configured with tool capabilities`. `resources.list-changed` also covers resource templates, and `resources.subscribe` alone does not advertise the resources capability.
 
-A server that starts without tools, prompts or resources advertises the matching capability only when its `list-changed` property is `true`, so set it to add them at runtime. Otherwise `addTool`, `addPrompt` and `addResource` fail with `IllegalStateException`, for example `Server must be configured with tool capabilities`.
+On `McpAsyncServer` and `McpStatelessAsyncServer`, `addTool`, `removeTool` and the other methods return a `Mono` that does nothing until it is subscribed to. Subscribe to it, or return it from a reactive method (`return server.addTool(spec);`), or the primitive is neither added nor removed.
 
-Over STDIO, when `micronaut.mcp.server.tools.list-changed` (or the `prompts` or `resources` equivalent) is `true`, the server notifies the client that the list changed. The HTTP transport cannot send notifications outside the response to a request, so it never advertises list changes or resource subscriptions, whatever the configuration: clients see the changes the next time they list the primitives.
+Over STDIO, when `micronaut.mcp.server.tools.list-changed` (or the `prompts` or `resources` equivalent) is `true`, the server notifies the client that the list changed. Otherwise, clients are not told that the list changed: they see a change only if they call `tools/list` (or `prompts/list`, `resources/list`) again, which many clients do only when they reconnect or start a new session. The HTTP transport cannot send notifications outside the response to a request, so it never advertises list changes or resource subscriptions, whatever the configuration, and its clients are never told. If clients must see changes right away, use the STDIO transport with `list-changed` set to `true`.
 
 NOTE: A primitive added at runtime is an MCP Java SDK specification, so its handler receives the SDK request as is. The features of the annotated primitives, such as argument binding, validation, the MCP Request Context and exception mapping, do not apply to it.
