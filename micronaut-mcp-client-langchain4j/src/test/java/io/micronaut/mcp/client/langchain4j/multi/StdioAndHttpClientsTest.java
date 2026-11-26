@@ -1,10 +1,9 @@
 package io.micronaut.mcp.client.langchain4j.multi;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.mcp.McpToolProvider;
 import dev.langchain4j.mcp.client.McpClient;
-import dev.langchain4j.service.tool.ToolProviderRequest;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.health.HealthStatus;
@@ -19,15 +18,16 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import reactor.core.publisher.Flux;
 
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static io.micronaut.mcp.client.langchain4j.multi.MultiClientTestSupport.mcpHealth;
+import static io.micronaut.mcp.client.langchain4j.multi.MultiClientTestSupport.stdioConnection;
+import static io.micronaut.mcp.client.langchain4j.multi.MultiClientTestSupport.toolNames;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Property(name = "micronaut.mcp.server.info.name", value = "http-server")
@@ -42,6 +42,10 @@ class StdioAndHttpClientsTest implements TestPropertyProvider {
     List<McpClient> clients;
 
     @Inject
+    @Named("local")
+    McpClient localClient;
+
+    @Inject
     McpToolProvider toolProvider;
 
     @Inject
@@ -53,14 +57,9 @@ class StdioAndHttpClientsTest implements TestPropertyProvider {
 
     @Override
     public Map<String, String> getProperties() {
-        String java = ProcessHandle.current().info().command().orElse("java");
-        String logback = Path.of("src/test/resources/logback-stderr.xml").toAbsolutePath().toString();
-        Map<String, String> properties = new HashMap<>();
-        List<String> command = List.of(java, "-Dlogback.configurationFile=" + logback,
-            "-cp", System.getProperty("java.class.path"), StdioServer.class.getName());
-        for (int i = 0; i < command.size(); i++) {
-            properties.put("micronaut.mcp.client.stdio.local.command[" + i + "]", command.get(i));
-        }
+        // The server logs to the standard error, as its standard output carries the protocol
+        Map<String, String> properties = new HashMap<>(stdioConnection("local", StdioServer.class,
+            "-Dlogback.configurationFile=logback-stderr.xml"));
         properties.put("micronaut.mcp.client.stdio.local.request-timeout", "20s");
         return properties;
     }
@@ -82,26 +81,16 @@ class StdioAndHttpClientsTest implements TestPropertyProvider {
 
     @Test
     void toolsOfTheStdioServerCanBeCalled() {
-        McpClient local = clients.stream().filter(c -> c.key().equals("local")).findFirst().orElseThrow();
-        String result = local.executeTool(dev.langchain4j.agent.tool.ToolExecutionRequest.builder()
+        String result = localClient.executeTool(ToolExecutionRequest.builder()
             .name("hello").arguments("{\"name\": \"Micronaut\"}").build()).resultText();
         assertEquals("Hello Micronaut from STDIO", result);
     }
 
     @Test
     void theHealthIndicatorPingsEveryServer() {
-        HealthResult mcp = healthIndicators.stream()
-            .map(indicator -> Flux.from(indicator.getResult()).blockFirst())
-            .filter(result -> result != null && result.getName().equals("mcp"))
-            .findFirst().orElseThrow();
+        HealthResult mcp = mcpHealth(healthIndicators);
         assertEquals(HealthStatus.UP, mcp.getStatus());
         assertEquals(Map.of("embeddedServer", "UP", "local", "UP"), mcp.getDetails());
-    }
-
-    private static Set<String> toolNames(McpToolProvider provider) {
-        return provider.provideTools(new ToolProviderRequest("memory", UserMessage.from("hi"))).tools().keySet().stream()
-            .map(ToolSpecification::name)
-            .collect(Collectors.toSet());
     }
 
     @Requires(property = "spec.name", value = "StdioAndHttpClientsTest")

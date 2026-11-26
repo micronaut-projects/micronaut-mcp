@@ -1,9 +1,6 @@
 package io.micronaut.mcp.client.langchain4j.multi;
 
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.mcp.McpToolProvider;
-import dev.langchain4j.service.tool.ToolProviderRequest;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.health.HealthStatus;
@@ -16,7 +13,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -27,8 +23,10 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
+import static io.micronaut.mcp.client.langchain4j.multi.MultiClientTestSupport.mcpHealth;
+import static io.micronaut.mcp.client.langchain4j.multi.MultiClientTestSupport.stdioConnection;
+import static io.micronaut.mcp.client.langchain4j.multi.MultiClientTestSupport.toolNames;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -56,30 +54,20 @@ class UnreachableServersTest implements TestPropertyProvider {
         properties.put("micronaut.mcp.client.http.unreachable.headers.X-Test", "test");
         // Shorter than the initialization timeout of the clients
         properties.put("endpoints.health.mcp.timeout", "1s");
-        List<String> command = List.of(ProcessHandle.current().info().command().orElse("java"),
-            "-cp", System.getProperty("java.class.path"), HangingServer.class.getName());
-        for (int i = 0; i < command.size(); i++) {
-            properties.put("micronaut.mcp.client.stdio.hanging.command[" + i + "]", command.get(i));
-        }
+        properties.putAll(stdioConnection("hanging", HangingServer.class));
         properties.put("micronaut.mcp.client.stdio.hanging.initialization-timeout", "2s");
         return properties;
     }
 
     @Test
     void theToolProviderSkipsTheServersThatCannotBeReached() {
-        Set<String> tools = toolProvider.provideTools(new ToolProviderRequest("memory", UserMessage.from("hi"))).tools().keySet().stream()
-            .map(ToolSpecification::name)
-            .collect(Collectors.toSet());
-        assertEquals(Set.of("forecast"), tools);
+        assertEquals(Set.of("forecast"), toolNames(toolProvider));
         assertFalse(hangingServerRunning(), "The process of a client that could not be created is stopped");
     }
 
     @Test
     void theHealthIndicatorReportsTheServersThatCannotBeReachedDown() {
-        HealthResult mcp = healthIndicators.stream()
-            .map(indicator -> Flux.from(indicator.getResult()).blockFirst())
-            .filter(result -> result != null && result.getName().equals("mcp"))
-            .findFirst().orElseThrow();
+        HealthResult mcp = mcpHealth(healthIndicators);
         assertEquals(HealthStatus.DOWN, mcp.getStatus());
         Map<?, ?> details = assertInstanceOf(Map.class, mcp.getDetails());
         assertEquals("UP", details.get("embeddedServer"));
