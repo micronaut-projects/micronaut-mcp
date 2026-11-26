@@ -25,7 +25,7 @@ class MetadataTest {
             """{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}"""))
         JSONAssert.assertEquals("""
             {"result": {"tools": [{"name": "forecast",
-              "icons": [{"src": "https://example.com/sun.svg", "mimeType": "image/svg+xml", "sizes": ["any"]}],
+              "icons": [{"src": "https://example.com/sun-light.svg", "mimeType": "image/svg+xml", "sizes": ["any"], "theme": "light"}, {"src": "https://example.com/sun-dark.svg", "mimeType": "image/svg+xml", "sizes": ["any"], "theme": "dark"}],
               "_meta": {"com.example/category": "weather"}}]}}""", result, JSONCompareMode.LENIENT)
     }
 
