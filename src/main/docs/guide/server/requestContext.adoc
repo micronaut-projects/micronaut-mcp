@@ -1,13 +1,77 @@
-Declare a parameter of type `McpRequestContext` in a tool, prompt, resource or completion method to report progress, send log messages to the client, or check whether the client stopped waiting:
+Declare a parameter of type api:mcp.server.context.McpRequestContext[] in a tool, prompt, resource or completion method to report progress, send log messages to the client, check whether the client stopped waiting, or ask the client for information:
 
 snippet::io.micronaut.mcp.docs.context.CatalogTools[project-base="test-suite-docs", tags="imports,clazz"]
 <1> Sends a https://modelcontextprotocol.io/specification/2025-11-25/basic/utilities/progress[progress notification], if the client asked for progress with a progress token.
 <2> Sends a https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/logging[log message].
 
-The parameter is not part of the tool's input schema or of the prompt's arguments.
+The parameter is not part of the tool's input schema or of the prompt's arguments. Its `transportContext()` is the transport context of the request, described in <<context,MCP Transport Context>>; it is typed as the SDK `McpTransportContext`.
 
-Over the HTTP transport, the response to a request whose client accepts both `application/json` and `text/event-stream` becomes an event stream as soon as the method sends a notification: each notification is sent as an event while the method runs, followed by the result. A request that sends no notification, or whose client only accepts JSON, is answered with JSON. Only requests for a primitive that declares an `McpRequestContext` parameter may become an event stream, and a client that accepts `text/event-stream` with a quality of `0` is answered with JSON. When the client goes away, the request is cancelled and `isCancelled()` returns `true`. If a slow client lets more than 256 events pile up, further notifications are dropped, but the result is always sent.
+`McpRequestContext` is an interface, so a unit test that calls a primitive method directly can pass a mock or its own implementation.
 
-When a primitive declares an `McpRequestContext` parameter, the server advertises the `logging` capability, since it may send log messages. The STDIO server applies the level a client sets with `logging/setLevel`. The HTTP server is stateless: it acknowledges `logging/setLevel`, but it cannot remember the level, so it sends every log message whatever its level.
+=== Progress
+
+`progress` sends a notification only when the client sent a progress token with the request, in `_meta.progressToken`; otherwise it does nothing. `progressToken()` returns the token, or `null`. Since every progress notification repeats it, the token must be a string of at most 256 characters or an integer, as the protocol allows; another token is ignored, as if the client had not asked for progress.
+
+=== Log messages
+
+`log` sends a log message to the client. When a primitive declares an `McpRequestContext` parameter, the server advertises the `logging` capability, since it may send log messages.
+
+The STDIO server applies the level a client sets with `logging/setLevel`. The HTTP server is stateless: it acknowledges `logging/setLevel`, but it cannot remember the level, so it sends every log message, whatever its level.
+
+WARNING: Log messages are sent to the client, and usually reach the language model. They are not server logs: as the https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/logging#security[specification] requires, do not put credentials, personal data, exception messages or internal details such as hosts, queries or file paths in them. Over HTTP the level a client sets is not applied, so `debug` messages are always sent.
+
+=== The response over HTTP
+
+Over the HTTP transport, the response stays JSON until the method sends its first notification. If the client accepts both `application/json` and `text/event-stream`, the response then becomes an event stream: each notification is sent as an event while the method runs, followed by the JSON-RPC response. A log message of any level, even `debug`, makes the response an event stream. For the example above, a client that sends:
+
+[source,http]
+----
+POST /mcp
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+ "params": {"name": "importCatalog", "arguments": {"pages": 2}, "_meta": {"progressToken": "import"}}}
+----
+
+receives a `text/event-stream` response with these events:
+
+[source]
+----
+data: {"jsonrpc":"2.0","method":"notifications/progress","params":{"progressToken":"import","progress":1.0,"total":2.0,"message":"Imported page 1"}}
+
+data: {"jsonrpc":"2.0","method":"notifications/progress","params":{"progressToken":"import","progress":2.0,"total":2.0,"message":"Imported page 2"}}
+
+data: {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","logger":"catalog","data":"Imported 2 pages"}}
+
+data: {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"done"}],"isError":false}}
+----
+
+A request that sends no notification is answered with JSON, and so is a client that only accepts JSON, whose notifications are dropped. On the blocking server, so that the response can become a stream while the method runs, a request for a primitive that declares an `McpRequestContext`, from a client that accepts both, runs the method on another thread of the blocking executor.
+
+Once the response is an event stream, its HTTP status is `200 OK`, even when the request fails: the error arrives as a JSON-RPC response with an `error` member in the last event. Check that member, not the HTTP status. A request that fails before its first notification is answered with JSON and the usual error status.
+
+NOTE: Only requests for a primitive that declares an `McpRequestContext` parameter may become an event stream. A client that accepts `text/event-stream` with a quality of `0` is answered with JSON. If a slow client lets more than 256 events, or notifications of more than about a million characters, pile up, further notifications are dropped, but the result is always sent.
+
+=== Deploying a server that streams
+
+An event stream stays open while the method runs, so the components between the client and the server must let it through as it is written:
+
+- The server sends no keep-alive while a method is silent. If the method pauses between notifications for longer than an idle timeout on the path, the connection is closed and the client never receives the result. Raise `micronaut.server.idle-timeout`, `micronaut.server.read-idle-timeout`, `micronaut.server.write-idle-timeout` and the read timeout of any reverse proxy or load balancer above the longest pause, or have a long-running method send a log message or progress regularly.
+- The event stream has the headers `Cache-Control: no-cache, no-transform` and `X-Accel-Buffering: no`, which nginx honours. Turn off response buffering for the MCP endpoint in any other reverse proxy, or the events arrive at once when the method returns, and a client that goes away is not noticed.
+- A request that fails after its first notification still has the HTTP status `200 OK`, so access logs and proxy error rates do not count it; the server logs an unexpected error at the `ERROR` level.
+- A client that does not read keeps up to 256 notifications, of about a million characters at most, in memory for each request. Put a public endpoint behind authentication and a connection or rate limit.
+
+=== Cancellation
+
+When the client closes the event stream, the request is cancelled and `isCancelled()` returns `true`; on the reactive server, a method that runs on an executor (`@ExecuteOn`) is also interrupted.
+
+Apart from that interruption, cancelling does not stop a running method: a long-running method should check `isCancelled()` regularly and return early. The server does not detect a client that goes away before the first notification. A long-running method that checks `isCancelled()` should therefore send a log message first, for example `context.log(LoggingLevel.DEBUG, "Started")`. A progress notification only starts the event stream when the client sent a progress token.
+
+`isCancelled()` is always `false` over STDIO, and when the response is sent as JSON. The server does not handle the `notifications/cancelled` message of the protocol on either transport.
+
+=== Elicitation and sampling
 
 `elicit` and `sample` send requests to the client, which only the STDIO transport supports: over the stateless HTTP transport they throw `UnsupportedOperationException`.
+
+They wait for the answer of the client. On a reactive STDIO server (`micronaut.mcp.server.reactive` set to `true`), a method without an executor runs on the thread that reads the messages of the client, which could then never read the answer, so `elicit` and `sample` fail there with an `IllegalStateException`. Annotate a method that calls them with `@ExecuteOn(TaskExecutors.BLOCKING)`.
