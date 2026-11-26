@@ -60,12 +60,14 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -101,6 +103,11 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     protected static final String MEMBER_TITLE = "title";
     private static final double UNSET_PRIORITY = -1;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMcpMethodRegistry.class);
+    /**
+     * The observers that failed, shared by the registries so each observer is logged in full once; weak, so that the
+     * observers of a closed context are not kept.
+     */
+    private static final Map<McpServerObserver, Boolean> FAILED_OBSERVERS = Collections.synchronizedMap(new WeakHashMap<>());
     protected final List<Method<Object>> methods = new ArrayList<>();
     protected final BeanContext beanContext;
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
@@ -123,8 +130,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     }
 
     /**
-     * Starts observing an operation with every observer. Callers skip this when there are no observers. An observer that
-     * fails to start is logged and left out, so that it cannot fail the operation.
+     * Starts observing an operation with every observer. Callers skip this when there are no observers. The observation
+     * never throws: an observer that fails to start or to stop is logged and left out, so that it cannot fail the operation.
      *
      * @param method The JSON-RPC method
      * @param name The name of the primitive
@@ -135,29 +142,39 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             return start(observers.getFirst(), method, name);
         }
         List<McpServerObserver.Observation> observations = observers.stream().map(o -> start(o, method, name)).toList();
-        return errorType -> observations.forEach(o -> stop(o, errorType));
+        return errorType -> observations.forEach(o -> o.stop(errorType));
     }
 
     private static McpServerObserver.Observation start(McpServerObserver observer, String method, String name) {
+        McpServerObserver.Observation observation;
         try {
-            return observer.start(method, name);
+            observation = observer.start(method, name);
         } catch (RuntimeException e) {
-            observerFailed(e);
+            observerFailed(observer, "start", method, name, e);
             return McpServerObserver.Observation.NOOP;
         }
+        return errorType -> {
+            try {
+                observation.stop(errorType);
+            } catch (RuntimeException e) {
+                observerFailed(observer, "stop", method, name, e);
+            }
+        };
     }
 
-    private static void stop(McpServerObserver.Observation observation, @Nullable String errorType) {
-        try {
-            observation.stop(errorType);
-        } catch (RuntimeException e) {
-            observerFailed(e);
-        }
-    }
-
-    private static void observerFailed(RuntimeException e) {
-        if (LOG.isWarnEnabled()) {
-            LOG.warn("An MCP server observer failed: {}", e.getMessage(), e);
+    /**
+     * Logs a failing observer: with the stack trace the first time it fails, and at debug level
+     * afterwards, so that an observer that fails on every operation does not flood the log.
+     */
+    private static void observerFailed(McpServerObserver observer, String phase, String method, String name, RuntimeException e) {
+        String observerName = observer.getClass().getName();
+        if (FAILED_OBSERVERS.put(observer, Boolean.TRUE) == null) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("MCP server observer {} failed to {} the observation of {} {}, further failures are logged at debug level: {}",
+                    observerName, phase, method, name, e.getMessage(), e);
+            }
+        } else if (LOG.isDebugEnabled()) {
+            LOG.debug("MCP server observer {} failed to {} the observation of {} {}: {}", observerName, phase, method, name, e.getMessage(), e);
         }
     }
 
@@ -196,10 +213,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         try {
             result = operation.get();
         } catch (Throwable e) {
-            stop(observation, errorTypeOf(e));
+            observation.stop(errorTypeOf(e));
             throw e;
         }
-        stop(observation, errorType(errorType, result));
+        observation.stop(errorType(errorType, result));
         return result;
     }
 
@@ -218,7 +235,9 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         try {
             return result != null ? errorType.apply(result) : null;
         } catch (RuntimeException e) {
-            observerFailed(e);
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("Could not tell whether the result of an MCP server operation is an error: {}", e.getMessage(), e);
+            }
             return null;
         }
     }
@@ -261,7 +280,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                 result = operation.get();
             } catch (Throwable e) {
                 // An Error thrown while the operation is assembled, which Mono.defer turns into the error signal
-                stop(observation, errorTypeOf(e));
+                observation.stop(errorTypeOf(e));
                 throw e;
             }
             AtomicBoolean stopped = new AtomicBoolean();
@@ -269,12 +288,12 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                 .doOnEach(signal -> {
                     if (!signal.isOnSubscribe() && stopped.compareAndSet(false, true)) {
                         Throwable error = signal.getThrowable();
-                        stop(observation, error != null ? errorTypeOf(error) : errorType(errorType, signal.get()));
+                        observation.stop(error != null ? errorTypeOf(error) : errorType(errorType, signal.get()));
                     }
                 })
                 .doOnCancel(() -> {
                     if (stopped.compareAndSet(false, true)) {
-                        stop(observation, McpServerObserver.CANCELLED);
+                        observation.stop(McpServerObserver.CANCELLED);
                     }
                 });
         });
