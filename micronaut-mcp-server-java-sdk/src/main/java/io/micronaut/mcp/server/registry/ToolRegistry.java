@@ -180,34 +180,42 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return CollectionUtils.isNotEmpty(tool.outputSchema());
     }
 
-    private <B, C> BiFunction<C, McpSchema.CallToolRequest, McpSchema.CallToolResult> provideSyncCallHandler(Method<B> toolMethod,
+    private <B, C> BiFunction<C, McpSchema.CallToolRequest, McpSchema.CallToolResult> provideSyncCallHandler(Method<B> m,
                                                                                                              McpSchema.Tool tool) {
         boolean structuredOutput = hasOutputSchema(tool);
+        String name = observedName(m);
         return (mcpTransportContext, callToolRequest)
-            -> callToolToResult(toolMethod, structuredOutput, mcpTransportContext, callToolRequest);
+            -> callToolToResult(m, name, structuredOutput, mcpTransportContext, callToolRequest);
     }
 
-    private <B, C> BiFunction<C, McpSchema.CallToolRequest, Mono<McpSchema.CallToolResult>> provideReactiveCallHandler(Method<B> toolMethod,
+    private <B, C> BiFunction<C, McpSchema.CallToolRequest, Mono<McpSchema.CallToolResult>> provideReactiveCallHandler(Method<B> m,
                                                                                                                        McpSchema.Tool tool) {
         boolean structuredOutput = hasOutputSchema(tool);
+        String name = observedName(m);
         return (mcpTransportContext, callToolRequest)
-            -> reactiveCallToolToResult(toolMethod, structuredOutput, mcpTransportContext, callToolRequest);
+            -> reactiveCallToolToResult(m, name, structuredOutput, mcpTransportContext, callToolRequest);
     }
 
     private <B> Mono<McpSchema.CallToolResult> reactiveCallToolToResult(Method<B> m,
+                                                                        String name,
                                                                         boolean structuredOutput,
                                                                         Object mcpTransportContext,
                                                                         McpSchema.CallToolRequest callToolRequest) {
-        return observedAsync(McpSchema.METHOD_TOOLS_CALL, callToolRequest.name(), () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
-            result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)), ToolRegistry::errorType);
+        return observedAsync(McpSchema.METHOD_TOOLS_CALL, name,
+            () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
+                result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)),
+            ToolRegistry::errorType);
     }
 
     private <B> McpSchema.CallToolResult callToolToResult(Method<B> m,
+                                                          String name,
                                                           boolean structuredOutput,
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
-        return observed(McpSchema.METHOD_TOOLS_CALL, callToolRequest.name(), () -> m.call(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
-            mcpTransportContext, result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)), ToolRegistry::errorType);
+        return observed(McpSchema.METHOD_TOOLS_CALL, name,
+            () -> m.call(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
+                mcpTransportContext, result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)),
+            ToolRegistry::errorType);
     }
 
     private static @Nullable String errorType(McpSchema.CallToolResult result) {

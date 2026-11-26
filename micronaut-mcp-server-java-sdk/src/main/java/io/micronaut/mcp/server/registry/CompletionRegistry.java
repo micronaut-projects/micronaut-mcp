@@ -107,39 +107,47 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     private <B> BiFunction<McpSyncServerExchange, McpSchema.CompleteRequest, McpSchema.CompleteResult> syncHandler(
         Method<B> m
     ) {
-        return (exchange, request) -> invokeAndMap(m, exchange, request);
+        String name = observedName(m);
+        return (exchange, request) -> invokeAndMap(m, name, exchange, request);
     }
 
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.CompleteRequest, Mono<McpSchema.CompleteResult>> asyncHandler(
         Method<B> m
     ) {
-        return (exchange, request) -> invokeAndMapAsync(m, exchange, request);
+        String name = observedName(m);
+        return (exchange, request) -> invokeAndMapAsync(m, name, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.CompleteRequest, McpSchema.CompleteResult> statelessSyncHandler(
         Method<B> m
     ) {
-        return (ctx, request) -> invokeAndMap(m, ctx, request);
+        String name = observedName(m);
+        return (ctx, request) -> invokeAndMap(m, name, ctx, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.CompleteRequest, Mono<McpSchema.CompleteResult>> statelessAsyncHandler(
         Method<B> m
     ) {
-        return (ctx, request) -> invokeAndMapAsync(m, ctx, request);
+        String name = observedName(m);
+        return (ctx, request) -> invokeAndMapAsync(m, name, ctx, request);
     }
 
     private <B> McpSchema.CompleteResult invokeAndMap(Method<B> m,
+                                                      String name,
                                                       Object mcpTransportContext,
                                                       McpSchema.CompleteRequest request) {
-        return observed(McpSchema.METHOD_COMPLETION_COMPLETE, completionName(request), () -> m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
-            mcpTransportContext, CompletionRegistry::map, e -> failWithMcpError(m, e)));
+        return observed(McpSchema.METHOD_COMPLETION_COMPLETE, name,
+            () -> m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
+                mcpTransportContext, CompletionRegistry::map, e -> failWithMcpError(m, e)));
     }
 
     private <B> Mono<McpSchema.CompleteResult> invokeAndMapAsync(Method<B> m,
+                                                                 String name,
                                                                  Object mcpTransportContext,
                                                                  McpSchema.CompleteRequest request) {
-        return observedAsync(McpSchema.METHOD_COMPLETION_COMPLETE, completionName(request), () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
-            CompletionRegistry::map, e -> failWithMcpError(m, e)));
+        return observedAsync(McpSchema.METHOD_COMPLETION_COMPLETE, name,
+            () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
+                CompletionRegistry::map, e -> failWithMcpError(m, e)));
     }
 
     private static McpSchema.CompleteResult map(@Nullable Object result) {
@@ -175,16 +183,6 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     protected boolean collectsValues(ExecutableMethod<?, ?> method) {
         // A publisher of completion values, such as a Flux<String>, is collected into the list of values
         return CharSequence.class.isAssignableFrom(resultArgument(method).getType());
-    }
-
-    private static String completionName(McpSchema.CompleteRequest request) {
-        if (request.ref() instanceof McpSchema.PromptReference prompt) {
-            return prompt.name();
-        }
-        if (request.ref() instanceof McpSchema.ResourceReference resource) {
-            return resource.uri();
-        }
-        return String.valueOf(request.ref());
     }
 
     private static McpSchema.CompleteResult completeResult(List<String> values) {

@@ -41,13 +41,13 @@ import io.micronaut.mcp.server.context.DefaultMcpRequestContext;
 import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.micronaut.mcp.server.observability.McpServerObserver;
-import jakarta.inject.Inject;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.inject.Inject;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
@@ -62,12 +62,14 @@ import reactor.core.scheduler.Schedulers;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -109,10 +111,20 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     private static final String PRIORITY_PROPERTY = "priority";
     private static final double UNSET_PRIORITY = -1;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMcpMethodRegistry.class);
+    /**
+     * The range of the error codes JSON-RPC reserves, which includes every code of JSON-RPC and MCP.
+     */
+    private static final int MIN_RESERVED_ERROR_CODE = -32768;
+    private static final int MAX_RESERVED_ERROR_CODE = -32000;
+    /**
+     * The observers that failed, shared by the registries so each observer is logged in full once; weak, so that the
+     * observers of a closed context are not kept.
+     */
+    private static final Map<McpServerObserver, Boolean> FAILED_OBSERVERS = Collections.synchronizedMap(new WeakHashMap<>());
     protected final List<Method<Object>> methods = new ArrayList<>();
     protected final BeanContext beanContext;
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
-    private List<McpServerObserver> observers = List.of();
+    private List<RegisteredObserver> observers = List.of();
     private final AtomicReference<Set<String>> notifyingNames = new AtomicReference<>();
     private final Map<Class<? extends Throwable>, Optional<McpErrorExceptionMapper<? extends Throwable>>> classToExceptionMapper = new ConcurrentHashMap<>();
     /**
@@ -130,49 +142,76 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @param observers The observers of the operations of the server
      */
     @Inject
-    protected void setObservers(List<McpServerObserver> observers) {
-        this.observers = List.copyOf(observers);
+    void setObservers(List<McpServerObserver> observers) {
+        this.observers = observers.stream().map(RegisteredObserver::new).toList();
     }
 
     /**
-     * Starts observing an operation. An observer that fails to start is logged and left out, so that it cannot fail the operation.
+     * The name observations tag the operations of a method with: the name or URI its primitive was declared with, rather
+     * than the one in the request, so that the names stay bounded by the registered primitives whatever the SDK accepts.
+     * Captured once, when the handler of the method is built.
+     *
+     * @param method A registered method whose primitive is designated by name
+     * @return The name of its primitive
+     */
+    final String observedName(Method<?> method) {
+        return Objects.requireNonNull(primitiveName(method.method()), "The primitive of an observed method has a name");
+    }
+
+    /**
+     * Starts observing an operation with every observer. Callers skip this when there are no observers. The observation
+     * never throws: an observer that fails to start or to stop is logged and left out, so that it cannot fail the operation.
      *
      * @param method The JSON-RPC method
      * @param name The name of the primitive
-     * @return The observation, which does nothing when there are no observers
+     * @return The observation
      */
-    protected final McpServerObserver.Observation observe(String method, String name) {
-        List<McpServerObserver> current = observers;
-        if (current.isEmpty()) {
+    private McpServerObserver.Observation observe(String method, String name) {
+        if (observers.size() == 1) {
+            return start(observers.getFirst(), method, name);
+        }
+        List<McpServerObserver.Observation> observations = observers.stream().map(o -> start(o, method, name)).toList();
+        return errorType -> observations.forEach(o -> o.stop(errorType));
+    }
+
+    // An observer that fails with an Error, such as an AssertionError or a NoClassDefFoundError of a missing tracing
+    // library, must not fail the operation either; only an error of the virtual machine itself is rethrown
+    @SuppressWarnings("java:S1181")
+    private static McpServerObserver.Observation start(RegisteredObserver observer, String method, String name) {
+        McpServerObserver.Observation observation;
+        try {
+            observation = observer.observer().start(method, name);
+        } catch (VirtualMachineError e) {
+            throw e;
+        } catch (Throwable e) {
+            observerFailed(observer, "start", method, name, e);
             return McpServerObserver.Observation.NOOP;
         }
-        if (current.size() == 1) {
-            return start(current.getFirst(), method, name);
-        }
-        List<McpServerObserver.Observation> observations = current.stream().map(o -> start(o, method, name)).toList();
-        return errorType -> observations.forEach(o -> stop(o, errorType));
+        return errorType -> {
+            try {
+                observation.stop(errorType);
+            } catch (VirtualMachineError e) {
+                throw e;
+            } catch (Throwable e) {
+                observerFailed(observer, "stop", method, name, e);
+            }
+        };
     }
 
-    private static McpServerObserver.Observation start(McpServerObserver observer, String method, String name) {
-        try {
-            return observer.start(method, name);
-        } catch (RuntimeException e) {
-            observerFailed(e);
-            return McpServerObserver.Observation.NOOP;
-        }
-    }
-
-    private static void stop(McpServerObserver.Observation observation, @Nullable String errorType) {
-        try {
-            observation.stop(errorType);
-        } catch (RuntimeException e) {
-            observerFailed(e);
-        }
-    }
-
-    private static void observerFailed(RuntimeException e) {
-        if (LOG.isWarnEnabled()) {
-            LOG.warn("An MCP server observer failed: {}", e.getMessage(), e);
+    /**
+     * Logs a failing observer: with the stack trace the first time it fails, and at debug level afterwards, so that an
+     * observer that fails on every operation does not flood the log. The shared map is consulted only on the first failure
+     * of the observer in this registry, so later failures take no lock.
+     */
+    private static void observerFailed(RegisteredObserver observer, String phase, String method, String name, Throwable e) {
+        String observerName = observer.observer().getClass().getName();
+        if (observer.failed().compareAndSet(false, true) && FAILED_OBSERVERS.put(observer.observer(), Boolean.TRUE) == null) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("MCP server observer {} failed to {} the observation of {} {}, further failures are logged at debug level: {}",
+                    observerName, phase, method, name, e.getMessage(), e);
+            }
+        } else if (LOG.isDebugEnabled()) {
+            LOG.debug("MCP server observer {} failed to {} the observation of {} {}: {}", observerName, phase, method, name, e.getMessage(), e);
         }
     }
 
@@ -185,7 +224,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @param <R> The result type
      * @return The result
      */
-    protected final <R> R observed(String method, String name, Supplier<R> operation) {
+    final <R> R observed(String method, String name, Supplier<R> operation) {
         return observed(method, name, operation, result -> null);
     }
 
@@ -202,7 +241,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      */
     // Errors are recorded too, and every failure is rethrown unchanged
     @SuppressWarnings("java:S1181")
-    protected final <R> R observed(String method, String name, Supplier<R> operation, Function<? super R, @Nullable String> errorType) {
+    final <R> R observed(String method, String name, Supplier<R> operation, Function<? super R, @Nullable String> errorType) {
         if (observers.isEmpty()) {
             return operation.get();
         }
@@ -211,20 +250,22 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         try {
             result = operation.get();
         } catch (Throwable e) {
-            stop(observation, errorTypeOf(e));
+            observation.stop(errorTypeOf(e));
             throw e;
         }
-        stop(observation, errorType(errorType, result));
+        observation.stop(errorType(errorType, result));
         return result;
     }
 
     /**
      * The error type of a failure: the JSON-RPC error code of a protocol error, as the semantic conventions for MCP
-     * suggest, or the exception class name.
+     * suggest, {@link McpServerObserver#OTHER_ERROR} for a code outside the reserved range, or the exception class name.
      */
     private static String errorTypeOf(Throwable error) {
         if (error instanceof McpError mcpError && mcpError.getJsonRpcError() != null) {
-            return String.valueOf(mcpError.getJsonRpcError().code());
+            int code = mcpError.getJsonRpcError().code();
+            // A code outside the reserved range is defined by the application and may come from a remote peer
+            return code >= MIN_RESERVED_ERROR_CODE && code <= MAX_RESERVED_ERROR_CODE ? String.valueOf(code) : McpServerObserver.OTHER_ERROR;
         }
         return error.getClass().getName();
     }
@@ -233,7 +274,9 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         try {
             return result != null ? errorType.apply(result) : null;
         } catch (RuntimeException e) {
-            observerFailed(e);
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("Could not tell whether the result of an MCP server operation is an error: {}", e.getMessage(), e);
+            }
             return null;
         }
     }
@@ -247,7 +290,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @param <R> The result type
      * @return The result
      */
-    protected final <R> Mono<R> observedAsync(String method, String name, Supplier<Mono<R>> operation) {
+    final <R> Mono<R> observedAsync(String method, String name, Supplier<Mono<R>> operation) {
         return observedAsync(method, name, operation, result -> null);
     }
 
@@ -263,23 +306,33 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
      * @param <R> The result type
      * @return The result
      */
-    protected final <R> Mono<R> observedAsync(String method, String name, Supplier<Mono<R>> operation, Function<? super R, @Nullable String> errorType) {
+    // An Error thrown while the operation is assembled is recorded too, and rethrown unchanged
+    @SuppressWarnings("java:S1181")
+    final <R> Mono<R> observedAsync(String method, String name, Supplier<Mono<R>> operation, Function<? super R, @Nullable String> errorType) {
         if (observers.isEmpty()) {
             return operation.get();
         }
         return Mono.defer(() -> {
             McpServerObserver.Observation observation = observe(method, name);
+            Mono<R> result;
+            try {
+                result = operation.get();
+            } catch (Throwable e) {
+                // An Error thrown while the operation is assembled, which Mono.defer turns into the error signal
+                observation.stop(errorTypeOf(e));
+                throw e;
+            }
             AtomicBoolean stopped = new AtomicBoolean();
-            return operation.get()
+            return result
                 .doOnEach(signal -> {
                     if (!signal.isOnSubscribe() && stopped.compareAndSet(false, true)) {
                         Throwable error = signal.getThrowable();
-                        stop(observation, error != null ? errorTypeOf(error) : errorType(errorType, signal.get()));
+                        observation.stop(error != null ? errorTypeOf(error) : errorType(errorType, signal.get()));
                     }
                 })
                 .doOnCancel(() -> {
                     if (stopped.compareAndSet(false, true)) {
-                        stop(observation, "cancelled");
+                        observation.stop(McpServerObserver.CANCELLED);
                     }
                 });
         });
@@ -910,6 +963,18 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                 throw new ConversionErrorException(argument, lastError.get());
             }
             throw new UnsatisfiedArgumentException(argument);
+        }
+    }
+
+    /**
+     * An observer of the registry, with whether it has failed in this registry.
+     *
+     * @param observer The observer
+     * @param failed Whether the observer has failed in this registry
+     */
+    private record RegisteredObserver(McpServerObserver observer, AtomicBoolean failed) {
+        RegisteredObserver(McpServerObserver observer) {
+            this(observer, new AtomicBoolean());
         }
     }
 }

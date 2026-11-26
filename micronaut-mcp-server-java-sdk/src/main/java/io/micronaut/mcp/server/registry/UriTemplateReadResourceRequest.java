@@ -214,12 +214,13 @@ record UriTemplateReadResourceRequest(
     /**
      * A compiled URI template.
      *
+     * @param uriTemplate The URI template as declared, which names the template in observations
      * @param matchTemplate The template the URIs are matched against
      * @param reservedVariables The names of the variables expanded with the reserved ({@code +}) operator
      * @param simpleVariablesOnly Whether every expression is a list of simple variables without a modifier, and the
      * literal text contains none of the {@link #UNMATCHABLE_CHARS}, so that a URI that contains one cannot match
      */
-    record Template(UriMatchTemplate matchTemplate, Set<String> reservedVariables, boolean simpleVariablesOnly) {
+    record Template(String uriTemplate, UriMatchTemplate matchTemplate, Set<String> reservedVariables, boolean simpleVariablesOnly) {
         /**
          * The characters that the pattern of a simple variable in {@link UriMatchTemplate} does not match, besides
          * {@code /}, and {@code ?}, which starts a query.
@@ -245,7 +246,7 @@ record UriTemplateReadResourceRequest(
                     reserved.add(variable.replaceAll("[:*].*$", "").trim());
                 }
             }
-            return new Template(UriMatchTemplate.of(uriTemplate), Set.copyOf(reserved), simpleVariablesOnly(uriTemplate));
+            return new Template(uriTemplate, UriMatchTemplate.of(uriTemplate), Set.copyOf(reserved), simpleVariablesOnly(uriTemplate));
         }
 
         private static boolean simpleVariablesOnly(String uriTemplate) {
