@@ -19,8 +19,16 @@ final class ExecutionModelSupport {
     }
 
     static Map<String, Object> callTool(HttpClient httpClient, JsonMapper jsonMapper, String name) throws IOException {
+        return callTool(httpClient, jsonMapper, name, "{}");
+    }
+
+    /**
+     * @param arguments The arguments of the call, as a JSON object
+     * @return The result of a tool call that succeeds or fails with a tool execution error
+     */
+    static Map<String, Object> callTool(HttpClient httpClient, JsonMapper jsonMapper, String name, String arguments) throws IOException {
         HttpResponse<String> response = httpClient.toBlocking().exchange(HttpRequest.POST("/mcp", """
-            {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "%s", "arguments": {}}}""".formatted(name)), String.class);
+            {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "%s", "arguments": %s}}""".formatted(name, arguments)), String.class);
         assertEquals(HttpStatus.OK, response.getStatus());
         return result(jsonMapper, response.body());
     }
