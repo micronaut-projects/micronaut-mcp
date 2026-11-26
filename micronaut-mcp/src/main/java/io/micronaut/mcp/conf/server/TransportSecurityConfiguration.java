@@ -32,6 +32,13 @@ public interface TransportSecurityConfiguration {
     String PREFIX = McpServerConfiguration.PREFIX + ".transport-security";
 
     /**
+     * The property that turns the validation of the {@code Origin} and {@code MCP-Protocol-Version} request headers on
+     * or off. It is read as a property, not through this interface: with {@code false}, the filter that validates the
+     * headers is not created.
+     */
+    String PROPERTY_ENABLED = PREFIX + ".enabled";
+
+    /**
      * Whether the {@code Origin} and {@code MCP-Protocol-Version} request headers are validated by default.
      */
     boolean DEFAULT_ENABLED = true;
@@ -42,18 +49,15 @@ public interface TransportSecurityConfiguration {
     boolean DEFAULT_ALLOW_LOOPBACK_ORIGINS = true;
 
     /**
-     * @return Whether the {@code Origin} and {@code MCP-Protocol-Version} request headers are validated. A request with
-     * an {@code Origin} that is not allowed is answered with 403, and one with an unsupported protocol version with 400.
-     */
-    boolean isEnabled();
-
-    /**
      * @return The origins allowed besides loopback origins, such as {@code https://app.example.com}. {@code *} allows
-     * every origin. Requests without an {@code Origin} header are always allowed: browsers send one with every
-     * {@code POST} request, so only non-browser clients omit it.
+     * every origin. Each other entry is an origin, {@code scheme://host[:port]}, without a path. Requests without an
+     * {@code Origin} header are always allowed: browsers send one with every {@code POST} request, so only non-browser
+     * clients omit it. None by default.
      */
     @NonNull
-    List<String> getAllowedOrigins();
+    default List<String> getAllowedOrigins() {
+        return List.of();
+    }
 
     /**
      * Whether loopback origins ({@code localhost}, {@code 127.0.0.1} and {@code [::1]}, with any scheme and port) are

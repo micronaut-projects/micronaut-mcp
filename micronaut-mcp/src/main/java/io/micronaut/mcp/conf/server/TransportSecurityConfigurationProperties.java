@@ -33,7 +33,9 @@ final class TransportSecurityConfigurationProperties implements TransportSecurit
     private List<String> allowedOrigins = List.of();
     private boolean allowLoopbackOrigins = DEFAULT_ALLOW_LOOPBACK_ORIGINS;
 
-    @Override
+    /**
+     * @return Whether the {@code Origin} and {@code MCP-Protocol-Version} request headers are validated
+     */
     public boolean isEnabled() {
         return enabled;
     }
@@ -68,7 +70,7 @@ final class TransportSecurityConfigurationProperties implements TransportSecurit
     }
 
     /**
-     * The origins allowed besides loopback origins, such as {@code https://app.example.com}. {@code *} allows every origin.
+     * The origins allowed besides loopback origins, such as {@code https://app.example.com}, each {@code scheme://host[:port]} without a path. {@code *} allows every origin.
      *
      * @param allowedOrigins The allowed origins
      */

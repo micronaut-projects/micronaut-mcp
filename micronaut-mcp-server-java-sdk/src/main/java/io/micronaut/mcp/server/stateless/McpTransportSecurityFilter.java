@@ -15,7 +15,9 @@
  */
 package io.micronaut.mcp.server.stateless;
 
+import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpHeaders;
@@ -40,13 +42,15 @@ import java.util.stream.Collectors;
 /**
  * Validates the {@code Origin} and {@code MCP-Protocol-Version} headers of requests to the MCP endpoint. As a filter it
  * runs on the thread that received the request, before the body is read and before a blocking server hands the
- * request to the blocking executor.
+ * request to the blocking executor. It is created with the context, so that an allowed origin that could never match
+ * fails the startup.
  *
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#security-warning">Streamable HTTP security</a>
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#protocol-version-header">Protocol version header</a>
  */
 @ServerFilter(McpController.PATH)
-@Requires(property = TransportSecurityConfiguration.PREFIX + ".enabled", notEquals = StringUtils.FALSE)
+@Context
+@Requires(property = TransportSecurityConfiguration.PROPERTY_ENABLED, notEquals = StringUtils.FALSE)
 @Internal
 final class McpTransportSecurityFilter {
     private static final String WILDCARD = "*";
@@ -61,9 +65,11 @@ final class McpTransportSecurityFilter {
     McpTransportSecurityFilter(TransportSecurityConfiguration configuration, McpStatelessServerTransport transport) {
         this.allowLoopbackOrigins = configuration.isAllowLoopbackOrigins();
         this.allowedOrigins = configuration.getAllowedOrigins().stream()
-            .map(McpTransportSecurityFilter::normalize)
+            .map(McpTransportSecurityFilter::allowedOrigin)
             .collect(Collectors.toUnmodifiableSet());
         this.anyOrigin = allowedOrigins.contains(WILDCARD);
+        // The versions the SDK transport supports: an SDK upgrade that drops a version starts rejecting clients that
+        // send it, which TransportSecurityTest pins
         this.protocolVersions = transport.protocolVersions();
     }
 
@@ -119,7 +125,11 @@ final class McpTransportSecurityFilter {
                 end++;
             }
         }
-        return isPortSuffix(origin, end) ? origin.substring(start, end).toLowerCase(Locale.ROOT) : "";
+        if (!isPortSuffix(origin, end) || origin.lastIndexOf('@', end) >= start) {
+            // A path, or user information, which an origin never has
+            return "";
+        }
+        return origin.substring(start, end).toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -143,9 +153,36 @@ final class McpTransportSecurityFilter {
         return true;
     }
 
+    /**
+     * A configured origin, normalized.
+     *
+     * @throws ConfigurationException if it is neither {@code *} nor an origin, so that it could never match
+     */
+    private static String allowedOrigin(String entry) {
+        String origin = normalize(entry);
+        if (!origin.equals(WILDCARD) && (origin.indexOf(SCHEME_SEPARATOR) < 1 || host(origin).isEmpty())) {
+            throw new ConfigurationException("Invalid " + TransportSecurityConfiguration.PREFIX + ".allowed-origins entry '"
+                + entry + "': expected * or an origin, scheme://host[:port], without a path");
+        }
+        return origin;
+    }
+
+    /**
+     * An origin in lower case, without a trailing slash and without the default port of {@code http} and {@code https},
+     * which browsers leave out.
+     */
     private static String normalize(String origin) {
         String normalized = origin.trim().toLowerCase(Locale.ROOT);
-        return normalized.endsWith("/") ? normalized.substring(0, normalized.length() - 1) : normalized;
+        if (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        if (normalized.startsWith("http://") && normalized.endsWith(":80")) {
+            return normalized.substring(0, normalized.length() - ":80".length());
+        }
+        if (normalized.startsWith("https://") && normalized.endsWith(":443")) {
+            return normalized.substring(0, normalized.length() - ":443".length());
+        }
+        return normalized;
     }
 
     private static HttpResponse<?> error(HttpStatus status, String message) {
@@ -153,7 +190,10 @@ final class McpTransportSecurityFilter {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("jsonrpc", McpSchema.JSONRPC_VERSION);
         body.put("id", null);
-        body.put("error", Map.of("code", McpSchema.ErrorCodes.INVALID_REQUEST, "message", message));
+        Map<String, Object> error = new LinkedHashMap<>();
+        error.put("code", McpSchema.ErrorCodes.INVALID_REQUEST);
+        error.put("message", message);
+        body.put("error", Collections.unmodifiableMap(error));
         return HttpResponse.status(status).body(Collections.unmodifiableMap(body));
     }
 }
