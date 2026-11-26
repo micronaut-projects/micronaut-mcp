@@ -42,7 +42,8 @@ class StatelessDynamicToolsTest {
     @Test
     void aStatelessServerDoesNotAdvertiseNotificationsItCannotSend() throws JSONException {
         JSONAssert.assertEquals("""
-            {"result": {"capabilities": {"tools": {"listChanged": false}}}}""", call("initialize", """
+            {"result": {"capabilities": {"tools": {"listChanged": false},
+                                         "resources": {"subscribe": false, "listChanged": false}}}}""", call("initialize", """
             {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "test", "version": "1"}}"""), JSONCompareMode.LENIENT);
     }
 
