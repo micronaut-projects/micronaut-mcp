@@ -76,14 +76,14 @@ public class IconConfiguration {
     }
 
     /**
-     * @return The theme the icon is designed for: {@code light} or {@code dark}. Any other value fails the startup
+     * @return The theme the icon is designed for: {@code light} or {@code dark}, in lowercase. Any other value fails the startup
      */
     public @Nullable String getTheme() {
         return theme;
     }
 
     /**
-     * @param theme The theme the icon is designed for: {@code light} or {@code dark}. Any other value fails the startup
+     * @param theme The theme the icon is designed for: {@code light} or {@code dark}, in lowercase. Any other value fails the startup
      */
     public void setTheme(@Nullable String theme) {
         this.theme = theme;

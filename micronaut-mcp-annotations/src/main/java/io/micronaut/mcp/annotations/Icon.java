@@ -24,7 +24,8 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * An icon of an MCP tool, prompt, resource or resource template, declared on the annotated method.
+ * An icon of an MCP tool, prompt, resource or resource template, declared on the annotated method. It is ignored unless
+ * the method is also annotated with {@link Tool}, {@link Prompt}, {@link Resource} or {@link ResourceTemplate}.
  *
  * <pre>
  * &#64;Tool
@@ -57,7 +58,7 @@ public @interface Icon {
     String[] sizes() default {};
 
     /**
-     * @return The theme the icon is designed for, {@code light} or {@code dark}. Empty for any theme. Any other value fails the startup.
+     * @return The theme the icon is designed for, {@code light} or {@code dark}, in lowercase. Empty for any theme. Any other value fails the startup.
      */
     String theme() default "";
 }

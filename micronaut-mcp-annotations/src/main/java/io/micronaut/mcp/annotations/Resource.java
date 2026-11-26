@@ -97,7 +97,7 @@ public @interface Resource {
     double priority() default -1;
 
     /**
-     * @return The size of the resource content in bytes, before any encoding. Negative when not known.
+     * @return The size of the resource content in bytes, before any encoding. Leave it out when not known: a negative value counts as not known.
      * @since 2.2.0
      */
     long size() default -1;

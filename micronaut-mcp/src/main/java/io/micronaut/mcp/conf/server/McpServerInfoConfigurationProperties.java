@@ -97,7 +97,7 @@ final class McpServerInfoConfigurationProperties implements McpServerInfoConfigu
     }
 
     /**
-     * @param icons The icons of the server
+     * @param icons The icons of the server. Each icon has a required src (an HTTPS URL or a data: URI) and an optional mime-type, sizes (for example 48x48 or any) and theme (light or dark, in lowercase).
      */
     public void setIcons(@Nullable List<IconConfiguration> icons) {
         this.icons = icons != null ? icons : List.of();
