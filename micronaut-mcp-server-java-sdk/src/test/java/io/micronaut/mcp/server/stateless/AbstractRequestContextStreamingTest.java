@@ -10,6 +10,7 @@ import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.context.ServerRequestContext;
+import io.micronaut.json.JsonMapper;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
@@ -25,11 +26,17 @@ import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +61,9 @@ abstract class AbstractRequestContextStreamingTest {
 
     @Inject
     EmbeddedServer server;
+
+    @Inject
+    JsonMapper jsonMapper;
 
     @Test
     void notificationsUpgradeTheResponseToAStream() {
@@ -197,35 +207,61 @@ abstract class AbstractRequestContextStreamingTest {
         assertTrue(initialize.contains("\"logging\":{}"), initialize);
     }
 
-    @Test
-    void settingTheLogLevelIsAcknowledged() {
-        HttpResponse<String> response = post(MediaType.APPLICATION_JSON, """
-            {"jsonrpc": "2.0", "id": 21, "method": "logging/setLevel", "params": {"level": "error"}}""");
-        assertTrue(response.body().contains("\"id\":21") && response.body().contains("\"result\":{}") && !response.body().contains("\"error\""), response.body());
+    @ParameterizedTest
+    @EnumSource(McpSchema.LoggingLevel.class)
+    void settingEachLogLevelIsAcknowledged(McpSchema.LoggingLevel level) throws IOException {
+        // The protocol spells the levels in lower case; a client that accepts an event stream gets JSON too
+        HttpResponse<String> response = post(ACCEPT_BOTH, """
+            {"jsonrpc": "2.0", "id": 21, "method": "logging/setLevel", "params": {"level": "%s"}}"""
+            .formatted(level.name().toLowerCase(Locale.ROOT)));
+        assertTrue(response.getContentType().map(MediaType.APPLICATION_JSON_TYPE::matches).orElse(false));
+        Map<?, ?> body = json(response.body());
+        assertEquals(21, ((Number) body.get("id")).intValue());
+        assertEquals(Map.of(), body.get("result"));
+        assertFalse(body.containsKey("error"), response.body());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "\"params\": {\"level\": \"verbose\"}",
+        "\"params\": {\"level\": \"INFO\"}",
+        "\"params\": {\"level\": 3}",
+        "\"params\": {}",
+        "\"params\": []",
+        "\"params\": null",
+        "\"other\": 1"
+    })
+    void settingAnInvalidLogLevelIsRejected(String params) throws IOException {
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> post(MediaType.APPLICATION_JSON, """
+            {"jsonrpc": "2.0", "id": 22, "method": "logging/setLevel", %s}""".formatted(params)));
+        assertEquals(HttpStatus.BAD_REQUEST, e.getStatus(), params);
+        Map<?, ?> body = json(e.getResponse().getBody(String.class).orElseThrow());
+        assertEquals(22, ((Number) body.get("id")).intValue());
+        assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, ((Number) ((Map<?, ?>) body.get("error")).get("code")).intValue(), params);
     }
 
     @Test
-    void settingAnInvalidLogLevelIsRejected() {
-        for (String params : List.of("{\"level\": \"verbose\"}", "{\"level\": 3}", "{}")) {
-            HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> post(MediaType.APPLICATION_JSON, """
-                {"jsonrpc": "2.0", "id": 22, "method": "logging/setLevel", "params": %s}""".formatted(params)));
-            assertEquals(HttpStatus.BAD_REQUEST, e.getStatus(), params);
-            String body = e.getResponse().getBody(String.class).orElseThrow();
-            assertTrue(body.contains("\"code\":" + McpSchema.ErrorCodes.INVALID_PARAMS) && body.contains("\"id\":22"), body);
-        }
+    void theRequestContextIsNotPartOfTheInputSchemaOrPromptArguments() throws IOException {
+        Map<?, ?> tools = (Map<?, ?>) json(post(MediaType.APPLICATION_JSON, """
+            {"jsonrpc": "2.0", "id": 11, "method": "tools/list", "params": {}}""").body()).get("result");
+        Map<?, ?> importCatalog = ((List<?>) tools.get("tools")).stream()
+            .map(Map.class::cast)
+            .filter(tool -> "importCatalog".equals(tool.get("name")))
+            .findFirst().orElseThrow();
+        Map<?, ?> inputSchema = (Map<?, ?>) importCatalog.get("inputSchema");
+        assertEquals(Set.of("pages"), ((Map<?, ?>) inputSchema.get("properties")).keySet());
+        assertEquals(List.of("pages"), inputSchema.get("required"));
+        Map<?, ?> prompts = (Map<?, ?>) json(post(MediaType.APPLICATION_JSON, """
+            {"jsonrpc": "2.0", "id": 12, "method": "prompts/list", "params": {}}""").body()).get("result");
+        Map<?, ?> explain = ((List<?>) prompts.get("prompts")).stream()
+            .map(Map.class::cast)
+            .filter(prompt -> "explain".equals(prompt.get("name")))
+            .findFirst().orElseThrow();
+        assertEquals(List.of("topic"), ((List<?>) explain.get("arguments")).stream().map(a -> ((Map<?, ?>) a).get("name")).toList());
     }
 
-    @Test
-    void theRequestContextIsNotPartOfTheInputSchemaOrPromptArguments() {
-        String tools = post(MediaType.APPLICATION_JSON, """
-            {"jsonrpc": "2.0", "id": 11, "method": "tools/list", "params": {}}""").body();
-        assertTrue(tools.contains("\"pages\""), tools);
-        assertFalse(tools.contains("context"), tools);
-        String prompts = post(MediaType.APPLICATION_JSON, """
-            {"jsonrpc": "2.0", "id": 12, "method": "prompts/list", "params": {}}""").body();
-        assertTrue(prompts.contains("\"arguments\":[{\"name\":\"topic\""), prompts);
-        assertFalse(prompts.contains("\"name\":\"context\"") || prompts.contains("\"name\":\"transport\"")
-            || prompts.contains("\"name\":\"request\""), prompts);
+    private Map<?, ?> json(String body) throws IOException {
+        return jsonMapper.readValue(body, Map.class);
     }
 
     @Test
