@@ -58,7 +58,7 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
      * The estimated size, in characters, of the notifications a slow client may have pending. Notifications beyond it
      * are dropped, but one notification always fits when none is pending, and there is always room for the final result.
      */
-    static final long BUFFER_CHARS = 1024 * 1024;
+    static final long BUFFER_CHARS = 1024L * 1024;
     /**
      * The estimated size of a notification besides its text.
      */
