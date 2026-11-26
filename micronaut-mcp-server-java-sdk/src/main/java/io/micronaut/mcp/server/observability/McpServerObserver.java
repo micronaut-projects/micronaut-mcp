@@ -45,6 +45,14 @@ public interface McpServerObserver {
     String CANCELLED = "cancelled";
 
     /**
+     * The error type of a protocol error whose code is outside the range JSON-RPC reserves (-32768 to -32000), which
+     * includes every code of JSON-RPC and MCP. Such a code is defined by the application and may come from a remote
+     * peer, for example a tool relaying the errors of another server, so it is not reported, to keep the error types
+     * bounded. The value is the fallback the OpenTelemetry semantic conventions define for {@code error.type}.
+     */
+    String OTHER_ERROR = "_OTHER";
+
+    /**
      * Called when an operation starts.
      *
      * @param method The JSON-RPC method, such as {@code tools/call}
@@ -72,7 +80,8 @@ public interface McpServerObserver {
          * @param errorType The type of the error that ended the operation, or {@code null} when it succeeded:
          * {@link #TOOL_ERROR}; the JSON-RPC error code, as a string, of the protocol error the operation ended with, so
          * {@code -32603} for an exception thrown by a prompt, resource or completion method unless an
-         * {@link io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper} maps it to another code; {@link #CANCELLED};
+         * {@link io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper} maps it to another code, or
+         * {@link #OTHER_ERROR} for a code outside the range JSON-RPC reserves; {@link #CANCELLED};
          * or the fully qualified class name of an {@link Error} the method threw, for example
          * {@code java.lang.StackOverflowError}. An {@link Error} that reaches the server through a returned publisher or
          * future, or that a method declaring {@code @ExecuteOn} throws on the synchronous server, is handled like an

@@ -45,6 +45,10 @@ abstract class AbstractOperationMetricsTest {
             {"name": "invalid", "arguments": {}}""");
         call("tools/call", """
             {"name": "slow", "arguments": {}}""");
+        for (int code : new int[] {1, 2, 3, 404, McpSchema.ErrorCodes.RESOURCE_NOT_FOUND}) {
+            callFailing("tools/call", """
+                {"name": "relay", "arguments": {"code": %d}}""".formatted(code));
+        }
         callFailing("tools/call", """
             {"name": "unknown", "arguments": {}}""");
         call("prompts/get", """
@@ -74,6 +78,10 @@ abstract class AbstractOperationMetricsTest {
             () -> assertEquals(1, timer("tools/call", "broken", "tool_error").count()),
             // a protocol error of the tool keeps its code
             () -> assertEquals(1, timer("tools/call", "invalid", invalidParams).count()),
+            // codes the application defines, which may come from a remote peer, are reported as one error type
+            () -> assertEquals(4, timer("tools/call", "relay", "_OTHER").count()),
+            () -> assertEquals(1, timer("tools/call", "relay", String.valueOf(McpSchema.ErrorCodes.RESOURCE_NOT_FOUND)).count()),
+            () -> assertEquals(2, meterRegistry.find(METER).tag("mcp.primitive.name", "relay").timers().size()),
             () -> assertTrue(timer("tools/call", "slow", "none").totalTime(TimeUnit.MILLISECONDS) >= SLOW_MILLIS,
                 "the timer covers the operation until it completes"),
             () -> assertEquals(1, timer("prompts/get", "greet", "none").count()),
@@ -94,6 +102,10 @@ abstract class AbstractOperationMetricsTest {
             () -> assertTrue(meterRegistry.find(METER).tag("error.type", "cancelled").timers().isEmpty(),
                 String.valueOf(meterRegistry.getMeters()))
         );
+    }
+
+    static McpError error(int code) {
+        return new McpError(new McpSchema.JSONRPCResponse.JSONRPCError(code, "relayed", null));
     }
 
     static McpError invalidParams() {

@@ -44,6 +44,11 @@ class ReactiveOperationMetricsTest extends AbstractOperationMetricsTest {
         }
 
         @Tool
+        Mono<String> relay(int code) {
+            return Mono.error(error(code));
+        }
+
+        @Tool
         Mono<String> slow() {
             return Mono.delay(Duration.ofMillis(SLOW_MILLIS)).thenReturn("done");
         }

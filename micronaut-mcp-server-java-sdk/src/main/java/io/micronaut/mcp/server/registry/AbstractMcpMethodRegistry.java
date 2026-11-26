@@ -104,6 +104,11 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     private static final double UNSET_PRIORITY = -1;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMcpMethodRegistry.class);
     /**
+     * The range of the error codes JSON-RPC reserves, which includes every code of JSON-RPC and MCP.
+     */
+    private static final int MIN_RESERVED_ERROR_CODE = -32768;
+    private static final int MAX_RESERVED_ERROR_CODE = -32000;
+    /**
      * The observers that failed, shared by the registries so each observer is logged in full once; weak, so that the
      * observers of a closed context are not kept.
      */
@@ -242,11 +247,13 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
 
     /**
      * The error type of a failure: the JSON-RPC error code of a protocol error, as the semantic conventions for MCP
-     * suggest, or the exception class name.
+     * suggest, {@link McpServerObserver#OTHER_ERROR} for a code outside the reserved range, or the exception class name.
      */
     private static String errorTypeOf(Throwable error) {
         if (error instanceof McpError mcpError && mcpError.getJsonRpcError() != null) {
-            return String.valueOf(mcpError.getJsonRpcError().code());
+            int code = mcpError.getJsonRpcError().code();
+            // A code outside the reserved range is defined by the application and may come from a remote peer
+            return code >= MIN_RESERVED_ERROR_CODE && code <= MAX_RESERVED_ERROR_CODE ? String.valueOf(code) : McpServerObserver.OTHER_ERROR;
         }
         return error.getClass().getName();
     }

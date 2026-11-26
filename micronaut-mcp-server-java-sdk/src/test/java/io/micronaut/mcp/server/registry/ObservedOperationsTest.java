@@ -71,6 +71,19 @@ class ObservedOperationsTest {
     }
 
     @Test
+    void onlyTheReservedJsonRpcCodesAreRecorded() {
+        for (int code : new int[] {-32768, -32000, -32769, -31999, 0, 404}) {
+            McpError error = new McpError(new McpSchema.JSONRPCResponse.JSONRPCError(code, "error", null));
+            assertThrows(McpError.class, () -> registry.observed("prompts/get", "codes", () -> {
+                throw error;
+            }));
+        }
+
+        assertEquals(List.of("prompts/get codes -32768", "prompts/get codes -32000", "prompts/get codes _OTHER",
+            "prompts/get codes _OTHER", "prompts/get codes _OTHER", "prompts/get codes _OTHER"), observer.stops);
+    }
+
+    @Test
     void anErrorIsRecordedWithItsClassAndRethrownUnchanged() {
         LinkageError error = new LinkageError("broken");
 

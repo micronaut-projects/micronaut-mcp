@@ -41,6 +41,11 @@ class OperationMetricsTest extends AbstractOperationMetricsTest {
         }
 
         @Tool
+        String relay(int code) {
+            throw error(code);
+        }
+
+        @Tool
         String slow() throws InterruptedException {
             Thread.sleep(SLOW_MILLIS);
             return "done";
