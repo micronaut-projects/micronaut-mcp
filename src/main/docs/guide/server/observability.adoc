@@ -4,7 +4,7 @@ dependency:micronaut-micrometer-core[groupId=io.micronaut.micrometer]
 
 dependency:micronaut-micrometer-registry-prometheus[groupId=io.micronaut.micrometer]
 
-With a `MeterRegistry` bean, the server times every tool call, prompt get, resource read and completion with a timer named `mcp.server.operation.duration`, following the https://opentelemetry.io/docs/specs/semconv/gen-ai/mcp/[OpenTelemetry semantic conventions for MCP]:
+With a `MeterRegistry` bean, the server times each call of an annotated tool, get of an annotated prompt, read of an annotated resource or resource template, and annotated completion with a timer named `mcp.server.operation.duration`:
 
 |===
 |Tag |Value
@@ -13,12 +13,22 @@ With a `MeterRegistry` bean, the server times every tool call, prompt get, resou
 |The JSON-RPC method: `tools/call`, `prompts/get`, `resources/read` or `completion/complete`
 
 |`mcp.primitive.name`
-|The name of the tool or prompt, the URI of the resource, or the URI template of the resource template
+|The name of the tool or prompt, the URI of the resource, the URI template of the resource template, or, for a completion, the name of the prompt or the URI of the resource it completes
 
 |`error.type`
-|`none`, `tool_error` for a tool execution error, the JSON-RPC error code of a protocol error (for example `-32602`), `cancelled` when the reactive server's result was cancelled before it produced a value, or the class of any other exception that ended the operation
+|`none`, `tool_error` for a tool execution error, the JSON-RPC error code of a protocol error (for example `-32603`), `cancelled` when the reactive server's result was cancelled before it produced a value, or the class of any other exception that ended the operation
 |===
+
+Primitives added at runtime through the MCP Java SDK server (see <<dynamicPrimitives, Adding Primitives at Runtime>>), and requests the SDK rejects before dispatching them, for example a call of an unknown tool, are not timed.
+
+The timer is based on the https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/mcp.md[OpenTelemetry semantic conventions for MCP], which are still in development, with these differences:
+
+* The conventions name the primitive with `gen_ai.tool.name`, `gen_ai.prompt.name` or the opt-in `mcp.resource.uri`, depending on the operation. The timer always uses `mcp.primitive.name`, because the Prometheus registry requires every timer of a name to have the same tag keys.
+* The conventions leave `error.type` out on success. The timer sets it to `none`, for the same reason.
+* The conventions do not count some JSON-RPC error codes as errors, for example `-32602` (invalid params). The timer records every code in `error.type`, so that a dashboard can tell them apart from successes.
+
+The timer publishes no histogram buckets by default. To publish them, for example the bucket boundaries the conventions recommend, configure the timer with a https://docs.micrometer.io/micrometer/reference/concepts/meter-filters.html[Micrometer `MeterFilter`].
 
 Disable the timer with `micronaut.mcp.server.metrics.enabled=false`.
 
-To observe operations otherwise, for example to trace them, register a bean of type api:mcp.server.observability.McpServerObserver[]: it is notified when each operation starts and ends. Each operation is stopped exactly once, including on the reactive server, and an observer that throws is logged without failing the operation.
+To observe operations otherwise, register a bean of type api:mcp.server.observability.McpServerObserver[]: it is notified when each operation starts and ends. Each operation is stopped exactly once, including on the reactive server, and an observer that throws is logged without failing the operation. The interface is experimental and may change, for example to give observers the context of the request.
