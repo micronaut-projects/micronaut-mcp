@@ -27,8 +27,10 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -216,6 +218,26 @@ class RequestContextStreamingTest {
         }
     }
 
+    @Test
+    void closingTheEventStreamCancelsTheRequest() throws Exception {
+        Primitives.CANCELLED = new CompletableFuture<>();
+        java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder(URI.create(server.getURL() + "/mcp"))
+            .header("Content-Type", MediaType.APPLICATION_JSON)
+            .header("Accept", ACCEPT_BOTH)
+            .POST(java.net.http.HttpRequest.BodyPublishers.ofString("""
+                {"jsonrpc": "2.0", "id": 25, "method": "tools/call",
+                 "params": {"name": "notifyUntilCancelled", "arguments": {}, "_meta": {"progressToken": 1}}}"""))
+            .build();
+        java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+        try (InputStream events = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofInputStream()).body()) {
+            // The first notification has arrived, so the response is an event stream
+            assertTrue(events.read() >= 0);
+        } finally {
+            client.shutdownNow();
+        }
+        assertTrue(Primitives.CANCELLED.get(10, TimeUnit.SECONDS), "the tool saw the request cancelled");
+    }
+
     private HttpResponse<String> post(String accept, String body) {
         return httpClient.toBlocking().exchange(HttpRequest.POST("/mcp", body)
             .contentType(MediaType.APPLICATION_JSON_TYPE)
@@ -249,6 +271,22 @@ class RequestContextStreamingTest {
         String waitForClient(McpRequestContext context) throws InterruptedException {
             context.progress(1);
             return CLIENT_GOT_PROGRESS.await(10, TimeUnit.SECONDS) ? "the client saw the progress" : "the progress was not streamed";
+        }
+
+        static volatile CompletableFuture<Boolean> CANCELLED = new CompletableFuture<>();
+
+        @Tool
+        String notifyUntilCancelled(McpRequestContext context) throws InterruptedException {
+            for (int i = 1; i <= 200; i++) {
+                context.progress(i);
+                if (context.isCancelled()) {
+                    CANCELLED.complete(true);
+                    return "cancelled";
+                }
+                Thread.sleep(50);
+            }
+            CANCELLED.complete(false);
+            return "not cancelled";
         }
 
         @Tool

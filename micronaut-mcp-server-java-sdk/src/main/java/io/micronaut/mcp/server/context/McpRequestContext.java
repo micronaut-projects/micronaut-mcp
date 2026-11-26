@@ -104,7 +104,12 @@ public interface McpRequestContext {
     }
 
     /**
-     * @return Whether the client stopped waiting for the result, for example by closing the stream of an HTTP request
+     * Whether the client stopped waiting for the result. Over the HTTP transport, that is when the client closes the
+     * event stream of the response, so only once the response has become an event stream with the first notification:
+     * the server does not detect a client that goes away before. It is always {@code false} over STDIO, and when the
+     * response is sent as JSON.
+     *
+     * @return Whether the client stopped waiting for the result
      */
     boolean isCancelled();
 

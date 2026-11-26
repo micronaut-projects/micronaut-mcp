@@ -38,9 +38,10 @@ import java.util.concurrent.BlockingQueue;
  * the request sends a notification before its result, in which case it becomes an event stream of the notifications
  * followed by the result.
  *
- * <p>The client may go away at any time: before the first notification the response is cancelled, afterwards the event
- * stream is. Either way the subscription to the result is disposed, {@link #isCancelled()} becomes {@code true} and
- * further notifications are dropped.</p>
+ * <p>Once the response is an event stream, a client that closes it cancels the stream: the subscription to the result is
+ * disposed, {@link #isCancelled()} becomes {@code true} and further notifications are dropped. Cancelling the response
+ * before the first notification does the same, but the HTTP server does not cancel a response it has not received yet
+ * when the client goes away, so in practice only the event stream is cancelled.</p>
  *
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#sending-messages-to-the-server">Sending messages to the server</a>
  */
