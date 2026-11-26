@@ -1,0 +1,40 @@
+Variable values are percent-decoded as UTF-8 before they are bound. This is URI decoding, not form decoding: a `{plus}` is never turned into a space, so clients must send a space as `%20`.
+
+The table shows what a method parameter receives for a request to `book://book/...`, with the template `book://book/{title}` (a simple variable) or `book://book/{+title}` (a reserved variable):
+
+|===
+|The client sends |`{title}` binds |`{+title}` binds
+
+|`A%20Tale`
+|`A Tale`
+|`A Tale`
+
+|`C%2B%2B`
+|`C{plus}{plus}`
+|`C{plus}{plus}`
+
+|`C{plus}{plus}`
+|invalid params error
+|`C{plus}{plus}`
+
+|`AC%2FDC`
+|invalid params error
+|`AC/DC`
+
+|`AC/DC`
+|resource not found error
+|resource not found error
+
+|`%zz` or `%FF`
+|invalid params error
+|invalid params error
+|===
+
+* A simple variable matches a single segment, and a value that contains an encoded `/` (`%2F`) is rejected, so that it cannot smuggle path segments such as `..%2F..%2Fetc` into the value. A value that may contain `/` needs a reserved variable, such as `{+title}`, and clients must send the `/` encoded, as `%2F`.
+* A literal `/` in a variable value is never routed to the method, whatever the operator or the pattern of the variable: the MCP SDK answers with a resource not found error. A regular expression such as `{path:.*}` does not help, since an encoded `/` is still rejected in it.
+* A simple variable does not match a literal `{plus}`, `;`, `&`, `!`, `(` or `)`, and such a request is answered with an invalid params error. Clients must percent-encode these characters, for example `{plus}` as `%2B`. A template of simple variables declares no query, so it answers a URI with a `?`, such as `book://book/a?b`, with an invalid params error too; clients must send a `?` in a value as `%3F`. A template with a reserved variable or a regular expression ignores the query instead: `book://book/{+title}` binds `a` for `book://book/a?b`.
+* A malformed escape, such as `%zz`, escaped bytes that are not valid UTF-8, such as `%FF`, and a value that contains an unpaired surrogate, which a JSON string can carry, are answered with an invalid params error.
+
+WARNING: Rejecting an encoded `/` does not make a value safe to use as a path. Decoded values may still be `..`, contain `\` (`%5C`), control characters such as `%00` and a CR LF line break (`%0D%0A`), which can forge lines in a log, and Unicode look-alikes of `/`, such as `%E2%88%95` (`∕`), and the values of reserved variables may also contain `/`. Validate every value before you use it, for example to resolve a file or to build a query.
+
+WARNING: Several URIs bind the same value: `book://book/secret` and `book://book/%73ecret` bind `secret`, and so does `book://book/secret?x` for the template `book://book/{+title}`. Authorize, rate limit and cache on the bound value, never on the URI of the request.

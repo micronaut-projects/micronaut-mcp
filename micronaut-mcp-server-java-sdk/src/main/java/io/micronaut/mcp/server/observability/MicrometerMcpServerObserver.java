@@ -27,22 +27,19 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Records the duration of MCP server operations with Micrometer, following the OpenTelemetry semantic conventions for
+ * Records the duration of MCP server operations with Micrometer, based on the OpenTelemetry semantic conventions for
  * MCP: a timer named {@value #METER_NAME}, tagged with the JSON-RPC method, the primitive name and the error type.
+ * Unlike the conventions, every timer has the same tag keys, as the Prometheus registry requires: one primitive name
+ * tag instead of a tool, prompt or resource attribute, and an error type of {@code none} on success.
  *
- * @see <a href="https://opentelemetry.io/docs/specs/semconv/gen-ai/mcp/">Semantic conventions for MCP</a>
- * @since 2.2.0
+ * @see <a href="https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/mcp.md">Semantic conventions for MCP</a>
  */
 @Singleton
 @Internal
 @Requires(classes = MeterRegistry.class)
 @Requires(beans = MeterRegistry.class)
-@Requires(property = MicrometerMcpServerObserver.PROPERTY_ENABLED, notEquals = StringUtils.FALSE)
+@Requires(property = MetricsConfigurationProperties.PROPERTY_ENABLED, defaultValue = StringUtils.TRUE, pattern = MetricsConfigurationProperties.ENABLED_PATTERN)
 final class MicrometerMcpServerObserver implements McpServerObserver {
-    /**
-     * The property that disables the metrics.
-     */
-    static final String PROPERTY_ENABLED = "micronaut.mcp.server.metrics.enabled";
     static final String METER_NAME = "mcp.server.operation.duration";
     static final String TAG_METHOD = "mcp.method.name";
     static final String TAG_NAME = "mcp.primitive.name";
@@ -51,7 +48,10 @@ final class MicrometerMcpServerObserver implements McpServerObserver {
 
     private final MeterRegistry meterRegistry;
     /**
-     * The timers by tags. The server only invokes registered primitives, so the names, and with them the timers, are bounded.
+     * The timers by tags, so that an operation does not build its timer again. Only annotated primitives are observed, under
+     * the names they were declared with, and the error types are bounded too (application defined JSON-RPC codes are
+     * reported as one), so the timers are bounded. Removing these timers from the registry is not supported: an
+     * operation would record to the removed timer.
      */
     private final Map<TimerKey, Timer> timers = new ConcurrentHashMap<>();
 
