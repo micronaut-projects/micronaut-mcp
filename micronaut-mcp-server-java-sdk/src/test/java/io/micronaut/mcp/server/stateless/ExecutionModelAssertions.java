@@ -27,7 +27,9 @@ final class ExecutionModelAssertions {
         assertEquals("wildcard", text(callTool(httpClient, jsonMapper, "wildcardMono")));
         assertEquals("{\"id\":\"1\",\"title\":\"Micronaut\",\"url\":\"https://micronaut.io\"}", text(callTool(httpClient, jsonMapper, "pojoAsObject")));
         // a publisher emitting more than one value fails instead of dropping values
-        assertEquals(Boolean.TRUE, callTool(httpClient, jsonMapper, "twoValues").get("isError"));
+        Map<String, Object> twoValues = callTool(httpClient, jsonMapper, "twoValues");
+        assertEquals(Boolean.TRUE, twoValues.get("isError"));
+        assertEquals("Source emitted more than one item", text(twoValues));
         // an McpError is sent as is
         Map<String, Object> error = callToolError(httpClient, jsonMapper, "invalidParams", HttpStatus.BAD_REQUEST);
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.get("code"));
@@ -37,7 +39,7 @@ final class ExecutionModelAssertions {
         // an empty publisher of structured content is a tool error
         Map<String, Object> empty = callTool(httpClient, jsonMapper, "emptyStructured");
         assertEquals(Boolean.TRUE, empty.get("isError"));
-        assertEquals("Tool emptyStructured returned no structured content", text(empty));
+        assertEquals("Tool emptyStructured produced no result. This is a server-side error; retrying with the same arguments will not help.", text(empty));
         // @ExecuteOn is honoured, with the request in scope
         assertEquals("true true", text(callTool(httpClient, jsonMapper, "onIo")));
         // a publisher of completion values is collected

@@ -66,7 +66,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpServerFeatures.SyncCompletionSpecification> getSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpServerFeatures.SyncCompletionSpecification(
                 toCompletion(m.method()),
                 syncHandler(m)
@@ -76,7 +76,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpServerFeatures.AsyncCompletionSpecification> getAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpServerFeatures.AsyncCompletionSpecification(
                 toCompletion(m.method()),
                 asyncHandler(m)
@@ -86,7 +86,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpStatelessServerFeatures.SyncCompletionSpecification> getStatelessSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpStatelessServerFeatures.SyncCompletionSpecification(
                 toCompletion(m.method()),
                 statelessSyncHandler(m)
@@ -96,7 +96,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
 
     @Override
     public List<McpStatelessServerFeatures.AsyncCompletionSpecification> getStatelessAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpStatelessServerFeatures.AsyncCompletionSpecification(
                 toCompletion(m.method()),
                 statelessAsyncHandler(m)
@@ -132,14 +132,14 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
                                                       Object mcpTransportContext,
                                                       McpSchema.CompleteRequest request) {
         return m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
-            mcpTransportContext, CompletionRegistry::map, this::failWithMcpError);
+            mcpTransportContext, CompletionRegistry::map, e -> failWithMcpError(m, e));
     }
 
     private <B> Mono<McpSchema.CompleteResult> invokeAndMapAsync(Method<B> m,
                                                                  Object mcpTransportContext,
                                                                  McpSchema.CompleteRequest request) {
         return m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
-            CompletionRegistry::map, this::failWithMcpError);
+            CompletionRegistry::map, e -> failWithMcpError(m, e));
     }
 
     private static McpSchema.CompleteResult map(@Nullable Object result) {
