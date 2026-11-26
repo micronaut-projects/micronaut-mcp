@@ -22,6 +22,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.mcp.annotations.Audience;
 import io.micronaut.mcp.annotations.Icon;
 import io.micronaut.mcp.annotations.Meta;
+import io.micronaut.mcp.server.McpIconFactory;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.bind.ArgumentBinder;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
@@ -227,7 +228,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     /**
      * @param method The method
      * @return The icons declared with {@link Icon}, or {@code null} when there are none
-     * @throws IllegalStateException If an icon has an empty {@code src}
+     * @throws IllegalStateException If an icon has an empty {@code src} or a theme other than {@code light} or {@code dark}
      */
     protected static @Nullable List<McpSchema.Icon> icons(ExecutableMethod<?, ?> method) {
         List<AnnotationValue<Icon>> values = method.getAnnotationValuesByType(Icon.class);
@@ -236,14 +237,11 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
         List<McpSchema.Icon> icons = new ArrayList<>(values.size());
         for (AnnotationValue<Icon> value : values) {
-            String src = value.stringValue(SRC_PROPERTY).filter(StringUtils::isNotEmpty).orElseThrow(() ->
-                new IllegalStateException("The @Icon of method " + method.getDeclaringType().getName() + "#" + method.getMethodName() + " requires a src"));
-            String[] sizes = value.stringValues(SIZES_PROPERTY);
-            icons.add(new McpSchema.Icon(
-                src,
-                value.stringValue(MIME_TYPE_PROPERTY).filter(StringUtils::isNotEmpty).orElse(null),
-                sizes.length == 0 ? null : List.of(sizes),
-                value.stringValue(THEME_PROPERTY).filter(StringUtils::isNotEmpty).orElse(null)));
+            icons.add(McpIconFactory.icon("The @Icon of method " + methodName(method),
+                value.stringValue(SRC_PROPERTY).orElse(null),
+                value.stringValue(MIME_TYPE_PROPERTY).orElse(null),
+                List.of(value.stringValues(SIZES_PROPERTY)),
+                value.stringValue(THEME_PROPERTY).orElse(null)));
         }
         return icons;
     }
@@ -251,6 +249,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     /**
      * @param method The method
      * @return The {@code _meta} entries declared with {@link Meta}, or {@code null} when there are none
+     * @throws IllegalStateException If a key is empty or declared twice
      */
     protected static @Nullable Map<String, Object> meta(ExecutableMethod<?, ?> method) {
         List<AnnotationValue<Meta>> values = method.getAnnotationValuesByType(Meta.class);
@@ -259,7 +258,11 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
         }
         Map<String, Object> meta = LinkedHashMap.newLinkedHashMap(values.size());
         for (AnnotationValue<Meta> value : values) {
-            meta.put(value.stringValue(KEY_PROPERTY).orElseThrow(), value.stringValue().orElse(""));
+            String key = value.stringValue(KEY_PROPERTY).filter(StringUtils::isNotEmpty).orElseThrow(() ->
+                new IllegalStateException("The @Meta of method " + methodName(method) + " requires a key"));
+            if (meta.put(key, value.stringValue().orElse("")) != null) {
+                throw new IllegalStateException("The @Meta key " + key + " is declared twice on method " + methodName(method));
+            }
         }
         return meta;
     }
@@ -286,6 +289,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             roles = Arrays.stream(audience).map(AbstractMcpMethodRegistry::role).toList();
         }
         return new McpSchema.Annotations(roles, hasPriority ? priority : null);
+    }
+
+    private static String methodName(ExecutableMethod<?, ?> method) {
+        return method.getDeclaringType().getName() + "#" + method.getMethodName();
     }
 
     private static McpSchema.Role role(Audience audience) {

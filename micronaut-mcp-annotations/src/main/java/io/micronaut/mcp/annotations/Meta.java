@@ -42,7 +42,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface Meta {
 
     /**
-     * @return The key, optionally prefixed by a reverse DNS name and a slash. Prefixes containing {@code modelcontextprotocol} or {@code mcp} are reserved.
+     * @return The key, optionally prefixed by a reverse DNS name and a slash. Prefixes containing {@code modelcontextprotocol} or {@code mcp} are reserved. An empty key, or a key repeated on the same method, fails the startup.
      */
     String key();
 

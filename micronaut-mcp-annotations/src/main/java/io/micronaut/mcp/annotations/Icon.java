@@ -57,7 +57,7 @@ public @interface Icon {
     String[] sizes() default {};
 
     /**
-     * @return The theme the icon is designed for, {@code light} or {@code dark}. Empty for any theme.
+     * @return The theme the icon is designed for, {@code light} or {@code dark}. Empty for any theme. Any other value fails the startup.
      */
     String theme() default "";
 }

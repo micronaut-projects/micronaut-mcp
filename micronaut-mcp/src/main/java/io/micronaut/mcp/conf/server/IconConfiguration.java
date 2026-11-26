@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,14 +76,14 @@ public class IconConfiguration {
     }
 
     /**
-     * @return The theme the icon is designed for: {@code light} or {@code dark}
+     * @return The theme the icon is designed for: {@code light} or {@code dark}. Any other value fails the startup
      */
     public @Nullable String getTheme() {
         return theme;
     }
 
     /**
-     * @param theme The theme the icon is designed for: {@code light} or {@code dark}
+     * @param theme The theme the icon is designed for: {@code light} or {@code dark}. Any other value fails the startup
      */
     public void setTheme(@Nullable String theme) {
         this.theme = theme;

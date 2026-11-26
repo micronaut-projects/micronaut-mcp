@@ -19,7 +19,6 @@ import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.mcp.conf.server.IconConfiguration;
 import io.micronaut.mcp.conf.server.McpServerInfoConfiguration;
 import io.micronaut.mcp.conf.server.PromptsConfiguration;
@@ -35,6 +34,7 @@ import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -68,18 +68,18 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
      * @since 2.2.0
      */
     protected static McpSchema.Implementation serverInfo(McpServerInfoConfiguration configuration) {
-        List<McpSchema.Icon> icons = configuration.getIcons().isEmpty() ? null : configuration.getIcons().stream()
-            .map(AbstractMcpServerFactory::icon)
-            .toList();
+        List<IconConfiguration> configuredIcons = configuration.getIcons();
+        List<McpSchema.Icon> icons = null;
+        if (!configuredIcons.isEmpty()) {
+            icons = new ArrayList<>(configuredIcons.size());
+            for (int i = 0; i < configuredIcons.size(); i++) {
+                IconConfiguration icon = configuredIcons.get(i);
+                icons.add(McpIconFactory.icon("The icon " + McpServerInfoConfiguration.PREFIX + ".icons[" + i + "]",
+                    icon.getSrc(), icon.getMimeType(), icon.getSizes(), icon.getTheme()));
+            }
+        }
         return new McpSchema.Implementation(configuration.getName(), configuration.getTitle(), configuration.getVersion(),
             configuration.getDescription(), icons, configuration.getWebsiteUrl());
-    }
-
-    private static McpSchema.Icon icon(IconConfiguration icon) {
-        if (StringUtils.isEmpty(icon.getSrc())) {
-            throw new IllegalStateException("Every icon in " + McpServerInfoConfiguration.PREFIX + ".icons requires a src");
-        }
-        return new McpSchema.Icon(icon.getSrc(), icon.getMimeType(), icon.getSizes().isEmpty() ? null : icon.getSizes(), icon.getTheme());
     }
 
     /**
