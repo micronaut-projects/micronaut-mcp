@@ -8,6 +8,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.json.JsonMapper;
+import io.micronaut.json.JsonStreamConfig;
 import io.micronaut.json.tree.JsonNode;
 import io.micronaut.mcp.server.json.MicronautMcpJsonMapperSupplier;
 import io.modelcontextprotocol.common.McpTransportContext;
@@ -86,10 +87,11 @@ class McpControllerTest {
     void parametersTheJsonMapperCannotReadAreAnInvalidRequest() {
         // An application McpJsonMapper gets the parameters as plain objects, which an application JsonMapper may fail to read
         JsonMapper failingJsonMapper = proxy(JsonMapper.class, (proxy, method, args) -> {
-            if (method.getName().equals("readValueFromTree")) {
-                throw new IOException("unreadable");
-            }
-            throw new UnsupportedOperationException(method.getName());
+            return switch (method.getName()) {
+                case "getStreamConfig" -> JsonStreamConfig.DEFAULT;
+                case "readValueFromTree" -> throw new IOException("unreadable");
+                default -> throw new UnsupportedOperationException(method.getName());
+            };
         });
         McpController controller = new McpReactiveController(
             proxy(McpStatelessServerHandler.class, (proxy, method, args) -> {
@@ -113,9 +115,9 @@ class McpControllerTest {
 
         assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
-        Map<?, ?> error = (Map<?, ?>) ((Map<?, ?>) response.body()).get("error");
-        assertEquals(McpSchema.ErrorCodes.INVALID_REQUEST, error.get("code"));
-        assertEquals("Invalid Request: \"params\" could not be read", error.get("message"));
+        JsonNode error = ((JsonNode) response.body()).get("error");
+        assertEquals(McpSchema.ErrorCodes.INVALID_REQUEST, error.get("code").getIntValue());
+        assertEquals("Invalid Request: \"params\" could not be read", error.get("message").getStringValue());
     }
 
     static Stream<Arguments> idsAndFailingHandlers() {
