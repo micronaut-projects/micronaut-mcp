@@ -84,7 +84,7 @@ public final class McpIconFactory {
             return;
         }
         String authority = httpAuthority(url);
-        if (StringUtils.isEmpty(authority)) {
+        if (authority == null || authority.isEmpty()) {
             throw new IllegalStateException(owner + " has " + noun + " that is not "
                 + (imageDataAllowed ? "an https or http URL, or a data: URI of an image" : "an https or http URL"));
         }
@@ -97,7 +97,7 @@ public final class McpIconFactory {
         try {
             URI uri = new URI(url);
             return uri.getScheme() != null && URL_SCHEMES.contains(uri.getScheme().toLowerCase(Locale.ROOT)) ? uri.getRawAuthority() : null;
-        } catch (URISyntaxException e) {
+        } catch (URISyntaxException _) {
             return null;
         }
     }
