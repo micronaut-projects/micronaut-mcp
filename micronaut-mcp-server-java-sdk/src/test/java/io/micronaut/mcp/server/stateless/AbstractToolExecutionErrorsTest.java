@@ -39,14 +39,14 @@ abstract class AbstractToolExecutionErrorsTest {
 
     @Test
     void aFailureWithoutAMessageIsDescribedByItsClass() throws IOException {
-        assertToolError("IllegalStateException", callTool(httpClient, jsonMapper, "failingWithoutMessage"));
+        assertToolError("Tool failingWithoutMessage failed (IllegalStateException)", callTool(httpClient, jsonMapper, "failingWithoutMessage"));
     }
 
     @Test
     void aFailureOfAnAnonymousClassWithoutAMessageIsDescribedByTheClassName() throws IOException {
         Map<String, Object> result = callTool(httpClient, jsonMapper, "failingAnonymously");
         assertEquals(Boolean.TRUE, result.get("isError"));
-        assertTrue(text(result).startsWith(ToolErrorTools.class.getName() + "$"), text(result));
+        assertTrue(text(result).startsWith("Tool failingAnonymously failed (" + ToolErrorTools.class.getName() + "$"), text(result));
     }
 
     @ParameterizedTest

@@ -228,12 +228,24 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             }
             throw mapException(mapper, error);
         } else {
-            message = errorMessage(error);
+            message = toolErrorMessage(m, error);
             if (LOG.isWarnEnabled()) {
                 LOG.warn("Tool {} failed: {}", toolName(m.method()), message, error);
             }
         }
         return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
+    }
+
+    /**
+     * The text of the tool execution error of a failure without a mapper: its message, or, when it has none, which tool
+     * failed and the class of the failure, so that the model is not left with a bare class name.
+     */
+    private static <B> String toolErrorMessage(Method<B> m, Throwable error) {
+        String message = error.getMessage();
+        if (message != null && !message.isBlank()) {
+            return message;
+        }
+        return "Tool " + toolName(m.method()) + " failed (" + errorMessage(error) + ")";
     }
 
     private <B> McpSchema.CallToolResult toCallToolResult(Method<B> m, boolean structuredOutput, @Nullable Object result) {
