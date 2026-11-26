@@ -1,7 +1,15 @@
-Methods annotated with `@Tool`, `@Prompt`, `@Resource` or `@ResourceTemplate` can declare icons with `@Icon` and `_meta` entries with `@Meta`. Both annotations are repeatable:
+Methods annotated with `@Tool`, `@Prompt`, `@Resource` or `@ResourceTemplate` can declare icons with `@Icon` and `_meta` entries with `@Meta`. Both annotations are repeatable, for example to offer an icon for each theme, and both are ignored on a method that is not one of these primitives:
 
 snippet::io.micronaut.mcp.docs.metadata.WeatherTools[project-base="test-suite-docs", tags="imports,clazz"]
 
-`@Resource` and `@ResourceTemplate` also accept the resource annotations of the specification: the intended `audience` (`Audience.USER`, `Audience.ASSISTANT`) and a `priority` between 0 and 1. `@Resource` accepts the `size` of the content in bytes.
+Every `@Icon` requires a `src` that is an HTTPS URL or a `data:image/...` URI (an HTTP URL is accepted, for example for local development) without a user name or password, and its `theme`, when set, must be `light` or `dark` in lowercase. Each `@Meta` key must be non-empty and declared at most once per method. The server fails to start when one of these rules is broken.
+
+TIP: Icons are repeated in every list response that includes their primitive. When many primitives share an icon, prefer an HTTPS URL over a `data:` URI to keep the responses small. Clients should treat icons, SVG ones in particular, as untrusted content.
+
+A `@Meta` key may start with a prefix: a reverse DNS name followed by `/`. Prefixes whose second label is `modelcontextprotocol` or `mcp`, such as `io.modelcontextprotocol/`, are reserved by the specification; this is not checked.
+
+The values of `@Meta` are always strings. For numbers, booleans or objects, define the primitive with a factory instead (see <<toolsFactory, Tools with a Factory>>, <<promptsFactory, Prompts with a Factory>> and <<resourcesFactory, Resources with a Factory>>) and set its `_meta` there.
+
+`@Resource` and `@ResourceTemplate` also accept hints that tell the client how to use the resource (the specification calls these _annotations_): the intended `audience` (`Audience.USER`, `Audience.ASSISTANT`), a `priority` between 0 and 1 and, for `@Resource`, the `size` of the content in bytes. Leave `priority` out to send no priority; a value outside 0 to 1 makes the server fail to start.
 
 snippet::io.micronaut.mcp.docs.metadata.WeatherResources[project-base="test-suite-docs", tags="imports,clazz"]

@@ -8,7 +8,7 @@ dependencies {
     api(mnSerde.micronaut.serde.api)
     testImplementation(mnSerde.micronaut.serde.jackson)
     testAnnotationProcessor(mn.micronaut.inject.java)
-    testRuntimeOnly(mnLogging.logback.classic)
+    testImplementation(mnLogging.logback.classic)
 }
 micronautBuild {
     testFramework = TestFramework.JUNIT6

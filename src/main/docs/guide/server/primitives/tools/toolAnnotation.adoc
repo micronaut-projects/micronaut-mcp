@@ -7,3 +7,5 @@ You can override this by setting the `name` attribute of the `@Tool` annotation.
 
 [.lang-python]
 NOTE: The Python method name is used verbatim, so the tool of the previous example is named `fen_evaluation`. Set the `name` attribute of the `@Tool` annotation to expose a different name.
+
+To add icons or `_meta`, see <<primitivesMetadata, Icons, Metadata and Resource Hints>>.
