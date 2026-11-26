@@ -163,6 +163,16 @@ class RegistryHandlersTest {
         // a value of the wrong type is a missing argument
         assertError(McpSchema.ErrorCodes.INVALID_PARAMS, "Required argument [HandlersRectangle rectangle] not specified",
             () -> toolHandler("area").apply(CONTEXT, new McpSchema.CallToolRequest("area", Map.of("width", "two", "height", 3))));
+        // and so is an integer out of the range of an int, which is not narrowed
+        assertError(McpSchema.ErrorCodes.INVALID_PARAMS, "Required argument [HandlersRectangle rectangle] not specified",
+            () -> toolHandler("area").apply(CONTEXT, new McpSchema.CallToolRequest("area", Map.of("width", 4294967297L, "height", 3))));
+    }
+
+    @Test
+    void aValueThatCannotBeConvertedIsAMissingArgumentNotAnInternalError() {
+        // the argument binders report conversion errors in their result, so no ConversionErrorException reaches the client
+        assertError(McpSchema.ErrorCodes.INVALID_PARAMS, "Required argument [Integer b] not specified",
+            () -> toolHandler("mixed").apply(CONTEXT, new McpSchema.CallToolRequest("mixed", Map.of("a", "x", "b", "abc"))));
     }
 
     @Test
