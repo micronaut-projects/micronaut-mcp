@@ -59,11 +59,11 @@ final class McpTransportSecurityFilter {
     private final List<String> protocolVersions;
 
     McpTransportSecurityFilter(TransportSecurityConfiguration configuration, McpStatelessServerTransport transport) {
-        this.anyOrigin = configuration.getAllowedOrigins().contains(WILDCARD);
         this.allowLoopbackOrigins = configuration.isAllowLoopbackOrigins();
         this.allowedOrigins = configuration.getAllowedOrigins().stream()
             .map(McpTransportSecurityFilter::normalize)
             .collect(Collectors.toUnmodifiableSet());
+        this.anyOrigin = allowedOrigins.contains(WILDCARD);
         this.protocolVersions = transport.protocolVersions();
     }
 
@@ -119,10 +119,28 @@ final class McpTransportSecurityFilter {
                 end++;
             }
         }
-        if (end < origin.length() && origin.charAt(end) != ':' && origin.charAt(end) != '/') {
-            return "";
+        return isPortSuffix(origin, end) ? origin.substring(start, end).toLowerCase(Locale.ROOT) : "";
+    }
+
+    /**
+     * Whether the origin ends at the given index, or continues with nothing but a port ({@code :digits}) and an
+     * optional trailing slash.
+     */
+    private static boolean isPortSuffix(String origin, int index) {
+        int end = origin.endsWith("/") ? origin.length() - 1 : origin.length();
+        if (index == end) {
+            return true;
         }
-        return origin.substring(start, end).toLowerCase(Locale.ROOT);
+        if (origin.charAt(index) != ':' || index + 1 == end) {
+            return false;
+        }
+        for (int i = index + 1; i < end; i++) {
+            char c = origin.charAt(i);
+            if (c < '0' || c > '9') {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static String normalize(String origin) {

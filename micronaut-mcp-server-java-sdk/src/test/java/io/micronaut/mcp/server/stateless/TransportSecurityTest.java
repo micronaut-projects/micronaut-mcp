@@ -13,6 +13,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -72,17 +73,18 @@ class TransportSecurityTest {
         assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://[::1")));
         assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "localhost")));
         assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://localhost@evil.example")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://localhost:6274@evil.example")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://[::1]:6274@evil.example")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://localhost:")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://localhost/evil")));
+        assertEquals(HttpStatus.OK, status(ping().header("Origin", "http://localhost:6274/")));
     }
 
     @Test
     void loopbackOriginsCanBeDisallowed() {
-        try (EmbeddedServer server = ApplicationContext.run(EmbeddedServer.class, Map.of(
-                "micronaut.mcp.server.info.name", "mcp-server",
-                "micronaut.mcp.server.info.version", "0.0.1",
-                "micronaut.mcp.server.transport", "HTTP",
+        try (EmbeddedServer server = mcpServer(Map.of(
                 "micronaut.mcp.server.transport-security.allow-loopback-origins", false,
-                "micronaut.mcp.server.transport-security.allowed-origins", List.of("http://localhost:6274"),
-                "micronaut.server.cors.localhost-pass-through", true));
+                "micronaut.mcp.server.transport-security.allowed-origins", List.of("http://localhost:6274")));
              HttpClient client = server.getApplicationContext().createBean(HttpClient.class, server.getURL())) {
             assertEquals(HttpStatus.OK, status(client, ping().header("Origin", "http://localhost:6274")));
             assertEquals(HttpStatus.FORBIDDEN, status(client, ping().header("Origin", "http://localhost:3000")));
@@ -91,15 +93,23 @@ class TransportSecurityTest {
     }
 
     @Test
-    void validationCanBeDisabled() {
-        try (EmbeddedServer server = ApplicationContext.run(EmbeddedServer.class, Map.of(
-                "micronaut.mcp.server.info.name", "mcp-server",
-                "micronaut.mcp.server.info.version", "0.0.1",
-                "micronaut.mcp.server.transport", "HTTP",
-                "micronaut.mcp.server.transport-security.enabled", false,
-                "micronaut.server.cors.localhost-pass-through", true));
+    void aWildcardAllowsEveryOrigin() {
+        try (EmbeddedServer server = mcpServer(Map.of(
+                "micronaut.mcp.server.transport-security.allowed-origins", List.of("*")));
              HttpClient client = server.getApplicationContext().createBean(HttpClient.class, server.getURL())) {
-            assertEquals(HttpStatus.OK, client.toBlocking().exchange(ping().header("Origin", "http://evil.example")).getStatus());
+            assertEquals(HttpStatus.OK, status(client, ping().header("Origin", "http://evil.example")));
+            assertEquals(HttpStatus.OK, status(client, ping().header("Origin", "null")));
+            // The protocol version is still validated
+            assertEquals(HttpStatus.BAD_REQUEST, status(client, ping().header("MCP-Protocol-Version", "1999-01-01")));
+        }
+    }
+
+    @Test
+    void validationCanBeDisabled() {
+        try (EmbeddedServer server = mcpServer(Map.of(
+                "micronaut.mcp.server.transport-security.enabled", false));
+             HttpClient client = server.getApplicationContext().createBean(HttpClient.class, server.getURL())) {
+            assertEquals(HttpStatus.OK, status(client, ping().header("Origin", "http://evil.example")));
         }
     }
 
@@ -116,6 +126,19 @@ class TransportSecurityTest {
                 assertEquals(HttpStatus.NOT_FOUND, status(client, ping().header("Origin", "http://evil.example")));
             }
         }
+    }
+
+    /**
+     * Starts a server with the HTTP transport, the given transport security properties, and the CORS pass-through that
+     * lets non-local origins reach the MCP endpoint rules.
+     */
+    private static EmbeddedServer mcpServer(Map<String, Object> transportSecurityProperties) {
+        Map<String, Object> properties = new HashMap<>(transportSecurityProperties);
+        properties.put("micronaut.mcp.server.info.name", "mcp-server");
+        properties.put("micronaut.mcp.server.info.version", "0.0.1");
+        properties.put("micronaut.mcp.server.transport", "HTTP");
+        properties.put("micronaut.server.cors.localhost-pass-through", true);
+        return ApplicationContext.run(EmbeddedServer.class, properties);
     }
 
     private static MutableHttpRequest<String> ping() {
