@@ -25,7 +25,7 @@ import org.jspecify.annotations.Nullable;
  *
  * <pre>
  * &#64;Tool
- * String importCatalog(String url, McpRequestContext context) {
+ * String importCatalog(String url, int pages, McpRequestContext context) {
  *     for (int i = 0; i &lt; pages; i++) {
  *         importPage(url, i);
  *         context.progress(i + 1, pages, "Imported page " + (i + 1));
@@ -62,6 +62,17 @@ public interface McpRequestContext {
      * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/utilities/progress">Progress</a>
      */
     void progress(double progress, @Nullable Double total, @Nullable String message);
+
+    /**
+     * Reports progress, if the client asked for it with a progress token.
+     *
+     * @param progress The progress so far, which must increase with each call
+     * @param total The total progress
+     * @param message A human-readable description of the progress
+     */
+    default void progress(double progress, double total, @Nullable String message) {
+        progress(progress, Double.valueOf(total), message);
+    }
 
     /**
      * Reports progress, if the client asked for it with a progress token.

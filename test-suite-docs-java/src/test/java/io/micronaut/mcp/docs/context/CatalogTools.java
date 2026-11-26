@@ -19,7 +19,7 @@ class CatalogTools {
     String importCatalog(int pages, McpRequestContext context) {
         for (int page = 1; page <= pages; page++) {
             importPage(page);
-            context.progress(page, (double) pages, "Imported page " + page); // <1>
+            context.progress(page, pages, "Imported page " + page); // <1>
         }
         context.log(McpSchema.LoggingLevel.INFO, "catalog", "Imported " + pages + " pages"); // <2>
         return "done";

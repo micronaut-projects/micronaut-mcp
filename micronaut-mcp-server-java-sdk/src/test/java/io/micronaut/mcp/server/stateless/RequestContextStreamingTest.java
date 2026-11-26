@@ -235,7 +235,7 @@ class RequestContextStreamingTest {
         @Tool
         String importCatalog(int pages, McpRequestContext context) {
             for (int page = 1; page <= pages; page++) {
-                context.progress(page, (double) pages, "Imported page " + page);
+                context.progress(page, pages, "Imported page " + page);
             }
             context.log(McpSchema.LoggingLevel.INFO, "catalog", "imported " + pages + " pages");
             return "done";
