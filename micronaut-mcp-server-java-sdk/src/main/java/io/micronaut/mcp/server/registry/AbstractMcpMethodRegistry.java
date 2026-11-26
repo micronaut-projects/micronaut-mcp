@@ -123,21 +123,18 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
     }
 
     /**
-     * Starts observing an operation. An observer that fails to start is logged and left out, so that it cannot fail the operation.
+     * Starts observing an operation with every observer. Callers skip this when there are no observers. An observer that
+     * fails to start is logged and left out, so that it cannot fail the operation.
      *
      * @param method The JSON-RPC method
      * @param name The name of the primitive
-     * @return The observation, which does nothing when there are no observers
+     * @return The observation
      */
-    protected final McpServerObserver.Observation observe(String method, String name) {
-        List<McpServerObserver> current = observers;
-        if (current.isEmpty()) {
-            return McpServerObserver.Observation.NOOP;
+    private McpServerObserver.Observation observe(String method, String name) {
+        if (observers.size() == 1) {
+            return start(observers.getFirst(), method, name);
         }
-        if (current.size() == 1) {
-            return start(current.getFirst(), method, name);
-        }
-        List<McpServerObserver.Observation> observations = current.stream().map(o -> start(o, method, name)).toList();
+        List<McpServerObserver.Observation> observations = observers.stream().map(o -> start(o, method, name)).toList();
         return errorType -> observations.forEach(o -> stop(o, errorType));
     }
 
@@ -267,7 +264,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
                 })
                 .doOnCancel(() -> {
                     if (stopped.compareAndSet(false, true)) {
-                        stop(observation, "cancelled");
+                        stop(observation, McpServerObserver.CANCELLED);
                     }
                 });
         });

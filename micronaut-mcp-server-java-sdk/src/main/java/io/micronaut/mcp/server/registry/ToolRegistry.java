@@ -192,16 +192,20 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                                                                         boolean structuredOutput,
                                                                         Object mcpTransportContext,
                                                                         McpSchema.CallToolRequest callToolRequest) {
-        return observedAsync(McpSchema.METHOD_TOOLS_CALL, callToolRequest.name(), () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
-            result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)), ToolRegistry::errorType);
+        return observedAsync(McpSchema.METHOD_TOOLS_CALL, callToolRequest.name(),
+            () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
+                result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)),
+            ToolRegistry::errorType);
     }
 
     private <B> McpSchema.CallToolResult callToolToResult(Method<B> m,
                                                           boolean structuredOutput,
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
-        return observed(McpSchema.METHOD_TOOLS_CALL, callToolRequest.name(), () -> m.call(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
-            mcpTransportContext, result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)), ToolRegistry::errorType);
+        return observed(McpSchema.METHOD_TOOLS_CALL, callToolRequest.name(),
+            () -> m.call(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
+                mcpTransportContext, result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)),
+            ToolRegistry::errorType);
     }
 
     private static @Nullable String errorType(McpSchema.CallToolResult result) {

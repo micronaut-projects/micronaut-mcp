@@ -31,6 +31,12 @@ public interface McpServerObserver {
     String TOOL_ERROR = "tool_error";
 
     /**
+     * The error type of an operation on the reactive server whose result was cancelled before it produced a value, for
+     * example because the client went away.
+     */
+    String CANCELLED = "cancelled";
+
+    /**
      * Called when an operation starts.
      *
      * @param method The JSON-RPC method, such as {@code tools/call}
@@ -52,8 +58,9 @@ public interface McpServerObserver {
         /**
          * Called when the operation ends.
          *
-         * @param errorType The type of the error that ended the operation, such as an exception class name or
-         * {@link #TOOL_ERROR}, or {@code null} when it succeeded
+         * @param errorType The type of the error that ended the operation, or {@code null} when it succeeded: the
+         * JSON-RPC error code of a protocol error (for example {@code -32603}), {@link #TOOL_ERROR},
+         * {@link #CANCELLED}, or the class name of any other exception
          */
         void stop(@Nullable String errorType);
     }
