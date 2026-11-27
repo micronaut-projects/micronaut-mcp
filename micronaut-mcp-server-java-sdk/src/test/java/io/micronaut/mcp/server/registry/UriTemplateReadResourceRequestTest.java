@@ -112,6 +112,25 @@ class UriTemplateReadResourceRequestTest {
             UriTemplateReadResourceRequest.arguments("book://book/{a,b}-{c}/{d}.txt", "book://book/ab-c-more/d.txt?edition=first"));
     }
 
+    // The pre-check must not reject a path that UriMatchTemplate matches, or a read that matches would fail
+    @ParameterizedTest
+    @ValueSource(strings = {"x://{a}", "x://{a}/{b}", "x://p/{a}-{b}.log", "x://{a}{b}", "x://{a}-{b}-{c}", "x://pre{a}post/s", "x://{a}/", "x:{a}", "x://a/b"})
+    void thePreCheckOfAPathWithAQueryAgreesWithUriMatchTemplate(String template) {
+        UriTemplateReadResourceRequest.Template compiled = UriTemplateReadResourceRequest.Template.compile(template);
+        String[] parts = {"", "a", "ab", "-", "a-b", "a-b-c", "a-b.log", ".log", "/", "a/", "/a", "a/b", "pre", "post", "prepost", "preXpost", "p", "x:", "x://"};
+        for (String first : parts) {
+            for (String second : parts) {
+                for (String third : new String[] {"", "/s", "-c", ".log", "/"}) {
+                    for (String uri : new String[] {"x://" + first + second + third, "x:" + first + second + third}) {
+                        if (UriMatchTemplate.of(template).match(uri).isPresent()) {
+                            assertFalse(compiled.rejectsSimplePath(uri + "?q=1"), template + " " + uri);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     @Test
     void onlyTemplatesOfSimpleVariablesArePreChecked() {
         assertNotNull(UriTemplateReadResourceRequest.Template.compile("book://book/{title}").simplePathPattern());

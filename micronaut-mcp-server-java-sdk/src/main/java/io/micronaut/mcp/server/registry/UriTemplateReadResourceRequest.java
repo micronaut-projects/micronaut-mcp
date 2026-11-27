@@ -247,7 +247,7 @@ record UriTemplateReadResourceRequest(
                 }
             }
             UriMatchTemplate matchTemplate = UriMatchTemplate.of(uriTemplate);
-            Pattern simplePath = simpleVariablesOnly(uriTemplate) ? compileSimplePath(matchTemplate.toPathString()) : null;
+            Pattern simplePath = simpleVariablesOnly(uriTemplate) ? compileSimplePath(withoutTrailingSlashes(matchTemplate.toPathString())) : null;
             return new Template(matchTemplate, Set.copyOf(reserved), simplePath);
         }
 
@@ -269,10 +269,19 @@ record UriTemplateReadResourceRequest(
             if (queryStart < 0) {
                 return false;
             }
-            if (pathEnd > 0 && uri.charAt(pathEnd - 1) == '/') {
+            // UriMatchTemplate ignores every trailing /, in the path and in the template
+            while (pathEnd > 0 && uri.charAt(pathEnd - 1) == '/') {
                 pathEnd--;
             }
             return !simplePathPattern.matcher(uri).region(0, pathEnd).matches();
+        }
+
+        private static String withoutTrailingSlashes(String path) {
+            int end = path.length();
+            while (end > 0 && path.charAt(end - 1) == '/') {
+                end--;
+            }
+            return path.substring(0, end);
         }
 
         private static Pattern compileSimplePath(String path) {
