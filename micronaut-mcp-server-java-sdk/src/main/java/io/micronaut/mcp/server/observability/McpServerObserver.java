@@ -39,8 +39,7 @@ public interface McpServerObserver {
     String TOOL_ERROR = "tool_error";
 
     /**
-     * The error type of an operation on the reactive server whose result was cancelled before it produced a value, for
-     * example because the client went away.
+     * The error type of an operation on the reactive server whose subscription was cancelled before it produced a value.
      */
     String CANCELLED = "cancelled";
 
@@ -53,7 +52,9 @@ public interface McpServerObserver {
     String OTHER_ERROR = "_OTHER";
 
     /**
-     * Called when an operation starts.
+     * Called when an operation starts. On a reactive server this runs on the subscribing thread, before any
+     * executor switch requested by the primitive. Keep per-operation state in the returned observation, since
+     * {@link Observation#stop(String)} may run on another thread. Both callbacks must return promptly.
      *
      * @param method The JSON-RPC method, such as {@code tools/call}
      * @param name The name of the tool or prompt; the URI of the resource; the URI template, as declared, of the resource
@@ -75,7 +76,8 @@ public interface McpServerObserver {
         Observation NOOP = errorType -> { };
 
         /**
-         * Called when the operation ends.
+         * Called when the operation ends. On a reactive server this runs on the thread delivering the result,
+         * completion, error or cancellation.
          *
          * @param errorType The type of the error that ended the operation, or {@code null} when it succeeded:
          * {@link #TOOL_ERROR}; the JSON-RPC error code, as a string, of the protocol error the operation ended with, so
