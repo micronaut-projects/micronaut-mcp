@@ -279,6 +279,11 @@ class TransportSecurityTest {
         "https://user@app.example.com | expected * or an origin, scheme://host[:port], without a path",
         "https://app example.com | expected * or an origin, scheme://host[:port], without a path",
         "https://[::g1] | expected * or an origin, scheme://host[:port], without a path",
+        "https://app.example.com// | for example 'https://app.example.com'",
+        "https://app.example.com:65536 | expected * or an origin, scheme://host[:port], without a path",
+        "https://app.example.com:0 | expected * or an origin, scheme://host[:port], without a path",
+        "https://app.example.com: | expected * or an origin, scheme://host[:port], without a path",
+        "https://app.example.com:123456 | expected * or an origin, scheme://host[:port], without a path",
         "null | clients that send Origin: null, such as file:// pages and sandboxed iframes, can only be allowed with *",
         "https://*.example.com | wildcards are not supported in an origin; list each origin, for example https://app.example.com, or use * to allow every origin",
         "http://localhost:* | wildcards are not supported in an origin"})
