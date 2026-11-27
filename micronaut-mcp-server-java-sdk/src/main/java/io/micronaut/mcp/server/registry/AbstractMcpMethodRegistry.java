@@ -190,23 +190,6 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
     }
 
     /**
-     * The text of a failure that no mapper handles, as a tool execution error tells it to the model. A failure without
-     * a message is described by the simple name of its class.
-     *
-     * @param throwable The failure
-     * @return The message of the failure, or the simple name of its class (its name for an anonymous class) when it has no message
-     */
-    static String errorMessage(Throwable throwable) {
-        String message = throwable.getMessage();
-        if (message != null && !message.isBlank()) {
-            return message;
-        }
-        // An anonymous class has no simple name
-        String simpleName = throwable.getClass().getSimpleName();
-        return simpleName.isEmpty() ? throwable.getClass().getName() : simpleName;
-    }
-
-    /**
      * An error handler for {@link Method#call} and {@link Method#callAsync} that fails with the protocol error of the failure.
      *
      * @param m The method that was invoked
