@@ -5,15 +5,10 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.client.BlockingHttpClient;
-import io.micronaut.http.client.HttpClient;
-import io.micronaut.http.client.annotation.Client;
-import io.micronaut.mcp.server.stdio.StdioServerTransportProviderReplacement;
+import io.micronaut.mcp.server.stdio.StdioTestTransportProviders;
 import io.micronaut.mcp.server.utils.Stdio;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.json.McpJsonMapper;
-import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -22,17 +17,13 @@ import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
-import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_PROMPTS;
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_INITIALIZATION_2025_WITH_LOGGING;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZE;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZED;
-import static io.micronaut.mcp.server.utils.JsonRpcMessages.PROMPTS_LIST;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Property(name = "micronaut.mcp.server.info.name", value="test mcp server")
+@Property(name = "micronaut.mcp.server.info.name", value="mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value="0.0.1")
 @Property(name = "micronaut.mcp.server.transport", value = "STDIO")
 @Property(name = "spec.name", value = "StdioPromptsListNoPromptsCapabilityTest")
@@ -47,23 +38,14 @@ class StdioPromptsListNoPromptsCapabilityTest {
     @Inject
     ReplacementMcpServerTransportProviderFactory factory;
 
-    /**
-     * Even if the server does not have the prompts capabilities, clients may not respect that and send a prompts/list request.
-     * In that scenario, the server should return an empty list of prompts
-     */
-    @SuppressWarnings("java:S2925")
     @Test
-    void syncPrompts() throws IOException, InterruptedException, JSONException {
+    void listsNoPrompts() throws IOException, InterruptedException, JSONException {
         factory.stdio.sendRequest(INITIALIZE);
-        Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+        Duration timeout = Duration.ofSeconds(10);
+        JSONAssert.assertEquals(EXPECTED_INITIALIZATION_2025_WITH_LOGGING, factory.stdio.readResponse(timeout), true);
         factory.stdio.sendRequest(INITIALIZED);
-        Thread.sleep(TimeUnit.SECONDS.toMillis(1));
         factory.stdio.sendRequest(PROMPTS_LIST);
-        Thread.sleep(TimeUnit.SECONDS.toMillis(1));
-        List<String> responses = factory.stdio.readResponses();
-        assertEquals(2, responses.size());
-        String readJsonRpc = responses.get(1);
-        JSONAssert.assertEquals(PROMPTS_LIST_RESULT, readJsonRpc, true);
+        JSONAssert.assertEquals(PROMPTS_LIST_RESULT, factory.stdio.readResponse(timeout), true);
     }
 
     @Requires(property = "spec.name", value = "StdioPromptsListNoPromptsCapabilityTest")
@@ -74,7 +56,7 @@ class StdioPromptsListNoPromptsCapabilityTest {
         @Prototype
         @Replaces(McpServerTransportProvider.class)
         McpServerTransportProvider stdioServerTransportProviderReplacement(McpJsonMapper jsonMapper) {
-            return new StdioServerTransportProviderReplacement(jsonMapper, stdio.serverStdin, stdio.serverStdout);
+            return StdioTestTransportProviders.gracefulListing(jsonMapper, stdio);
         }
 
         @PreDestroy
