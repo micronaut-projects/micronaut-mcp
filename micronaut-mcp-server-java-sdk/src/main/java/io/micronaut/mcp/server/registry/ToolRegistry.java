@@ -47,6 +47,8 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,8 +57,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.regex.Pattern;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_ARRAY;
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_BOOL;
@@ -75,7 +77,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public static final boolean DEFAULT_OPEN_WORLD_HINT_VALUE = true;
     public static final boolean DEFAULT_RETURN_DIRECT_VALUE = false;
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
-    private static final Pattern CONTROL_CHARACTERS = Pattern.compile("\\p{Cntrl}");
+    private static final Pattern CONTROL_CHARACTERS = Pattern.compile("[\\p{Cc}\\p{Zl}\\p{Zp}]+");
     private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.CallToolRequest.class};
     private static final Argument<Map<String, Object>> JSON_OBJECT_ARGUMENT = Argument.mapOf(String.class, Object.class);
     private static final String KEY_SCHEMA = "$schema";
@@ -236,54 +238,42 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             throw mcpError;
         }
         String name = toolName(m.method());
-        String message;
         if (mapper instanceof InputErrorMapper<?> inputErrorMapper) {
-            // Only the message is needed, so no McpError, with its stack trace, is built
-            String mapped = inputErrorMessage(inputErrorMapper, error);
-            // An exception without a message, such as a SerdeException without a cause, has no message to map
-            message = mapped != null && !mapped.isBlank() ? mapped : toolErrorMessage(name, error);
-            // Classified by the type of the exception, which may also be thrown by the tool body
+            String message = inputErrorMessage(inputErrorMapper, error);
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Tool {} failed with an input error: {}", name, loggable(message), error);
+                LOG.debug("Tool {} failed with an input error: {}", loggable(name), loggable(message));
             }
-        } else if (mapper != null) {
-            // The SDK does not log the protocol errors it sends
+            return toolError(message);
+        }
+        if (mapper != null) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Tool {} failed with a mapped protocol error", name, error);
+                LOG.debug("Tool {} failed with a mapped protocol error: {}", loggable(name), loggableStackTrace(error));
             }
             throw mapException(mapper, error);
-        } else {
-            message = toolErrorMessage(name, error);
-            if (LOG.isWarnEnabled()) {
-                LOG.warn("Tool {} failed: {}", name, loggable(message), error);
-            }
         }
-        return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
+        if (LOG.isWarnEnabled()) {
+            LOG.warn("Tool {} failed: {}", loggable(name), loggableStackTrace(error));
+        }
+        return toolError("Tool " + name + " failed");
+    }
+
+    private static String loggable(String text) {
+        return CONTROL_CHARACTERS.matcher(text).replaceAll(" ");
     }
 
     /**
-     * A message that may contain the arguments of a call, made safe to log: control characters, such as line breaks,
-     * are replaced, so that a caller cannot forge log lines (CWE-117). The text sent to the model is unchanged.
+     * Render the whole exception, including causes and suppressed exceptions, as one log line.
+     * Passing the throwable separately would let the logging backend render its raw messages again.
      */
-    private static String loggable(@Nullable String message) {
-        return message == null ? "null" : CONTROL_CHARACTERS.matcher(message).replaceAll("_");
+    private static String loggableStackTrace(Throwable error) {
+        StringWriter trace = new StringWriter();
+        error.printStackTrace(new PrintWriter(trace));
+        return loggable(trace.toString().stripTrailing());
     }
 
     @SuppressWarnings("unchecked")
     private static <T extends Throwable> String inputErrorMessage(InputErrorMapper<?> mapper, T error) {
-        return ((InputErrorMapper<T>) mapper).message(error);
-    }
-
-    /**
-     * The text of the tool execution error of a failure without a mapper: its message, or, when it has none, which tool
-     * failed and the class of the failure, so that the model is not left with a bare class name.
-     */
-    private static String toolErrorMessage(String name, Throwable error) {
-        String message = error.getMessage();
-        if (message != null && !message.isBlank()) {
-            return message;
-        }
-        return "Tool " + name + " failed (" + errorMessage(error) + ")";
+        return ((InputErrorMapper<T>) mapper).messageOrDefault(error);
     }
 
     private <B> McpSchema.CallToolResult toCallToolResult(Method<B> m, boolean structuredOutput, @Nullable Object result) {
@@ -292,14 +282,12 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         }
         try {
             return serialize(m, structuredOutput, result);
-        } catch (IOException e) {
-            // Reported like an output that does not match the output schema: a tool execution error with the reason
+        } catch (IOException | RuntimeException e) {
             String name = toolName(m.method());
-            String message = "The result of tool " + name + " could not be serialized: " + e.getMessage();
             if (LOG.isWarnEnabled()) {
-                LOG.warn("The result of tool {} could not be serialized: {}", name, loggable(e.getMessage()), e);
+                LOG.warn("The result of tool {} could not be serialized: {}", loggable(name), loggableStackTrace(e));
             }
-            return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
+            return toolError("The result of tool " + name + " could not be serialized");
         }
     }
 
@@ -321,7 +309,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             if (LOG.isWarnEnabled()) {
                 LOG.warn("Tool {} returned null but declares an output schema; returning an error result to the client", toolName(method));
             }
-            return toolError("Tool " + toolName(method) + " produced no result");
+            return toolError("Tool " + toolName(method) + " produced no result. This is a server-side error; retrying with the same arguments will not help.");
         }
         // The SDK validates the object against the output schema and adds its JSON as text content. A result that cannot be
         // converted is reported by the caller like a text result that cannot be serialized
@@ -336,7 +324,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
 
     private static McpSchema.CallToolResult toolError(String reason) {
         return McpSchema.CallToolResult.builder()
-            .addTextContent(reason + ". This is a server-side error; retrying with the same arguments will not help.")
+            .addTextContent(reason)
             .isError(true)
             .build();
     }

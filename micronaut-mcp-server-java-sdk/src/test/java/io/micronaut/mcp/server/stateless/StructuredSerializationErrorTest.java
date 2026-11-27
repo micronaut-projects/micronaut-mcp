@@ -18,7 +18,6 @@ import java.util.Map;
 import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.callTool;
 import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.text;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * With an MCP JSON mapper other than the Micronaut one, the tool registry converts structured content itself, and a
@@ -43,8 +42,7 @@ class StructuredSerializationErrorTest {
     void aStructuredResultThatCannotBeConvertedIsAToolExecutionError() throws IOException {
         Map<String, Object> result = callTool(httpClient, jsonMapper, "notSerializable");
         assertEquals(Boolean.TRUE, result.get("isError"));
-        assertTrue(text(result).startsWith("The result of tool notSerializable could not be serialized: "), text(result));
-        assertTrue(text(result).contains("Unserializable"), text(result));
+        assertEquals("The result of tool notSerializable could not be serialized", text(result));
     }
 
     /**

@@ -47,7 +47,7 @@ class ToolRegistryOtherMapperTest {
         assertTrue(result.isError());
         assertNull(result.structuredContent());
         String text = ((McpSchema.TextContent) result.content().getFirst()).text();
-        assertTrue(text.startsWith("The result of tool unserializable could not be serialized: "), text);
+        assertEquals("The result of tool unserializable could not be serialized", text);
     }
 
     private McpSchema.CallToolResult call(String name) {

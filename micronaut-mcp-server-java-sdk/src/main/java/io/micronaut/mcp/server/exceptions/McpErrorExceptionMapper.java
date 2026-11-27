@@ -20,10 +20,9 @@ import io.modelcontextprotocol.spec.McpError;
 /**
  * API to define mappers from exceptions to {@link McpError}, the JSON-RPC error sent to the client.
  * <p>
- * For a tool, an exception that a mapper maps is answered with the protocol error the mapper returns. The model does not
- * see a protocol error, whereas it sees the message of an exception that no mapper maps, which is answered with a tool
- * execution error, a result whose {@code isError} is {@code true}. The built-in mappers of arguments that cannot be bound
- * or are not valid do not follow this rule: the message of their error is sent as a tool execution error.
+ * A tool sends the protocol error returned by an application mapper to the client, which may pass its
+ * code, message and data to the model. Use client-safe details in mapped errors.
+ * Built-in argument mappers report validation and binding errors as tool results with {@code isError} set to true.
  *
  * @param <T> Exception to Map
  */
