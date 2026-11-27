@@ -1,6 +1,6 @@
 The HTTP endpoint validates two request headers, as the https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#security-warning[Streamable HTTP transport] requires:
 
-- `Origin`, to prevent DNS rebinding attacks. A request whose `Origin` is not allowed is answered with `403 Forbidden`. Requests without an `Origin` are allowed: browsers always send one, and other clients do not need one. Loopback origins (`localhost`, `127.0.0.1` and `[::1]`, with `http` or `https` and any port) are allowed by default, so that local tools such as the MCP Inspector can connect. Other loopback forms, such as `127.0.0.2` or `[::ffff:127.0.0.1]`, and other schemes, such as the `capacitor://localhost` of web view shells, are rejected unless listed. Allow the origins of browser-based clients with `allowed-origins`, or `*` for any origin. Each entry is an origin, `scheme://host[:port]`, without a path, as browsers send it; the default port of `http` and `https` can be left out. An entry that is not an origin, such as `app.example.com` or `https://app.example.com/ui`, could never match, so it fails the startup. Wildcard subdomains, such as `https://*.example.com`, are not supported. Clients that send `Origin: null`, such as `file://` pages and sandboxed iframes, are rejected; only `*` allows them.
+- `Origin`, to prevent DNS rebinding attacks. A request whose `Origin` is not allowed is answered with `403 Forbidden`. Requests without an `Origin` are allowed: browsers always send one, and other clients do not need one. Loopback origins (`localhost`, `127.0.0.1` and `[::1]`, with `http` or `https` and any port) are allowed by default, so that local tools such as the MCP Inspector can connect. Other loopback forms, such as `127.0.0.2` or `[::ffff:127.0.0.1]`, and other schemes, such as the `capacitor://localhost` of web view shells, are rejected unless listed. Allow the origins of browser-based clients with `allowed-origins`, or `*` for any origin. Each entry is an origin, `scheme://host[:port]`, without a path, as browsers send it; the default port of `http` and `https` can be left out. An entry that is not an origin, such as `app.example.com`, `https://app.example.com/ui`, `https://app.example.com//` or one with a port outside 1 to 65535, could never match, so it fails the startup. Wildcard subdomains, such as `https://*.example.com`, are not supported. Clients that send `Origin: null`, such as `file://` pages and sandboxed iframes, are rejected; only `*` allows them.
 - `MCP-Protocol-Version`. A request with a version the server does not support is answered with `400 Bad Request`.
 
 A request with more than one `Origin` header is answered with `403 Forbidden`, and one with more than one `MCP-Protocol-Version` header with `400 Bad Request`, so that a second value cannot pass for the one that is checked. The checks apply to every request routed to the MCP endpoint, whatever the shape of `micronaut.mcp.server.endpoint` and the context path; a request with a method the endpoint does not serve is answered with `405 Method Not Allowed`.
@@ -24,4 +24,22 @@ WARNING: With the default `allow-loopback-origins`, a page served by any other a
 
 include::{includedir}configurationProperties/io.micronaut.mcp.conf.server.TransportSecurityConfigurationProperties.adoc[]
 
-NOTE: A browser-based client on another origin also needs https://docs.micronaut.io/latest/guide/#cors[CORS] to be enabled for that origin. Its MCP requests are POST requests with a JSON body, and usually an `Authorization` and an `MCP-Protocol-Version` header, so the browser first sends a preflight `OPTIONS` request, which the Micronaut CORS configuration must allow, including those headers. The allowed origins of the MCP endpoint do not configure CORS, and CORS does not configure them: an origin allowed by CORS but not listed in `allowed-origins` gets `403 Forbidden`.
+NOTE: A browser-based client on another origin also needs https://docs.micronaut.io/latest/guide/#cors[CORS] to be enabled for that origin. Its MCP requests are POST requests with a JSON body, and usually an `Authorization` and an `MCP-Protocol-Version` header, so the browser first sends a preflight `OPTIONS` request, which the Micronaut CORS configuration must allow, including those headers. The allowed origins of the MCP endpoint do not configure CORS, and CORS does not configure them: an origin allowed by CORS but not listed in `allowed-origins` gets `403 Forbidden`. With <<authorization, Authorization>>, the client also reads the `WWW-Authenticate` header of a `401 Unauthorized` response, which names the protected resource metadata, and browsers only let JavaScript read it when CORS exposes it:
+
+[configuration]
+----
+micronaut:
+  server:
+    cors:
+      enabled: true
+      configurations:
+        web:
+          allowed-origins:
+            - https://app.example.com
+          allowed-headers:
+            - Content-Type
+            - Authorization
+            - MCP-Protocol-Version
+          exposed-headers:
+            - WWW-Authenticate
+----
