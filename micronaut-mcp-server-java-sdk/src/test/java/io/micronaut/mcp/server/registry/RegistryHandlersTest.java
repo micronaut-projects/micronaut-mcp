@@ -115,29 +115,20 @@ class RegistryHandlersTest {
     }
 
     @Test
-    void unmappedExceptionsAreToolErrorsWithTheirMessage() {
+    void unmappedExceptionsReturnAGenericToolError() {
         var failing = toolHandler("failing");
         McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("failing", Map.of());
         // twice, so the second lookup hits the cached miss
-        assertToolError("failing", () -> failing.apply(CONTEXT, request));
-        assertToolError("failing", () -> failing.apply(CONTEXT, request));
+        assertToolError("Tool failing failed", () -> failing.apply(CONTEXT, request));
+        assertToolError("Tool failing failed", () -> failing.apply(CONTEXT, request));
     }
 
     @Test
-    void exceptionsWithoutAMessageAreReportedWithTheirType() {
-        // the model is told which tool failed and how
-        assertToolError("Tool silent failed (IllegalStateException)",
-            () -> toolHandler("silent").apply(CONTEXT, new McpSchema.CallToolRequest("silent", Map.of())));
-        assertToolError("Tool blank failed (IllegalStateException)",
-            () -> toolHandler("blank").apply(CONTEXT, new McpSchema.CallToolRequest("blank", Map.of())));
-    }
-
-    @Test
-    void exceptionsOfAnAnonymousClassWithoutAMessageAreReportedWithTheNameOfTheirClass() {
-        McpSchema.CallToolResult result = toolHandler("anonymous").apply(CONTEXT, new McpSchema.CallToolRequest("anonymous", Map.of()));
-        assertTrue(result.isError());
-        // an anonymous class has no simple name
-        assertTrue(text(result).startsWith("Tool anonymous failed (" + Primitives.class.getName() + "$"));
+    void messageLessExceptionsReturnAGenericToolError() {
+        for (String tool : List.of("silent", "blank", "anonymous")) {
+            assertToolError("Tool " + tool + " failed",
+                () -> toolHandler(tool).apply(CONTEXT, new McpSchema.CallToolRequest(tool, Map.of())));
+        }
     }
 
     @Test
