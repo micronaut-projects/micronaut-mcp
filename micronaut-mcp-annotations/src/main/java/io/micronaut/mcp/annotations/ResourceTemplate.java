@@ -72,9 +72,8 @@ public @interface ResourceTemplate {
      * percent-decoded with URI decoding, so a {@code +} is not turned into a space. A simple variable, such as {@code {title}},
      * matches a single segment and rejects an encoded {@code /}; use a reserved variable, such as {@code {+title}}, for values
      * that may contain an encoded {@code /}.
-     * Declare the template explicitly for new handlers.
      */
-    String uriTemplate() default "pgn://round/{round}";
+    String uriTemplate();
 
     /**
      * @return A concise human-readable title of the resource.

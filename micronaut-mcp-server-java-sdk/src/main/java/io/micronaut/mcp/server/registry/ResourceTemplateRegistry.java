@@ -17,6 +17,7 @@ package io.micronaut.mcp.server.registry;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.inject.ExecutableMethod;
@@ -158,8 +159,9 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
     }
 
     private static String uriTemplateValue(ExecutableMethod<?, ?> method) {
-        // An omitted member may be absent from the generated executable method metadata.
-        return method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY).orElse("pgn://round/{round}");
+        return method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY)
+            .orElseThrow(() -> new ConfigurationException("Missing required member uriTemplate in @ResourceTemplate on method "
+                + method.getDeclaringType().getSimpleName() + "." + method.getDescription(true)));
     }
 
     private static String mimeType(ExecutableMethod<?, ?> method) {

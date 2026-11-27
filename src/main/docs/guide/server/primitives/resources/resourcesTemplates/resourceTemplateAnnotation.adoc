@@ -2,6 +2,6 @@ The preferred way to declare a resource is using a method annotated with api:mcp
 
 snippet::io.micronaut.mcp.docs.resources.MyResourcesTemplates[project-base="test-suite-docs", tags="clazz"]
 
-Declare `uriTemplate` explicitly for new handlers. For compatibility, a declaration that omits it uses `pgn://round/{round}`.
+Specify `uriTemplate` on every `@ResourceTemplate` handler.
 
 To add icons, `_meta`, an audience, a priority, see <<primitivesMetadata, Icons, Metadata and Resource Hints>>.

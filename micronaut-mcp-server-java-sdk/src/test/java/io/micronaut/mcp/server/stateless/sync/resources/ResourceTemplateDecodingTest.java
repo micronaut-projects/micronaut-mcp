@@ -60,11 +60,6 @@ class ResourceTemplateDecodingTest {
     }
 
     @Test
-    void aDeclarationCanUseTheLegacyDefaultTemplate() throws IOException {
-        assertEquals("Round 14", contents(read("pgn://round/14")).get("text"));
-    }
-
-    @Test
     void aReservedVariableMayContainAnEncodedSlash() throws IOException {
         Map<String, Object> contents = contents(read("file://files/docs%2Fread%20me.txt"));
         assertEquals("File docs/read me.txt", contents.get("text"));
@@ -141,11 +136,6 @@ class ResourceTemplateDecodingTest {
         @ResourceTemplate(uriTemplate = "book://book/{title}")
         String book(String title) {
             return "Book " + title;
-        }
-
-        @ResourceTemplate
-        String round(String round) {
-            return "Round " + round;
         }
 
         @ResourceTemplate(uriTemplate = "book://unavailable/{title}")
