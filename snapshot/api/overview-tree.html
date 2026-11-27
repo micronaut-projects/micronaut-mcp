@@ -29,6 +29,7 @@ loadScripts(document, 'script');</script>
 <ul id="navbar-top-firstrow" class="nav-list" title="Navigation">
 <li><a href="index.html">Overview</a></li>
 <li class="nav-bar-cell1-rev">Tree</li>
+<li><a href="deprecated-list.html">Deprecated</a></li>
 <li><a href="index-all.html">Index</a></li>
 <li><a href="search.html">Search</a></li>
 <li><a href="help-doc.html#tree">Help</a></li>
@@ -52,6 +53,8 @@ loadScripts(document, 'script');</script>
 <span class="package-hierarchy-label">Package Hierarchies:</span>
 <ul class="horizontal contents-list">
 <li><a href="io/micronaut/mcp/annotations/package-tree.html">io.micronaut.mcp.annotations</a>, </li>
+<li><a href="io/micronaut/mcp/client/langchain4j/package-tree.html">io.micronaut.mcp.client.langchain4j</a>, </li>
+<li><a href="io/micronaut/mcp/client/langchain4j/health/package-tree.html">io.micronaut.mcp.client.langchain4j.health</a>, </li>
 <li><a href="io/micronaut/mcp/client/langchain4j/stdio/package-tree.html">io.micronaut.mcp.client.langchain4j.stdio</a>, </li>
 <li><a href="io/micronaut/mcp/conf/package-tree.html">io.micronaut.mcp.conf</a>, </li>
 <li><a href="io/micronaut/mcp/conf/client/package-tree.html">io.micronaut.mcp.conf.client</a>, </li>
@@ -89,12 +92,16 @@ loadScripts(document, 'script');</script>
 </li>
 <li class="circle">io.micronaut.mcp.primitives.prompts.<a href="io/micronaut/mcp/primitives/prompts/ClasspathPrompt.html" class="type-name-link" title="class in io.micronaut.mcp.primitives.prompts">ClasspathPrompt</a></li>
 <li class="circle">io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/CompletionRegistry.html" class="type-name-link" title="class in io.micronaut.mcp.server.registry">CompletionRegistry</a></li>
+<li class="circle">io.micronaut.mcp.client.langchain4j.<a href="io/micronaut/mcp/client/langchain4j/ConnectionMcpClient.html" class="type-name-link" title="class in io.micronaut.mcp.client.langchain4j">ConnectionMcpClient</a> (implements dev.langchain4j.mcp.client.McpClient)</li>
 <li class="circle">io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/DefaultMcpRequestContext.html" class="type-name-link" title="class in io.micronaut.mcp.server.context">DefaultMcpRequestContext</a> (implements io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/McpRequestContext.html" title="interface in io.micronaut.mcp.server.context">McpRequestContext</a>)</li>
 <li class="circle">io.micronaut.mcp.server.tools.fetch.<a href="io/micronaut/mcp/server/tools/fetch/FetchResponse.Builder.html" class="type-name-link" title="class in io.micronaut.mcp.server.tools.fetch">FetchResponse.Builder</a></li>
 <li class="circle">io.modelcontextprotocol.server.http.tck.<a href="io/modelcontextprotocol/server/http/tck/HttpRequestUtils.html" class="type-name-link" title="class in io.modelcontextprotocol.server.http.tck">HttpRequestUtils</a></li>
 <li class="circle">io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/IconConfiguration.html" class="type-name-link" title="class in io.micronaut.mcp.conf.server">IconConfiguration</a></li>
 <li class="circle">io.modelcontextprotocol.server.http.tck.<a href="io/modelcontextprotocol/server/http/tck/InitializeTest.html" class="type-name-link" title="class in io.modelcontextprotocol.server.http.tck">InitializeTest</a></li>
 <li class="circle">io.micronaut.mcp.server.exceptions.<a href="io/micronaut/mcp/server/exceptions/JsonRrpcResponseUtils.html" class="type-name-link" title="class in io.micronaut.mcp.server.exceptions">JsonRrpcResponseUtils</a></li>
+<li class="circle">io.micronaut.mcp.client.langchain4j.stdio.<a href="io/micronaut/mcp/client/langchain4j/stdio/LegacyMcpClientStdioConfiguration.html" class="type-name-link" title="class in io.micronaut.mcp.client.langchain4j.stdio">LegacyMcpClientStdioConfiguration</a> (implements io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientStdioConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientStdioConfiguration</a>)</li>
+<li class="circle">io.micronaut.mcp.client.langchain4j.<a href="io/micronaut/mcp/client/langchain4j/McpClientConnections.html" class="type-name-link" title="class in io.micronaut.mcp.client.langchain4j">McpClientConnections</a></li>
+<li class="circle">io.micronaut.mcp.client.langchain4j.health.<a href="io/micronaut/mcp/client/langchain4j/health/McpClientHealthEnabledCondition.html" class="type-name-link" title="class in io.micronaut.mcp.client.langchain4j.health">McpClientHealthEnabledCondition</a> (implements io.micronaut.context.condition.Condition)</li>
 <li class="circle">io.micronaut.mcp.server.<a href="io/micronaut/mcp/server/McpIconFactory.html" class="type-name-link" title="class in io.micronaut.mcp.server">McpIconFactory</a></li>
 <li class="circle">io.micronaut.mcp.server.<a href="io/micronaut/mcp/server/McpIntrospection.html" class="type-name-link" title="class in io.micronaut.mcp.server">McpIntrospection</a></li>
 <li class="circle">io.micronaut.mcp.server.json.<a href="io/micronaut/mcp/server/json/MicronautJsonSchemaValidator.html" class="type-name-link" title="class in io.micronaut.mcp.server.json">MicronautJsonSchemaValidator</a> (implements io.modelcontextprotocol.json.schema.JsonSchemaValidator)</li>
@@ -113,6 +120,19 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.mcp.server.stdio.<a href="io/micronaut/mcp/server/stdio/StdioServerTransportProviderReplacement.html" class="type-name-link" title="class in io.micronaut.mcp.server.stdio">StdioServerTransportProviderReplacement</a> (implements io.modelcontextprotocol.spec.McpServerTransportProvider)</li>
 <li class="circle">io.micronaut.mcp.primitives.utils.<a href="io/micronaut/mcp/primitives/utils/StringInterpolator.html" class="type-name-link" title="class in io.micronaut.mcp.primitives.utils">StringInterpolator</a></li>
 <li class="circle">io.modelcontextprotocol.server.http.tck.<a href="io/modelcontextprotocol/server/http/tck/SuiteShutdownExtension.html" class="type-name-link" title="class in io.modelcontextprotocol.server.http.tck">SuiteShutdownExtension</a> (implements org.junit.jupiter.api.extension.AfterAllCallback)</li>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" class="type-name-link external-link" title="class or interface in java.lang">Throwable</a> (implements java.io.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>)
+<ul>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" class="type-name-link external-link" title="class or interface in java.lang">Exception</a>
+<ul>
+<li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/RuntimeException.html" class="type-name-link external-link" title="class or interface in java.lang">RuntimeException</a>
+<ul>
+<li class="circle">io.micronaut.mcp.client.langchain4j.<a href="io/micronaut/mcp/client/langchain4j/McpClientConnectingException.html" class="type-name-link" title="class in io.micronaut.mcp.client.langchain4j">McpClientConnectingException</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="circle">io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" class="type-name-link" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></li>
 <li class="circle">io.modelcontextprotocol.server.http.tck.async.<a href="io/modelcontextprotocol/server/http/tck/async/Tools.html" class="type-name-link" title="class in io.modelcontextprotocol.server.http.tck.async">Tools</a></li>
 <li class="circle">io.modelcontextprotocol.server.http.tck.<a href="io/modelcontextprotocol/server/http/tck/ToolsCallTest.html" class="type-name-link" title="class in io.modelcontextprotocol.server.http.tck">ToolsCallTest</a></li>
@@ -127,6 +147,16 @@ loadScripts(document, 'script');</script>
 <li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html" class="type-name-link external-link" title="class or interface in java.lang">AutoCloseable</a>
 <ul>
 <li class="circle">io.micronaut.mcp.server.<a href="io/micronaut/mcp/server/McpHttpServer.html" class="type-name-link" title="interface in io.micronaut.mcp.server">McpHttpServer</a></li>
+</ul>
+</li>
+<li class="circle">java.util.function.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/BiFunction.html" class="type-name-link external-link" title="class or interface in java.util.function">BiFunction</a>&lt;T,<wbr>U,<wbr>R&gt;
+<ul>
+<li class="circle">io.micronaut.mcp.client.langchain4j.<a href="io/micronaut/mcp/client/langchain4j/McpToolNameMapper.html" class="type-name-link" title="interface in io.micronaut.mcp.client.langchain4j">McpToolNameMapper</a></li>
+</ul>
+</li>
+<li class="circle">java.util.function.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/BiPredicate.html" class="type-name-link external-link" title="class or interface in java.util.function">BiPredicate</a>&lt;T,<wbr>U&gt;
+<ul>
+<li class="circle">io.micronaut.mcp.client.langchain4j.<a href="io/micronaut/mcp/client/langchain4j/McpToolFilter.html" class="type-name-link" title="interface in io.micronaut.mcp.client.langchain4j">McpToolFilter</a></li>
 </ul>
 </li>
 <li class="circle">io.micronaut.mcp.server.tools.fetch.<a href="io/micronaut/mcp/server/tools/fetch/FetchTool.html" class="type-name-link" title="interface in io.micronaut.mcp.server.tools.fetch">FetchTool</a></li>
@@ -154,7 +184,12 @@ loadScripts(document, 'script');</script>
 </li>
 <li class="circle">io.micronaut.core.naming.Named
 <ul>
+<li class="circle">io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientConnectionConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf.client">McpClientConnectionConfiguration</a>
+<ul>
 <li class="circle">io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf.client">McpClientHttpConfiguration</a></li>
+<li class="circle">io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientStdioConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf.client">McpClientStdioConfiguration</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="circle">io.micronaut.mcp.server.tools.search.<a href="io/micronaut/mcp/server/tools/search/SearchTool.html" class="type-name-link" title="interface in io.micronaut.mcp.server.tools.search">SearchTool</a></li>

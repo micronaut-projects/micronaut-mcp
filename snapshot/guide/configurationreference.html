@@ -51,9 +51,43 @@
             </div>
 <div class="sect2">
 <h3 id="_micronaut_mcp_client_langchain4j_config_properties">Micronaut Mcp Client Langchain4j Config Properties</h3>
+<a id="io.micronaut.mcp.client.langchain4j.health.McpClientHealthConfiguration" href="#io.micronaut.mcp.client.langchain4j.health.McpClientHealthConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/client/langchain4j/health/McpClientHealthConfiguration.html">McpClientHealthConfiguration</a></caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>endpoints.health.mcp.enabled</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether the <code>mcp</code> health indicator pings the MCP servers. When it is enabled, a server that cannot be reached
+ makes the health endpoint answer 503. Default value <code>true</code>.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>endpoints.health.mcp.timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long the <code>mcp</code> health indicator waits for the MCP servers to answer its pings. Default value <code>10s</code>.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-after: always;"></div>
 <a id="io.micronaut.mcp.client.langchain4j.stdio.StdioMcpTransportConfigurationProperties" href="#io.micronaut.mcp.client.langchain4j.stdio.StdioMcpTransportConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 1. Configuration Properties for <a href="../api/io/micronaut/mcp/client/langchain4j/stdio/StdioMcpTransportConfigurationProperties.html">StdioMcpTransportConfigurationProperties</a></caption>
+<caption class="title">Table 2. Configuration Properties for <a href="../api/io/micronaut/mcp/client/langchain4j/stdio/StdioMcpTransportConfigurationProperties.html">StdioMcpTransportConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -72,7 +106,8 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>langchain4j.mcp.client.transport.stdio.commands</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.util.List</p></td>
-<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Deprecated: declares a STDIO connection named <code>stdio</code>, declare it with <code>micronaut.mcp.client.stdio.stdio.command</code>
+ instead.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
@@ -83,7 +118,7 @@
 <h3 id="_micronaut_mcp_config_properties">Micronaut Mcp Config Properties</h3>
 <a id="io.micronaut.mcp.primitives.prompts.ClasspathPrompt" href="#io.micronaut.mcp.primitives.prompts.ClasspathPrompt">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 2. Configuration Properties for <a href="../api/io/micronaut/mcp/primitives/prompts/ClasspathPrompt.html">ClasspathPrompt</a></caption>
+<caption class="title">Table 3. Configuration Properties for <a href="../api/io/micronaut/mcp/primitives/prompts/ClasspathPrompt.html">ClasspathPrompt</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -140,7 +175,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.mcp.conf.client.McpClientConfigurationProperties" href="#io.micronaut.mcp.conf.client.McpClientConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 3. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/client/McpClientConfigurationProperties.html">McpClientConfigurationProperties</a></caption>
+<caption class="title">Table 4. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/client/McpClientConfigurationProperties.html">McpClientConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -165,7 +200,7 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.transport</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/mcp/conf/Transport.html">Transport</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Set the MCP Transport. It defaults to HTTP.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Deprecated, has no effect: declare the connections under <code>micronaut.mcp.client.http</code> or <code>micronaut.mcp.client.stdio</code>.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
@@ -173,7 +208,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.mcp.conf.client.McpClientHttpConfigurationProperties" href="#io.micronaut.mcp.conf.client.McpClientHttpConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 4. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/client/McpClientHttpConfigurationProperties.html">McpClientHttpConfigurationProperties</a></caption>
+<caption class="title">Table 5. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/client/McpClientHttpConfigurationProperties.html">McpClientHttpConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -190,6 +225,27 @@
 </thead>
 <tbody>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.initialization-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer the initialization. Only used by the LangChain4j client, whose default
+ is 30 seconds.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.request-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer an MCP request, such as a tool call or a ping. Only used by the
+ LangChain4j client, whose defaults are 60 seconds for requests and 10 seconds for pings.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.auto-health-check</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether the LangChain4j client checks periodically that the server is reachable, and reconnects when it is not.
+ Default value <code>true</code>.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.url</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.net.URI</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The MCP Server URL</p></td>
@@ -198,7 +254,9 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.timeout</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The duration to wait for server responses before timing out requests.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The timeout of the HTTP calls of the LangChain4j transport. The Java SDK client uses it as the timeout of an MCP
+ request. To limit how long an MCP request, such as a tool call, may take with the LangChain4j client, set
+ <code>request-timeout</code>.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
@@ -213,12 +271,78 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">Whether to log responses. Default value <code>false</code>.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.headers</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The headers sent with every request, such as <code>Authorization</code>. Only used by the LangChain4j client.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-after: always;"></div>
+<a id="io.micronaut.mcp.conf.client.McpClientStdioConfigurationProperties" href="#io.micronaut.mcp.conf.client.McpClientStdioConfigurationProperties">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 6. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/client/McpClientStdioConfigurationProperties.html">McpClientStdioConfigurationProperties</a></caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.stdio.*.initialization-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer the initialization. Only used by the LangChain4j client, whose default
+ is 30 seconds.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.stdio.*.request-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer an MCP request, such as a tool call or a ping. Only used by the
+ LangChain4j client, whose defaults are 60 seconds for requests and 10 seconds for pings.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.stdio.*.auto-health-check</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether the LangChain4j client checks periodically that the server is reachable, and reconnects when it is not.
+ Default value <code>true</code>.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.stdio.*.command</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.List</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The command that starts the server, and its arguments. Required.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.stdio.*.environment</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The environment variables of the server process, in addition to those of the application.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.stdio.*.log-events</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to log the messages exchanged with the server. Default value <code>false</code>.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
 </tbody>
 </table>
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.mcp.conf.server.McpServerConfigurationProperties" href="#io.micronaut.mcp.conf.server.McpServerConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 5. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/McpServerConfigurationProperties.html">McpServerConfigurationProperties</a></caption>
+<caption class="title">Table 7. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/McpServerConfigurationProperties.html">McpServerConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -263,7 +387,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.mcp.conf.server.McpServerInfoConfigurationProperties" href="#io.micronaut.mcp.conf.server.McpServerInfoConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 6. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/McpServerInfoConfigurationProperties.html">McpServerInfoConfigurationProperties</a></caption>
+<caption class="title">Table 8. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/McpServerInfoConfigurationProperties.html">McpServerInfoConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -326,7 +450,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.mcp.conf.server.PromptsConfigurationProperties" href="#io.micronaut.mcp.conf.server.PromptsConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 7. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/PromptsConfigurationProperties.html">PromptsConfigurationProperties</a></caption>
+<caption class="title">Table 9. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/PromptsConfigurationProperties.html">PromptsConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -355,7 +479,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.mcp.conf.server.ResourcesConfigurationProperties" href="#io.micronaut.mcp.conf.server.ResourcesConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 8. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/ResourcesConfigurationProperties.html">ResourcesConfigurationProperties</a></caption>
+<caption class="title">Table 10. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/ResourcesConfigurationProperties.html">ResourcesConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -392,7 +516,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.mcp.conf.server.ToolsConfigurationProperties" href="#io.micronaut.mcp.conf.server.ToolsConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 9. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/ToolsConfigurationProperties.html">ToolsConfigurationProperties</a></caption>
+<caption class="title">Table 11. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/ToolsConfigurationProperties.html">ToolsConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -421,7 +545,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.mcp.conf.server.TransportSecurityConfigurationProperties" href="#io.micronaut.mcp.conf.server.TransportSecurityConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 10. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/TransportSecurityConfigurationProperties.html">TransportSecurityConfigurationProperties</a></caption>
+<caption class="title">Table 12. Configuration Properties for <a href="../api/io/micronaut/mcp/conf/server/TransportSecurityConfigurationProperties.html">TransportSecurityConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -463,7 +587,7 @@
 <h3 id="_micronaut_mcp_server_java_sdk_config_properties">Micronaut Mcp Server Java Sdk Config Properties</h3>
 <a id="io.micronaut.mcp.server.observability.MetricsConfigurationProperties" href="#io.micronaut.mcp.server.observability.MetricsConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 11. Configuration Properties for <a href="../api/io/micronaut/mcp/server/observability/MetricsConfigurationProperties.html">MetricsConfigurationProperties</a></caption>
+<caption class="title">Table 13. Configuration Properties for <a href="../api/io/micronaut/mcp/server/observability/MetricsConfigurationProperties.html">MetricsConfigurationProperties</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">

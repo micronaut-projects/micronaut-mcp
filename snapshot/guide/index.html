@@ -312,6 +312,21 @@
 <li>
 <p>A server with <code>list-changed</code> set to <code>true</code> for tools, prompts or resources advertises that capability even when it has none of them, so they can be added at runtime. Clients may then list them and get an empty list. Set <code>list-changed</code> to <code>false</code> if your clients should not see an empty capability.</p>
 </li>
+<li>
+<p>The LangChain4j MCP client connects to every connection of <code>micronaut.mcp.client.http</code> and <code>micronaut.mcp.client.stdio</code> together. <code>micronaut.mcp.client.transport</code> is deprecated and no longer selects the transport: with <code>STDIO</code>, the HTTP connections, including the <code>embeddedServer</code> connection of an application that is itself an HTTP MCP server, are no longer left out, so their tools reach the <code>McpToolProvider</code>. Remove the HTTP connections you do not want, and leave out the tools of <code>embeddedServer</code> with an <code>McpToolFilter</code>. See <a href="#clientLangchain4j">LangChain4j MCP Client</a>.</p>
+</li>
+<li>
+<p>The <code>McpToolProvider</code> of the LangChain4j client skips the servers that cannot be reached instead of failing, and connects to each server when its client is first used rather than when the provider is created. While one request creates the client of a connection, the other requests get no tools from that server instead of waiting.</p>
+</li>
+<li>
+<p>With Micronaut Management, the new <code>mcp</code> health indicator of the LangChain4j client is down when any server cannot be reached, so <code>/health</code> and <code>/health/readiness</code> answer <code>503</code>. Disable it with <code>endpoints.health.mcp.enabled=false</code>.</p>
+</li>
+<li>
+<p>The LangChain4j <code>StdioMcpTransport</code> and <code>StreamableHttpMcpTransport</code> beans are prototypes owned and closed by their client, instead of singletons. Inject the <code>McpClient</code> of a connection rather than its transport.</p>
+</li>
+<li>
+<p>The application fails to start when two MCP client connections have the same name, when an HTTP connection has no <code>url</code>, or when a STDIO connection has no <code>command</code>.</p>
+</li>
 </ul>
 </div>
 </div>
@@ -5948,6 +5963,27 @@ class MyResourceTemplates {
 </thead>
 <tbody>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.initialization-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer the initialization. Only used by the LangChain4j client, whose default
+ is 30 seconds.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.request-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer an MCP request, such as a tool call or a ping. Only used by the
+ LangChain4j client, whose defaults are 60 seconds for requests and 10 seconds for pings.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.auto-health-check</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether the LangChain4j client checks periodically that the server is reachable, and reconnects when it is not.
+ Default value <code>true</code>.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.url</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.net.URI</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The MCP Server URL</p></td>
@@ -5956,7 +5992,9 @@ class MyResourceTemplates {
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.timeout</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The duration to wait for server responses before timing out requests.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The timeout of the HTTP calls of the LangChain4j transport. The Java SDK client uses it as the timeout of an MCP
+ request. To limit how long an MCP request, such as a tool call, may take with the LangChain4j client, set
+ <code>request-timeout</code>.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
@@ -5969,6 +6007,12 @@ class MyResourceTemplates {
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.log-responses</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Whether to log responses. Default value <code>false</code>.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.headers</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The headers sent with every request, such as <code>Authorization</code>. Only used by the LangChain4j client.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
@@ -6011,6 +6055,21 @@ runtime = [
 </div>
 </div>
 </p>
+</div>
+<div class="paragraph">
+<p>It creates a client for each HTTP connection of <code>micronaut.mcp.client.http</code>, using its <code>url</code>, and its <code>timeout</code> as the request timeout of the client.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The <code>headers</code>, <code>initialization-timeout</code>, <code>request-timeout</code>, <code>auto-health-check</code>, <code>log-requests</code> and <code>log-responses</code> settings of a connection, and the STDIO connections of <code>micronaut.mcp.client.stdio</code>, are only used by the <a href="#clientLangchain4j">LangChain4j MCP Client</a>.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>Additionally, if you are building an <a href="#serverJavaSdk">MCP Server</a>, you can test it by injecting a bean of type <code>io.modelcontextprotocol.client.McpSyncClient</code> or <code>io.modelcontextprotocol.client.McpAsyncClient</code> in your tests. The MCP Client pointing to your MCP Server has a <a href="https://docs.micronaut.io/latest/guide/#qualifiers">name qualifier</a> with value <code>embeddedServer</code>.</p>
@@ -6059,14 +6118,425 @@ runtime = [
 </div>
 </p>
 </div>
+<div class="sect2">
+<h3 id="_connections">Connections</h3>
 <div class="paragraph">
-<p>Additionally, if you are building an MCP Server, you can test it by injecting a bean of type <code>dev.langchain4j.mcp.client.McpClient</code> in your tests.
-The MCP Client pointing to your MCP Server has a name qualifier with value <code>embeddedServer</code>.</p>
+<p>Declare a named connection for each MCP server, over Streamable HTTP or STDIO. Connections of both transports can be used together:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.mcp.client.http.weather.url=https://weather.example.com/mcp
+micronaut.mcp.client.http.weather.headers.Authorization=Bearer ${WEATHER_TOKEN}
+micronaut.mcp.client.http.weather.request-timeout=30s
+micronaut.mcp.client.stdio.files.command[0]=npx
+micronaut.mcp.client.stdio.files.command[1]=-y
+micronaut.mcp.client.stdio.files.command[2]=@modelcontextprotocol/server-filesystem@&lt;version&gt;
+micronaut.mcp.client.stdio.files.command[3]=/tmp
+micronaut.mcp.client.stdio.files.environment.DEBUG=false
+micronaut.mcp.client.stdio.files.initialization-timeout=2m
+micronaut.mcp.client.stdio.files.auto-health-check=false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  mcp:
+    client:
+      http:
+        weather:
+          url: https://weather.example.com/mcp
+          headers:
+            Authorization: Bearer ${WEATHER_TOKEN}
+          request-timeout: 30s
+      stdio:
+        files:
+          command:
+            - npx
+            - -y
+            - "@modelcontextprotocol/server-filesystem@&lt;version&gt;"
+            - /tmp
+          environment:
+            DEBUG: "false"
+          initialization-timeout: 2m
+          auto-health-check: false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.mcp.client.http.weather]
+url = "https://weather.example.com/mcp"
+request-timeout = "30s"
+
+[micronaut.mcp.client.http.weather.headers]
+Authorization = "Bearer ${WEATHER_TOKEN}"
+
+[micronaut.mcp.client.stdio.files]
+command = ["npx", "-y", "@modelcontextprotocol/server-filesystem@&lt;version&gt;", "/tmp"]
+initialization-timeout = "2m"
+auto-health-check = false
+
+[micronaut.mcp.client.stdio.files.environment]
+DEBUG = "false"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  mcp {
+    client {
+      http {
+        weather {
+          url = "https://weather.example.com/mcp"
+          headers {
+            Authorization = "Bearer ${WEATHER_TOKEN}"
+          }
+          requestTimeout = "30s"
+        }
+      }
+      stdio {
+        files {
+          command = ["npx", "-y", "@modelcontextprotocol/server-filesystem@&lt;version&gt;", "/tmp"]
+          environment {
+            DEBUG = "false"
+          }
+          initializationTimeout = "2m"
+          autoHealthCheck = false
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    mcp {
+      client {
+        http {
+          weather {
+            url = "https://weather.example.com/mcp"
+            headers {
+              Authorization = "Bearer ${WEATHER_TOKEN}"
+            }
+            request-timeout = "30s"
+          }
+        }
+        stdio {
+          files {
+            command = ["npx", "-y", "@modelcontextprotocol/server-filesystem@&lt;version&gt;", "/tmp"]
+            environment {
+              DEBUG = "false"
+            }
+            initialization-timeout = "2m"
+            auto-health-check = false
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "mcp": {
+      "client": {
+        "http": {
+          "weather": {
+            "url": "https://weather.example.com/mcp",
+            "headers": {
+              "Authorization": "Bearer ${WEATHER_TOKEN}"
+            },
+            "request-timeout": "30s"
+          }
+        },
+        "stdio": {
+          "files": {
+            "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem@&lt;version&gt;", "/tmp"],
+            "environment": {
+              "DEBUG": "false"
+            },
+            "initialization-timeout": "2m",
+            "auto-health-check": false
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
 </div>
 <div class="paragraph">
-<p>To customize client creation for your application&#8217;s needs, define a
+<p>The name of a connection declared in configuration is normalized to kebab case: <code>micronaut.mcp.client.http.internalAdmin</code> declares the connection <code>internal-admin</code>, which is also the key of its client. The <code>embeddedServer</code> connection keeps its name.</p>
+</div>
+<div class="paragraph">
+<p>Each connection needs a name that is unique across <code>micronaut.mcp.client.http</code> and <code>micronaut.mcp.client.stdio</code>. The application fails to start when two connections have the same name, when an HTTP connection has no <code>url</code>, or when a STDIO connection has no <code>command</code>.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Settings of a connection</caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Setting</th>
+<th class="tableblock halign-left valign-top">Transport</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>url</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">HTTP</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The URL of the MCP endpoint of the server. Required.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>headers</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">HTTP</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The headers sent with every request, such as <code>Authorization</code>.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">HTTP</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The timeout of the HTTP calls of the transport.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>log-requests</code>, <code>log-responses</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">HTTP</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to log the HTTP requests and responses.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>false</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>command</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">STDIO</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The command that starts the server, and its arguments. Required.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>environment</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">STDIO</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The environment variables of the server process, in addition to those of the application.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>log-events</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">STDIO</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to log the messages exchanged with the server.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>false</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>initialization-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Both</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer the initialization.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>30s</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>request-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Both</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer an MCP request, such as a tool call or a ping.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>60s</code>, and <code>10s</code> for pings</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>auto-health-check</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Both</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether the client checks periodically that its server is reachable, and reconnects when it is not.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>true</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Keys of <code>headers</code> and <code>environment</code> keep their case when set in a configuration file. When they are set with environment variables, such as <code>MICRONAUT_MCP_CLIENT_STDIO_FILES_ENVIRONMENT_DEBUG</code>, they are lower-cased, so the server process receives <code>debug</code> rather than <code>DEBUG</code>. Set keys whose case matters in a configuration file.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The process of a STDIO connection inherits the environment of the application, in addition to its <code>environment</code>. Applications that keep secrets in their environment make them available to that process, so only start servers you trust, pin their version, for example <code>@modelcontextprotocol/server-filesystem@&lt;version&gt;</code> rather than the latest release that <code>npx</code> would download, and consider starting them with a cleared environment, for example <code>command: [env, -i, "PATH=/usr/bin:/bin", npx, &#8230;&#8203;]</code>. Pass secrets to a server in its <code>environment</code> rather than in its <code>command</code>, as the command is logged at debug level.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>For STDIO connections, a reconnection by <code>auto-health-check</code> starts a new server process, so consider disabling it for servers that are slow to start, such as those started with <code>npx</code>, or that cannot run twice.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_using_the_tools">Using the tools</h3>
+<div class="paragraph">
+<p>For each connection there is a <code>dev.langchain4j.mcp.client.McpClient</code> bean, qualified by the name of the connection, which is also the key of the client (<code>client.key()</code>).</p>
+</div>
+<div class="paragraph">
+<p>A <code>dev.langchain4j.mcp.McpToolProvider</code> bean provides the tools of every connection to LangChain4j AI services. A <code>McpToolProvider</code> bean qualified by the name of a connection provides only the tools of that connection. The primary provider also includes tools from application-defined <code>McpClient</code> beans. If your application supplies an <code>McpTransport</code> bean, Micronaut creates its <code>DefaultMcpClient.Builder</code> and <code>McpClient</code> beans with the same qualifier.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+LangChain4j rejects two tools with the same name, and the primary <code>McpToolProvider</code> gives the tools of every connection under their own names. When two servers have a tool with the same name, every call that uses the primary provider fails, and a server can cause it at any time by renaming or adding a tool. Unless you trust every server, prefix the tools with the name of their connection with an <code>McpToolNameMapper</code>, as shown below, or use the provider of each connection.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+The primary <code>McpToolProvider</code> gives the model the tools, and the tool descriptions, of every connection at once. A server you do not fully trust can use its descriptions to steer the model into calling the tools of another connection. Give an AI service the <code>McpToolProvider</code> qualified by the name of the connection it needs, or restrict the tools with an <code>McpToolFilter</code>, rather than the primary provider.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_customizing_the_tools">Customizing the tools</h3>
+<div class="paragraph">
+<p>Declare one bean of each of these types to customize the tools of all the tool providers. Use the key of the client, the normalized name of its connection, to treat connections differently. Prefer a filter that lists the connections it allows to one that lists those it rejects, so that a name that does not match hides tools rather than exposes them:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>io.micronaut.mcp.client.langchain4j.McpToolFilter</code> selects the tools that the tool providers provide.</p>
+</li>
+<li>
+<p><code>io.micronaut.mcp.client.langchain4j.McpToolNameMapper</code> names them.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For example, the following beans prefix every tool with the name of its connection, so that the tools of different servers cannot clash, and only provide the tools of the connections they list, which leaves out, for example, the <code>embeddedServer</code> connection of an application that is itself an MCP server:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Factory
+class McpToolsFactory {
+
+    @Singleton
+    McpToolNameMapper prefixWithConnection() {
+        return (client, tool) -&gt; client.key() + "__" + tool.name();
+    }
+
+    @Singleton
+    McpToolFilter onlyListedConnections() {
+        return (client, tool) -&gt; Set.of("weather", "files").contains(client.key());
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Every <code>dev.langchain4j.mcp.client.McpClientListener</code> bean, and a <code>dev.langchain4j.mcp.client.logging.McpLogMessageHandler</code> bean, are registered with every client.</p>
+</div>
+<div class="paragraph">
+<p>To customize client creation further, define a
 <a href="https://docs.micronaut.io/latest/api/io/micronaut/context/event/BeanCreatedEventListener.html">BeanCreatedEventListener</a>
-for <code>StreamableHttpMcpTransport.Builder</code>.</p>
+for <code>DefaultMcpClient.Builder</code>, <code>StreamableHttpMcpTransport.Builder</code> or <code>StdioMcpTransport.Builder</code>. A <code>BeanCreatedEventListener</code> for <code>McpToolProvider.Builder</code> customizes the tool providers, both the provider of every connection and the provider of each connection.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_unreachable_servers">Unreachable servers</h3>
+<div class="paragraph">
+<p>A client is created when it is first used, which initializes the connection to its server, and starts the process of a STDIO server. The <code>McpToolProvider</code> beans skip the servers that cannot be reached, so an unreachable server does not prevent the application from starting. Creating a client that failed is attempted again the next time the tools are provided. A warning names the connection when its client cannot be created, and an information message when it is created again; the failures in between are logged at debug level.</p>
+</div>
+<div class="paragraph">
+<p>Only one attempt to create the client of a connection runs at a time. The requests made while it runs do not wait for it: they get no tools from that server. The request that makes an attempt waits up to twice the <code>initialization-timeout</code> of the connection, as the client tries two versions of the protocol, once for each connection whose server cannot be reached, so set a short <code>initialization-timeout</code> for servers that may be unavailable. Each attempt to create the client of a STDIO connection starts a new server process.</p>
+</div>
+<div class="paragraph">
+<p>By default, each client checks its server periodically with a thread of its own, see <code>auto-health-check</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_health">Health</h3>
+<div class="paragraph">
+<p>With Micronaut Management, the <code>mcp</code> health indicator pings every server concurrently, and reports each connection whose server cannot be reached, or whose client cannot be created, as down. The servers that do not answer within <code>endpoints.health.mcp.timeout</code> (default <code>10s</code>) are reported down. Disable the indicator with <code>endpoints.health.mcp.enabled=false</code>.</p>
+</div>
+<div class="paragraph">
+<p>The first health check creates the clients that are not created yet, so it starts the processes of the STDIO servers, for example an <code>npx</code> download. While a request is creating the client of a connection, the health check reports that connection down without waiting.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Health checks are not authenticated by default, so anyone who can reach the health endpoint can make the indicator attempt to create the clients that failed, which starts the process of a STDIO server again. Require authentication with <code>endpoints.health.sensitive=true</code>, or serve the management endpoints on a separate port with <code>endpoints.all.port</code>, when the health endpoint is reachable from untrusted networks.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+When any server cannot be reached, the <code>mcp</code> indicator is down, so the <code>/health</code> and <code>/health/readiness</code> endpoints answer <code>503 Service Unavailable</code>; <code>/health/liveness</code> is not affected. A readiness probe on these endpoints takes the application out of service when a server that it can do without is down. The indicator also pings the <code>embeddedServer</code> connection of an application that is itself an MCP server, without credentials, so it is down when that endpoint requires authentication. In these cases, disable the indicator.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_migrating_from_2_1">Migrating from 2.1</h3>
+<div class="paragraph">
+<p>The <code>micronaut.mcp.client.transport</code> property is deprecated and no longer selects the transport: the transport of a connection is set by where it is declared, and connections of both transports can be used together. Its only remaining effect is described below. In particular, <code>micronaut.mcp.client.transport: STDIO</code> no longer removes the <code>embeddedServer</code> connection of an application that is itself an HTTP MCP server, so the tool providers provide the application&#8217;s own tools; leave them out with an <code>McpToolFilter</code>, as shown above.</p>
+</div>
+<div class="paragraph">
+<p>The <code>langchain4j.mcp.client.transport.stdio.commands</code> property is deprecated: as in 2.1, it declares a STDIO connection named <code>stdio</code> only when <code>micronaut.mcp.client.transport</code> is <code>STDIO</code>, and it is ignored otherwise. Declare the connection under <code>micronaut.mcp.client.stdio</code> instead, and note that the property there is <code>command</code>, not <code>commands</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml"># Before
+micronaut.mcp.client.transport: STDIO
+langchain4j.mcp.client.transport.stdio.commands: [npx, -y, "@modelcontextprotocol/server-filesystem@&lt;version&gt;", /tmp]
+
+# After
+micronaut.mcp.client.stdio.stdio.command: [npx, -y, "@modelcontextprotocol/server-filesystem@&lt;version&gt;", /tmp]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The application logs a warning when it uses either deprecated property. See also the <a href="#breaks">breaking changes</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_testing_an_mcp_server">Testing an MCP server</h3>
+<div class="paragraph">
+<p>If you are building an MCP Server, you can test it by injecting a bean of type <code>dev.langchain4j.mcp.client.McpClient</code> in your tests.
+The MCP Client pointing to your MCP Server has a name qualifier with value <code>embeddedServer</code>.</p>
+</div>
 </div>
 
 <h1 id="repository"><a class="anchor" href="#repository"></a>6 Repository</h1>
