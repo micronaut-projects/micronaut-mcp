@@ -4,9 +4,9 @@ plugins {
 }
 dependencies {
     compileOnly(mn.micronaut.http.server)
-    compileOnly(projects.micronautMcpServerJavaSdk)
-    api(libs.managed.mcp.java.sdk)
+    api(projects.micronautMcpJavaSdkJson)
     api(projects.micronautMcp)
+    runtimeOnly(mnSerde.micronaut.serde.jackson)
     testAnnotationProcessor(mn.micronaut.inject.java)
     testAnnotationProcessor(mnSerde.micronaut.serde.processor)
     testImplementation(mnSerde.micronaut.serde.jackson)
