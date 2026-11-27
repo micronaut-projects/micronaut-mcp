@@ -44,6 +44,16 @@ class MicrometerMcpServerObserverTest {
         assertEquals(2, meterRegistry.find(MicrometerMcpServerObserver.METER_NAME).timers().size());
     }
 
+    @Test
+    void nextOperationRegistersANewTimerAfterTheRegistryIsCleared() {
+        observer.start("tools/call", "add").stop(null);
+        meterRegistry.clear();
+
+        observer.start("tools/call", "add").stop(null);
+
+        assertEquals(1, timer("tools/call", "add", "none").count());
+    }
+
     private Timer timer(String method, String name, String errorType) {
         Timer timer = meterRegistry.find(MicrometerMcpServerObserver.METER_NAME)
             .tag(MicrometerMcpServerObserver.TAG_METHOD, method)

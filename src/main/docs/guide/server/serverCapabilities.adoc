@@ -1,6 +1,5 @@
-Based on the primitive beans you defined, the `list-changed` and `subscribe` properties, and the transport, Micronaut instantiates a bean of type `McpSchema.ServerCapabilities`.
+The injectable `McpSchema.ServerCapabilities` bean exposes the capabilities configured through your primitive beans and the `list-changed` and `subscribe` properties. You can customize these capabilities with a https://docs.micronaut.io/latest/guide/#events[`BeanCreatedEventListener`] for `McpSchema.ServerCapabilities.Builder`.
 
-Moreover, you can create a https://docs.micronaut.io/latest/guide/#events[`BeanCreatedEventListener`] for `McpSchema.ServerCapabilities.Builder`
-to further customize the definition of the capabilities.
+To read the capabilities clients receive in the `initialize` response, call `getServerCapabilities()` on the active <<serverInstance, SDK server bean>>. For example, with HTTP and `micronaut.mcp.server.tools.list-changed=true`, the injectable capabilities bean reports `tools.listChanged` as `true` and the server advertises it as `false`.
 
-With the HTTP transport, the server cannot send notifications outside the response to a request, so it advertises `listChanged` and `subscribe` as `false`, including when a `BeanCreatedEventListener` of `McpSchema.ServerCapabilities.Builder` sets them. Only a `BeanCreatedEventListener` of the server specification that sets the capabilities itself overrides this, and clients would then wait for notifications that never arrive. See <<dynamicPrimitives, Adding and Removing Primitives at Runtime>>.
+The HTTP server turns off `listChanged` and `subscribe` because it can send notifications only during a request. A `BeanCreatedEventListener` that replaces the capabilities on the server specification itself can override these flags, but clients would then wait for notifications that never arrive. See <<dynamicPrimitives, Adding and Removing Primitives at Runtime>>.

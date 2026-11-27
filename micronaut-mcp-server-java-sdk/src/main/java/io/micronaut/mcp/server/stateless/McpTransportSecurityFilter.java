@@ -36,6 +36,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -205,23 +206,28 @@ final class McpTransportSecurityFilter implements Ordered {
 
     /**
      * Whether the origin ends at the given index, or continues with nothing but a port ({@code :digits}) and an
-     * optional trailing slash.
+     * optional trailing slash. An explicit port must be between 1 and 65535.
      */
     private static boolean isPortSuffix(String origin, int index) {
         int end = origin.endsWith("/") ? origin.length() - 1 : origin.length();
-        if (index == end) {
-            return true;
+        if (index >= end) {
+            return index == end;
         }
         if (origin.charAt(index) != ':' || index + 1 == end) {
             return false;
         }
+        int port = 0;
         for (int i = index + 1; i < end; i++) {
             char c = origin.charAt(i);
             if (c < '0' || c > '9') {
                 return false;
             }
+            port = port * 10 + c - '0';
+            if (port > MAX_PORT) {
+                return false;
+            }
         }
-        return true;
+        return port > 0;
     }
 
     /**
@@ -230,9 +236,9 @@ final class McpTransportSecurityFilter implements Ordered {
      * @throws ConfigurationException if it is neither {@code *} nor an origin, so that it could never match
      */
     private static String allowedOrigin(String entry) {
-        String origin = normalize(entry);
+        String origin = entry.trim().toLowerCase(Locale.ROOT);
         if (origin.equals(WILDCARD) || isOrigin(origin)) {
-            return origin;
+            return normalize(origin);
         }
         String prefix = "Invalid " + ALLOWED_ORIGINS + " entry '" + entry + "': ";
         if (origin.equals("null")) {
@@ -248,35 +254,17 @@ final class McpTransportSecurityFilter implements Ordered {
             + (example != null ? ", for example '" + example + "'" : ""));
     }
 
-    /**
-     * Whether a normalized value is a complete origin: a non-empty scheme, a host and an optional port between 1 and
-     * 65535, with nothing after them, not even a {@code /}, so that it can match the origin a browser sends.
-     */
     private static boolean isOrigin(String origin) {
-        int schemeEnd = origin.indexOf(SCHEME_SEPARATOR);
-        // The scheme must not be empty
-        if (schemeEnd <= 0 || origin.endsWith("/")) {
+        if (!isHost(host(origin))) {
             return false;
         }
-        String host = host(origin);
-        if (!isHost(host)) {
+        try {
+            // The host scan enforces the origin shape. URI additionally validates the scheme and IPv6 literals.
+            URI uri = URI.create(origin);
+            return uri.isAbsolute() && uri.getRawAuthority() != null;
+        } catch (IllegalArgumentException e) {
             return false;
         }
-        int hostEnd = schemeEnd + SCHEME_SEPARATOR.length() + host.length();
-        return hostEnd == origin.length() || (origin.charAt(hostEnd) == ':' && isPort(origin.substring(hostEnd + 1)));
-    }
-
-    private static boolean isPort(String port) {
-        if (port.isEmpty() || port.length() > 5) {
-            return false;
-        }
-        for (int i = 0; i < port.length(); i++) {
-            if (port.charAt(i) < '0' || port.charAt(i) > '9') {
-                return false;
-            }
-        }
-        int value = Integer.parseInt(port);
-        return value >= 1 && value <= MAX_PORT;
     }
 
     /**

@@ -20,6 +20,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import reactor.core.publisher.Mono;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -137,6 +138,11 @@ abstract class AbstractRequestContextStdioTest {
                 .maxTokens(10)
                 .build());
             return ((McpSchema.TextContent) greeting.content()).text() + " " + name.content().get("name") + " (" + greeting.stopReason() + ")";
+        }
+
+        @Tool
+        Mono<String> deferredGreet(McpRequestContext context) {
+            return Mono.fromCallable(() -> greet(context));
         }
 
         // A reactive server invokes a method without an executor on the thread that reads the messages of the client
