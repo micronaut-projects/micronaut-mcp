@@ -203,8 +203,9 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                           McpSchema.ReadResourceRequest request) {
         // Matched where the method runs, on its executor if it declares one, so that a slow match of an untrusted URI
         // does not run on the transport thread
-        return m.call(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
-            mcpTransportContext, result -> map(mimeType, request, result), e -> handleReadFailure(m, e));
+        return observed(McpSchema.METHOD_RESOURCES_READ, uriTemplate.uriTemplate(),
+            () -> m.call(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
+                mcpTransportContext, result -> map(mimeType, request, result), e -> handleReadFailure(m, e)));
     }
 
     private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
@@ -213,8 +214,9 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                                      Object mcpTransportContext,
                                                                      McpSchema.ReadResourceRequest request) {
         // Matched where the method runs, see invokeAndMap
-        return m.callAsync(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
-            result -> map(mimeType, request, result), e -> handleReadFailure(m, e));
+        return observedAsync(McpSchema.METHOD_RESOURCES_READ, uriTemplate.uriTemplate(),
+            () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
+                result -> map(mimeType, request, result), e -> handleReadFailure(m, e)));
     }
 
     private <R> R handleReadFailure(Method<?> method, Throwable error) {

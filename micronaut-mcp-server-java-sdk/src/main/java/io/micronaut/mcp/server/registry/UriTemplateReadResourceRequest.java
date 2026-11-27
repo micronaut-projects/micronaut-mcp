@@ -232,11 +232,12 @@ record UriTemplateReadResourceRequest(
     /**
      * A compiled URI template.
      *
+     * @param uriTemplate The URI template as declared, which names the template in observations
      * @param matchTemplate The template the URIs are matched against
      * @param reservedVariables The names of the variables expanded with the reserved ({@code +}) operator
      * @param simplePathPattern A path pre-check for templates with only simple variables and no reserved literals
      */
-    record Template(UriMatchTemplate matchTemplate, Set<String> reservedVariables, @Nullable Pattern simplePathPattern) {
+    record Template(String uriTemplate, UriMatchTemplate matchTemplate, Set<String> reservedVariables, @Nullable Pattern simplePathPattern) {
         private static final String UNMATCHABLE_CHARS = "#(!{)&;+";
         private static final Pattern SIMPLE_EXPRESSION = Pattern.compile("\\{\\w++(?:,\\w++)*+}");
         private static final Pattern EXPRESSION = Pattern.compile("\\{[^}]*}");
@@ -260,7 +261,7 @@ record UriTemplateReadResourceRequest(
             }
             UriMatchTemplate matchTemplate = UriMatchTemplate.of(uriTemplate);
             Pattern simplePath = simpleVariablesOnly(uriTemplate) ? compileSimplePath(withoutTrailingSlashes(matchTemplate.toPathString())) : null;
-            return new Template(matchTemplate, Set.copyOf(reserved), simplePath);
+            return new Template(uriTemplate, matchTemplate, Set.copyOf(reserved), simplePath);
         }
 
         /**

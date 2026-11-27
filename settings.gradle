@@ -39,4 +39,5 @@ micronautBuild {
     importMicronautCatalog("micronaut-json-schema")
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-langchain4j")
+    importMicronautCatalog("micronaut-micrometer")
 }

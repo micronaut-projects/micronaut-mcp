@@ -3,6 +3,7 @@ plugins {
     id("io.micronaut.build.internal.mcp-module")
 }
 dependencies {
+    compileOnly(mnMicrometer.micrometer.core)
     api(mn.micronaut.json.core)
     implementation(mnSerde.micronaut.serde.api)
     compileOnly(mn.jackson.databind)
@@ -15,6 +16,9 @@ dependencies {
     implementation(mnJsonSchema.micronaut.json.schema.annotations)
     implementation(mnJsonSchema.micronaut.json.schema.validation)
     testImplementation(mnSecurity.micronaut.security)
+    testImplementation(mnMicrometer.micronaut.micrometer.core)
+    // ListAppender, to assert how failing observers are logged
+    testImplementation(mnLogging.logback.classic)
     api(mnJsonSchema.micronaut.json.schema.utils)
     api(mnValidation.validation)
     compileOnly(mn.micronaut.http.server)

@@ -59,6 +59,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "spec.name", value = "RegistryHandlersTest")
+// The executor metrics binder wraps executors, so CountingExecutor could not be injected by its type
+@Property(name = "micronaut.metrics.binders.executor.enabled", value = "false")
 @Property(name = "micronaut.executors.blocking.type", value = "fixed")
 @Property(name = "micronaut.executors.blocking.n-threads", value = "1")
 @MicronautTest(startApplication = false)
