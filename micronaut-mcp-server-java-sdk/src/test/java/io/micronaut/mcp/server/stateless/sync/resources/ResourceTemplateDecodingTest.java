@@ -9,7 +9,9 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.mcp.annotations.ResourceTemplate;
+import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -50,6 +52,19 @@ class ResourceTemplateDecodingTest {
     }
 
     @Test
+    void aQueryDoesNotAffectPathBinding() throws IOException {
+        String uri = "book://book/A%20Tale?edition=first&format=print";
+        Map<String, Object> contents = contents(read(uri));
+        assertEquals("Book A Tale", contents.get("text"));
+        assertEquals(uri, contents.get("uri"));
+    }
+
+    @Test
+    void aDeclarationCanUseTheLegacyDefaultTemplate() throws IOException {
+        assertEquals("Round 14", contents(read("pgn://round/14")).get("text"));
+    }
+
+    @Test
     void aReservedVariableMayContainAnEncodedSlash() throws IOException {
         Map<String, Object> contents = contents(read("file://files/docs%2Fread%20me.txt"));
         assertEquals("File docs/read me.txt", contents.get("text"));
@@ -58,16 +73,23 @@ class ResourceTemplateDecodingTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"book://book/%zz", "book://book/%FF", "book://book/AC%2FDC"})
-    void anInvalidValueIsAnInvalidParamsError(String uri) throws IOException {
+    void anInvalidValueBypassesTheApplicationMapper(String uri) throws IOException {
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error(read(uri)).get("code"));
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"book://book/C++", "book://book/a;b", "book://book/a?b"})
+    @ValueSource(strings = {"book://book/C++", "book://book/a;b"})
     void aUriRoutedToTheTemplateThatDoesNotMatchItIsAnInvalidParamsError(String uri) throws IOException {
         Map<String, Object> error = error(read(uri));
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.get("code"));
         assertTrue(error.get("message").toString().startsWith("The URI does not match the URI template book://book/{title}"), error.toString());
+    }
+
+    @Test
+    void anExceptionFromTheHandlerIsStillMapped() throws IOException {
+        Map<String, Object> error = error(read("book://unavailable/A%20Tale"));
+        assertEquals(McpSchema.ErrorCodes.INTERNAL_ERROR, error.get("code"));
+        assertEquals("Mapped: A Tale", error.get("message"));
     }
 
     @ParameterizedTest
@@ -101,10 +123,34 @@ class ResourceTemplateDecodingTest {
 
     @Requires(property = "spec.name", value = "ResourceTemplateDecodingTest")
     @Singleton
+    static class CatchAllMapper implements McpErrorExceptionMapper<RuntimeException> {
+        @Override
+        public boolean canMap(Class<? extends Throwable> clazz) {
+            return RuntimeException.class.isAssignableFrom(clazz);
+        }
+
+        @Override
+        public McpError map(RuntimeException exception) {
+            return McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message("Mapped: " + exception.getMessage()).build();
+        }
+    }
+
+    @Requires(property = "spec.name", value = "ResourceTemplateDecodingTest")
+    @Singleton
     static class Templates {
         @ResourceTemplate(uriTemplate = "book://book/{title}")
         String book(String title) {
             return "Book " + title;
+        }
+
+        @ResourceTemplate
+        String round(String round) {
+            return "Round " + round;
+        }
+
+        @ResourceTemplate(uriTemplate = "book://unavailable/{title}")
+        String unavailableBook(String title) {
+            throw McpError.builder(McpSchema.ErrorCodes.RESOURCE_NOT_FOUND).message(title).build();
         }
 
         @ResourceTemplate(uriTemplate = "file://files/{+path}", mimeType = "text/markdown")

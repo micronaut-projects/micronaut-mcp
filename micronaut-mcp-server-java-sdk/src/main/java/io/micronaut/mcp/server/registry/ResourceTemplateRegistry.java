@@ -17,7 +17,6 @@ package io.micronaut.mcp.server.registry;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.inject.ExecutableMethod;
@@ -159,9 +158,8 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
     }
 
     private static String uriTemplateValue(ExecutableMethod<?, ?> method) {
-        return method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY)
-            .orElseThrow(() -> new ConfigurationException("Missing required member uriTemplate in @ResourceTemplate on method "
-                + method.getDeclaringType().getSimpleName() + "." + method.getDescription(true)));
+        // An omitted member may be absent from the generated executable method metadata.
+        return method.stringValue(ResourceTemplate.class, URI_TEMPLATE_PROPERTY).orElse("pgn://round/{round}");
     }
 
     private static String mimeType(ExecutableMethod<?, ?> method) {
@@ -176,7 +174,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         // Matched where the method runs, on its executor if it declares one, so that a slow match of an untrusted URI
         // does not run on the transport thread
         return m.call(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
-            mcpTransportContext, result -> map(mimeType, request, result), e -> failWithMcpError(m, e));
+            mcpTransportContext, result -> map(mimeType, request, result), e -> handleReadFailure(m, e));
     }
 
     private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
@@ -186,7 +184,14 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
                                                                      McpSchema.ReadResourceRequest request) {
         // Matched where the method runs, see invokeAndMap
         return m.callAsync(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
-            result -> map(mimeType, request, result), e -> failWithMcpError(m, e));
+            result -> map(mimeType, request, result), e -> handleReadFailure(m, e));
+    }
+
+    private <R> R handleReadFailure(Method<?> method, Throwable error) {
+        if (error instanceof UriTemplateReadResourceRequest.InvalidUriTemplateException invalid) {
+            throw invalid;
+        }
+        return failWithMcpError(method, error);
     }
 
     private static McpSchema.ReadResourceResult map(String mimeType, McpSchema.ReadResourceRequest request, @Nullable Object result) {
