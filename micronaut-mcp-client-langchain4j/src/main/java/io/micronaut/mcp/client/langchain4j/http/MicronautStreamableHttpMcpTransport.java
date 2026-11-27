@@ -53,6 +53,7 @@ import java.util.concurrent.atomic.AtomicReference;
 final class MicronautStreamableHttpMcpTransport implements McpTransport {
     private static final String MCP_METHOD = "Mcp-Method";
     private static final String MCP_NAME = "Mcp-Name";
+    private static final String ERROR = "error";
     private static final Duration CLOSE_TIMEOUT = Duration.ofSeconds(10);
 
     private final MicronautMcpHttpExchange exchange;
@@ -88,8 +89,8 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
         CompletableFuture<String> ready = execute(context, post(context, headers))
             .thenCompose(response -> {
                 JsonNode message = McpJson.parse(response);
-                if (message.has("error")) {
-                    throw rpcError(message.get("error"));
+                if (message.has(ERROR)) {
+                    throw rpcError(message.get(ERROR));
                 }
                 JsonNode version = message.path("result").path("protocolVersion");
                 if (!version.isTextual()) {
@@ -268,10 +269,10 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
         if (id != null && message.contains("\"error\"")) {
             JsonNode node = McpJson.parse(message);
             JsonNode responseId = node.get("id");
-            if (node.has("error") && (responseId == null || !responseId.isNumber() || responseId.asLong() != id)) {
+            if (node.has(ERROR) && (responseId == null || !responseId.isNumber() || responseId.asLong() != id)) {
                 // An error the server could not relate to the request, for example about the session, which the
                 // operation handler would discard: it fails the request instead
-                future.completeExceptionally(rpcError(node.get("error")));
+                future.completeExceptionally(rpcError(node.get(ERROR)));
                 return;
             }
         }
