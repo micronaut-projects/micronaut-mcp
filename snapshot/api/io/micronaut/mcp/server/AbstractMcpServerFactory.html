@@ -63,6 +63,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#getTools(io.micronaut.mcp.server.registry.ToolRegistry)" tabindex="0">getTools(ToolRegistry)</a></li>
+<li><a href="#serverInfo(io.micronaut.mcp.conf.server.McpServerInfoConfiguration)" tabindex="0">serverInfo(McpServerInfoConfiguration)</a></li>
 <li><a href="#getPrompts(io.micronaut.mcp.server.registry.PromptRegistry)" tabindex="0">getPrompts(PromptRegistry)</a></li>
 <li><a href="#getResources(io.micronaut.mcp.server.registry.ResourceRegistry)" tabindex="0">getResources(ResourceRegistry)</a></li>
 <li><a href="#getResourceTemplates(io.micronaut.mcp.server.registry.ResourceTemplateRegistry)" tabindex="0">getResourceTemplates(ResourceTemplateRegistry)</a></li>
@@ -121,7 +122,7 @@ This class provides a framework for deriving specific implementations of MCP ser
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel" aria-labelledby="method-summary-table-tab0">
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -187,6 +188,11 @@ This class provides a framework for deriving specific implementations of MCP ser
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Retrieves a list of tools from the provided <a href="registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry"><code>ToolRegistry</code></a>.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static io.modelcontextprotocol.spec.McpSchema.Implementation</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#serverInfo(io.micronaut.mcp.conf.server.McpServerInfoConfiguration)" class="member-name-link">serverInfo</a><wbr>(<a href="../conf/server/McpServerInfoConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerInfoConfiguration</a>&nbsp;configuration)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">The server information sent in the response to <code>initialize</code>.</div>
+</div>
 </div>
 </div>
 </div>
@@ -231,6 +237,26 @@ This class provides a framework for deriving specific implementations of MCP ser
 <dd><code>toolRegistry</code> - the registry of tools from which to retrieve the tools</dd>
 <dt>Returns:</dt>
 <dd>a list of tools retrieved from the provided tool registry</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="serverInfo(io.micronaut.mcp.conf.server.McpServerInfoConfiguration)">
+<h3>serverInfo</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type">io.modelcontextprotocol.spec.McpSchema.Implementation</span>&nbsp;<span class="element-name">serverInfo</span><wbr><span class="parameters">(<a href="../conf/server/McpServerInfoConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerInfoConfiguration</a>&nbsp;configuration)</span></div>
+<div class="block">The server information sent in the response to <code>initialize</code>.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>configuration</code> - The server information configuration</dd>
+<dt>Returns:</dt>
+<dd>The server implementation</dd>
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalStateException.html" title="class or interface in java.lang" class="external-link">IllegalStateException</a></code> - If an icon is invalid, or if the website URL is not an https or http URL without a user
+name or password</dd>
+<dt>Since:</dt>
+<dd>2.2.0</dd>
 </dl>
 </div>
 </section>

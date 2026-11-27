@@ -68,6 +68,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#title()" tabindex="0">title</a></li>
 <li><a href="#description()" tabindex="0">description</a></li>
 <li><a href="#mimeType()" tabindex="0">mimeType</a></li>
+<li><a href="#audience()" tabindex="0">audience</a></li>
+<li><a href="#priority()" tabindex="0">priority</a></li>
 </ol>
 </li>
 </ol>
@@ -143,14 +145,20 @@ Supported return types:
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Optional Element</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#description()" class="member-name-link">description</a></code></div>
+<div class="col-first even-row-color"><code><a href="Audience.html" title="enum class in io.micronaut.mcp.annotations">Audience</a>[]</code></div>
+<div class="col-second even-row-color"><code><a href="#audience()" class="member-name-link">audience</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#mimeType()" class="member-name-link">mimeType</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#description()" class="member-name-link">description</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#name()" class="member-name-link">name</a></code></div>
+<div class="col-second even-row-color"><code><a href="#mimeType()" class="member-name-link">mimeType</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#name()" class="member-name-link">name</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>double</code></div>
+<div class="col-second even-row-color"><code><a href="#priority()" class="member-name-link">priority</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#title()" class="member-name-link">title</a></code></div>
@@ -287,6 +295,42 @@ Supported return types:
 <dl class="notes">
 <dt>Default:</dt>
 <dd><code>"text/plain"</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="audience()">
+<h3>audience</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type"><a href="Audience.html" title="enum class in io.micronaut.mcp.annotations">Audience</a>[]</span>&nbsp;<span class="element-name">audience</span></div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The intended audience of the resources. Empty when not specified.</dd>
+<dt>Since:</dt>
+<dd>2.2.0</dd>
+</dl>
+<dl class="notes">
+<dt>Default:</dt>
+<dd><code>{}</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="priority()">
+<h3>priority</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type">double</span>&nbsp;<span class="element-name">priority</span></div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>How important the resources are, from 0 (least) to 1 (most important). <code>-1</code> when not specified: any other value outside 0 to 1 fails the startup.</dd>
+<dt>Since:</dt>
+<dd>2.2.0</dd>
+</dl>
+<dl class="notes">
+<dt>Default:</dt>
+<dd><code>-1.0</code></dd>
 </dl>
 </div>
 </section>

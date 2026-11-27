@@ -181,19 +181,21 @@
         
         <div class="toc-item" style="margin-left:40px" id="toc-item-resourcesTemplatesFactory"><a href="#resourcesTemplatesFactory"><strong>4.7.3.4.2</strong><span>Resource Templates with a Factory</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-completions"><a href="#completions"><strong>4.7.4</strong><span>Completions</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-primitivesMetadata"><a href="#primitivesMetadata"><strong>4.7.4</strong><span>Icons, Metadata and Resource Hints</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-promptCompletionAnnotation"><a href="#promptCompletionAnnotation"><strong>4.7.4.1</strong><span>Prompt Completions with Annotations</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-completions"><a href="#completions"><strong>4.7.5</strong><span>Completions</span></a></div>
         
-        <div class="toc-item" style="margin-left:40px" id="toc-item-promptCompletionParameter"><a href="#promptCompletionParameter"><strong>4.7.4.1.1</strong><span>PromptCompletion Annotation Method Parameters</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-promptCompletionAnnotation"><a href="#promptCompletionAnnotation"><strong>4.7.5.1</strong><span>Prompt Completions with Annotations</span></a></div>
         
-        <div class="toc-item" style="margin-left:40px" id="toc-item-promptCompletionReturnType"><a href="#promptCompletionReturnType"><strong>4.7.4.1.2</strong><span>PromptCompletion Annotation Method Return Type</span></a></div>
+        <div class="toc-item" style="margin-left:40px" id="toc-item-promptCompletionParameter"><a href="#promptCompletionParameter"><strong>4.7.5.1.1</strong><span>PromptCompletion Annotation Method Parameters</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-resourceCompletionAnnotation"><a href="#resourceCompletionAnnotation"><strong>4.7.4.2</strong><span>Resource Completions with Annotations</span></a></div>
+        <div class="toc-item" style="margin-left:40px" id="toc-item-promptCompletionReturnType"><a href="#promptCompletionReturnType"><strong>4.7.5.1.2</strong><span>PromptCompletion Annotation Method Return Type</span></a></div>
         
-        <div class="toc-item" style="margin-left:40px" id="toc-item-resourceCompletionParameter"><a href="#resourceCompletionParameter"><strong>4.7.4.2.1</strong><span>ResourceCompletion Annotation Method Parameters</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-resourceCompletionAnnotation"><a href="#resourceCompletionAnnotation"><strong>4.7.5.2</strong><span>Resource Completions with Annotations</span></a></div>
         
-        <div class="toc-item" style="margin-left:40px" id="toc-item-resourceCompletionReturnType"><a href="#resourceCompletionReturnType"><strong>4.7.4.2.2</strong><span>ResourceCompletion Annotation Method Return Type</span></a></div>
+        <div class="toc-item" style="margin-left:40px" id="toc-item-resourceCompletionParameter"><a href="#resourceCompletionParameter"><strong>4.7.5.2.1</strong><span>ResourceCompletion Annotation Method Parameters</span></a></div>
+        
+        <div class="toc-item" style="margin-left:40px" id="toc-item-resourceCompletionReturnType"><a href="#resourceCompletionReturnType"><strong>4.7.5.2.2</strong><span>ResourceCompletion Annotation Method Return Type</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-client"><a href="#client"><strong>5</strong><span>MCP Client</span></a></div>
         
@@ -348,7 +350,162 @@ runtime = [
 
 
 <div class="paragraph">
-<p>Via configuration, you should define your mcp server name and version:</p>
+<p>Set the <code>name</code> and the <code>version</code> of your MCP server; both are required. You can also give it a title, a description, a website URL, icons (each with a <code>src</code> and optionally a <code>mime-type</code>, <code>sizes</code> and a <code>theme</code>), and instructions that clients may add to the model&#8217;s prompt:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.mcp.server.info.name=weather
+micronaut.mcp.server.info.version=1.0.0
+micronaut.mcp.server.info.title=Weather
+micronaut.mcp.server.info.description=Forecasts by city
+micronaut.mcp.server.info.website-url=https://example.com
+micronaut.mcp.server.info.icons[0].src=https://example.com/weather.png
+micronaut.mcp.server.info.icons[0].mime-type=image/png
+micronaut.mcp.server.info.icons[0].sizes[0]=48x48
+micronaut.mcp.server.info.icons[0].theme=light
+micronaut.mcp.server.info.instructions=Ask for a city before asking for a forecast.</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  mcp:
+    server:
+      info:
+        name: weather
+        version: 1.0.0
+        title: Weather
+        description: Forecasts by city
+        website-url: https://example.com
+        icons:
+          - src: https://example.com/weather.png
+            mime-type: image/png
+            sizes:
+              - 48x48
+            theme: light
+        instructions: Ask for a city before asking for a forecast.</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.mcp.server.info]
+name = "weather"
+version = "1.0.0"
+title = "Weather"
+description = "Forecasts by city"
+website-url = "https://example.com"
+instructions = "Ask for a city before asking for a forecast."
+
+[[micronaut.mcp.server.info.icons]]
+src = "https://example.com/weather.png"
+mime-type = "image/png"
+sizes = ["48x48"]
+theme = "light"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  mcp {
+    server {
+      info {
+        name = "weather"
+        version = "1.0.0"
+        title = "Weather"
+        description = "Forecasts by city"
+        websiteUrl = "https://example.com"
+        icons = [{
+            src = "https://example.com/weather.png"
+            mimeType = "image/png"
+            sizes = ["48x48"]
+            theme = "light"
+          }]
+        instructions = "Ask for a city before asking for a forecast."
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    mcp {
+      server {
+        info {
+          name = "weather"
+          version = "1.0.0"
+          title = "Weather"
+          description = "Forecasts by city"
+          website-url = "https://example.com"
+          icons = [{
+              src = "https://example.com/weather.png"
+              mime-type = "image/png"
+              sizes = ["48x48"]
+              theme = "light"
+            }]
+          instructions = "Ask for a city before asking for a forecast."
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "mcp": {
+      "server": {
+        "info": {
+          "name": "weather",
+          "version": "1.0.0",
+          "title": "Weather",
+          "description": "Forecasts by city",
+          "website-url": "https://example.com",
+          "icons": [{
+              "src": "https://example.com/weather.png",
+              "mime-type": "image/png",
+              "sizes": ["48x48"],
+              "theme": "light"
+            }],
+          "instructions": "Ask for a city before asking for a forecast."
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Without <code>name</code> and <code>version</code>, clients receive the default server information of the MCP Java SDK, and the other properties on this page are ignored: the server logs a warning at startup. Every icon requires a <code>src</code> that is an HTTPS URL or a <code>data:image/&#8230;&#8203;</code> URI (an HTTP URL is accepted, for example for local development), the <code>website-url</code> must be an HTTPS or HTTP URL, neither may contain a user name or password, and an icon <code>theme</code>, when set, must be <code>light</code> or <code>dark</code> in lowercase; otherwise the server fails to start.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Every client that connects reads the server information, including the <code>website-url</code> and the icon sources, and the instructions in the response to <code>initialize</code>, and clients may add the instructions to the model&#8217;s prompt. Do not put secrets or internal details in them.
+</td>
+</tr>
+</table>
 </div>
 <a id="io.micronaut.mcp.conf.server.McpServerInfoConfigurationProperties" href="#io.micronaut.mcp.conf.server.McpServerInfoConfigurationProperties">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
@@ -378,6 +535,36 @@ runtime = [
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.info.version</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
 <td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.info.title</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A human-readable title of the server, for display</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.info.description</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A description of the server</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.info.website-url</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The URL of the website of the server. It must be an https or http URL without a user name or password, or the startup fails.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.info.icons</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.util.List</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The icons of the server. Each icon has a required src (an HTTPS URL or a data:image/&#8230;&#8203; URI; an HTTP URL is accepted, another scheme or a URL with a user name or password fails the startup) and an optional mime-type, sizes (for example 48x48 or any) and theme (light or dark, in lowercase).</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.info.instructions</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Instructions describing how to use the server and its features, which clients may add to the model&#8217;s prompt. Every client that connects can read them, so do not put secrets in them.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
@@ -1223,6 +1410,9 @@ The Python method name is used verbatim, so the tool of the previous example is 
 </td>
 </tr>
 </table>
+</div>
+<div class="paragraph">
+<p>To add icons or <code>_meta</code>, see <a href="#primitivesMetadata">Icons, Metadata and Resource Hints</a>.</p>
 </div>
 
 <h2 id="toolAnnotationsHints"><a class="anchor" href="#toolAnnotationsHints"></a>4.7.1.4.1 Tool Hints</h2>
@@ -2504,6 +2694,9 @@ class Prompts {
 }</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>To add icons or <code>_meta</code>, see <a href="#primitivesMetadata">Icons, Metadata and Resource Hints</a>.</p>
+</div>
 
 <h2 id="promptAnnotationParameter"><a class="anchor" href="#promptAnnotationParameter"></a>4.7.2.3.1 Prompt Annotation Method Parameters</h2>
 
@@ -2868,6 +3061,9 @@ class Resources {
 <p>You can optionally provide <code>title</code>, <code>description</code> and <code>mimeType</code> (defaults to <code>text/plain</code>).</p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>To add icons, <code>_meta</code>, an audience, a priority or a size, see <a href="#primitivesMetadata">Icons, Metadata and Resource Hints</a>.</p>
 </div>
 
 <h2 id="resourceAnnotationParameter"><a class="anchor" href="#resourceAnnotationParameter"></a>4.7.3.2.1 Resource Annotation Method Parameters</h2>
@@ -3358,6 +3554,9 @@ class MyResourcesTemplates {
 }</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>To add icons, <code>_meta</code>, an audience, a priority, see <a href="#primitivesMetadata">Icons, Metadata and Resource Hints</a>.</p>
+</div>
 
 <h2 id="resourceTemplateAnnotationParameter"><a class="anchor" href="#resourceTemplateAnnotationParameter"></a>4.7.3.4.1.1 Resource Annotation Method Parameters</h2>
 
@@ -3579,7 +3778,178 @@ class ResourcesTemplatesFactory {
 </div>
 </div>
 
-<h2 id="completions"><a class="anchor" href="#completions"></a>4.7.4 Completions</h2>
+<h2 id="primitivesMetadata"><a class="anchor" href="#primitivesMetadata"></a>4.7.4 Icons, Metadata and Resource Hints</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/primitivesMetadata.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Methods annotated with <code>@Tool</code>, <code>@Prompt</code>, <code>@Resource</code> or <code>@ResourceTemplate</code> can declare icons with <code>@Icon</code> and <code>_meta</code> entries with <code>@Meta</code>. Both annotations are repeatable, for example to offer an icon for each theme, and both are ignored on a method that is not one of these primitives:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.mcp.annotations.Icon;
+import io.micronaut.mcp.annotations.Meta;
+import io.micronaut.mcp.annotations.Tool;
+import jakarta.inject.Singleton;
+
+@Singleton
+class WeatherTools {
+    @Tool
+    @Icon(src = "https://example.com/sun-light.svg", mimeType = "image/svg+xml", sizes = "any", theme = "light")
+    @Icon(src = "https://example.com/sun-dark.svg", mimeType = "image/svg+xml", sizes = "any", theme = "dark")
+    @Meta(key = "com.example/category", value = "weather")
+    String forecast(String city) {
+        return "sunny";
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.inject import Singleton
+from micronaut.mcp.annotations import Icon, Meta, Tool
+
+@Singleton
+class WeatherTools:
+
+    @Tool
+    @Icon(src="https://example.com/sun-light.svg", mimeType="image/svg+xml", sizes=["any"], theme="light")
+    @Icon(src="https://example.com/sun-dark.svg", mimeType="image/svg+xml", sizes=["any"], theme="dark")
+    @Meta(key="com.example/category", value="weather")
+    def forecast(self, city: str) -&gt; str:
+        return "sunny"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.mcp.annotations.Icon
+import io.micronaut.mcp.annotations.Meta
+import io.micronaut.mcp.annotations.Tool
+import jakarta.inject.Singleton
+
+@Singleton
+class WeatherTools {
+    @Tool
+    @Icon(src = "https://example.com/sun-light.svg", mimeType = "image/svg+xml", sizes = ["any"], theme = "light")
+    @Icon(src = "https://example.com/sun-dark.svg", mimeType = "image/svg+xml", sizes = ["any"], theme = "dark")
+    @Meta(key = "com.example/category", value = "weather")
+    fun forecast(city: String): String {
+        return "sunny"
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.mcp.annotations.Icon
+import io.micronaut.mcp.annotations.Meta
+import io.micronaut.mcp.annotations.Tool
+import jakarta.inject.Singleton
+
+@Singleton
+class WeatherTools {
+    @Tool
+    @Icon(src = "https://example.com/sun-light.svg", mimeType = "image/svg+xml", sizes = "any", theme = "light")
+    @Icon(src = "https://example.com/sun-dark.svg", mimeType = "image/svg+xml", sizes = "any", theme = "dark")
+    @Meta(key = "com.example/category", value = "weather")
+    String forecast(String city) {
+        return "sunny"
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Every <code>@Icon</code> requires a <code>src</code> that is an HTTPS URL or a <code>data:image/&#8230;&#8203;</code> URI (an HTTP URL is accepted, for example for local development) without a user name or password, and its <code>theme</code>, when set, must be <code>light</code> or <code>dark</code> in lowercase. An image data URI needs an image media type and a non-empty payload separated by a comma. An invalid icon causes startup to fail.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Icons are repeated in every list response that includes their primitive. When many primitives share an icon, prefer an HTTPS URL over a <code>data:</code> URI to keep the responses small. Clients should treat icons, SVG ones in particular, as untrusted content.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>A <code>@Meta</code> key must be non-empty and follow the <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/index#_meta">MCP key format</a>. For example, <code>com.example/display-name</code> has the prefix <code>com.example/</code> and the name <code>display-name</code>. MCP reserves prefixes whose second label is <code>modelcontextprotocol</code> or <code>mcp</code>, such as <code>io.modelcontextprotocol/</code>.</p>
+</div>
+<div class="paragraph">
+<p>Repeating the same key and value on a method produces one metadata entry. A malformed key or conflicting values for the same key cause startup to fail.</p>
+</div>
+<div class="paragraph">
+<p>The values of <code>@Meta</code> are always strings. For numbers, booleans or objects, define the primitive with a factory instead (see <a href="#toolsFactory">Tools with a Factory</a>, <a href="#promptsFactory">Prompts with a Factory</a> and <a href="#resourcesFactory">Resources with a Factory</a>) and set its <code>_meta</code> there.</p>
+</div>
+<div class="paragraph">
+<p><code>@Resource</code> and <code>@ResourceTemplate</code> also accept hints that tell the client how to use the resource (the specification calls these <em>annotations</em>): the intended <code>audience</code> (<code>Audience.USER</code>, <code>Audience.ASSISTANT</code>), a <code>priority</code> between 0 and 1 and, for <code>@Resource</code>, the <code>size</code> of the content in bytes. Leave <code>priority</code> out to send no priority; a value outside 0 to 1 makes the server fail to start.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.mcp.annotations.Audience;
+import io.micronaut.mcp.annotations.Resource;
+import jakarta.inject.Singleton;
+
+@Singleton
+class WeatherResources {
+    @Resource(uri = "weather://stations", size = 4, audience = Audience.ASSISTANT, priority = 0.5)
+    String stations() {
+        return "KSEA";
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.inject import Singleton
+from micronaut.mcp.annotations import Audience, Resource
+
+@Singleton
+class WeatherResources:
+
+    @Resource(uri="weather://stations", size=4, audience=[Audience.ASSISTANT], priority=0.5)
+    def stations(self) -&gt; str:
+        return "KSEA"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.micronaut.mcp.annotations.Audience
+import io.micronaut.mcp.annotations.Resource
+import jakarta.inject.Singleton
+
+@Singleton
+class WeatherResources {
+    @Resource(uri = "weather://stations", size = 4, audience = [Audience.ASSISTANT], priority = 0.5)
+    fun stations(): String {
+        return "KSEA"
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.micronaut.mcp.annotations.Audience
+import io.micronaut.mcp.annotations.Resource
+import jakarta.inject.Singleton
+
+@Singleton
+class WeatherResources {
+    @Resource(uri = "weather://stations", size = 4, audience = Audience.ASSISTANT, priority = 0.5d)
+    String stations() {
+        return "KSEA"
+    }
+}</code></pre>
+</div>
+</div>
+
+<h2 id="completions"><a class="anchor" href="#completions"></a>4.7.5 Completions</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions.adoc"'>
@@ -3599,7 +3969,7 @@ class ResourcesTemplatesFactory {
 </blockquote>
 </div>
 
-<h2 id="promptCompletionAnnotation"><a class="anchor" href="#promptCompletionAnnotation"></a>4.7.4.1 Prompt Completions with Annotations</h2>
+<h2 id="promptCompletionAnnotation"><a class="anchor" href="#promptCompletionAnnotation"></a>4.7.5.1 Prompt Completions with Annotations</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions/promptCompletionAnnotation.adoc"'>
@@ -3689,7 +4059,7 @@ Defining a prompt completion via an annotation currently does not work with <a h
 </table>
 </div>
 
-<h2 id="promptCompletionParameter"><a class="anchor" href="#promptCompletionParameter"></a>4.7.4.1.1 PromptCompletion Annotation Method Parameters</h2>
+<h2 id="promptCompletionParameter"><a class="anchor" href="#promptCompletionParameter"></a>4.7.5.1.1 PromptCompletion Annotation Method Parameters</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions/promptCompletionAnnotation/promptCompletionParameter.adoc"'>
@@ -3718,7 +4088,7 @@ Defining a prompt completion via an annotation currently does not work with <a h
 <p>You can also bind the completion argument&#8217;s name as a method parameter, as illustrated in the code listing above.</p>
 </div>
 
-<h2 id="promptCompletionReturnType"><a class="anchor" href="#promptCompletionReturnType"></a>4.7.4.1.2 PromptCompletion Annotation Method Return Type</h2>
+<h2 id="promptCompletionReturnType"><a class="anchor" href="#promptCompletionReturnType"></a>4.7.5.1.2 PromptCompletion Annotation Method Return Type</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions/promptCompletionAnnotation/promptCompletionReturnType.adoc"'>
@@ -3741,7 +4111,7 @@ Defining a prompt completion via an annotation currently does not work with <a h
 </ul>
 </div>
 
-<h2 id="resourceCompletionAnnotation"><a class="anchor" href="#resourceCompletionAnnotation"></a>4.7.4.2 Resource Completions with Annotations</h2>
+<h2 id="resourceCompletionAnnotation"><a class="anchor" href="#resourceCompletionAnnotation"></a>4.7.5.2 Resource Completions with Annotations</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions/resourceCompletionAnnotation.adoc"'>
@@ -3897,7 +4267,7 @@ class MyResourceTemplates {
 </div>
 </div>
 
-<h2 id="resourceCompletionParameter"><a class="anchor" href="#resourceCompletionParameter"></a>4.7.4.2.1 ResourceCompletion Annotation Method Parameters</h2>
+<h2 id="resourceCompletionParameter"><a class="anchor" href="#resourceCompletionParameter"></a>4.7.5.2.1 ResourceCompletion Annotation Method Parameters</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions/resourceCompletionAnnotation/resourceCompletionParameter.adoc"'>
@@ -3926,7 +4296,7 @@ class MyResourceTemplates {
 <p>You can also bind the completion argument&#8217;s name as a method parameter, as illustrated in the code listing above.</p>
 </div>
 
-<h2 id="resourceCompletionReturnType"><a class="anchor" href="#resourceCompletionReturnType"></a>4.7.4.2.2 ResourceCompletion Annotation Method Return Type</h2>
+<h2 id="resourceCompletionReturnType"><a class="anchor" href="#resourceCompletionReturnType"></a>4.7.5.2.2 ResourceCompletion Annotation Method Return Type</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions/resourceCompletionAnnotation/resourceCompletionReturnType.adoc"'>

@@ -88,6 +88,9 @@ loadScripts(document, 'script');</script>
 <li><a href="#mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Throwable)" tabindex="0">mcpError(ExecutableMethod, Throwable)</a></li>
 <li><a href="#failWithMcpError(io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry.Method,java.lang.Throwable)" tabindex="0">failWithMcpError(AbstractMcpMethodRegistry.Method, Throwable)</a></li>
 <li><a href="#resultArgument(io.micronaut.inject.ExecutableMethod)" tabindex="0">resultArgument(ExecutableMethod)</a></li>
+<li><a href="#icons(io.micronaut.inject.ExecutableMethod)" tabindex="0">icons(ExecutableMethod)</a></li>
+<li><a href="#meta(io.micronaut.inject.ExecutableMethod)" tabindex="0">meta(ExecutableMethod)</a></li>
+<li><a href="#resourceAnnotations(io.micronaut.inject.ExecutableMethod,java.lang.Class)" tabindex="0">resourceAnnotations(ExecutableMethod, Class)</a></li>
 </ol>
 </li>
 </ol>
@@ -214,25 +217,35 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSyncSpecs()" class="member-name-link">getSyncSpecs</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isNotEmpty()" class="member-name-link">isNotEmpty</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.modelcontextprotocol.spec.McpError</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Throwable)" class="member-name-link">mcpError</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;io.modelcontextprotocol.spec.McpSchema.Icon&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#icons(io.micronaut.inject.ExecutableMethod)" class="member-name-link">icons</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isNotEmpty()" class="member-name-link">isNotEmpty</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.modelcontextprotocol.spec.McpError</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Throwable)" class="member-name-link">mcpError</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Maps a failure of a method to the protocol error sent to the client: a failure that an <a href="../exceptions/McpErrorExceptionMapper.html" title="interface in io.micronaut.mcp.server.exceptions"><code>McpErrorExceptionMapper</code></a> maps is mapped by
 it, another <code>McpError</code> is returned unchanged, and any other failure becomes an internal error.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static io.micronaut.core.type.Argument<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resultArgument(io.micronaut.inject.ExecutableMethod)" class="member-name-link">resultArgument</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#meta(io.micronaut.inject.ExecutableMethod)" class="member-name-link">meta</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static @Nullable io.modelcontextprotocol.spec.McpSchema.Annotations</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resourceAnnotations(io.micronaut.inject.ExecutableMethod,java.lang.Class)" class="member-name-link">resourceAnnotations</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>&gt;&nbsp;annotationType)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static io.micronaut.core.type.Argument<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resultArgument(io.micronaut.inject.ExecutableMethod)" class="member-name-link">resultArgument</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">The type of the value a method produces: the method return type, or its first type argument when the method returns
 a reactive type or a <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link"><code>CompletionStage</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/Stream.html" title="class or interface in java.util.stream" class="external-link">Stream</a><wbr>&lt;io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry.Method&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#streamMethods()" class="member-name-link">streamMethods</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/Stream.html" title="class or interface in java.util.stream" class="external-link">Stream</a><wbr>&lt;io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry.Method&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#streamMethods()" class="member-name-link">streamMethods</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a stream of the methods currently stored in the registry.</div>
 </div>
 </div>
@@ -633,6 +646,56 @@ a reactive type or a <a href="https://docs.oracle.com/en/java/javase/25/docs/api
 <dd><code>method</code> - The method</dd>
 <dt>Returns:</dt>
 <dd>The result argument</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="icons(io.micronaut.inject.ExecutableMethod)">
+<h3>icons</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.modelcontextprotocol.spec.McpSchema.Icon&gt;</span>&nbsp;<span class="element-name">icons</span><wbr><span class="parameters">(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method)</span></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>method</code> - The method</dd>
+<dt>Returns:</dt>
+<dd>The icons declared with <a href="../../annotations/Icon.html" title="annotation interface in io.micronaut.mcp.annotations"><code>Icon</code></a>, or <code>null</code> when there are none</dd>
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalStateException.html" title="class or interface in java.lang" class="external-link">IllegalStateException</a></code> - If an icon has a blank <code>src</code> or a theme other than <code>light</code> or <code>dark</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="meta(io.micronaut.inject.ExecutableMethod)">
+<h3>meta</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">meta</span><wbr><span class="parameters">(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method)</span></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>method</code> - The method</dd>
+<dt>Returns:</dt>
+<dd>The <code>_meta</code> entries declared with <a href="../../annotations/Meta.html" title="annotation interface in io.micronaut.mcp.annotations"><code>Meta</code></a>, or <code>null</code> when there are none</dd>
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalStateException.html" title="class or interface in java.lang" class="external-link">IllegalStateException</a></code> - If a key is empty, malformed or has conflicting values</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="resourceAnnotations(io.micronaut.inject.ExecutableMethod,java.lang.Class)">
+<h3>resourceAnnotations</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type">@Nullable io.modelcontextprotocol.spec.McpSchema.Annotations</span>&nbsp;<span class="element-name">resourceAnnotations</span><wbr><span class="parameters">(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>&gt;&nbsp;annotationType)</span></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>method</code> - The method</dd>
+<dd><code>annotationType</code> - The resource or resource template annotation</dd>
+<dt>Returns:</dt>
+<dd>The resource annotations it declares, or <code>null</code> when it declares none</dd>
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalStateException.html" title="class or interface in java.lang" class="external-link">IllegalStateException</a></code> - If the priority is set and is not between 0 and 1</dd>
 </dl>
 </div>
 </section>
