@@ -63,6 +63,11 @@ public final class McpClientTransportHeaders {
      * @return The Reactor context, with the headers
      */
     public static @NonNull Context withHeaders(@NonNull Context context, @NonNull Map<String, String> headers) {
-        return context.put(McpTransportContext.KEY, transportContext(headers));
+        // Overlays the headers on the transport context already in the Reactor context, keeping the entries that another
+        // component supplied
+        McpTransportContext transportContext = context.getOrDefault(McpTransportContext.KEY, null) instanceof McpTransportContext existing
+            ? existing.putAll(Map.of(HEADERS, Map.copyOf(headers)))
+            : transportContext(headers);
+        return context.put(McpTransportContext.KEY, transportContext);
     }
 }

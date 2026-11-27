@@ -45,11 +45,27 @@ public final class McpClientRequestHeaders {
      * @return The static headers of the connection, overridden by those of the providers
      */
     public static @NonNull Map<String, String> headers(@NonNull McpClientHttpConfiguration connection, @NonNull List<McpClientHeadersProvider> providers) {
-        Map<String, String> headers = new LinkedHashMap<>(connection.getHeaders());
+        Map<String, String> headers = merge(new LinkedHashMap<>(), connection.getHeaders());
         for (McpClientHeadersProvider provider : providers) {
             if (provider.supports(connection)) {
-                headers.putAll(provider.headers(connection));
+                merge(headers, provider.headers(connection));
             }
+        }
+        return headers;
+    }
+
+    /**
+     * Puts headers into others, replacing those with the same name whatever its case, as HTTP field names are case
+     * insensitive: otherwise both {@code authorization} and {@code Authorization} would be sent.
+     *
+     * @param headers The headers, which are changed
+     * @param overrides The headers that replace those with the same name
+     * @return The headers
+     */
+    public static @NonNull Map<String, String> merge(@NonNull Map<String, String> headers, @NonNull Map<String, String> overrides) {
+        for (Map.Entry<String, String> override : overrides.entrySet()) {
+            headers.keySet().removeIf(name -> name.equalsIgnoreCase(override.getKey()));
+            headers.put(override.getKey(), override.getValue());
         }
         return headers;
     }

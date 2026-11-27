@@ -20,8 +20,12 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
+import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
+import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
+import io.micronaut.mcp.conf.client.McpClientRequestHeaders;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -30,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
 /**
  * Creates the {@link McpClientTools} of each connection, and the primary one of every connection.
@@ -43,11 +48,14 @@ final class McpClientToolsFactory {
     private final McpConnectionClients connectionClients;
     private final @Nullable McpClientToolFilter filter;
     private final @Nullable McpClientToolNameMapper nameMapper;
+    private final List<McpClientHeadersProvider> headersProviders;
 
     McpClientToolsFactory(BeanContext beanContext,
                           McpConnectionClients connectionClients,
                           @Nullable McpClientToolFilter filter,
-                          @Nullable McpClientToolNameMapper nameMapper) {
+                          @Nullable McpClientToolNameMapper nameMapper,
+                          List<McpClientHeadersProvider> headersProviders) {
+        this.headersProviders = headersProviders;
         this.beanContext = beanContext;
         this.connectionClients = connectionClients;
         this.filter = filter;
@@ -57,7 +65,10 @@ final class McpClientToolsFactory {
     @EachBean(McpClientConnectionConfiguration.class)
     @Singleton
     McpClientTools connectionTools(McpClientConnectionConfiguration configuration) {
-        return new ConnectionMcpClientTools(configuration.getName(), beanContext, connectionClients, filter, nameMapper);
+        // The tools a server lists may depend on the credentials of the caller, so they are cached only when the headers
+        // of the connection are the same for every request
+        boolean cached = !(configuration instanceof McpClientHttpConfiguration http && McpClientRequestHeaders.isDynamic(http, headersProviders));
+        return new ConnectionMcpClientTools(configuration.getName(), beanContext, connectionClients, filter, nameMapper, cached);
     }
 
     @Primary
@@ -65,10 +76,12 @@ final class McpClientToolsFactory {
     McpClientTools allTools(List<McpClientConnectionConfiguration> connections) {
         List<String> names = connections.stream().map(McpClientConnectionConfiguration::getName).toList();
         return () -> {
-            // Callers may already occupy every thread of Micronaut's blocking executor.
+            // Callers may already occupy every thread of Micronaut's blocking executor. Each lookup runs in the context of
+            // the caller, such as the HTTP request whose credentials the headers providers forward
+            PropagatedContext context = PropagatedContext.getOrEmpty();
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
                 List<CompletableFuture<List<McpClientTool>>> tools = names.stream()
-                    .map(name -> CompletableFuture.supplyAsync(() -> toolsOf(name), executor))
+                    .map(name -> CompletableFuture.supplyAsync(context.wrap((Supplier<List<McpClientTool>>) () -> toolsOf(name)), executor))
                     .toList();
                 return tools.stream().flatMap(t -> t.join().stream()).toList();
             }
