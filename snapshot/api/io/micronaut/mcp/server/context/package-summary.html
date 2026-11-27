@@ -95,7 +95,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li>
 <div id="class-summary">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab4" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab4', 2)" class="table-tab">Record Classes</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button><button id="class-summary-tab4" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab4', 2)" class="table-tab">Record Classes</button></div>
 <div id="class-summary.tabpanel" role="tabpanel" aria-labelledby="class-summary-tab0">
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
@@ -104,8 +104,21 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab4">
 <div class="block">The thread and subscriber context of the blocking HTTP route while it handles a request.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="MicronautMcpTransportContext.html" title="interface in io.micronaut.mcp.server.context">MicronautMcpTransportContext</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DefaultMcpRequestContext.html" title="class in io.micronaut.mcp.server.context">DefaultMcpRequestContext</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="block">The <a href="McpRequestContext.html" title="interface in io.micronaut.mcp.server.context"><code>McpRequestContext</code></a> of a request received over STDIO, through the SDK server exchange, or over HTTP, through
+the <a href="McpNotificationEmitter.html" title="interface in io.micronaut.mcp.server.context"><code>McpNotificationEmitter</code></a> of the request.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="McpNotificationEmitter.html" title="interface in io.micronaut.mcp.server.context">McpNotificationEmitter</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="block">Sends the notifications of an HTTP request to its client, on the stream the response is upgraded to.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="McpRequestContext.html" title="interface in io.micronaut.mcp.server.context">McpRequestContext</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="block">The request a tool, prompt, resource or completion method is invoked for.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="MicronautMcpTransportContext.html" title="interface in io.micronaut.mcp.server.context">MicronautMcpTransportContext</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">Extension of <code>McpTransportContext</code> with convenience methods to access common transport metadata in a Micronaut context.</div>
 </div>
 </div>
