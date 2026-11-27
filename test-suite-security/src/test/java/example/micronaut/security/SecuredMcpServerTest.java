@@ -236,6 +236,39 @@ class SecuredMcpServerTest implements TestPropertyProvider {
         }
     }
 
+    /**
+     * Micronaut mounts every route under the context path, the metadata controller too, but the challenge advertises
+     * the metadata at the root, as RFC 9728 requires. The proxy in front of the server maps the advertised path to the
+     * one under the context path, as the guide describes, which this test does by adding the context path itself.
+     */
+    @Test
+    void withAContextPathTheProxyMapsTheAdvertisedMetadataUnderIt() throws JSONException {
+        String issuer = issuer();
+        Map<String, Object> properties = new HashMap<>(Map.of(
+            "micronaut.mcp.server.info.name", "secured",
+            "micronaut.mcp.server.info.version", "1.0.0",
+            "micronaut.mcp.server.transport", "HTTP",
+            "micronaut.server.context-path", "/ctx",
+            "micronaut.security.intercept-url-map[0].pattern", "/ctx/mcp",
+            "micronaut.security.intercept-url-map[0].access[0]", "isAuthenticated()",
+            "micronaut.security.token.jwt.signatures.jwks.idp.url", issuer + "/.well-known/jwks.json",
+            "micronaut.security.oauth2.clients.idp.openid.issuer", issuer,
+            "spec.name", "SecuredMcpServerTest"));
+        try (EmbeddedServer server = ApplicationContext.run(EmbeddedServer.class, properties);
+             HttpClient client = server.getApplicationContext().createBean(HttpClient.class, server.getURI().resolve("/"))) {
+            BlockingHttpClient blocking = client.toBlocking();
+            String base = "http://localhost:" + server.getPort();
+            HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> blocking.exchange(whoami("/ctx/mcp"), String.class));
+            assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatus());
+            String advertised = "/.well-known/oauth-protected-resource/ctx/mcp";
+            assertEquals("Bearer resource_metadata=\"" + base + advertised + "\"", ex.getResponse().getHeaders().get("WWW-Authenticate"));
+            // Without the proxy mapping, the advertised URL is not the metadata
+            assertThrows(HttpClientResponseException.class, () -> blocking.retrieve(advertised));
+            JSONObject metadata = new JSONObject(blocking.retrieve("/ctx" + advertised));
+            assertEquals(base + "/ctx/mcp", metadata.getString("resource"));
+        }
+    }
+
     private static <T> MutableHttpRequest<T> proxied(MutableHttpRequest<T> request) {
         return request.header("X-Forwarded-Proto", "https").header("X-Forwarded-Host", "mcp.example.com");
     }
