@@ -25,8 +25,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Supplier;
-
 /**
  * The {@link McpRequestContext} of a request received over STDIO, through the SDK server exchange, or over HTTP, through
  * the {@link McpNotificationEmitter} of the request.
@@ -40,46 +38,46 @@ public final class DefaultMcpRequestContext implements McpRequestContext {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultMcpRequestContext.class);
     private static final String ELICITATION = "Elicitation";
     private static final String SAMPLING = "Sampling";
-    /**
-     * Whether the current thread is invoking a method on the thread that received its request, so a request context
-     * must not wait there for an answer of the client.
-     */
-    private static final ThreadLocal<Boolean> ON_RECEIVING_THREAD = new ThreadLocal<>();
 
     private final McpTransportContext transportContext;
     private final @Nullable McpSyncServerExchange syncExchange;
     private final @Nullable McpAsyncServerExchange asyncExchange;
     private final @Nullable McpNotificationEmitter emitter;
     private final @Nullable Object progressToken;
+    private final @Nullable Thread receivingThread;
 
     private DefaultMcpRequestContext(McpTransportContext transportContext,
                                      @Nullable McpSyncServerExchange syncExchange,
                                      @Nullable McpAsyncServerExchange asyncExchange,
                                      @Nullable McpNotificationEmitter emitter,
-                                     @Nullable Object progressToken) {
+                                     @Nullable Object progressToken,
+                                     @Nullable Thread receivingThread) {
         this.transportContext = transportContext;
         this.syncExchange = syncExchange;
         this.asyncExchange = asyncExchange;
         this.emitter = emitter;
         this.progressToken = progressToken;
+        this.receivingThread = receivingThread;
     }
 
     /**
      * @param context The transport context, or the server exchange, the SDK invokes the method with
      * @param request The request
+     * @param onReceivingThread Whether binding runs on the STDIO reader for an asynchronous exchange
      * @return The request context
      */
-    public static McpRequestContext of(@Nullable Object context, @Nullable Object request) {
+    public static McpRequestContext of(@Nullable Object context, @Nullable Object request, boolean onReceivingThread) {
         Object progressToken = progressToken(request);
         if (context instanceof McpSyncServerExchange exchange) {
-            return new DefaultMcpRequestContext(exchange.transportContext(), exchange, null, null, progressToken);
+            return new DefaultMcpRequestContext(exchange.transportContext(), exchange, null, null, progressToken, null);
         }
         if (context instanceof McpAsyncServerExchange exchange) {
-            return new DefaultMcpRequestContext(exchange.transportContext(), null, exchange, null, progressToken);
+            return new DefaultMcpRequestContext(exchange.transportContext(), null, exchange, null, progressToken,
+                onReceivingThread ? Thread.currentThread() : null);
         }
         McpTransportContext transportContext = context instanceof McpTransportContext c ? c : McpTransportContext.EMPTY;
         McpNotificationEmitter emitter = transportContext instanceof HttpRequestMcpTransportContext http ? http.emitter() : currentEmitter();
-        return new DefaultMcpRequestContext(transportContext, null, null, emitter, progressToken);
+        return new DefaultMcpRequestContext(transportContext, null, null, emitter, progressToken, null);
     }
 
     /**
@@ -163,8 +161,8 @@ public final class DefaultMcpRequestContext implements McpRequestContext {
     }
 
     @Override
-    public boolean isCancelled() {
-        return emitter != null && emitter.isCancelled();
+    public boolean isClientDisconnected() {
+        return emitter != null && emitter.isClientDisconnected();
     }
 
     @Override
@@ -191,30 +189,9 @@ public final class DefaultMcpRequestContext implements McpRequestContext {
         throw unsupported(SAMPLING);
     }
 
-    /**
-     * Invokes a method on the thread that received its request: a reactive server without an executor for the method.
-     * Its request context then fails rather than waits for an answer of the client, which this thread would read.
-     *
-     * @param invocation The invocation of the method
-     * @param <T> The type of the result
-     * @return The result of the invocation
-     */
-    public static <T> T onReceivingThread(Supplier<T> invocation) {
-        Boolean previous = ON_RECEIVING_THREAD.get();
-        ON_RECEIVING_THREAD.set(Boolean.TRUE);
-        try {
-            return invocation.get();
-        } finally {
-            if (previous == null) {
-                ON_RECEIVING_THREAD.remove();
-            } else {
-                ON_RECEIVING_THREAD.set(previous);
-            }
-        }
-    }
-
-    private static void checkMayWait(String feature) {
-        if (Boolean.TRUE.equals(ON_RECEIVING_THREAD.get())) {
+    private void checkMayWait(String feature) {
+        // A deferred publisher may execute on the reader after the annotated method has returned.
+        if (Thread.currentThread() == receivingThread) {
             throw new IllegalStateException(feature + " waits for the answer of the client, which the thread that runs the method"
                 + " reads on a reactive server: annotate the method with @ExecuteOn(TaskExecutors.BLOCKING)");
         }
