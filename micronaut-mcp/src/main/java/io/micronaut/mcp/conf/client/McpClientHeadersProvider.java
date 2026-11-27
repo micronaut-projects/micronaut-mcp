@@ -46,6 +46,9 @@ public interface McpClientHeadersProvider {
     Map<String, String> headers(@NonNull McpClientHttpConfiguration connection);
 
     /**
+     * Selects connections when Micronaut configures their transports and discovery caches. Base this decision on the
+     * connection configuration. Evaluate request-specific conditions in {@link #headers(McpClientHttpConfiguration)}.
+     *
      * @param connection The connection
      * @return Whether this provider provides headers for the requests sent over the connection
      */

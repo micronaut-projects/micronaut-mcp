@@ -153,11 +153,13 @@ To compute headers for each request otherwise, for example to send an OAuth acce
 
 A headers provider is asked for every connection, unless it overrides `supports(McpClientHttpConfiguration)`: check the connection, so that a token meant for one MCP server is not sent to the others.
 
+Provider headers override static headers even when the names use different capitalization. Connections that propagate authorization or use a headers provider fetch tool, resource, and prompt catalogs on each lookup so the server can select the entries visible to the current caller.
+
 WARNING: The https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization[MCP authorization specification] forbids passing through a token whose audience is not the MCP server: a server that follows it rejects the token, and one that skips the audience check becomes a confused deputy. Only propagate the `Authorization` header to MCP servers that accept the tokens issued for the application, for example servers of the same organization behind the same authorization server. Otherwise exchange the user's token for one whose audience is the MCP server, for example with https://datatracker.ietf.org/doc/html/rfc8693[OAuth 2.0 Token Exchange], in a custom `McpClientHeadersProvider`.
 
 IMPORTANT: The client of a connection, and so its MCP session, is shared by every user of the application: the session is created for the first user, and the propagated `Authorization` header applies to each request, not to the session. An MCP server that binds its sessions to the user that initialized them, as the specification recommends, rejects or mixes up the calls of other users. Connections that propagate authorization need a server without user-bound sessions, or a connection for each user.
 
-The headers of the user are only known while the application handles their request. Requests the clients send on their own, such as the initialization when a client is created, pings and reconnections, and the answers to the requests of the server, such as sampling, elicitation, pings and roots, are sent on other threads: they carry the static headers of the connection and those of the headers providers, which must handle there being no current request, but not the propagated `Authorization` header. MCP servers that require authorization for these requests need a headers provider that supplies credentials of the application, for example a client credentials token.
+Initialization, pings, reconnections, and replies to server requests can all run outside a user request. If the MCP server requires authentication for those operations, configure a headers provider that can supply application credentials when the current request is absent, for example a client credentials token.
 
 === Testing an MCP server
 

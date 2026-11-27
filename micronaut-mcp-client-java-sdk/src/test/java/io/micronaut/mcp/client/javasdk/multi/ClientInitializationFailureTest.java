@@ -17,7 +17,10 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,11 +28,13 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Property(name = "micronaut.mcp.server.info.name", value = "http-server")
 @Property(name = "micronaut.mcp.server.info.version", value = "1.0.0")
@@ -72,6 +77,31 @@ class ClientInitializationFailureTest implements TestPropertyProvider {
         Qualifier<McpAsyncClient> hanging = Qualifiers.byName("hanging");
         assertThrows(BeanInstantiationException.class, () -> beanContext.getBean(McpAsyncClient.class, hanging));
         assertFalse(hangingServerRunning(), "The process of a client that failed to initialize is stopped");
+    }
+
+    @Test
+    void eventLoopInitializationFailureClosesTheSynchronousClientAndAllowsRetry() {
+        assertEventLoopFailureCleanup(McpSyncClient.class);
+    }
+
+    @Test
+    void eventLoopInitializationFailureClosesTheAsynchronousClientAndAllowsRetry() {
+        assertEventLoopFailureCleanup(McpAsyncClient.class);
+    }
+
+    private void assertEventLoopFailureCleanup(Class<?> type) {
+        Object client = Mono.fromCallable(() -> beanContext.getBean(type, Qualifiers.byName("hanging")))
+            .subscribeOn(Schedulers.parallel()).block(Duration.ofSeconds(10));
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15);
+        while (beanContext.findBeanRegistration(client).isPresent() && System.nanoTime() < deadline) {
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(20));
+        }
+        assertTrue(beanContext.findBeanRegistration(client).isEmpty(), "The failed singleton was removed");
+        assertFalse(hangingServerRunning());
+        BeanInstantiationException retry = assertThrows(BeanInstantiationException.class, () ->
+            beanContext.getBean(type, Qualifiers.byName("hanging")));
+        assertTrue(retry.getMessage().contains("failed to initialize"), retry::getMessage);
+        assertFalse(hangingServerRunning());
     }
 
     @Test
