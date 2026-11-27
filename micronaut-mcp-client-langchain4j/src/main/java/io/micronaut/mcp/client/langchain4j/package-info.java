@@ -16,4 +16,7 @@
 /**
  * Classes related with Langchain4J MCP Client.
  */
+@NullMarked
 package io.micronaut.mcp.client.langchain4j;
+
+import org.jspecify.annotations.NullMarked;

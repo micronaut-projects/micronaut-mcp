@@ -15,17 +15,23 @@
  */
 package io.micronaut.mcp.client.langchain4j.http;
 
+import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
+import io.micronaut.context.BeanContext;
+import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import dev.langchain4j.mcp.client.McpHeadersSupplier;
 import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.micronaut.mcp.conf.client.McpClientRequestHeaders;
 import io.micronaut.mcp.conf.client.McpHttpClientType;
 import io.micronaut.context.exceptions.DisabledBeanException;
+
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -60,9 +66,35 @@ final class StreamableHttpMcpTransportFactory {
         return builder;
     }
 
-    // A new transport for each client, which owns and closes it
+    /**
+     * The transport of each HTTP connection, the one bean of type {@link McpTransport} of the connection, which gets its
+     * client: a new transport for each client, which owns and closes it, over the Micronaut HTTP client when the
+     * connection selects it, or else over the JDK HTTP client.
+     *
+     * @param config The connection
+     * @param beanContext The bean context
+     * @param transports The transports of the Micronaut HTTP client, when it is on the classpath
+     * @return The transport
+     */
+    @EachBean(McpClientHttpConfiguration.class)
+    @Prototype
+    @Bean(typed = McpTransport.class)
+    McpTransport createHttpMcpTransport(McpClientHttpConfiguration config,
+                                        BeanContext beanContext,
+                                        @Nullable MicronautHttpClientTransports transports) {
+        if (config.getHttpClient() != McpHttpClientType.MICRONAUT) {
+            return beanContext.getBean(StreamableHttpMcpTransport.class, Qualifiers.byName(config.getName()));
+        }
+        if (transports == null) {
+            throw new IllegalStateException("The MCP connection " + config.getName() + " uses the Micronaut HTTP client, add the micronaut-http-client dependency");
+        }
+        return transports.create(config);
+    }
+
+    // A new transport over the JDK HTTP client, provided as the McpTransport of the connection above
     @EachBean(StreamableHttpMcpTransport.Builder.class)
     @Prototype
+    @Bean(typed = StreamableHttpMcpTransport.class)
     StreamableHttpMcpTransport createStreamableHttpMcpTransport(StreamableHttpMcpTransport.Builder builder) {
         return builder.build();
     }

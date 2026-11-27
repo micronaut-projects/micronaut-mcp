@@ -3,11 +3,14 @@ package io.micronaut.mcp.client.langchain4j.health;
 import dev.langchain4j.mcp.client.McpClient;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.exceptions.ConfigurationException;
+import io.micronaut.health.HealthStatus;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.management.health.indicator.HealthIndicator;
+import io.micronaut.management.health.indicator.HealthResult;
 import io.micronaut.mcp.client.langchain4j.ConnectionMcpClients;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Mono;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
@@ -36,7 +39,7 @@ class McpClientHealthIndicatorTest {
             ConnectionMcpClients.register(context, "broken");
             McpClientHealthIndicator indicator = indicator(context, executor, Duration.ofSeconds(10), "broken");
             assertEquals(Map.of("broken", Map.of("status", "DOWN", "error", "IllegalStateException")),
-                indicator.getHealthInformation());
+                result(indicator).getDetails());
         }
     }
 
@@ -58,8 +61,8 @@ class McpClientHealthIndicatorTest {
             McpClientHealthIndicator indicator = indicator(context, executor, Duration.ofMillis(100), "slow");
             Map<String, Object> down = Map.of("slow", Map.of("status", "DOWN", "error", "No answer within 100ms, the client may still be connecting to its server. See endpoints.health.mcp.timeout"));
             try {
-                assertEquals(down, indicator.getHealthInformation());
-                assertEquals(down, indicator.getHealthInformation());
+                assertEquals(down, result(indicator).getDetails());
+                assertEquals(down, result(indicator).getDetails());
                 assertEquals(1, pings.get(), "The second check awaits the ping that is still running");
             } finally {
                 // Lets the pings end, so that the executor can be closed
@@ -121,15 +124,19 @@ class McpClientHealthIndicatorTest {
         }
     }
 
-    private static Map<String, Object> awaitUp(McpClientHealthIndicator indicator) throws InterruptedException {
+    private static HealthResult result(McpClientHealthIndicator indicator) {
+        return Mono.from(indicator.getResult()).block(Duration.ofSeconds(5));
+    }
+
+    private static Object awaitUp(McpClientHealthIndicator indicator) throws InterruptedException {
         for (int i = 0; i < 50; i++) {
-            Map<String, Object> information = indicator.getHealthInformation();
-            if (!information.toString().contains("DOWN")) {
-                return information;
+            HealthResult health = result(indicator);
+            if (HealthStatus.UP.equals(health.getStatus())) {
+                return health.getDetails();
             }
             Thread.sleep(100);
         }
-        return indicator.getHealthInformation();
+        return result(indicator).getDetails();
     }
 
     private static McpClientHealthIndicator indicator(ApplicationContext context, ExecutorService executor, Duration timeout, String name) {

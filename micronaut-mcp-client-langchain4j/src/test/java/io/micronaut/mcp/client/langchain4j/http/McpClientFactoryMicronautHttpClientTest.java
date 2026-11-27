@@ -1,6 +1,5 @@
-package io.micronaut.mcp.client.langchain4j;
+package io.micronaut.mcp.client.langchain4j.http;
 
-import dev.langchain4j.mcp.client.DefaultMcpClient;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -8,6 +7,8 @@ import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,8 +23,8 @@ class McpClientFactoryMicronautHttpClientTest {
     @Test
     void theConnectionsOfTheMicronautHttpClientNeedTheMicronautHttpClient() {
         McpClientHttpConfiguration configuration = beanContext.getBean(McpClientHttpConfiguration.class, Qualifiers.byName("micronaut"));
-        McpClientFactory factory = new McpClientFactory();
-        IllegalStateException error = assertThrows(IllegalStateException.class, () -> factory.createMcpClient(configuration, new DefaultMcpClient.Builder(), beanContext, null));
+        StreamableHttpMcpTransportFactory factory = new StreamableHttpMcpTransportFactory(List.of());
+        IllegalStateException error = assertThrows(IllegalStateException.class, () -> factory.createHttpMcpTransport(configuration, beanContext, null));
         assertTrue(error.getMessage().contains("micronaut-http-client"), error.getMessage());
     }
 }

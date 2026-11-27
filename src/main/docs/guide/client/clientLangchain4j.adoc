@@ -60,7 +60,7 @@ For STDIO connections, a reconnection by `auto-health-check` starts a new server
 
 For each connection there is a `dev.langchain4j.mcp.client.McpClient` bean, qualified by the name of the connection, which is also the key of the client (`client.key()`).
 
-A `dev.langchain4j.mcp.McpToolProvider` bean provides the tools of every connection to LangChain4j AI services. A `McpToolProvider` bean qualified by the name of a connection provides only the tools of that connection. An `McpClient` bean that your application declares itself is not part of the tool providers.
+A `dev.langchain4j.mcp.McpToolProvider` bean provides the tools of every connection to LangChain4j AI services. A `McpToolProvider` bean qualified by the name of a connection provides only the tools of that connection. The primary provider also includes tools from application-defined `McpClient` beans. If your application supplies an `McpTransport` bean, Micronaut creates its `DefaultMcpClient.Builder` and `McpClient` beans with the same qualifier.
 
 WARNING: LangChain4j rejects two tools with the same name, and the primary `McpToolProvider` gives the tools of every connection under their own names. When two servers have a tool with the same name, every call that uses the primary provider fails, and a server can cause it at any time by renaming or adding a tool. Unless you trust every server, prefix the tools with the name of their connection with an `McpToolNameMapper`, as shown below, or use the provider of each connection.
 

@@ -18,10 +18,11 @@ package io.micronaut.mcp.client.langchain4j.health;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.health.HealthStatus;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.management.endpoint.health.HealthEndpoint;
-import io.micronaut.management.health.indicator.AbstractHealthIndicator;
+import io.micronaut.management.health.indicator.HealthIndicator;
 import io.micronaut.management.health.indicator.HealthResult;
 import io.micronaut.mcp.client.langchain4j.ConnectionMcpClient;
 import io.micronaut.mcp.client.langchain4j.McpClientConnections;
@@ -29,6 +30,7 @@ import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import io.micronaut.scheduling.TaskExecutors;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.reactivestreams.Publisher;
 
 import java.time.Duration;
 import java.util.LinkedHashMap;
@@ -55,7 +57,7 @@ import java.util.concurrent.TimeoutException;
 @Requires(beans = HealthEndpoint.class)
 @Requires(beans = McpClientConnectionConfiguration.class)
 @Requires(condition = McpClientHealthEnabledCondition.class)
-final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String, Object>> {
+final class McpClientHealthIndicator implements HealthIndicator {
     private static final String NAME = "mcp";
     private static final String STATUS = "status";
     private static final String ERROR = "error";
@@ -77,30 +79,11 @@ final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String,
     }
 
     @Override
-    protected Map<String, Object> getHealthInformation() {
-        Map<String, Object> details = details();
-        healthStatus = status(details);
-        return details;
+    public Publisher<HealthResult> getResult() {
+        return Publishers.fromCompletableFuture(this::checkConnections);
     }
 
-    /**
-     * Builds the result from the status of this check, rather than from the field shared by concurrent checks.
-     *
-     * @return The result of the check
-     */
-    @Override
-    protected HealthResult getHealthResult() {
-        Map<String, Object> details = details();
-        return HealthResult.builder(NAME, status(details)).details(details).build();
-    }
-
-    private static HealthStatus status(Map<String, Object> details) {
-        boolean up = details.values().stream()
-            .allMatch(detail -> detail instanceof Map<?, ?> map && HealthStatus.UP.getName().equals(map.get(STATUS)));
-        return up ? HealthStatus.UP : HealthStatus.DOWN;
-    }
-
-    private Map<String, Object> details() {
+    private CompletableFuture<HealthResult> checkConnections() {
         Map<String, CompletableFuture<Map<String, String>>> checks = LinkedHashMap.newLinkedHashMap(connections.size());
         for (McpClientConnectionConfiguration connection : connections) {
             String name = connection.getName();
@@ -109,12 +92,12 @@ final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String,
                 .orTimeout(timeout.toMillis(), TimeUnit.MILLISECONDS)
                 .exceptionally(this::down));
         }
-        CompletableFuture.allOf(checks.values().toArray(CompletableFuture[]::new)).join();
-        Map<String, Object> details = LinkedHashMap.newLinkedHashMap(checks.size());
-        for (Map.Entry<String, CompletableFuture<Map<String, String>>> check : checks.entrySet()) {
-            details.put(check.getKey(), check.getValue().join());
-        }
-        return details;
+        return CompletableFuture.allOf(checks.values().toArray(CompletableFuture[]::new)).thenApply(ignored -> {
+            Map<String, Map<String, String>> details = LinkedHashMap.newLinkedHashMap(checks.size());
+            checks.forEach((name, result) -> details.put(name, result.resultNow()));
+            boolean up = details.values().stream().allMatch(detail -> HealthStatus.UP.getName().equals(detail.get(STATUS)));
+            return HealthResult.builder(NAME, up ? HealthStatus.UP : HealthStatus.DOWN).details(details).build();
+        });
     }
 
     private CompletableFuture<Map<String, String>> ping(String name) {
@@ -145,10 +128,5 @@ final class McpClientHealthIndicator extends AbstractHealthIndicator<Map<String,
     private static String format(Duration duration) {
         long millis = duration.toMillis();
         return millis % 1000 == 0 ? (millis / 1000) + "s" : millis + "ms";
-    }
-
-    @Override
-    protected String getName() {
-        return NAME;
     }
 }
