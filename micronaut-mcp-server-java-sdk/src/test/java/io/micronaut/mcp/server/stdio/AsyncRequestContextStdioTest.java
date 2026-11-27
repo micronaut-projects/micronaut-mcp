@@ -32,6 +32,7 @@ class AsyncRequestContextStdioTest extends AbstractRequestContextStdioTest {
         Map<?, ?> result = read(server);
         assertEquals(2, ((Number) result.get("id")).intValue());
         String text = String.valueOf(result);
-        assertTrue(text.contains("isError=true") && text.contains("@ExecuteOn(TaskExecutors.BLOCKING)"), text);
+        // the advice to annotate the method with @ExecuteOn(TaskExecutors.BLOCKING), meant for the developer, is logged
+        assertTrue(text.contains("isError=true") && text.contains("Tool greet failed"), text);
     }
 }
