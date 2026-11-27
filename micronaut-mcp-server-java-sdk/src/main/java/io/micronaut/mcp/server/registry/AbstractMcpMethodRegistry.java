@@ -81,6 +81,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -108,6 +109,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
     private static final String SIZES_PROPERTY = "sizes";
     private static final String THEME_PROPERTY = "theme";
     private static final String KEY_PROPERTY = "key";
+    private static final String META_PREFIX_LABEL = "[A-Za-z](?:[A-Za-z0-9-]*[A-Za-z0-9])?";
+    private static final String META_NAME = "[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?";
+    // A prefix may stand alone with its trailing slash. The full key must still be non-empty.
+    private static final Pattern META_KEY = Pattern.compile("(?:" + META_PREFIX_LABEL + "(?:\\." + META_PREFIX_LABEL + ")*+/)?(?:" + META_NAME + ")?");
     private static final String AUDIENCE_PROPERTY = "audience";
     private static final String PRIORITY_PROPERTY = "priority";
     private static final double UNSET_PRIORITY = -1;
@@ -537,7 +542,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
     /**
      * @param method The method
      * @return The {@code _meta} entries declared with {@link Meta}, or {@code null} when there are none
-     * @throws IllegalStateException If a key is empty or declared twice
+     * @throws IllegalStateException If a key is empty, malformed or has conflicting values
      */
     protected static @Nullable Map<String, Object> meta(ExecutableMethod<?, ?> method) {
         List<AnnotationValue<Meta>> values = method.getAnnotationValuesByType(Meta.class);
@@ -548,8 +553,13 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
         for (AnnotationValue<Meta> value : values) {
             String key = value.stringValue(KEY_PROPERTY).filter(StringUtils::isNotEmpty).orElseThrow(() ->
                 new IllegalStateException("The @Meta of method " + methodName(method) + " requires a key"));
-            if (meta.put(key, value.stringValue().orElse("")) != null) {
-                throw new IllegalStateException("The @Meta key " + key + " is declared twice on method " + methodName(method));
+            if (!META_KEY.matcher(key).matches()) {
+                throw new IllegalStateException("Invalid @Meta key on method " + methodName(method));
+            }
+            String entryValue = value.stringValue().orElse("");
+            Object previous = meta.putIfAbsent(key, entryValue);
+            if (previous != null && !previous.equals(entryValue)) {
+                throw new IllegalStateException("The @Meta key " + key + " has conflicting values on method " + methodName(method));
             }
         }
         return meta;

@@ -50,7 +50,8 @@ class IconValidationTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"javascript:alert(1)", "file:///etc/passwd", "example.com", "data:image/png;base64,AA"})
+    @ValueSource(strings = {"javascript:alert(1)", "file:///etc/passwd", "example.com", "data:image/png;base64,AA",
+        "http://:8080/", "https://example.org:abc/"})
     void aWebsiteUrlThatIsNotAnHttpUrlFailsTheStartup(String websiteUrl) {
         assertEquals("The micronaut.mcp.server.info.website-url has a value that is not an https or http URL",
             startupFailure(Map.of("micronaut.mcp.server.info.website-url", websiteUrl)));

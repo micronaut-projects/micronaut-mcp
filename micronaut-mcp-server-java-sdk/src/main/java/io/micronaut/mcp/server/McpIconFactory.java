@@ -23,8 +23,8 @@ import org.jspecify.annotations.Nullable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Builds the MCP icons declared with {@code @Icon} or configured under {@code micronaut.mcp.server.info.icons}, so both
@@ -38,8 +38,9 @@ import java.util.Set;
 public final class McpIconFactory {
 
     private static final Set<String> THEMES = Set.of("light", "dark");
-    private static final Set<String> URL_SCHEMES = Set.of("https", "http");
-    private static final String IMAGE_DATA_PREFIX = "data:image/";
+    private static final String MIME_TOKEN = "[A-Za-z0-9!#$%&'*+.^_`|~-]++";
+    private static final Pattern IMAGE_DATA_HEADER = Pattern.compile("image/" + MIME_TOKEN + "(?:;" + MIME_TOKEN + "=" + MIME_TOKEN + ")*+(?:;base64)?", Pattern.CASE_INSENSITIVE);
+    private static final int MAX_PORT = 65535;
 
     private McpIconFactory() {
     }
@@ -80,25 +81,53 @@ public final class McpIconFactory {
      * @throws IllegalStateException If the value is not accepted
      */
     static void checkUrl(String owner, String noun, String url, boolean imageDataAllowed) {
-        if (imageDataAllowed && url.toLowerCase(Locale.ROOT).startsWith(IMAGE_DATA_PREFIX)) {
-            return;
-        }
-        String authority = httpAuthority(url);
-        if (authority == null || authority.isEmpty()) {
-            throw new IllegalStateException(owner + " has " + noun + " that is not "
-                + (imageDataAllowed ? "an https or http URL, or a data: URI of an image" : "an https or http URL"));
-        }
-        if (authority.contains("@")) {
-            throw new IllegalStateException(owner + " has " + noun + " with a user name or password, which every client would receive");
-        }
-    }
-
-    private static @Nullable String httpAuthority(String url) {
         try {
             URI uri = new URI(url);
-            return uri.getScheme() != null && URL_SCHEMES.contains(uri.getScheme().toLowerCase(Locale.ROOT)) ? uri.getRawAuthority() : null;
+            if (imageDataAllowed && "data".equalsIgnoreCase(uri.getScheme()) && isImageData(uri)) {
+                return;
+            }
+            if ("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme())) {
+                String authority = uri.getRawAuthority();
+                if (authority != null && authority.contains("@")) {
+                    throw new IllegalStateException(owner + " has " + noun + " with a user name or password, which every client would receive");
+                }
+                if (authority != null && hasHostAndValidPort(authority)) {
+                    return;
+                }
+            }
         } catch (URISyntaxException _) {
-            return null;
+            // URI syntax errors include the input. Report only the configuration property or method below.
         }
+        throw new IllegalStateException(owner + " has " + noun + " that is not "
+            + (imageDataAllowed ? "an https or http URL, or a data: URI of an image" : "an https or http URL"));
+    }
+
+    private static boolean isImageData(URI uri) {
+        String data = uri.getRawSchemeSpecificPart();
+        int comma = data.indexOf(',');
+        return comma > 0 && comma < data.length() - 1 && IMAGE_DATA_HEADER.matcher(data).region(0, comma).matches();
+    }
+
+    private static boolean hasHostAndValidPort(String authority) {
+        // URI validates bracketed IPv6 literals. Use the raw authority to also accept hostnames containing underscores.
+        int colon = authority.indexOf(':', authority.lastIndexOf(']') + 1);
+        if (colon < 0) {
+            return !authority.isEmpty();
+        }
+        if (colon == 0) {
+            return false;
+        }
+        int port = 0;
+        for (int i = colon + 1; i < authority.length(); i++) {
+            char digit = authority.charAt(i);
+            if (digit < '0' || digit > '9') {
+                return false;
+            }
+            port = port * 10 + digit - '0';
+            if (port > MAX_PORT) {
+                return false;
+            }
+        }
+        return true;
     }
 }
