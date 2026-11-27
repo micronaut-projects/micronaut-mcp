@@ -4,15 +4,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class Stdio implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(Stdio.class);
@@ -21,7 +22,6 @@ public class Stdio implements AutoCloseable {
     public final PipedInputStream  serverStdin;
     public final PipedOutputStream serverStdout;
     private static final byte NEWLINE = (byte) '\n';
-    private BufferedReader lineReader;
 
     public Stdio() {
         try {
@@ -59,44 +59,31 @@ public class Stdio implements AutoCloseable {
     }
 
     /**
-     * Waits until the server has written {@code count} lines, failing if they do not all arrive within {@code timeout}.
-     * Unlike {@link #readResponses()}, it does not depend on sleeping long enough before reading.
+     * Reads one LF-terminated UTF-8 response on the calling thread. Keep pipe I/O on the test thread because
+     * {@link PipedInputStream} treats the death of its last reader or writer as a broken pipe.
      *
-     * <p>Call it from the thread that sends the requests and keep it there: {@link PipedInputStream} remembers the last
-     * thread on each end of a pipe and reports the pipe as broken once that thread has died, so the I/O must not run on a
-     * short-lived thread such as the one {@code assertTimeoutPreemptively} creates. That is why the timeout is enforced by
-     * polling here instead.</p>
-     *
-     * <p>Do not mix it with {@link #readResponses()} on the same instance: each keeps its own buffered reader over the same
-     * pipe.</p>
-     *
-     * @param count   number of lines to read
-     * @param timeout how long to wait for all of them
-     * @return the lines read
+     * @param timeout how long to wait for the complete response
+     * @return the response without its line terminator
+     * @throws IOException if the pipe cannot be read
+     * @throws InterruptedException if the wait is interrupted
      */
-    public synchronized List<String> readLines(int count, Duration timeout) {
+    public String readResponse(Duration timeout) throws IOException, InterruptedException {
         long deadline = System.nanoTime() + timeout.toNanos();
-        try {
-            if (lineReader == null) {
-                lineReader = new BufferedReader(new InputStreamReader(serverToClient, StandardCharsets.UTF_8));
+        ByteArrayOutputStream line = new ByteArrayOutputStream();
+        while (System.nanoTime() - deadline < 0) {
+            if (serverToClient.available() == 0) {
+                TimeUnit.NANOSECONDS.sleep(Math.min(deadline - System.nanoTime(), TimeUnit.MILLISECONDS.toNanos(10)));
+                continue;
             }
-            List<String> lines = new ArrayList<>(count);
-            while (lines.size() < count) {
-                if (lineReader.ready()) {
-                    lines.add(lineReader.readLine());
-                } else if (System.nanoTime() - deadline > 0) {
-                    throw new AssertionError("Expected " + count + " lines within " + timeout + " but read " + lines);
-                } else {
-                    Thread.sleep(10);
-                }
+            // Decode only after the newline. Even a single UTF-8 character can span pipe writes.
+            int next = serverToClient.read();
+            if (next == NEWLINE) {
+                String response = line.toString(StandardCharsets.UTF_8);
+                return response.endsWith("\r") ? response.substring(0, response.length() - 1) : response;
             }
-            return lines;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
+            line.write(next);
         }
+        throw new AssertionError("Expected a complete stdio response within " + timeout + ", received " + line.size() + " bytes");
     }
 
     @Override

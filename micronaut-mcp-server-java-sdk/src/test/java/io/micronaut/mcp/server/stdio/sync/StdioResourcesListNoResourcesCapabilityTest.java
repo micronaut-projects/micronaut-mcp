@@ -18,13 +18,12 @@ import org.skyscreamer.jsonassert.JSONAssert;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.List;
 
+import static io.micronaut.mcp.server.utils.JsonRpcMessages.EXPECTED_INITIALIZATION_2025_WITH_LOGGING;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZE;
 import static io.micronaut.mcp.server.utils.JsonRpcMessages.INITIALIZED;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Property(name = "micronaut.mcp.server.info.name", value="test mcp server")
+@Property(name = "micronaut.mcp.server.info.name", value="mcp-server")
 @Property(name = "micronaut.mcp.server.info.version", value="0.0.1")
 @Property(name = "micronaut.mcp.server.transport", value = "STDIO")
 @Property(name = "spec.name", value = "StdioResourcesListNoResourcesCapabilityTest")
@@ -38,20 +37,14 @@ class StdioResourcesListNoResourcesCapabilityTest {
     @Inject
     ReplacementMcpServerTransportProviderFactory factory;
 
-    /**
-     * Even if the server does not have the prompts capabilities, clients may not respect that and send a prompts/list request.
-     * In that scenario, the server should return an empty list of prompts
-     */
     @Test
-    void syncPrompts() throws IOException, JSONException {
+    void listsNoResources() throws IOException, InterruptedException, JSONException {
         factory.stdio.sendRequest(INITIALIZE);
+        Duration timeout = Duration.ofSeconds(10);
+        JSONAssert.assertEquals(EXPECTED_INITIALIZATION_2025_WITH_LOGGING, factory.stdio.readResponse(timeout), true);
         factory.stdio.sendRequest(INITIALIZED);
         factory.stdio.sendRequest(RESOURCES_LIST);
-        // the initialized notification gets no response
-        List<String> responses = factory.stdio.readLines(2, Duration.ofSeconds(10));
-        assertEquals(2, responses.size());
-        String readJsonRpc = responses.get(1);
-        JSONAssert.assertEquals(RESOURCES_LIST_RESULT, readJsonRpc, true);
+        JSONAssert.assertEquals(RESOURCES_LIST_RESULT, factory.stdio.readResponse(timeout), true);
     }
 
     @Requires(property = "spec.name", value = "StdioResourcesListNoResourcesCapabilityTest")
