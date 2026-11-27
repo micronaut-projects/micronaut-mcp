@@ -163,7 +163,7 @@ Initialization, pings, reconnections, and replies to server requests can all run
 
 === Micronaut HTTP Client
 
-By default the clients send their requests with the JDK HTTP client. Set `http-client` to `MICRONAUT` on an HTTP connection to use the Micronaut HTTP client instead, with the `micronaut-http-client` dependency: the client filters of the application apply, and `service-id` names the `micronaut.http.services` entry that configures the client, for example its SSL, proxy or timeouts. The service ID selects filters such as `@ClientFilter(serviceId = "weather")` even when the service entry omits `url`. In that case, the connection URL supplies the host. A `url` without a path sends the requests to `/mcp`, as with the JDK HTTP client. Without `service-id`, the default client configuration applies, with the `request-timeout` of the connection, or its `timeout`, as the read timeout.
+By default the clients send their requests with the JDK HTTP client. Set `http-client` to `MICRONAUT` on an HTTP connection to use the Micronaut HTTP client instead, with the `micronaut-http-client` dependency: the client filters of the application apply, and `service-id` names the `micronaut.http.services` entry that configures the client, for example its SSL, proxy or timeouts. The service ID selects filters such as `@ClientFilter(serviceId = "weather")` even when the service entry omits `url`. In that case, the connection URL supplies the host. With either HTTP client, a URL without a path uses `/` for LangChain4j and `/mcp` for the MCP Java SDK. Without `service-id`, the default client configuration applies, with the `request-timeout` of the connection, or its `timeout`, as the read timeout.
 
 [configuration]
 ----

@@ -34,6 +34,7 @@ import org.junit.jupiter.api.TestInstance;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.micronaut.mcp.client.langchain4j.http.CraftedMcpServer.SESSION_ID;
@@ -218,6 +220,12 @@ class MicronautStreamableHttpMcpTransportTest implements TestPropertyProvider {
 
         assertEquals("s2", assertInstanceOf(McpHttpSessionNotFoundException.class, error).getSessionId());
         assertEquals(0, failures.get(), "The server was reached");
+
+        server.on("POST initialize", json(200, INITIALIZE_RESULT, SESSION_ID, "s3"));
+        server.on("POST ping", json(200, "{\"jsonrpc\":\"2.0\",\"id\":3,\"result\":{}}"));
+        transport.sendRequest(new McpPingRequest(3L)).get(5, TimeUnit.SECONDS);
+        assertEquals("s3", server.requests("POST").getLast().header(SESSION_ID));
+        assertEquals(3, server.requests("POST").stream().filter(r -> r.body().contains("\"ping\"")).count());
     }
 
     @Test
@@ -348,8 +356,96 @@ class MicronautStreamableHttpMcpTransportTest implements TestPropertyProvider {
         assertTrue(beanContext.findBean(StreamableHttpMcpTransport.Builder.class, Qualifiers.byName("crafted")).isEmpty());
     }
 
+    @Test
+    void cancellationDuringRenewalStopsTheReplay() throws Exception {
+        McpTransport transport = transport("crafted");
+        server.on("POST initialize", json(200, INITIALIZE_RESULT, SESSION_ID, "s1"));
+        transport.sendInitializeRequest(new McpInitializeRequest(1L)).get(5, TimeUnit.SECONDS);
+        CompletableFuture<Void> renewing = new CompletableFuture<>();
+        CompletableFuture<Void> release = new CompletableFuture<>();
+        server.on("POST ping", json(404, ""));
+        server.on("POST initialize", e -> {
+            renewing.complete(null);
+            release.join();
+            json(200, INITIALIZE_RESULT, SESSION_ID, "s2").respond(e);
+        });
+        server.on("POST tools/list", json(200, "{\"jsonrpc\":\"2.0\",\"id\":4,\"result\":{\"tools\":[]}}"));
+        CompletableFuture<String> pending = transport.sendRequest(new McpPingRequest(2L));
+        CompletableFuture<String> tools;
+        try {
+            renewing.get(5, TimeUnit.SECONDS);
+            CompletableFuture<String> waiting = transport.sendRequest(new McpPingRequest(3L));
+            tools = transport.sendRequest(new McpListToolsRequest(4L, null));
+            assertTrue(pending.cancel(false));
+            assertTrue(waiting.cancel(false));
+        } finally {
+            release.complete(null);
+        }
+        tools.get(5, TimeUnit.SECONDS);
+        List<Request> requests = server.requests("POST");
+        assertEquals("s2", requests.getLast().header(SESSION_ID));
+        assertEquals(1, requests.stream().filter(r -> r.body().contains("\"ping\"")).count());
+    }
+
+    @Test
+    void pollMayReturnOnlyARetryInterval() throws Exception {
+        McpTransport transport = transport("crafted");
+        server.on("POST ping", events(utf8("id: operation\nretry: 1\ndata:\n\n")));
+        for (int i = 0; i < 11; i++) {
+            server.on("GET", events(utf8("retry: 1\n\n")));
+        }
+        server.on("GET", events(utf8("data: {\"jsonrpc\":\"2.0\",\"id\":5,\"result\":{}}\n\n")));
+        assertTrue(transport.sendRequest(new McpPingRequest(5L)).get(5, TimeUnit.SECONDS).contains("result"));
+        assertEquals(12, server.requests("GET").size());
+        assertTrue(server.requests("GET").stream().allMatch(r -> "operation".equals(r.header("Last-Event-ID"))));
+    }
+
+    @Test
+    void aResumedStreamHonorsTheRequestDeadline() {
+        McpTransport transport = transport("impatient");
+        server.on("POST ping", events(utf8("id: operation\nretry: 60000\n\n")));
+
+        assertInstanceOf(TimeoutException.class, failure(transport.sendRequest(new McpPingRequest(5L))));
+        assertTrue(server.requests("GET").isEmpty());
+    }
+
+    @Test
+    void hostOnlyUrlUsesSamePathForBothLangChainTransports() throws Exception {
+        String url = "http://localhost:" + server.port();
+        McpTransport jdk = new StreamableHttpMcpTransport.Builder().url(url).build();
+        McpTransport micronaut = transports.create(McpClientHttpConfiguration.of("root", URI.create(url)));
+        for (McpTransport transport : List.of(jdk, micronaut)) {
+            try (transport) {
+                start(transport);
+                server.on("POST ping", json(200, "{\"jsonrpc\":\"2.0\",\"id\":5,\"result\":{}}"));
+                transport.sendRequest(new McpPingRequest(5L)).get(5, TimeUnit.SECONDS);
+            }
+        }
+        assertEquals(List.of("/", "/"), server.requests("POST").stream().map(r -> r.uri().getPath()).toList());
+    }
+
+    @Test
+    void rejectedRenewalMustNotReplayTheOriginalOperation() throws Exception {
+        McpTransport transport = transport("crafted");
+        server.on("POST initialize", json(200, INITIALIZE_RESULT, SESSION_ID, "s1"));
+        transport.sendInitializeRequest(new McpInitializeRequest(1L)).get(5, TimeUnit.SECONDS);
+        server.on("POST ping", json(404, ""));
+        server.on("POST initialize", json(400, "{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32602,\"message\":\"initialization rejected\"}}"));
+
+        McpException failure = assertInstanceOf(McpException.class, failure(transport.sendRequest(new McpPingRequest(2L))));
+
+        assertEquals(-32602, failure.errorCode());
+        assertEquals("initialization rejected", failure.errorMessage());
+        List<Request> requests = server.requests("POST");
+        assertEquals(1, requests.stream().filter(r -> r.body().contains("\"ping\"")).count());
+        assertEquals(1, requests.stream().filter(r -> r.body().contains("notifications/initialized")).count());
+    }
+
     private McpTransport transport(String connection) {
-        McpTransport transport = transports.create(configuration(connection));
+        return start(transports.create(configuration(connection)));
+    }
+
+    private static McpTransport start(McpTransport transport) {
         transport.start(new McpOperationHandler(new ConcurrentHashMap<>(), List::of, transport, log -> { }, () -> { }, () -> { },
             () -> { }, uri -> { }, null, () -> { }, () -> { }, (id, message) -> { }, (id, params) -> { }));
         return transport;

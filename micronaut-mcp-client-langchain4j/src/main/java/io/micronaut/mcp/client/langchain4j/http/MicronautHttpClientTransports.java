@@ -42,6 +42,6 @@ public final class MicronautHttpClientTransports {
      * @return The transport of the connection
      */
     public McpTransport create(McpClientHttpConfiguration configuration) {
-        return new MicronautStreamableHttpMcpTransport(clients.exchange(configuration));
+        return new MicronautStreamableHttpMcpTransport(clients.exchange(configuration, "/"));
     }
 }

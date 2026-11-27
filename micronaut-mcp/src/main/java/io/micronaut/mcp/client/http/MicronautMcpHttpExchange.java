@@ -32,6 +32,7 @@ import io.micronaut.mcp.conf.client.McpClientRequestHeaders;
 import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Scheduler;
 import reactor.util.retry.Retry;
 
@@ -70,7 +71,8 @@ public final class MicronautMcpHttpExchange {
     private static final Duration CLOSE_TIMEOUT = Duration.ofSeconds(5);
     private static final String LAST_EVENT_ID = "Last-Event-ID";
     private static final Duration DEFAULT_RETRY = Duration.ofSeconds(1);
-    private static final int MAX_RESUMPTIONS = 10;
+    // A data field may include "data: " before its payload and a carriage return after it.
+    private static final int SSE_LINE_OVERHEAD = 7;
 
     private final StreamingHttpClient client;
     private final String uri;
@@ -82,6 +84,7 @@ public final class MicronautMcpHttpExchange {
     private final AtomicReference<String> sessionId = new AtomicReference<>();
     private final AtomicReference<String> protocolVersion = new AtomicReference<>();
     private final AtomicBoolean sessionless = new AtomicBoolean();
+    private final Sinks.Empty<Void> closed = Sinks.empty();
 
     MicronautMcpHttpExchange(StreamingHttpClient client,
                              String uri,
@@ -115,6 +118,14 @@ public final class MicronautMcpHttpExchange {
     }
 
     /**
+     * @param expired The error for the request whose session the server rejected
+     * @return Whether this request invalidated the active session
+     */
+    public boolean invalidateSession(McpHttpSessionNotFoundException expired) {
+        return sessionId.compareAndSet(expired.getSessionId(), null);
+    }
+
+    /**
      * Computes the headers of a request on the calling thread: the static headers of the connection, and those of the
      * headers providers.
      *
@@ -141,7 +152,7 @@ public final class MicronautMcpHttpExchange {
     /**
      * Sends a JSON-RPC message, resuming the event stream of the response when the server closes it before it sends the
      * response, as the server may: with a {@code GET} that carries the {@code Last-Event-ID} of the stream, after the
-     * {@code retry} delay of the stream, until the response arrives or the server sends nothing more.
+     * {@code retry} delay of the stream, until the response arrives, the cursor is cleared, or the subscriber cancels.
      *
      * @param message The message, as JSON
      * @param headers The headers of the request
@@ -156,41 +167,42 @@ public final class MicronautMcpHttpExchange {
                 .contentType(MediaType.APPLICATION_JSON_TYPE)
                 .header(HttpHeaders.ACCEPT, ACCEPT);
             headers.forEach(request::header);
-            String session = initialize ? null : sessionHeaders(request);
+            String session = initialize ? null : sessionId.get();
             if (initialize) {
                 sessionId.set(null);
+            } else {
+                sessionHeaders(request, session);
             }
-            StreamState stream = new StreamState();
+            StreamState stream = new StreamState(session);
             Flux<String> messages = exchange(request, session, true, stream);
             if (response == null) {
                 return messages;
             }
-            return messages.doOnNext(m -> stream.responded |= response.test(m))
-                .concatWith(Flux.defer(() -> resume(headers, stream, response, 0)));
+            long started = System.nanoTime();
+            Duration timeout = initialize ? configuration.getInitializationTimeout() : configuration.getRequestTimeout();
+            return messages.concatWith(Flux.defer(() -> resume(headers, stream, started, timeout))).takeUntil(response);
         });
     }
 
-    /**
-     * Resumes a stream that ended before the response arrived, while the server sends new events.
-     */
-    private Flux<String> resume(Map<String, String> headers, StreamState stream, Predicate<String> response, int attempt) {
-        String lastEventId = stream.lastEventId;
-        if (stream.responded || lastEventId == null || attempt >= MAX_RESUMPTIONS) {
+    private Flux<String> resume(Map<String, String> headers, StreamState stream, long started, @Nullable Duration timeout) {
+        if (stream.lastEventId == null) {
             return Flux.empty();
         }
-        // Neither the scheduler of the exchange, over an executor service, nor the schedulers of Reactor, which the
-        // application may replace, can be relied on to delay
-        return reconnectDelay(stream, DEFAULT_RETRY).thenMany(Flux.defer(() -> {
+        // A poll can return only a retry interval. Keep its cursor until a subsequent poll updates or clears it.
+        Flux<String> polls = Flux.defer(() -> {
             MutableHttpRequest<?> request = HttpRequest.GET(uri)
                 .header(HttpHeaders.ACCEPT, MediaType.TEXT_EVENT_STREAM)
-                .header(LAST_EVENT_ID, lastEventId);
+                .header(LAST_EVENT_ID, stream.lastEventId);
             headers.forEach(request::header);
-            String session = sessionHeaders(request);
-            return exchange(request, session, false, stream)
-                .doOnNext(m -> stream.responded |= response.test(m))
-                // A stream that brings no new event ends the resumption
-                .concatWith(Flux.defer(() -> lastEventId.equals(stream.lastEventId) ? Flux.empty() : resume(headers, stream, response, attempt + 1)));
-        }));
+            sessionHeaders(request, stream.session);
+            return reconnectDelay(stream, DEFAULT_RETRY).thenMany(exchange(request, stream.session, false, stream));
+        }).repeat(() -> stream.lastEventId != null).takeUntilOther(closed.asMono());
+        if (timeout == null || !timeout.isPositive()) {
+            return polls;
+        }
+        // Reading each short poll can succeed even after the deadline for the original request.
+        long remaining = timeout.toNanos() - (System.nanoTime() - started);
+        return polls.takeUntilOther(Mono.fromFuture(() -> new CompletableFuture<Void>().orTimeout(remaining, TimeUnit.NANOSECONDS)));
     }
 
     /**
@@ -201,15 +213,15 @@ public final class MicronautMcpHttpExchange {
      */
     public Flux<String> listen() {
         return Flux.defer(() -> {
-            StreamState stream = new StreamState();
+            StreamState stream = new StreamState(sessionId.get());
             Flux<String> get = Flux.defer(() -> {
                 MutableHttpRequest<?> request = HttpRequest.GET(uri).header(HttpHeaders.ACCEPT, MediaType.TEXT_EVENT_STREAM);
                 headers().forEach(request::header);
                 if (stream.lastEventId != null) {
                     request.header(LAST_EVENT_ID, stream.lastEventId);
                 }
-                String session = sessionHeaders(request);
-                return exchange(request, session, false, stream);
+                sessionHeaders(request, stream.session);
+                return exchange(request, stream.session, false, stream);
             });
             return get.repeatWhen(ends -> ends.concatMap(ignored -> reconnectDelay(stream, DEFAULT_RETRY)))
                 .retryWhen(Retry.from(errors -> errors.concatMap(signal -> {
@@ -230,17 +242,14 @@ public final class MicronautMcpHttpExchange {
         return Mono.fromFuture(() -> CompletableFuture.supplyAsync(() -> 0L, delayed));
     }
 
-    private @Nullable String sessionHeaders(MutableHttpRequest<?> request) {
+    private void sessionHeaders(MutableHttpRequest<?> request, @Nullable String session) {
         String version = protocolVersion.get();
         if (version != null) {
             request.header(PROTOCOL_VERSION, version);
         }
-        String session = sessionId.get();
         if (session != null && !sessionless.get()) {
             request.header(SESSION_ID, session);
-            return session;
         }
-        return null;
     }
 
     private Flux<String> exchange(MutableHttpRequest<?> request, @Nullable String session, boolean errorMessages, StreamState stream) {
@@ -265,10 +274,11 @@ public final class MicronautMcpHttpExchange {
      * @return A publisher completing when the session is ended
      */
     public Mono<Void> close(Map<String, String> headers) {
+        closed.tryEmitEmpty();
         MutableHttpRequest<?> request = HttpRequest.DELETE(uri);
         headers.forEach(request::header);
-        String session = sessionHeaders(request);
-        sessionId.set(null);
+        String session = sessionId.getAndSet(null);
+        sessionHeaders(request, session);
         if (session == null) {
             return Mono.empty();
         }
@@ -279,8 +289,6 @@ public final class MicronautMcpHttpExchange {
 
     private Flux<String> errorBody(HttpClientResponseException e, @Nullable String session, boolean errorMessages) {
         if (e.getStatus() == HttpStatus.NOT_FOUND && session != null) {
-            // The server no longer knows the session: forget it, so that the client initializes a new one
-            sessionId.compareAndSet(session, null);
             return Flux.error(new McpHttpSessionNotFoundException(session, "The MCP server " + configuration.getName() + " no longer knows the session " + session, e));
         }
         if (!errorMessages) {
@@ -311,13 +319,17 @@ public final class MicronautMcpHttpExchange {
     }
 
     /**
-     * The state of an event stream that its resumption needs: the id of its last event and its reconnection delay,
-     * which belong to each stream, and whether the response arrived.
+     * The state of an event stream that its resumption needs: the id of its last event and its reconnection delay
+     * belong to the session that opened the stream.
      */
     private static final class StreamState {
         private volatile @Nullable String lastEventId;
         private volatile @Nullable Duration retry;
-        private volatile boolean responded;
+        private volatile @Nullable String session;
+
+        StreamState(@Nullable String session) {
+            this.session = session;
+        }
     }
 
     /**
@@ -349,7 +361,12 @@ public final class MicronautMcpHttpExchange {
             if (first) {
                 first = false;
                 if (!sessionless.get()) {
-                    response.getHeaders().findFirst(SESSION_ID).ifPresent(sessionId::set);
+                    response.getHeaders().findFirst(SESSION_ID).ifPresent(id -> {
+                        // Keep the identity of an echoed session id so a late response cannot replace a newer session.
+                        if (!id.equals(stream.session) && sessionId.compareAndSet(stream.session, id)) {
+                            stream.session = id;
+                        }
+                    });
                 }
                 eventStream = response.getContentType().map(MediaType.TEXT_EVENT_STREAM_TYPE::matches).orElse(false);
             }
@@ -406,7 +423,7 @@ public final class MicronautMcpHttpExchange {
                 }
             }
             if (start < bytes.length) {
-                if (line.size() + (long) (bytes.length - start) > maxMessageSize) {
+                if (line.size() + (long) (bytes.length - start) - SSE_LINE_OVERHEAD > maxMessageSize) {
                     throw tooLarge();
                 }
                 line.write(bytes, start, bytes.length - start);

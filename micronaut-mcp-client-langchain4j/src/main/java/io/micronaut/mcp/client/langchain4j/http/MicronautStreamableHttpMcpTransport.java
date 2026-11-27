@@ -33,6 +33,7 @@ import io.micronaut.mcp.client.http.McpHttpSessionNotFoundException;
 import io.micronaut.mcp.client.http.MicronautMcpHttpExchange;
 import org.jspecify.annotations.Nullable;
 import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -40,7 +41,6 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -58,11 +58,10 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
     private final MicronautMcpHttpExchange exchange;
     private final AtomicReference<McpOperationHandler> operationHandler = new AtomicReference<>();
     private final AtomicReference<Runnable> onFailure = new AtomicReference<>();
-    private final AtomicReference<McpInitializeRequest> initializeRequest = new AtomicReference<>();
     private final AtomicReference<String> protocolVersion = new AtomicReference<>();
     private final AtomicBoolean modernProtocol = new AtomicBoolean();
     private final AtomicReference<String> negotiatedVersion = new AtomicReference<>();
-    private final AtomicReference<Renewal> renewal = new AtomicReference<>();
+    private @Nullable Session session;
 
     MicronautStreamableHttpMcpTransport(MicronautMcpHttpExchange exchange) {
         this.exchange = exchange;
@@ -75,25 +74,34 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
 
     @Override
     public CompletableFuture<String> sendInitializeRequest(McpInitializeRequest request) {
-        initializeRequest.set(request);
-        return initialize(request, exchange.headers());
+        return initialize(request, exchange.headers()).ready();
     }
 
     /**
      * Initializes a session with the given headers, such as those of the caller whose request found the session
      * expired, which the response scheduler could not compute again.
      */
-    private CompletableFuture<String> initialize(McpInitializeRequest request, Map<String, String> headers) {
+    private synchronized Session initialize(McpInitializeRequest request, Map<String, String> headers) {
         negotiatedVersion.set(null);
         updateProtocolVersion();
-        return execute(new McpCallContext(null, request), headers, true)
+        McpCallContext context = new McpCallContext(null, request);
+        CompletableFuture<String> ready = execute(context, post(context, headers))
             .thenCompose(response -> {
-                // The version an earlier protocol negotiates is sent from the initialized notification on
-                negotiatedVersion.set(McpJson.parse(response).path("result").path("protocolVersion").asText(null));
+                JsonNode message = McpJson.parse(response);
+                if (message.has("error")) {
+                    throw rpcError(message.get("error"));
+                }
+                JsonNode version = message.path("result").path("protocolVersion");
+                if (!version.isTextual()) {
+                    throw new IllegalStateException("The MCP initialize result is missing its protocol version");
+                }
+                negotiatedVersion.set(version.textValue());
                 updateProtocolVersion();
-                return execute(new McpCallContext(null, new McpInitializationNotification()), headers, true)
-                    .thenApply(ignored -> response);
+                McpCallContext initialized = new McpCallContext(null, new McpInitializationNotification());
+                return execute(initialized, post(initialized, headers)).thenApply(ignored -> response);
             });
+        session = new Session(request, ready);
+        return session;
     }
 
     @Override
@@ -103,15 +111,45 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
 
     @Override
     public CompletableFuture<String> sendRequest(McpCallContext context) {
-        // The headers are computed on the thread that calls the client
+        // Compute request headers on the calling thread, including those needed for a later renewal.
         Map<String, String> headers = exchange.headers();
-        Renewal current = renewal.get();
-        if (current != null && current.initialized().state() != Future.State.SUCCESS) {
-            // A new caller must wait for the handshake too. It can retry a failed handshake with its own headers.
-            return renew(current.expiredSession(), initializeRequest.get(), headers)
-                .thenCompose(ignored -> execute(context, headers, true));
+        return send(context, headers);
+    }
+
+    private synchronized CompletableFuture<String> send(McpCallContext context, Map<String, String> headers) {
+        Flux<String> messages = post(context, headers);
+        Session current = session;
+        if (current == null || modernProtocol.get()) {
+            return execute(context, messages.doOnError(McpHttpSessionNotFoundException.class, exchange::invalidateSession));
         }
-        return execute(context, headers, false);
+        Session active = current.ready().isCompletedExceptionally() ? initialize(current.request(), headers) : current;
+        Flux<String> pending = afterHandshake(active, messages.onErrorResume(McpHttpSessionNotFoundException.class, expired -> {
+            Session replacement = renew(active, expired, headers);
+            return afterHandshake(replacement, messages.doOnError(McpHttpSessionNotFoundException.class,
+                error -> markExpired(replacement, error)));
+        }));
+        return execute(context, pending);
+    }
+
+    private static Flux<String> afterHandshake(Session session, Flux<String> messages) {
+        // Cancelling the operation cancels its pending replay, while other callers can still use the handshake.
+        return Mono.fromFuture(session.ready(), true).thenMany(messages);
+    }
+
+    private synchronized Session renew(Session expired, McpHttpSessionNotFoundException error, Map<String, String> headers) {
+        Session current = session;
+        if (current != null && current != expired) {
+            return current;
+        }
+        exchange.invalidateSession(error);
+        return initialize(expired.request(), headers);
+    }
+
+    private synchronized void markExpired(Session expired, McpHttpSessionNotFoundException error) {
+        if (session == expired && exchange.invalidateSession(error)) {
+            // This request used its retry. The next caller can start another session with its own headers.
+            session = new Session(expired.request(), CompletableFuture.failedFuture(error));
+        }
     }
 
     @Override
@@ -143,22 +181,33 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
         exchange.setSessionless(modern);
     }
 
-    private CompletableFuture<String> execute(McpCallContext context, Map<String, String> headers, boolean retried) {
+    private Flux<String> post(McpCallContext context, Map<String, String> headers) {
+        String json = McpJson.serialize(context.message());
+        Long id = context.message().getId();
+        boolean initialize = context.message() instanceof McpInitializeRequest;
+        return exchange.post(json, requestHeaders(context, json, headers), initialize, id != null ? message -> isResponseTo(message, id) : null)
+            .doOnError(error -> {
+                Runnable failure = onFailure.get();
+                if (failure != null && isConnectionLost(error)) {
+                    failure.run();
+                }
+            });
+    }
+
+    private CompletableFuture<String> execute(McpCallContext context, Flux<String> messages) {
         McpOperationHandler handler = operationHandler.get();
         if (handler == null) {
             return CompletableFuture.failedFuture(new IllegalStateException("The transport is not started"));
         }
-        String json = McpJson.serialize(context.message());
         Long id = context.message().getId();
         CompletableFuture<String> future = new CompletableFuture<>();
         if (id != null) {
             // The operation handler completes the future when it receives the response with this id
             handler.expectResponse(id, future);
         }
-        boolean initialize = context.message() instanceof McpInitializeRequest;
-        Disposable exchanged = exchange.post(json, requestHeaders(context, json, headers), initialize, id != null ? message -> isResponseTo(message, id) : null).subscribe(
+        Disposable exchanged = messages.subscribe(
             message -> receive(handler, message, id, future),
-            error -> failed(context, headers, retried, error, future),
+            future::completeExceptionally,
             () -> {
                 if (id == null) {
                     future.complete(null);
@@ -222,62 +271,18 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
             if (node.has("error") && (responseId == null || !responseId.isNumber() || responseId.asLong() != id)) {
                 // An error the server could not relate to the request, for example about the session, which the
                 // operation handler would discard: it fails the request instead
-                JsonNode error = node.get("error");
-                int code = error.path("code").asInt();
-                String text = error.path("message").asText();
-                JsonNode data = error.get("data");
-                future.completeExceptionally(data == null ? new McpException(code, text) : McpException.withErrorData(code, text, data.toString()));
+                future.completeExceptionally(rpcError(node.get("error")));
                 return;
             }
         }
         handler.onMessage(message);
     }
 
-    private void failed(McpCallContext context, Map<String, String> headers, boolean retried, Throwable error, CompletableFuture<String> future) {
-        McpInitializeRequest initialize = initializeRequest.get();
-        if (error instanceof McpHttpSessionNotFoundException expired && !retried && initialize != null) {
-            // As the LangChain4j HTTP transport: initialize a new session, then send the request again once
-            renew(expired.getSessionId(), initialize, headers)
-                .thenCompose(ignored -> execute(context, headers, true))
-                .whenComplete((response, retryError) -> {
-                    if (retryError != null) {
-                        future.completeExceptionally(retryError);
-                    } else {
-                        future.complete(response);
-                    }
-                });
-            return;
-        }
-        future.completeExceptionally(error);
-        Runnable failure = onFailure.get();
-        if (failure != null && isConnectionLost(error)) {
-            // Only when the server cannot be reached, not when it fails a request; called off the event loop
-            failure.run();
-        }
-    }
-
-    /**
-     * Initializes a new session in place of an expired one, once for all the requests that found it expired: each would
-     * otherwise send the initialize request again, with the same id, and all but one would never get the response.
-     */
-    private CompletableFuture<String> renew(String expiredSession, McpInitializeRequest initialize, Map<String, String> headers) {
-        while (true) {
-            Renewal current = renewal.get();
-            if (current != null && current.expiredSession().equals(expiredSession) && !current.initialized().isCompletedExceptionally()) {
-                return current.initialized();
-            }
-            CompletableFuture<String> initialized = new CompletableFuture<>();
-            if (renewal.compareAndSet(current, new Renewal(expiredSession, initialized))) {
-                initialize(initialize, headers).whenComplete((response, e) -> {
-                    if (e != null) {
-                        initialized.completeExceptionally(e);
-                    } else {
-                        initialized.complete(response);
-                    }
-                });
-                return initialized;
-            }
-        }
+    private static McpException rpcError(JsonNode error) {
+        int code = error.path("code").asInt();
+        String text = error.path("message").asText();
+        JsonNode data = error.get("data");
+        return data == null ? new McpException(code, text) : McpException.withErrorData(code, text, data.toString());
     }
 
     private static boolean isConnectionLost(Throwable error) {
@@ -307,6 +312,6 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
         }
     }
 
-    private record Renewal(String expiredSession, CompletableFuture<String> initialized) {
+    private record Session(McpInitializeRequest request, CompletableFuture<String> ready) {
     }
 }

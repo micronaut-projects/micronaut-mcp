@@ -126,7 +126,9 @@ final class MicronautStreamableHttpClientTransport implements McpClientTransport
      */
     private McpTransportSessionNotFoundException sessionExpired(McpHttpSessionNotFoundException e) {
         McpTransportSessionNotFoundException expired = new McpTransportSessionNotFoundException(e.getSessionId(), e);
-        exceptionHandler.get().accept(expired);
+        if (exchange.invalidateSession(e) && !closed.get()) {
+            exceptionHandler.get().accept(expired);
+        }
         return expired;
     }
 

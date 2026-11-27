@@ -59,7 +59,6 @@ import java.util.concurrent.ExecutorService;
 // Only http-client-core can be on the classpath, without the Micronaut HTTP client that provides the registry
 @Requires(beans = StreamingHttpClientRegistry.class)
 public final class MicronautMcpHttpClients {
-    private static final String DEFAULT_ENDPOINT = "/mcp";
     private final StreamingHttpClientRegistry<?> registry;
     private final BeanContext beanContext;
     private final List<McpClientHeadersProvider> headersProviders;
@@ -79,16 +78,17 @@ public final class MicronautMcpHttpClients {
 
     /**
      * @param configuration The connection
+     * @param defaultPath The path used by the client adapter for a URL without a path
      * @return A new exchange with the server of the connection
      */
-    public MicronautMcpHttpExchange exchange(McpClientHttpConfiguration configuration) {
+    public MicronautMcpHttpExchange exchange(McpClientHttpConfiguration configuration, String defaultPath) {
         Endpoint endpoint = endpoints.computeIfAbsent(configuration.getName(), name -> endpoint(configuration));
-        return new MicronautMcpHttpExchange(endpoint.client(), endpoint.uri(), configuration, headersProviders, scheduler);
+        String uri = endpoint.origin() + path(configuration.getUrl(), defaultPath);
+        return new MicronautMcpHttpExchange(endpoint.client(), uri, configuration, headersProviders, scheduler);
     }
 
     private Endpoint endpoint(McpClientHttpConfiguration configuration) {
         URI url = configuration.getUrl();
-        String path = path(url);
         URI origin = URI.create(url.getScheme() + "://" + url.getRawAuthority());
         String serviceId = configuration.getServiceId();
         if (serviceId != null) {
@@ -98,7 +98,7 @@ public final class MicronautMcpHttpClients {
             // when the connection supplies the origin.
             MutableAnnotationMetadata metadata = new MutableAnnotationMetadata();
             metadata.addDeclaredAnnotation(Client.class.getName(), Map.of(AnnotationMetadata.VALUE_MEMBER, serviceId));
-            return new Endpoint(registry.getStreamingHttpClient(metadata), serviceHasUrls ? path : origin + path);
+            return new Endpoint(registry.getStreamingHttpClient(metadata), serviceHasUrls ? "" : origin.toString());
         }
         HttpClientConfiguration clientConfiguration = new ConnectionHttpClientConfiguration(defaultConfiguration());
         // MCP does not use redirects, and following one could send the token of a user to another server
@@ -107,15 +107,11 @@ public final class MicronautMcpHttpClients {
         if (timeout != null) {
             clientConfiguration.setReadTimeout(timeout);
         }
-        return new Endpoint(registry.resolveStreamingHttpClient(null, LoadBalancer.fixed(origin), clientConfiguration, beanContext), path);
+        return new Endpoint(registry.resolveStreamingHttpClient(null, LoadBalancer.fixed(origin), clientConfiguration, beanContext), "");
     }
 
-    /**
-     * @return The path and query of the endpoint, with {@code /mcp} as the path of a URL without one, as the transport of
-     * the JDK HTTP client of the MCP Java SDK does, so that switching HTTP clients does not change the endpoint
-     */
-    private static String path(URI url) {
-        String path = url.getRawPath() == null || url.getRawPath().isEmpty() ? DEFAULT_ENDPOINT : url.getRawPath();
+    private static String path(URI url, String defaultPath) {
+        String path = url.getRawPath() == null || url.getRawPath().isEmpty() ? defaultPath : url.getRawPath();
         return path + (url.getRawQuery() != null ? "?" + url.getRawQuery() : "");
     }
 
@@ -125,7 +121,7 @@ public final class MicronautMcpHttpClients {
             .orElseGet(DefaultHttpClientConfiguration::new);
     }
 
-    private record Endpoint(StreamingHttpClient client, String uri) {
+    private record Endpoint(StreamingHttpClient client, String origin) {
     }
 
     /**

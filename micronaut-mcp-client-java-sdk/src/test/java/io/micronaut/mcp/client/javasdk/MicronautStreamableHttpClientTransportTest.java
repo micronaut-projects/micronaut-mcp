@@ -36,6 +36,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -405,6 +406,52 @@ class MicronautStreamableHttpClientTransportTest implements TestPropertyProvider
         JsonSchemaValidator validator = beanContext.getBean(JsonSchemaValidator.class);
         IllegalStateException error = assertThrows(IllegalStateException.class, () -> factory.mcpClientSyncSpec(configuration, validator));
         assertTrue(error.getMessage().contains("micronaut-http-client"), error.getMessage());
+    }
+
+    @Test
+    void late404DoesNotExpireTheReplacementSession() throws Exception {
+        McpClientTransport transport = transport("crafted", new CopyOnWriteArrayList<>());
+        AtomicInteger expirations = new AtomicInteger();
+        transport.setExceptionHandler(ignored -> expirations.incrementAndGet());
+        server.on("POST initialize", json(200, INITIALIZE_RESULT, SESSION_ID, "s1"));
+        transport.sendMessage(initialize()).block(TIMEOUT);
+        CompletableFuture<Void> firstRelease = new CompletableFuture<>();
+        CompletableFuture<Void> secondRelease = new CompletableFuture<>();
+        server.on("POST tools/list", exchange -> {
+            firstRelease.join();
+            json(404, "").respond(exchange);
+        });
+        server.on("POST tools/list", exchange -> {
+            secondRelease.join();
+            json(404, "").respond(exchange);
+        });
+        CompletableFuture<Void> first = transport.sendMessage(toolsList("2")).onErrorComplete().toFuture();
+        CompletableFuture<Void> second = transport.sendMessage(toolsList("3")).onErrorComplete().toFuture();
+        try {
+            List<Request> pending = server.await(r -> r.body().contains("tools/list"), 2);
+            assertTrue(pending.stream().allMatch(r -> "s1".equals(r.header(SESSION_ID))));
+            firstRelease.complete(null);
+            CompletableFuture.anyOf(first, second).get(5, TimeUnit.SECONDS);
+            server.on("POST initialize", json(200, INITIALIZE_RESULT, SESSION_ID, "s2"));
+            transport.sendMessage(initialize()).block(TIMEOUT);
+        } finally {
+            firstRelease.complete(null);
+            secondRelease.complete(null);
+        }
+        CompletableFuture.allOf(first, second).get(5, TimeUnit.SECONDS);
+        assertEquals(1, expirations.get());
+    }
+
+    @Test
+    void frameBoundaryAcceptsAnExactSizeMessage() {
+        McpClientTransport transport = transport("small", new CopyOnWriteArrayList<>());
+        String prefix = "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"text\":\"";
+        String suffix = "\"}}";
+        String message = prefix + "é" + "x".repeat(1024 - prefix.length() - suffix.length() - 2) + suffix;
+        server.on("POST tools/list", events(utf8("data: " + message + "\n\n")));
+        transport.sendMessage(toolsList("1")).block(TIMEOUT);
+        server.on("POST tools/list", events(utf8("data: " + message + "\r"), utf8("\n\r\n")));
+        transport.sendMessage(toolsList("1")).block(TIMEOUT);
     }
 
     private McpClientTransport transport(String connection, List<McpSchema.JSONRPCMessage> received) {

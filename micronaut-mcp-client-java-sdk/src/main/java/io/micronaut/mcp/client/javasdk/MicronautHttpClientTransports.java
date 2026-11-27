@@ -48,6 +48,6 @@ final class MicronautHttpClientTransports {
     }
 
     McpClientTransport create(McpClientHttpConfiguration configuration) {
-        return new MicronautStreamableHttpClientTransport(clients.exchange(configuration), configuration, headersProviders, jsonMapper);
+        return new MicronautStreamableHttpClientTransport(clients.exchange(configuration, "/mcp"), configuration, headersProviders, jsonMapper);
     }
 }
