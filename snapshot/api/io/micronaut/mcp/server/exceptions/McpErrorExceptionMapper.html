@@ -72,10 +72,18 @@ loadScripts(document, 'script');</script>
 <dt>Type Parameters:</dt>
 <dd><span id="type-param-T"><code>T</code> - Exception to Map</span></dd>
 </dl>
+<dl class="notes">
+<dt>All Known Subinterfaces:</dt>
+<dd><code><a href="InputErrorMapper.html" title="interface in io.micronaut.mcp.server.exceptions">InputErrorMapper</a>&lt;T&gt;</code></dd>
+</dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">McpErrorExceptionMapper&lt;T extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&gt;</span></div>
-<div class="block">ApI to define mappers from exceptions to <code>McpError</code>.</div>
+<div class="block">API to define mappers from exceptions to <code>McpError</code>, the JSON-RPC error sent to the client.
+<p>
+A tool sends the protocol error returned by an application mapper to the client, which may pass its
+code, message and data to the model. Use client-safe details in mapped errors.
+Built-in argument mappers report validation and binding errors as tool results with <code>isError</code> set to true.</div>
 </div>
 </section>
 <section class="summary">

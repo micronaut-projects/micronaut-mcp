@@ -137,6 +137,8 @@
         
         <div class="toc-item" style="margin-left:40px" id="toc-item-toolAnnotationReturnType"><a href="#toolAnnotationReturnType"><strong>4.7.1.4.3</strong><span>Tool Annotation Method Return Type</span></a></div>
         
+        <div class="toc-item" style="margin-left:40px" id="toc-item-toolErrors"><a href="#toolErrors"><strong>4.7.1.4.4</strong><span>Tool Errors</span></a></div>
+        
         <div class="toc-item" style="margin-left:30px" id="toc-item-toolsInputJsonSchema"><a href="#toolsInputJsonSchema"><strong>4.7.1.5</strong><span>Tools Input JSON Schema</span></a></div>
         
         <div class="toc-item" style="margin-left:30px" id="toc-item-toolsOutputJsonSchema"><a href="#toolsOutputJsonSchema"><strong>4.7.1.6</strong><span>Tools Output JSON Schema</span></a></div>
@@ -262,13 +264,22 @@
 <p>With the HTTP transport, a message that is not a valid JSON-RPC 2.0 request or notification gets HTTP 400 with the JSON-RPC error <code>-32600</code> (Invalid Request), a <code>null</code> id and a message that names the problem. Before, such a message either got HTTP 500 or reached the SDK. This includes a <code>jsonrpc</code> member that is missing or other than <code>"2.0"</code>, a <code>method</code> that is missing or not a string, an <code>id</code> that is <code>null</code>, a boolean, a fractional number or larger than a 64-bit integer, <code>params</code> that are neither an object nor an array, and a batch (an array of messages).</p>
 </li>
 <li>
-<p>With the HTTP transport, an exception other than an <code>McpError</code> that the SDK throws outside your tools, prompts, resources and completions, for example while it converts the request parameters, is logged at <code>ERROR</code> and answered with the JSON-RPC error <code>-32603</code> and the message <code>Internal error</code>, without the message of the exception. An exception other than an <code>McpError</code> thrown by your own primitives is also answered with <code>-32603</code> and the message <code>Internal error</code>, and logged at <code>WARN</code> with its stack trace, unless an <code>McpErrorExceptionMapper</code> maps it: map the exceptions whose message the client may see. A notification whose handling fails is answered with the HTTP status of the error and no body, because a JSON-RPC error response needs an id.</p>
+<p>With the HTTP transport, an exception other than an <code>McpError</code> that the SDK throws outside your tools, prompts, resources and completions, for example while it converts the request parameters, is logged at <code>ERROR</code> and answered with the JSON-RPC error <code>-32603</code> and the message <code>Internal error</code>, without the message of the exception. An exception other than an <code>McpError</code> thrown by your prompts, resources and completions is also answered with <code>-32603</code> and the message <code>Internal error</code>, and logged at <code>WARN</code> with its stack trace, unless an <code>McpErrorExceptionMapper</code> maps it: map the exceptions whose message the client may see. Tools report their failures as tool execution errors instead, see below. A notification whose handling fails is answered with the HTTP status of the error and no body, because a JSON-RPC error response needs an id.</p>
 </li>
 <li>
 <p>A <code>@ToolArg</code> parameter is always a named property of the input schema of a tool, even when its type has a <code>@JsonSchema</code>. Only a parameter without <code>@ToolArg</code> can provide the schema of the whole input.</p>
 </li>
 <li>
 <p>The <code>$id</code> of generated JSON schemas, which clients see in <code>tools/list</code>, defaults to <code>classpath:META-INF/schemas/&lt;name&gt;</code> with Micronaut JSON Schema 2.3.2 and later, instead of <code><a href="http://localhost:8080/schemas/&lt;name&gt" class="bare">http://localhost:8080/schemas/&lt;name&gt</a>;</code>. Set the <code>micronaut.jsonschema.baseUri</code> annotation processor option to choose another base.</p>
+</li>
+<li>
+<p>A tool method that throws an unmapped exception now returns a result with <code>isError</code> set to <code>true</code> and a generic message identifying the tool. Argument binding and bean validation failures return <code>isError</code> with a message describing the invalid input. With the HTTP transport the response status is <code>200</code> instead of <code>400</code> or <code>500</code>. In particular, a bean validation failure of a tool argument is no longer the error <code>-32602</code>. Existing <code>McpErrorExceptionMapper</code> beans still produce JSON-RPC errors for the exceptions they map. To answer with a JSON-RPC error, throw an <code>io.modelcontextprotocol.spec.McpError</code>, or map an exception that Micronaut MCP does not map itself with an <code>McpErrorExceptionMapper</code>. Clients that detect a failed call by the <code>error</code> member of the JSON-RPC response must also check <code>isError</code> in its <code>result</code>. Likewise, access logs, firewall rules and alerts that count <code>4xx</code> responses no longer see tool arguments that fail validation, which are logged at <code>DEBUG</code> level. See <a href="#toolErrors">Tool Errors</a>.</p>
+</li>
+<li>
+<p>A tool failure that no <code>McpErrorExceptionMapper</code> maps is logged by the <code>io.micronaut.mcp.server.registry.ToolRegistry</code> logger at <code>WARN</code> level. The registry renders the exception and its stack trace on one log line. A tool that fails often for expected reasons, such as an unknown identifier, should return a <code>CallToolResult</code> whose <code>isError</code> is <code>true</code> instead of throwing, which is not logged. See <a href="#toolErrors">Tool Errors</a>.</p>
+</li>
+<li>
+<p>The message of a structured content or tool input that does not match its JSON schema lists the schema errors, separated by semicolons, after the prefix the SDK adds, for example <code>Tool (moon-phase-at-date) input validation failed: /date: does not match the date pattern must be a valid RFC 3339 full-date</code>. It no longer contains <code>Validation failed: structuredContent does not match tool outputSchema</code> nor the <code>ValidationMessageAdapter</code> representation of the errors.</p>
 </li>
 </ul>
 </div>
@@ -1470,6 +1481,222 @@ class Tools {
 <p>When it is <code>true</code>, methods run on the thread that received the request, which must not block. Annotate a method with <code>@ExecuteOn</code> to run it on another executor, for example <code>@ExecuteOn(TaskExecutors.BLOCKING)</code>.</p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>See <a href="#toolErrors">Tool Errors</a> for how a tool reports a failure.</p>
+</div>
+
+<h2 id="toolErrors"><a class="anchor" href="#toolErrors"></a>4.7.1.4.4 Tool Errors</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/tools/toolAnnotation/toolErrors.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The following <code>@Tool</code> methods show how to report expected failures, unexpected failures and protocol errors.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example.micronaut;
+
+
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.mcp.annotations.Tool;
+import io.micronaut.mcp.annotations.ToolArg;
+import io.modelcontextprotocol.spec.McpError;
+import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.inject.Singleton;
+
+import java.util.Map;
+
+
+@Singleton
+class WeatherTools {
+    private static final Map&lt;String, Integer&gt; TEMPERATURES = Map.of("Madrid", 21, "London", 14);
+
+    @Tool(description = "Returns the temperature of a city in degrees Celsius")
+    McpSchema.CallToolResult temperature(@ToolArg(description = "Madrid or London") String city) {
+        Integer temperature = TEMPERATURES.get(city);
+        if (temperature == null) {
+            return McpSchema.CallToolResult.builder()
+                .addTextContent("Unknown city " + city + ", use Madrid or London")
+                .isError(true)
+                .build();
+        }
+        return McpSchema.CallToolResult.builder()
+            .addTextContent(String.valueOf(temperature))
+            .build();
+    }
+
+    @Tool(description = "Returns the forecast of a city")
+    String forecast(@ToolArg String city) {
+        throw new IllegalStateException("The forecast service is not available");
+    }
+
+    @Tool(description = "Returns the weather alerts of a city")
+    String alerts(@ToolArg String city) {
+        throw McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR)
+            .message("Weather alerts are disabled on this server")
+            .build();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from typing import Annotated
+
+from io.modelcontextprotocol.spec import McpError, McpSchema
+from jakarta.inject import Singleton
+from java.lang import IllegalStateException
+from micronaut.context.annotation import Requires
+from micronaut.mcp.annotations import Tool, ToolArg
+
+@Singleton
+class WeatherTools:
+    TEMPERATURES = {"Madrid": 21, "London": 14}
+
+    @Tool(description="Returns the temperature of a city in degrees Celsius")
+    def temperature(self, city: Annotated[str, ToolArg(description="Madrid or London")]) -&gt; McpSchema.CallToolResult:
+        temperature = self.TEMPERATURES.get(city)
+        if temperature is None:
+            return McpSchema.CallToolResult.builder() \
+                .addTextContent(f"Unknown city {city}, use Madrid or London") \
+                .isError(True) \
+                .build()
+        return McpSchema.CallToolResult.builder() \
+            .addTextContent(str(temperature)) \
+            .build()
+
+    @Tool(description="Returns the forecast of a city")
+    def forecast(self, city: Annotated[str, ToolArg()]) -&gt; str:
+        raise IllegalStateException("The forecast service is not available")
+
+    @Tool(description="Returns the weather alerts of a city")
+    def alerts(self, city: Annotated[str, ToolArg()]) -&gt; str:
+        raise McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR) \
+            .message("Weather alerts are disabled on this server") \
+            .build()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example.micronaut
+
+
+import io.micronaut.context.annotation.Requires
+import io.micronaut.mcp.annotations.Tool
+import io.micronaut.mcp.annotations.ToolArg
+import io.modelcontextprotocol.spec.McpError
+import io.modelcontextprotocol.spec.McpSchema
+import jakarta.inject.Singleton
+
+
+@Singleton
+class WeatherTools {
+    private val temperatures = mapOf("Madrid" to 21, "London" to 14)
+
+    @Tool(description = "Returns the temperature of a city in degrees Celsius")
+    fun temperature(@ToolArg(description = "Madrid or London") city: String): McpSchema.CallToolResult {
+        val temperature = temperatures[city]
+            ?: return McpSchema.CallToolResult.builder()
+                .addTextContent("Unknown city $city, use Madrid or London")
+                .isError(true)
+                .build()
+        return McpSchema.CallToolResult.builder()
+            .addTextContent(temperature.toString())
+            .build()
+    }
+
+    @Tool(description = "Returns the forecast of a city")
+    fun forecast(@ToolArg city: String): String {
+        throw IllegalStateException("The forecast service is not available")
+    }
+
+    @Tool(description = "Returns the weather alerts of a city")
+    fun alerts(@ToolArg city: String): String {
+        throw McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR)
+            .message("Weather alerts are disabled on this server")
+            .build()
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example.micronaut
+
+
+import io.micronaut.context.annotation.Requires
+import io.micronaut.mcp.annotations.Tool
+import io.micronaut.mcp.annotations.ToolArg
+import io.modelcontextprotocol.spec.McpError
+import io.modelcontextprotocol.spec.McpSchema
+import jakarta.inject.Singleton
+
+
+@Singleton
+class WeatherTools {
+    private static final Map&lt;String, Integer&gt; TEMPERATURES = [Madrid: 21, London: 14]
+
+    @Tool(description = "Returns the temperature of a city in degrees Celsius")
+    McpSchema.CallToolResult temperature(@ToolArg(description = "Madrid or London") String city) {
+        Integer temperature = TEMPERATURES[city]
+        if (temperature == null) {
+            return McpSchema.CallToolResult.builder()
+                .addTextContent("Unknown city ${city}, use Madrid or London".toString())
+                .isError(true)
+                .build()
+        }
+        McpSchema.CallToolResult.builder()
+            .addTextContent(String.valueOf(temperature))
+            .build()
+    }
+
+    @Tool(description = "Returns the forecast of a city")
+    String forecast(@ToolArg String city) {
+        throw new IllegalStateException("The forecast service is not available")
+    }
+
+    @Tool(description = "Returns the weather alerts of a city")
+    String alerts(@ToolArg String city) {
+        throw McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR)
+            .message("Weather alerts are disabled on this server")
+            .build()
+    }
+}</code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>For an expected failure, return a <code>CallToolResult</code> with <code>isError</code> set to <code>true</code> and a message that helps the caller correct the request. For example, <code>temperature</code> lists the supported cities. Returning an error result does not generate a server log entry.</p>
+</li>
+<li>
+<p>If a tool throws an unmapped exception, the client receives a tool execution error with a generic message, such as <code>Tool forecast failed</code>. The server logs the exception details and stack trace at <code>WARN</code>. If the server cannot serialize a tool result, the client receives a message identifying the tool and the serialization failure.</p>
+</li>
+<li>
+<p>To report a JSON-RPC protocol error, throw an <code>io.modelcontextprotocol.spec.McpError</code> with a code and a client-safe message, as <code>alerts</code> does.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Clients decide what to show the model. The <a href="https://modelcontextprotocol.io/specification/2025-11-25/server/tools#error-handling">MCP specification</a> recommends that clients forward tool execution errors and allows them to forward protocol errors too. Use client-safe text in explicit results and in the message and data of a protocol error.</p>
+</div>
+<div class="paragraph">
+<p>Arguments that cannot be bound or fail bean validation produce tool execution errors with the validation message, for example <code>date: must be a date in the past or in the present</code>. The registry logs these errors at <code>DEBUG</code>.</p>
+</div>
+<div class="paragraph">
+<p>An application <code>io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper</code> can turn an exception into a protocol error. A mapper that matches every <code>RuntimeException</code> also matches an <code>McpError</code> thrown by a tool and can replace its code and message. The built-in argument mappers send their messages as tool execution errors. They match by exception type, including when a tool body throws an exception such as a <code>SerdeException</code> while reading an upstream response. Handle such an exception inside the tool if its message contains private details.</p>
+</div>
+<div class="paragraph">
+<p>The registry unwraps exceptions from reactive types and <code>CompletionStage</code> before choosing a mapper. The same rules apply to synchronous and reactive servers. Prompts, resources and completions report failures as protocol errors.</p>
+</div>
+<div class="paragraph">
+<p>With a reactive server, a tool without <code>@ExecuteOn</code> can fail on the event loop. A synchronous appender writes the log on that thread. An asynchronous appender such as Logback&#8217;s <code>AsyncAppender</code> can offload that work. The registry renders unexpected tool exceptions, including their causes and suppressed exceptions, on one log line.</p>
 </div>
 
 <h2 id="toolsInputJsonSchema"><a class="anchor" href="#toolsInputJsonSchema"></a>4.7.1.5 Tools Input JSON Schema</h2>

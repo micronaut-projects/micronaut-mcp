@@ -552,6 +552,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/modelcontextprotocol/server/http/tck/InitializeTest.html#%3Cinit%3E()" class="member-name-link">InitializeTest()</a> - Constructor for class io.modelcontextprotocol.server.http.tck.<a href="io/modelcontextprotocol/server/http/tck/InitializeTest.html" title="class in io.modelcontextprotocol.server.http.tck">InitializeTest</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/server/exceptions/InputErrorMapper.html" class="type-name-link" title="interface in io.micronaut.mcp.server.exceptions">InputErrorMapper&lt;T&gt;</a> - Interface in <a href="io/micronaut/mcp/server/exceptions/package-summary.html">io.micronaut.mcp.server.exceptions</a></dt>
+<dd>
+<div class="block">Marks the built-in mappers of failures to bind or validate the arguments of a primitive.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/primitives/utils/StringInterpolator.html#interpolate(java.lang.String,java.util.Map)" class="member-name-link">interpolate(String, Map)</a> - Static method in class io.micronaut.mcp.primitives.utils.<a href="io/micronaut/mcp/primitives/utils/StringInterpolator.html" title="class in io.micronaut.mcp.primitives.utils">StringInterpolator</a></dt>
 <dd>
 <div class="block">If you supplied a template such as `Name: ${firstName} ${lastName}` and map of values such as `[firstName: Sergio, lastName: Amo] it returns `Name: Sergio Amo`.</div>
@@ -682,6 +686,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">If the JSONRPCResponse signals an error and the error is related to a listing request to a primitive, it returns an empty response for that primitive instead of an error.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/server/exceptions/InputErrorMapper.html#map(T)" class="member-name-link">map(T)</a> - Method in interface io.micronaut.mcp.server.exceptions.<a href="io/micronaut/mcp/server/exceptions/InputErrorMapper.html" title="interface in io.micronaut.mcp.server.exceptions">InputErrorMapper</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/exceptions/McpErrorExceptionMapper.html#map(T)" class="member-name-link">map(T)</a> - Method in interface io.micronaut.mcp.server.exceptions.<a href="io/micronaut/mcp/server/exceptions/McpErrorExceptionMapper.html" title="interface in io.micronaut.mcp.server.exceptions">McpErrorExceptionMapper</a></dt>
 <dd>
 <div class="block">Map the given exception to a <code>McpError</code>.</div>
@@ -721,7 +727,7 @@ it, another <code>McpError</code> is returned unchanged, and any other failure b
 </dd>
 <dt><a href="io/micronaut/mcp/server/exceptions/McpErrorExceptionMapper.html" class="type-name-link" title="interface in io.micronaut.mcp.server.exceptions">McpErrorExceptionMapper&lt;T&gt;</a> - Interface in <a href="io/micronaut/mcp/server/exceptions/package-summary.html">io.micronaut.mcp.server.exceptions</a></dt>
 <dd>
-<div class="block">ApI to define mappers from exceptions to <code>McpError</code>.</div>
+<div class="block">API to define mappers from exceptions to <code>McpError</code>, the JSON-RPC error sent to the client.</div>
 </dd>
 <dt><a href="io/micronaut/mcp/server/McpHttpServer.html" class="type-name-link" title="interface in io.micronaut.mcp.server">McpHttpServer</a> - Interface in <a href="io/micronaut/mcp/server/package-summary.html">io.micronaut.mcp.server</a></dt>
 <dd>
@@ -782,6 +788,12 @@ it, another <code>McpError</code> is returned unchanged, and any other failure b
 <dt><a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html#MEMBER_TITLE" class="member-name-link">MEMBER_TITLE</a> - Static variable in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry">ResourceTemplateRegistry</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#MEMBER_TITLE" class="member-name-link">MEMBER_TITLE</a> - Static variable in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/server/exceptions/InputErrorMapper.html#message(T)" class="member-name-link">message(T)</a> - Method in interface io.micronaut.mcp.server.exceptions.<a href="io/micronaut/mcp/server/exceptions/InputErrorMapper.html" title="interface in io.micronaut.mcp.server.exceptions">InputErrorMapper</a></dt>
+<dd>
+<div class="block">The message of the error, which a tool sends as a tool execution error without building an <code>McpError</code>.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/exceptions/InputErrorMapper.html#messageOrDefault(T)" class="member-name-link">messageOrDefault(T)</a> - Method in interface io.micronaut.mcp.server.exceptions.<a href="io/micronaut/mcp/server/exceptions/InputErrorMapper.html" title="interface in io.micronaut.mcp.server.exceptions">InputErrorMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/tools/fetch/FetchResponse.html#metadata()" class="member-name-link">metadata()</a> - Method in record class io.micronaut.mcp.server.tools.fetch.<a href="io/micronaut/mcp/server/tools/fetch/FetchResponse.html" title="class in io.micronaut.mcp.server.tools.fetch">FetchResponse</a></dt>
 <dd>
