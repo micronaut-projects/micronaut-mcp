@@ -238,7 +238,7 @@ record UriTemplateReadResourceRequest(
      */
     record Template(UriMatchTemplate matchTemplate, Set<String> reservedVariables, @Nullable Pattern simplePathPattern) {
         private static final String UNMATCHABLE_CHARS = "#(!{)&;+";
-        private static final Pattern SIMPLE_EXPRESSION = Pattern.compile("\\{[A-Za-z0-9_]+(?:,[A-Za-z0-9_]+)*}");
+        private static final Pattern SIMPLE_EXPRESSION = Pattern.compile("\\{\\w++(?:,\\w++)*+}");
         private static final Pattern EXPRESSION = Pattern.compile("\\{[^}]*}");
 
         // An expression ends at its first }, so a regular expression with braces, such as {+p:[a-z]{1,3}}, is not
