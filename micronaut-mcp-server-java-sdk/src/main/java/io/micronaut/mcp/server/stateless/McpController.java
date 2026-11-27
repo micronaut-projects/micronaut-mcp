@@ -119,10 +119,10 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
                 return Mono.create(sink -> {
                     StreamingJsonRpcResponse response = new StreamingJsonRpcResponse(sink, jsonrpcRequest);
                     request.setAttribute(McpNotificationEmitter.ATTRIBUTE, response);
-                    response.subscription(handleJsonRpcRequest(jsonrpcRequest, transportContext)
+                    handleJsonRpcRequest(jsonrpcRequest, transportContext)
                         // The Reactor context of the route, with the propagated context, reaches the primitive
                         .contextWrite(sink.contextView())
-                        .subscribe(response::complete, response::fail, response::completeEmpty));
+                        .subscribe(response::complete, response::fail, response::completeEmpty);
                 });
             }
             return handleJsonRpcRequest(jsonrpcRequest, transportContext);
@@ -131,8 +131,7 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
     }
 
     /**
-     * Acknowledges a {@code logging/setLevel} request with a valid level. A stateless server cannot remember the level,
-     * so it sends every log message whatever its level.
+     * Validates the requested level and reports that the stateless transport cannot apply it across requests.
      */
     @SuppressWarnings("java:S1452")
     private static HttpResponse<?> setLevel(McpSchema.JSONRPCRequest jsonrpcRequest, @Nullable JsonNode body) {
@@ -143,7 +142,9 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
                 mcpError(McpSchema.ErrorCodes.INVALID_PARAMS, "Invalid logging level, expected one of " + LOGGING_LEVELS), jsonrpcRequest);
             return HttpResponse.status(status(rsp)).body(rsp);
         }
-        return HttpResponse.ok(new McpSchema.JSONRPCResponse(McpSchema.JSONRPC_VERSION, jsonrpcRequest.id(), Map.of(), null));
+        McpSchema.JSONRPCResponse rsp = JsonRrpcResponseUtils.jsonrpcResponse(
+            mcpError(McpSchema.ErrorCodes.METHOD_NOT_FOUND, "logging/setLevel is not supported over stateless HTTP"), jsonrpcRequest);
+        return HttpResponse.status(status(rsp)).body(rsp);
     }
 
     @SuppressWarnings("java:S3740")

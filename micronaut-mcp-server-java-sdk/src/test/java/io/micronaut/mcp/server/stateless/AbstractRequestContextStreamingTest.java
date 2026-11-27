@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,7 +52,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -232,7 +232,7 @@ abstract class AbstractRequestContextStreamingTest {
             String body = post(accept, """
                 {"jsonrpc": "2.0", "id": 33, "method": "tools/call", "params": {"name": "propagated", "arguments": {}}}""").body();
             String result = data(body).isEmpty() ? body : data(body).getLast();
-            assertTrue(result.contains("\"text\":\"marker=true, eventLoop=" + invokesOnTheEventLoop() + "\""), accept + ": " + result);
+            assertTrue(result.contains("\"text\":\"marker=true, eventLoop=" + invokesOnTheEventLoop() + ", filter=present\""), accept + ": " + result);
         }
     }
 
@@ -246,16 +246,16 @@ abstract class AbstractRequestContextStreamingTest {
 
     @ParameterizedTest
     @EnumSource(McpSchema.LoggingLevel.class)
-    void settingEachLogLevelIsAcknowledged(McpSchema.LoggingLevel level) throws IOException {
-        // The protocol spells the levels in lower case; a client that accepts an event stream gets JSON too
-        HttpResponse<String> response = post(ACCEPT_BOTH, """
+    void statelessHttpCannotSetTheLogLevel(McpSchema.LoggingLevel level) throws IOException {
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> post(ACCEPT_BOTH, """
             {"jsonrpc": "2.0", "id": 21, "method": "logging/setLevel", "params": {"level": "%s"}}"""
-            .formatted(level.name().toLowerCase(Locale.ROOT)));
-        assertTrue(response.getContentType().map(MediaType.APPLICATION_JSON_TYPE::matches).orElse(false));
-        Map<?, ?> body = json(response.body());
+            .formatted(level.name().toLowerCase(Locale.ROOT))));
+        assertEquals(HttpStatus.BAD_REQUEST, e.getStatus());
+        Map<?, ?> body = json(e.getResponse().getBody(String.class).orElseThrow());
         assertEquals(21, ((Number) body.get("id")).intValue());
-        assertEquals(Map.of(), body.get("result"));
-        assertFalse(body.containsKey("error"), response.body());
+        Map<?, ?> error = (Map<?, ?>) body.get("error");
+        assertEquals(McpSchema.ErrorCodes.METHOD_NOT_FOUND, ((Number) error.get("code")).intValue());
+        assertTrue(error.get("message").toString().contains("stateless HTTP"));
     }
 
     @ParameterizedTest
@@ -327,14 +327,14 @@ abstract class AbstractRequestContextStreamingTest {
     }
 
     @Test
-    void closingTheEventStreamCancelsTheRequest() throws Exception {
-        Primitives.CANCELLED = new CompletableFuture<>();
+    void closingTheEventStreamLetsTheToolFinish() throws Exception {
+        Primitives.FINISHED_AFTER_DISCONNECT = new CompletableFuture<>();
         java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder(URI.create(server.getURL() + "/mcp"))
             .header("Content-Type", MediaType.APPLICATION_JSON)
             .header("Accept", ACCEPT_BOTH)
             .POST(java.net.http.HttpRequest.BodyPublishers.ofString("""
                 {"jsonrpc": "2.0", "id": 25, "method": "tools/call",
-                 "params": {"name": "notifyUntilCancelled", "arguments": {}, "_meta": {"progressToken": 1}}}"""))
+                 "params": {"name": "observeDisconnect", "arguments": {}, "_meta": {"progressToken": 1}}}"""))
             .build();
         java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
         try (InputStream events = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofInputStream()).body()) {
@@ -343,7 +343,7 @@ abstract class AbstractRequestContextStreamingTest {
         } finally {
             client.shutdownNow();
         }
-        assertTrue(Primitives.CANCELLED.get(10, TimeUnit.SECONDS), "the tool saw the request cancelled");
+        assertTrue(Primitives.FINISHED_AFTER_DISCONNECT.get(10, TimeUnit.SECONDS), "the tool observed the disconnect and finished without interruption");
     }
 
     private HttpResponse<String> post(String accept, String body) {
@@ -381,21 +381,21 @@ abstract class AbstractRequestContextStreamingTest {
             return CLIENT_GOT_PROGRESS.await(10, TimeUnit.SECONDS) ? "the client saw the progress" : "the progress was not streamed";
         }
 
-        static volatile CompletableFuture<Boolean> CANCELLED = new CompletableFuture<>();
+        static volatile CompletableFuture<Boolean> FINISHED_AFTER_DISCONNECT = new CompletableFuture<>();
 
         @Tool
         @ExecuteOn(TaskExecutors.BLOCKING)
-        String notifyUntilCancelled(McpRequestContext context) {
+        String observeDisconnect(McpRequestContext context) {
             try {
-                for (int i = 1; i <= 500 && !context.isCancelled(); i++) {
+                for (int i = 1; i <= 500 && !context.isClientDisconnected(); i++) {
                     context.progress(i);
                     Thread.sleep(20);
                 }
             } catch (InterruptedException e) {
-                // The reactive server interrupts a method that runs on an executor when its request is cancelled
+                FINISHED_AFTER_DISCONNECT.completeExceptionally(e);
                 Thread.currentThread().interrupt();
             }
-            CANCELLED.complete(context.isCancelled());
+            FINISHED_AFTER_DISCONNECT.complete(context.isClientDisconnected());
             return "done";
         }
 
@@ -424,10 +424,11 @@ abstract class AbstractRequestContextStreamingTest {
         }
 
         @Tool
-        String propagated(McpRequestContext context) {
+        Mono<String> propagated(McpRequestContext context) {
             context.log(McpSchema.LoggingLevel.INFO, "checking the propagated context");
-            return "marker=" + PropagatedContext.getOrEmpty().find(Marker.class).isPresent()
+            String invocation = "marker=" + PropagatedContext.getOrEmpty().find(Marker.class).isPresent()
                 + ", eventLoop=" + (Thread.currentThread() instanceof FastThreadLocalThread);
+            return Mono.deferContextual(ctx -> Mono.just(invocation + ", filter=" + ctx.get("filter-value")));
         }
 
         @Tool
@@ -484,7 +485,7 @@ abstract class AbstractRequestContextStreamingTest {
         @Override
         public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
             try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new Marker()).propagate()) {
-                return chain.proceed(request);
+                return Mono.from(chain.proceed(request)).contextWrite(ctx -> ctx.put("filter-value", "present"));
             }
         }
     }
