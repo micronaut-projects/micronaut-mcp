@@ -81,12 +81,13 @@ class UriTemplateReadResourceRequestTest {
         }
     }
 
-    // UriMatchTemplate takes seconds to fail on such URIs, as it backtracks over every split point. A query lets the
-    // trailing literal of the template follow the ?, which the SDK routes and UriMatchTemplate drops.
+    // UriMatchTemplate backtracks over every split point before rejecting these paths. The SDK may route a URI even
+    // when a literal required by the template only appears in the query.
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
         "log://{year}-{month}-{day} | +",
         "log://{year}-{month}-{day}.log | ?.log",
+        "log://{year}-{month}-{day}-summary.log | .log?-summary.log",
         "pair://{a}-{b}.json | ?.json"
     })
     void aLongUriThatDoesNotMatchIsRejectedQuickly(String template, String suffix) {
@@ -94,24 +95,49 @@ class UriTemplateReadResourceRequestTest {
         assertTimeout(Duration.ofSeconds(1), () -> assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments(template, uri)));
     }
 
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+        "book://book/{title} | book://book/a%3Fb?edition=first&format=print",
+        "book://book/{title} | book://book/a%3Fb/?edition=first",
+        "book://book/{+title} | book://book/a%3Fb?edition=first",
+        "book://book/fiction+history/{title} | book://book/fiction+history/a%3Fb?edition=first"
+    })
+    void theQueryDoesNotAffectPathBinding(String template, String uri) {
+        assertEquals(Map.of("title", "a?b"), UriTemplateReadResourceRequest.arguments(template, uri));
+    }
+
     @Test
-    void aQueryIsInvalidParamsForATemplateOfSimpleVariables() {
-        // UriMatchTemplate drops the query, so it would bind a
-        assertTrue(UriMatchTemplate.of("book://book/{title}").match("book://book/a?b").isPresent());
-        McpError error = assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/a?b"));
-        assertTrue(error.getMessage().startsWith("The URI does not match the URI template book://book/{title}"), error.getMessage());
-        assertEquals(Map.of("title", "a?b"), UriTemplateReadResourceRequest.arguments("book://book/{title}", "book://book/a%3Fb"));
-        // A template that is not pre-checked, such as one with a reserved variable, still drops the query
-        assertEquals(Map.of("title", "secret"), UriTemplateReadResourceRequest.arguments("book://book/{+title}", "book://book/secret?x"));
+    void simplePathPreCheckPreservesVariableBoundaries() {
+        assertEquals(Map.of("a", "a", "b", "b", "c", "c-more", "d", "d"),
+            UriTemplateReadResourceRequest.arguments("book://book/{a,b}-{c}/{d}.txt", "book://book/ab-c-more/d.txt?edition=first"));
+    }
+
+    // The pre-check must not reject a path that UriMatchTemplate matches, or a read that matches would fail
+    @ParameterizedTest
+    @ValueSource(strings = {"x://{a}", "x://{a}/{b}", "x://p/{a}-{b}.log", "x://{a}{b}", "x://{a}-{b}-{c}", "x://pre{a}post/s", "x://{a}/", "x:{a}", "x://a/b"})
+    void thePreCheckOfAPathWithAQueryAgreesWithUriMatchTemplate(String template) {
+        UriTemplateReadResourceRequest.Template compiled = UriTemplateReadResourceRequest.Template.compile(template);
+        String[] parts = {"", "a", "ab", "-", "a-b", "a-b-c", "a-b.log", ".log", "/", "a/", "/a", "a/b", "pre", "post", "prepost", "preXpost", "p", "x:", "x://"};
+        for (String first : parts) {
+            for (String second : parts) {
+                for (String third : new String[] {"", "/s", "-c", ".log", "/"}) {
+                    for (String uri : new String[] {"x://" + first + second + third, "x:" + first + second + third}) {
+                        if (UriMatchTemplate.of(template).match(uri).isPresent()) {
+                            assertFalse(compiled.rejectsSimplePath(uri + "?q=1"), template + " " + uri);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Test
     void onlyTemplatesOfSimpleVariablesArePreChecked() {
-        assertTrue(UriTemplateReadResourceRequest.Template.compile("book://book/{title}").simpleVariablesOnly());
-        assertTrue(UriTemplateReadResourceRequest.Template.compile("log://{year}-{month}-{day}").simpleVariablesOnly());
-        assertTrue(UriTemplateReadResourceRequest.Template.compile("x://{a,b}").simpleVariablesOnly());
+        assertNotNull(UriTemplateReadResourceRequest.Template.compile("book://book/{title}").simplePathPattern());
+        assertNotNull(UriTemplateReadResourceRequest.Template.compile("log://{year}-{month}-{day}").simplePathPattern());
+        assertNotNull(UriTemplateReadResourceRequest.Template.compile("x://{a,b}").simplePathPattern());
         for (String template : new String[] {"file:///{+path}", "x://{id:[0-9]+}", "x://{id:3}", "search://books{?q}", "x://a(b)/{id}", "x://a?b={id}"}) {
-            assertFalse(UriTemplateReadResourceRequest.Template.compile(template).simpleVariablesOnly(), template);
+            assertNull(UriTemplateReadResourceRequest.Template.compile(template).simplePathPattern(), template);
         }
         // A literal ( in the template is matched by UriMatchTemplate
         assertEquals(Map.of("id", "7"), UriTemplateReadResourceRequest.arguments("x://a(b)/{id}", "x://a(b)/7"));

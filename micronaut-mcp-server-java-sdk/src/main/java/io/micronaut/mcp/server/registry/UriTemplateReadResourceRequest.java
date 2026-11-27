@@ -20,6 +20,7 @@ import io.micronaut.http.uri.UriMatchInfo;
 import io.micronaut.http.uri.UriMatchTemplate;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -70,17 +71,12 @@ record UriTemplateReadResourceRequest(
     }
 
     private static Map<String, Object> arguments(Template uriTemplate, String uri) {
-        // The SDK routes the request with a laxer matcher, which accepts characters such as + that a simple variable
-        // does not match, and a query that UriMatchTemplate drops before it matches. UriMatchTemplate backtracks over
-        // every split point before it fails, which takes seconds for a long URI and a template with several variables in
-        // a segment, such as log://{year}-{month}-{day}.log, so such a URI is rejected without matching it. Without these
-        // characters, UriMatchTemplate matches whatever the SDK routed.
-        Optional<UriMatchInfo> matchOptional = uriTemplate.simpleVariablesOnly() && hasUnmatchableChar(uri)
+        Optional<UriMatchInfo> matchOptional = uriTemplate.rejectsSimplePath(uri)
             ? Optional.empty()
             : uriTemplate.matchTemplate().match(uri);
         if (matchOptional.isEmpty()) {
             // Binding nothing would report the variables as missing, or bind null
-            throw invalidParams("The URI does not match the URI template " + uriTemplate.matchTemplate()
+            throw new InvalidUriTemplateException("The URI does not match the URI template " + uriTemplate.matchTemplate()
                 + ": percent-encode reserved characters such as ?, +, ;, &, !, ( and ) in variable values, for example + as %2B");
         }
         Map<String, Object> variables = matchOptional.get().getVariableValues();
@@ -95,20 +91,6 @@ record UriTemplateReadResourceRequest(
             }
         }
         return decoded == null ? variables : decoded;
-    }
-
-    /**
-     * @return Whether the URI contains a character that neither a simple variable nor the literal text of a
-     * {@link Template#simpleVariablesOnly()} template matches, or a {@code ?}, which starts a query that such a template
-     * does not declare
-     */
-    private static boolean hasUnmatchableChar(String uri) {
-        for (int i = 0; i < uri.length(); i++) {
-            if (Template.UNMATCHABLE_CHARS.indexOf(uri.charAt(i)) >= 0) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static boolean hasSurrogate(String value) {
@@ -129,7 +111,7 @@ record UriTemplateReadResourceRequest(
     private static String decode(Template uriTemplate, String name, String value) {
         String decoded = percentDecode(name, value);
         if (decoded.indexOf('/') >= 0 && !uriTemplate.reservedVariables().contains(name)) {
-            throw invalidParams("The value of URI template variable '" + name + "' must not contain an encoded / (%2F)");
+            throw new InvalidUriTemplateException("The value of URI template variable '" + name + "' must not contain an encoded / (%2F)");
         }
         return decoded;
     }
@@ -187,7 +169,7 @@ record UriTemplateReadResourceRequest(
         try {
             bytes.put(encoder.encode(CharBuffer.wrap(value, i, end)));
         } catch (CharacterCodingException _) {
-            throw invalidParams("The value of URI template variable '" + name + "' contains an unpaired surrogate");
+            throw new InvalidUriTemplateException("The value of URI template variable '" + name + "' contains an unpaired surrogate");
         }
         return end;
     }
@@ -221,13 +203,18 @@ record UriTemplateReadResourceRequest(
         return -1;
     }
 
-    private static McpError malformed(String name) {
-        return invalidParams("Invalid percent-encoding in the value of URI template variable '" + name
+    private static InvalidUriTemplateException malformed(String name) {
+        return new InvalidUriTemplateException("Invalid percent-encoding in the value of URI template variable '" + name
             + "': escapes must be %XX hexadecimal pairs encoding UTF-8");
     }
 
-    private static McpError invalidParams(String message) {
-        return McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS).message(message).build();
+    /**
+     * Identifies validation failures raised before the application handler is invoked.
+     */
+    static final class InvalidUriTemplateException extends McpError {
+        private InvalidUriTemplateException(String message) {
+            super(new McpSchema.JSONRPCResponse.JSONRPCError(McpSchema.ErrorCodes.INVALID_PARAMS, message));
+        }
     }
 
     /**
@@ -235,16 +222,11 @@ record UriTemplateReadResourceRequest(
      *
      * @param matchTemplate The template the URIs are matched against
      * @param reservedVariables The names of the variables expanded with the reserved ({@code +}) operator
-     * @param simpleVariablesOnly Whether every expression is a list of simple variables without a modifier, and the
-     * literal text contains none of the {@link #UNMATCHABLE_CHARS}, so that a URI that contains one cannot match
+     * @param simplePathPattern A path pre-check for templates with only simple variables and no reserved literals
      */
-    record Template(UriMatchTemplate matchTemplate, Set<String> reservedVariables, boolean simpleVariablesOnly) {
-        /**
-         * The characters that the pattern of a simple variable in {@link UriMatchTemplate} does not match, besides
-         * {@code /}, and {@code ?}, which starts a query.
-         */
-        static final String UNMATCHABLE_CHARS = "?#(!{)&;+";
-        private static final Pattern SIMPLE_EXPRESSION = Pattern.compile("\\{[A-Za-z0-9_,]+}");
+    record Template(UriMatchTemplate matchTemplate, Set<String> reservedVariables, @Nullable Pattern simplePathPattern) {
+        private static final String UNMATCHABLE_CHARS = "#(!{)&;+";
+        private static final Pattern SIMPLE_EXPRESSION = Pattern.compile("\\{[A-Za-z0-9_]+(?:,[A-Za-z0-9_]+)*}");
         private static final Pattern EXPRESSION = Pattern.compile("\\{[^}]*}");
 
         // An expression ends at its first }, so a regular expression with braces, such as {+p:[a-z]{1,3}}, is not
@@ -264,7 +246,68 @@ record UriTemplateReadResourceRequest(
                     reserved.add(variable.replaceAll("[:*].*$", "").trim());
                 }
             }
-            return new Template(UriMatchTemplate.of(uriTemplate), Set.copyOf(reserved), simpleVariablesOnly(uriTemplate));
+            UriMatchTemplate matchTemplate = UriMatchTemplate.of(uriTemplate);
+            Pattern simplePath = simpleVariablesOnly(uriTemplate) ? compileSimplePath(withoutTrailingSlashes(matchTemplate.toPathString())) : null;
+            return new Template(matchTemplate, Set.copyOf(reserved), simplePath);
+        }
+
+        /**
+         * The SDK routes with the query attached. Check the path alone before handing it to the core matcher, whose
+         * lazy capture groups would otherwise backtrack on every failed split of a non-matching path.
+         */
+        boolean rejectsSimplePath(String uri) {
+            if (simplePathPattern == null) {
+                return false;
+            }
+            int queryStart = uri.indexOf('?');
+            int pathEnd = queryStart < 0 ? uri.length() : queryStart;
+            for (int i = 0; i < pathEnd; i++) {
+                if (UNMATCHABLE_CHARS.indexOf(uri.charAt(i)) >= 0) {
+                    return true;
+                }
+            }
+            if (queryStart < 0) {
+                return false;
+            }
+            // UriMatchTemplate ignores every trailing /, in the path and in the template
+            while (pathEnd > 0 && uri.charAt(pathEnd - 1) == '/') {
+                pathEnd--;
+            }
+            return !simplePathPattern.matcher(uri).region(0, pathEnd).matches();
+        }
+
+        private static String withoutTrailingSlashes(String path) {
+            int end = path.length();
+            while (end > 0 && path.charAt(end - 1) == '/') {
+                end--;
+            }
+            return path.substring(0, end);
+        }
+
+        private static Pattern compileSimplePath(String path) {
+            Matcher expressions = SIMPLE_EXPRESSION.matcher(path);
+            StringBuilder pattern = new StringBuilder();
+            int cursor = 0;
+            int variables = 0;
+            while (expressions.find()) {
+                if (cursor < expressions.start()) {
+                    String literal = Pattern.quote(path.substring(cursor, expressions.start()));
+                    if (variables == 0) {
+                        pattern.append(literal);
+                    } else {
+                        // Taking the first match leaves maximum room in the segment for the next variable.
+                        // The atomic group prevents backtracking into later occurrences of the same literal.
+                        pattern.append("(?>[^/]{").append(variables).append(",}?").append(literal).append(')');
+                        variables = 0;
+                    }
+                }
+                variables += 1 + (int) expressions.group().chars().filter(c -> c == ',').count();
+                cursor = expressions.end();
+            }
+            if (variables > 0) {
+                pattern.append("[^/]{").append(variables).append(",}");
+            }
+            return Pattern.compile(pattern.append(Pattern.quote(path.substring(cursor))).toString());
         }
 
         private static boolean simpleVariablesOnly(String uriTemplate) {
@@ -276,7 +319,8 @@ record UriTemplateReadResourceRequest(
             }
             String literal = expressions.replaceAll("");
             for (int i = 0; i < literal.length(); i++) {
-                if (UNMATCHABLE_CHARS.indexOf(literal.charAt(i)) >= 0) {
+                char c = literal.charAt(i);
+                if (c == '?' || UNMATCHABLE_CHARS.indexOf(c) >= 0) {
                     return false;
                 }
             }
