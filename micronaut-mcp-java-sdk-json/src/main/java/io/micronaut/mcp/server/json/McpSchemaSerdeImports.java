@@ -1,0 +1,38 @@
+/*
+ * Copyright 2017-2025 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.mcp.server.json;
+
+import io.micronaut.core.annotation.Internal;
+import io.micronaut.serde.annotation.SerdeImport;
+import io.modelcontextprotocol.spec.McpSchema;
+
+/**
+ * Serde imports for MCP JDK classes. They are declared in this package, which no other module shares: in the
+ * {@code io.micronaut.mcp.server} package of the server module, its annotation processor would generate the same
+ * introspections again, two classes with the same name in two modules.
+ *
+ * @since 2.2.0
+ */
+@SerdeImport(McpSchema.SetLevelRequest.class)
+@SerdeImport(McpSchema.LoggingLevel.class)
+@SerdeImport(McpSchema.Icon.class)
+@SerdeImport(McpSchema.CompleteReference.class)
+@SerdeImport(McpSchema.TextContent.class)
+@Internal
+final class McpSchemaSerdeImports {
+    private McpSchemaSerdeImports() {
+    }
+}

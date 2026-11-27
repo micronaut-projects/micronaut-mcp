@@ -1603,5 +1603,500 @@
     "type": "io.micronaut.mcp.client.langchain4j.$McpClientFactory$CrateMcpClientBuilder0$Definition",
     "member": "Method io.micronaut.mcp.client.langchain4j.$McpClientFactory$CrateMcpClientBuilder0$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
     "reason": "The generated client builder definition now accepts the optional configuration qualified by the transport name"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Class io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Constructor io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection.hasBuilder()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection.isBuildable()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Class io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Constructor io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection.dispatchOne(int,java.lang.Object,java.lang.Object)",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection.getTargetMethodByIndex(int)",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection.hasBuilder()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection.hasConstructor()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection.instantiateInternal(java.lang.Object[])",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection.isBuildable()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection.isStaticCreator()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Class io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Constructor io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection.getTypeArgumentsMap()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection.hasBuilder()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection.hasConstructor()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection.instantiateInternal(java.lang.Object[])",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection.isBuildable()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection.isStaticCreator()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Class io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Constructor io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection.dispatchOne(int,java.lang.Object,java.lang.Object)",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection.getTargetMethodByIndex(int)",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection.hasBuilder()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection.hasConstructor()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection.instantiateInternal(java.lang.Object[])",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection.isBuildable()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Class io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Constructor io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection.dispatchOne(int,java.lang.Object,java.lang.Object)",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection.getTargetMethodByIndex(int)",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection.hasBuilder()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection.hasConstructor()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection.instantiateInternal(java.lang.Object[])",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection.isBuildable()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Method io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection.isStaticCreator()",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.UnsafeBeanInstantiationIntrospection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$CompleteReference$Introspection",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.UnsafeBeanInstantiationIntrospection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$Icon$Introspection",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.EnumBeanIntrospection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.UnsafeBeanInstantiationIntrospection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$LoggingLevel$Introspection",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.UnsafeBeanInstantiationIntrospection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$SetLevelRequest$Introspection",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadata",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataDelegate",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanInfo",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.BeanIntrospectionReference",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Implemented interface io.micronaut.core.beans.UnsafeBeanInstantiationIntrospection",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Implemented interface io.micronaut.core.naming.Named",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
+  },
+  {
+    "type": "io.micronaut.mcp.server.$io_modelcontextprotocol_spec_McpSchema$TextContent$Introspection",
+    "member": "Implemented interface io.micronaut.core.type.ArgumentCoercible",
+    "reason": "Generated introspection of an MCP schema type, now generated in the io.micronaut.mcp.server.json package of micronaut-mcp-java-sdk-json, which the server module depends on"
   }
 ]
