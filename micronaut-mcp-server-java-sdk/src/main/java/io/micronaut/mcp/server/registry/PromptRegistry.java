@@ -158,7 +158,7 @@ public final class PromptRegistry
 
     private McpSchema.Prompt prompt(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
         return new McpSchema.Prompt(promptName(method), promptTitle(method).orElse(null), promptDescription(method).orElse(null),
-            promptArguments(beanDefinition, method));
+            promptArguments(beanDefinition, method), meta(method), icons(method));
     }
 
     private List<McpSchema.PromptArgument> promptArguments(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {

@@ -50,6 +50,8 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     McpStatelessServerFeatures.AsyncResourceSpecification> {
 
     private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.ReadResourceRequest.class};
+    private static final String SIZE_PROPERTY = "size";
+    private static final long UNKNOWN_SIZE = -1;
     private final ArgumentBinderRegistry<McpSchema.ReadResourceRequest> argumentBinderRegistry;
 
     public ResourceRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
@@ -167,7 +169,8 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
         String title = method.stringValue(Resource.class, TITLE_PROPERTY).orElse(null);
         String description = method.stringValue(Resource.class, DESCRIPTION_PROPERTY).orElse(null);
         String mimeType = method.stringValue(Resource.class, MIME_TYPE_PROPERTY).orElse(Resource.DEFAULT_MIME_TYPE);
-        // size, attributes, and other optional fields are left null for declarative resources
-        return new McpSchema.Resource(uri, name, title, description, mimeType, null, null, null);
+        long size = method.longValue(Resource.class, SIZE_PROPERTY).orElse(UNKNOWN_SIZE);
+        McpSchema.Annotations annotations = resourceAnnotations(method, Resource.class);
+        return new McpSchema.Resource(uri, name, title, description, mimeType, size < 0 ? null : size, annotations, meta(method), icons(method));
     }
 }

@@ -58,6 +58,7 @@ server:
           resourceTemplateAnnotationParameter: Resource Annotation Method Parameters
           resourceTemplateAnnotationReturnType: Resource Annotation Method Return Type
         resourcesTemplatesFactory: Resource Templates with a Factory
+    primitivesMetadata: Icons, Metadata and Resource Hints
     completions:
       title: Completions
       promptCompletionAnnotation:

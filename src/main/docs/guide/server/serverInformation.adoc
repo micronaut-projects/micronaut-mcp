@@ -1,3 +1,27 @@
-Via configuration, you should define your mcp server name and version:
+Set the `name` and the `version` of your MCP server; both are required. You can also give it a title, a description, a website URL, icons (each with a `src` and optionally a `mime-type`, `sizes` and a `theme`), and instructions that clients may add to the model's prompt:
+
+[configuration]
+----
+micronaut:
+  mcp:
+    server:
+      info:
+        name: weather
+        version: 1.0.0
+        title: Weather
+        description: Forecasts by city
+        website-url: https://example.com
+        icons:
+          - src: https://example.com/weather.png
+            mime-type: image/png
+            sizes:
+              - 48x48
+            theme: light
+        instructions: Ask for a city before asking for a forecast.
+----
+
+NOTE: Without `name` and `version`, clients receive the default server information of the MCP Java SDK, and the other properties on this page are ignored: the server logs a warning at startup. Every icon requires a `src` that is an HTTPS URL or a `data:image/...` URI (an HTTP URL is accepted, for example for local development), the `website-url` must be an HTTPS or HTTP URL, neither may contain a user name or password, and an icon `theme`, when set, must be `light` or `dark` in lowercase; otherwise the server fails to start.
+
+WARNING: Every client that connects reads the server information, including the `website-url` and the icon sources, and the instructions in the response to `initialize`, and clients may add the instructions to the model's prompt. Do not put secrets or internal details in them.
 
 include::{includedir}configurationProperties/io.micronaut.mcp.conf.server.McpServerInfoConfigurationProperties.adoc[]
