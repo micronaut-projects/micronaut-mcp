@@ -35,7 +35,7 @@ public interface McpNotificationEmitter {
     void emit(McpSchema.JSONRPCNotification notification);
 
     /**
-     * @return Whether the client stopped waiting for the result
+     * @return Whether the client disconnected from the response stream
      */
-    boolean isCancelled();
+    boolean isClientDisconnected();
 }

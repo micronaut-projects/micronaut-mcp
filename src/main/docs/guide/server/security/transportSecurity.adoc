@@ -43,3 +43,5 @@ micronaut:
           exposed-headers:
             - WWW-Authenticate
 ----
+
+Allow the same browser origin to fetch the protected resource metadata URL advertised in the challenge.

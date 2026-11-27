@@ -9,26 +9,26 @@ The bean type depends on the server type selected:
 |`McpServerFeatures.SyncPromptSpecification`
 |`McpServerFeatures.SyncToolSpecification`
 |`McpServerFeatures.SyncResourceSpecification`
-|`McpSchema.ResourceTemplate`
+|`McpServerFeatures.SyncResourceTemplateSpecification`
 
 |STDIO
 |true
 |`McpServerFeatures.AsyncPromptSpecification`
 |`McpServerFeatures.AsyncToolSpecification`
 |`McpServerFeatures.AsyncResourceSpecification`
-|`McpSchema.ResourceTemplate`
+|`McpServerFeatures.AsyncResourceTemplateSpecification`
 
 |HTTP
 |false
 |`McpStatelessServerFeatures.SyncPromptSpecification`
 |`McpStatelessServerFeatures.SyncToolSpecification`
-|`McpServerFeatures.SyncResourceSpecification`
-|`McpSchema.ResourceTemplate`
+|`McpStatelessServerFeatures.SyncResourceSpecification`
+|`McpStatelessServerFeatures.SyncResourceTemplateSpecification`
 
 |HTTP
 |true
 |`McpStatelessServerFeatures.AsyncPromptSpecification`
 |`McpStatelessServerFeatures.AsyncToolSpecification`
 |`McpStatelessServerFeatures.AsyncResourceSpecification`
-|`McpSchema.ResourceTemplate`
+|`McpStatelessServerFeatures.AsyncResourceTemplateSpecification`
 |===

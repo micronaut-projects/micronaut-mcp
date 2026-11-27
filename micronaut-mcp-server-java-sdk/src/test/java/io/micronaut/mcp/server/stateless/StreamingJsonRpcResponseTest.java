@@ -7,7 +7,6 @@ import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
 import reactor.core.Disposable;
-import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
@@ -90,34 +89,24 @@ class StreamingJsonRpcResponseTest {
     }
 
     @Test
-    void cancellingTheStreamCancelsTheRequest() {
+    void closingTheStreamDetachesEventDelivery() {
         AtomicReference<StreamingJsonRpcResponse> streaming = new AtomicReference<>();
         HttpResponse<?> response = started(streaming);
-        Disposable subscription = Disposables.single();
-        streaming.get().subscription(subscription);
-        assertFalse(streaming.get().isCancelled());
+        assertFalse(streaming.get().isClientDisconnected());
         events(response).take(1).blockLast();
-        assertTrue(streaming.get().isCancelled());
-        assertTrue(subscription.isDisposed());
-        // notifications of a cancelled request are dropped
+        assertTrue(streaming.get().isClientDisconnected());
         streaming.get().emit(NOTIFICATION);
-        // the client no longer reads the stream, so the result cannot be sent, and nothing fails
         assertDoesNotThrow(() -> streaming.get().complete(HttpResponse.ok("late")));
     }
 
     @Test
-    void cancellingBeforeTheFirstNotificationCancelsTheRequest() {
+    void closingBeforeTheFirstNotificationDetachesEventDelivery() {
         AtomicReference<StreamingJsonRpcResponse> streaming = new AtomicReference<>();
         Disposable response = Mono.<HttpResponse<?>>create(sink -> streaming.set(new StreamingJsonRpcResponse(sink, REQUEST))).subscribe();
-        Disposable subscription = Disposables.single();
-        streaming.get().subscription(subscription);
         response.dispose();
-        assertTrue(streaming.get().isCancelled());
-        assertTrue(subscription.isDisposed());
-        // a subscription that arrives after the client went away is disposed right away
-        Disposable late = Disposables.single();
-        streaming.get().subscription(late);
-        assertTrue(late.isDisposed());
+        assertTrue(streaming.get().isClientDisconnected());
+        streaming.get().emit(NOTIFICATION);
+        assertDoesNotThrow(() -> streaming.get().completeEmpty());
     }
 
     @Test

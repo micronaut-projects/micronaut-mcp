@@ -13,19 +13,28 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Filter;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.client.BlockingHttpClient;
+import io.micronaut.http.client.DefaultHttpClientConfiguration;
 import io.micronaut.http.client.HttpClient;
+import io.micronaut.http.client.HttpClientConfiguration;
+import io.micronaut.http.client.ProxyHttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.filter.HttpServerFilter;
+import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.context.MicronautMcpTransportContext;
 import io.micronaut.security.token.Claims;
@@ -44,9 +53,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.reactivestreams.Publisher;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 
+import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -56,6 +67,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -78,6 +90,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SecuredMcpServerTest implements TestPropertyProvider {
 
     private static final String KEY_ID = "idp";
+    private static final String METADATA_PATH = "/.well-known/oauth-protected-resource";
+    private static final String PUBLIC_HOST = "mcp.example.com";
+    private static final String CONTEXT_PATH = "/ctx";
+    private static final String CONTEXT_ENDPOINT = CONTEXT_PATH + "/mcp";
 
     private final RSAKey key = generateKey();
 
@@ -113,19 +129,11 @@ class SecuredMcpServerTest implements TestPropertyProvider {
         idp.close();
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"/mcp", "/mcp/"})
-    void anUnauthenticatedCallIsChallengedWithTheProtectedResourceMetadata(String path) {
-        HttpClientResponseException ex = rejected(whoami(path));
-        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatus());
-        assertEquals("Bearer resource_metadata=\"http://localhost:" + port + "/.well-known/oauth-protected-resource"
-            + path + "\"", ex.getResponse().getHeaders().get("WWW-Authenticate"));
-    }
-
     @Test
-    void theProtectedResourceMetadataNamesTheAudienceAndTheAuthorizationServer() throws JSONException {
-        JSONObject metadata = new JSONObject(httpClient.toBlocking().retrieve("/.well-known/oauth-protected-resource/mcp"));
-        // The guide asks for the audience to be the resource the metadata reports
+    void aClientCanFollowTheChallengeToDiscoverTheAudienceAndAuthorizationServer() throws JSONException {
+        URI metadataUri = metadataUri(rejected(whoami("/mcp")));
+        assertEquals(URI.create("http://localhost:" + port + METADATA_PATH + "/mcp"), metadataUri);
+        JSONObject metadata = new JSONObject(httpClient.toBlocking().retrieve(metadataUri.getRawPath()));
         assertEquals(audience(), metadata.getString("resource"));
         JSONAssert.assertEquals(new JSONArray(List.of(issuer())), metadata.getJSONArray("authorization_servers"), JSONCompareMode.STRICT);
     }
@@ -236,41 +244,69 @@ class SecuredMcpServerTest implements TestPropertyProvider {
         }
     }
 
-    /**
-     * Micronaut mounts every route under the context path, the metadata controller too, but the challenge advertises
-     * the metadata at the root, as RFC 9728 requires. The proxy in front of the server maps the advertised path to the
-     * one under the context path, as the guide describes, which this test does by adding the context path itself.
-     */
+    private static <T> MutableHttpRequest<T> proxied(MutableHttpRequest<T> request) {
+        return request.header("X-Forwarded-Proto", "https").header("X-Forwarded-Host", "mcp.example.com");
+    }
+
     @Test
-    void withAContextPathTheProxyMapsTheAdvertisedMetadataUnderIt() throws JSONException {
-        String issuer = issuer();
-        Map<String, Object> properties = new HashMap<>(Map.of(
-            "micronaut.mcp.server.info.name", "secured",
-            "micronaut.mcp.server.info.version", "1.0.0",
-            "micronaut.mcp.server.transport", "HTTP",
-            "micronaut.server.context-path", "/ctx",
-            "micronaut.security.intercept-url-map[0].pattern", "/ctx/mcp",
-            "micronaut.security.intercept-url-map[0].access[0]", "isAuthenticated()",
-            "micronaut.security.token.jwt.signatures.jwks.idp.url", issuer + "/.well-known/jwks.json",
-            "micronaut.security.oauth2.clients.idp.openid.issuer", issuer,
-            "spec.name", "SecuredMcpServerTest"));
-        try (EmbeddedServer server = ApplicationContext.run(EmbeddedServer.class, properties);
-             HttpClient client = server.getApplicationContext().createBean(HttpClient.class, server.getURI().resolve("/"))) {
+    void aProxyCanPublishCanonicalDiscoveryForAnApplicationWithAContextPath() throws Exception {
+        String browserOrigin = "https://app.example.com";
+        String resource = "https://" + PUBLIC_HOST + CONTEXT_ENDPOINT;
+        Map<String, Object> properties = new HashMap<>(getProperties());
+        properties.putAll(Map.ofEntries(
+            Map.entry("spec.name", "SecuredMcpServerTest"),
+            Map.entry("micronaut.server.port", -1),
+            Map.entry("micronaut.server.context-path", CONTEXT_PATH),
+            Map.entry("micronaut.mcp.server.transport", "HTTP"),
+            Map.entry("micronaut.mcp.server.info.name", "secured"),
+            Map.entry("micronaut.mcp.server.info.version", "1.0.0"),
+            Map.entry("micronaut.security.intercept-url-map[0].pattern", "/mcp"),
+            Map.entry("micronaut.security.intercept-url-map[0].access[0]", "isAuthenticated()"),
+            Map.entry("micronaut.security.token.jwt.claims-validators.audience", resource),
+            Map.entry("micronaut.server.host-resolution.protocol-header", "X-Forwarded-Proto"),
+            Map.entry("micronaut.server.host-resolution.host-header", "X-Forwarded-Host"),
+            Map.entry("micronaut.server.host-resolution.allowed-hosts[0]", "https://mcp[.]example[.]com"),
+            Map.entry("micronaut.mcp.server.transport-security.allowed-origins", List.of(browserOrigin)),
+            Map.entry("micronaut.server.cors.enabled", true),
+            Map.entry("micronaut.server.cors.configurations.web.allowed-origins", List.of(browserOrigin)),
+            Map.entry("micronaut.server.cors.configurations.web.exposed-headers", List.of(HttpHeaders.WWW_AUTHENTICATE))));
+        HttpClientConfiguration clientConfiguration = new DefaultHttpClientConfiguration();
+        clientConfiguration.setFollowRedirects(false);
+        try (EmbeddedServer application = ApplicationContext.run(EmbeddedServer.class, properties);
+             EmbeddedServer gateway = ApplicationContext.run(EmbeddedServer.class, Map.of(
+                 "spec.name", "SecuredMcpServerTestGateway",
+                 "micronaut.security.enabled", false,
+                 "micronaut.mcp.server.enabled", false,
+                 "test.gateway.upstream", application.getURL().toString()));
+             HttpClient client = HttpClient.create(gateway.getURL(), clientConfiguration)) {
             BlockingHttpClient blocking = client.toBlocking();
-            String base = "http://localhost:" + server.getPort();
-            HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () -> blocking.exchange(whoami("/ctx/mcp"), String.class));
-            assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatus());
-            String advertised = "/.well-known/oauth-protected-resource/ctx/mcp";
-            assertEquals("Bearer resource_metadata=\"" + base + advertised + "\"", ex.getResponse().getHeaders().get("WWW-Authenticate"));
-            // Without the proxy mapping, the advertised URL is not the metadata
-            assertThrows(HttpClientResponseException.class, () -> blocking.retrieve(advertised));
-            JSONObject metadata = new JSONObject(blocking.retrieve("/ctx" + advertised));
-            assertEquals(base + "/ctx/mcp", metadata.getString("resource"));
+            HttpResponse<?> redirect = blocking.exchange(whoami(CONTEXT_ENDPOINT + "/"));
+            assertEquals(HttpStatus.PERMANENT_REDIRECT, redirect.getStatus());
+            assertEquals(CONTEXT_ENDPOINT, redirect.getHeaders().get(HttpHeaders.LOCATION));
+
+            HttpClientResponseException challenge = assertThrows(HttpClientResponseException.class, () -> blocking.exchange(
+                whoami(redirect.getHeaders().get(HttpHeaders.LOCATION)).header(HttpHeaders.ORIGIN, browserOrigin), String.class));
+            assertEquals(HttpHeaders.WWW_AUTHENTICATE, challenge.getResponse().getHeaders().get(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS));
+            URI metadataUri = metadataUri(challenge);
+            assertEquals(URI.create("https://" + PUBLIC_HOST + METADATA_PATH + CONTEXT_ENDPOINT), metadataUri);
+
+            HttpResponse<String> metadata = blocking.exchange(HttpRequest.GET(metadataUri.getRawPath())
+                .header(HttpHeaders.ORIGIN, browserOrigin), String.class);
+            assertEquals(browserOrigin, metadata.getHeaders().get(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+            String audience = new JSONObject(metadata.body()).getString("resource");
+            assertEquals(resource, audience);
+            String token = token(claims().audience(audience).build(), key);
+            assertEquals(HttpStatus.OK, blocking.exchange(whoami(CONTEXT_ENDPOINT).bearerAuth(token), String.class).getStatus());
         }
     }
 
-    private static <T> MutableHttpRequest<T> proxied(MutableHttpRequest<T> request) {
-        return request.header("X-Forwarded-Proto", "https").header("X-Forwarded-Host", "mcp.example.com");
+    private static URI metadataUri(HttpClientResponseException response) {
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatus());
+        String challenge = response.getResponse().getHeaders().get(HttpHeaders.WWW_AUTHENTICATE);
+        assertNotNull(challenge);
+        String prefix = "Bearer resource_metadata=\"";
+        assertTrue(challenge.startsWith(prefix) && challenge.endsWith("\""), challenge);
+        return URI.create(challenge.substring(prefix.length(), challenge.length() - 1));
     }
 
     @Test
@@ -357,6 +393,38 @@ class SecuredMcpServerTest implements TestPropertyProvider {
         @Override
         public boolean validate(Claims claims, @Nullable T request) {
             return claims.contains(Claims.EXPIRATION_TIME);
+        }
+    }
+
+    /**
+     * Implements the proxy mappings from the Authorization section of the guide.
+     */
+    @Requires(property = "spec.name", value = "SecuredMcpServerTestGateway")
+    @Filter("/**")
+    static class Gateway implements HttpServerFilter {
+        private final ProxyHttpClient client;
+        private final URI upstream;
+
+        Gateway(ProxyHttpClient client, @Value("${test.gateway.upstream}") URI upstream) {
+            this.client = client;
+            this.upstream = upstream;
+        }
+
+        @Override
+        public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
+            String path = request.getPath();
+            if (path.equals(CONTEXT_ENDPOINT + "/")) {
+                return Publishers.just(HttpResponse.permanentRedirect(URI.create(CONTEXT_ENDPOINT)));
+            }
+            if (path.equals(METADATA_PATH + CONTEXT_ENDPOINT)) {
+                path = CONTEXT_PATH + path;
+            } else if (!path.equals(CONTEXT_ENDPOINT)) {
+                return chain.proceed(request);
+            }
+            MutableHttpRequest<?> forwarded = request.mutate().uri(upstream.resolve(path));
+            forwarded.getHeaders().set("X-Forwarded-Proto", "https");
+            forwarded.getHeaders().set("X-Forwarded-Host", PUBLIC_HOST);
+            return client.proxy(forwarded);
         }
     }
 
