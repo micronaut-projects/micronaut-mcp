@@ -78,10 +78,13 @@ loadScripts(document, 'script');</script>
 <li><a href="#getAsyncSpecs()" tabindex="0">getAsyncSpecs()</a></li>
 <li><a href="#getStatelessSyncSpecs()" tabindex="0">getStatelessSyncSpecs()</a></li>
 <li><a href="#getStatelessAsyncSpecs()" tabindex="0">getStatelessAsyncSpecs()</a></li>
+<li><a href="#collectsValues(io.micronaut.inject.ExecutableMethod)" tabindex="0">collectsValues(ExecutableMethod)</a></li>
 <li><a href="#addMethod(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)" tabindex="0">addMethod(BeanDefinition, ExecutableMethod)</a></li>
 <li><a href="#streamMethods()" tabindex="0">streamMethods()</a></li>
 <li><a href="#isNotEmpty()" tabindex="0">isNotEmpty()</a></li>
-<li><a href="#mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Exception)" tabindex="0">mcpError(ExecutableMethod, Exception)</a></li>
+<li><a href="#mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Throwable)" tabindex="0">mcpError(ExecutableMethod, Throwable)</a></li>
+<li><a href="#failWithMcpError(io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry.Method,java.lang.Throwable)" tabindex="0">failWithMcpError(AbstractMcpMethodRegistry.Method, Throwable)</a></li>
+<li><a href="#resultArgument(io.micronaut.inject.ExecutableMethod)" tabindex="0">resultArgument(ExecutableMethod)</a></li>
 </ol>
 </li>
 </ol>
@@ -161,7 +164,7 @@ Produces MCP Resource Template specifications with handlers that invoke the anno
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel" aria-labelledby="method-summary-table-tab0">
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -177,6 +180,17 @@ Produces MCP Resource Template specifications with handlers that invoke the anno
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#boundParameterTypes()" class="member-name-link">boundParameterTypes</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The types of the values that can be bound to a method parameter without an argument binder, in the order they are matched.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#collectsValues(io.micronaut.inject.ExecutableMethod)" class="member-name-link">collectsValues</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Whether a method returning a reactive type that may emit several values has its values collected into a <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link"><code>List</code></a>.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;R&gt;&nbsp;R</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#failWithMcpError(io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry.Method,java.lang.Throwable)" class="member-name-link">failWithMcpError</a><wbr>(io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry.Method&lt;?&gt;&nbsp;m,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">An error handler for <code>AbstractMcpMethodRegistry.Method.call(Supplier, Object, Function, Function)</code> and <code>AbstractMcpMethodRegistry.Method.callAsync(Supplier, Function, Function)</code> that fails with the protocol error of the failure.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;io.modelcontextprotocol.server.McpServerFeatures.AsyncResourceTemplateSpecification&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getAsyncSpecs()" class="member-name-link">getAsyncSpecs</a>()</code></div>
@@ -194,14 +208,21 @@ Produces MCP Resource Template specifications with handlers that invoke the anno
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isNotEmpty()" class="member-name-link">isNotEmpty</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.modelcontextprotocol.spec.McpError</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Exception)" class="member-name-link">mcpError</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a>&nbsp;ex)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Throwable)" class="member-name-link">mcpError</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Converts an exception thrown while invoking a method into the error returned to the client.</div>
+<div class="block">Maps a failure of a method to the protocol error sent to the client: a failure that an <a href="../exceptions/McpErrorExceptionMapper.html" title="interface in io.micronaut.mcp.server.exceptions"><code>McpErrorExceptionMapper</code></a> maps is mapped by
+it, another <code>McpError</code> is returned unchanged, and any other failure becomes an internal error.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/Stream.html" title="class or interface in java.util.stream" class="external-link">Stream</a><wbr>&lt;io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry.Method&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#streamMethods()" class="member-name-link">streamMethods</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static io.micronaut.core.type.Argument<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resultArgument(io.micronaut.inject.ExecutableMethod)" class="member-name-link">resultArgument</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">The type of the value a method produces: the method return type, or its first type argument when the method returns
+a reactive type or a <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link"><code>CompletionStage</code></a>.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/Stream.html" title="class or interface in java.util.stream" class="external-link">Stream</a><wbr>&lt;io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry.Method&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#streamMethods()" class="member-name-link">streamMethods</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a stream of the methods currently stored in the registry.</div>
 </div>
 </div>
@@ -452,6 +473,22 @@ The first is always the <code>McpTransportContext</code>, the second the request
 </section>
 </li>
 <li>
+<section class="detail" id="collectsValues(io.micronaut.inject.ExecutableMethod)">
+<h3>collectsValues</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">collectsValues</span><wbr><span class="parameters">(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method)</span></div>
+<div class="block">Whether a method returning a reactive type that may emit several values has its values collected into a <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link"><code>List</code></a>.
+Registries that do not collect reject such methods when they are added.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>method</code> - The method</dd>
+<dt>Returns:</dt>
+<dd>Whether the values are collected</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="addMethod(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)">
 <h3>addMethod</h3>
 <div class="horizontal-scroll">
@@ -462,6 +499,8 @@ The first is always the <code>McpTransportContext</code>, the second the request
 <dt>Parameters:</dt>
 <dd><code>beanDefinition</code> - the bean definition that declares or provides the method</dd>
 <dd><code>method</code> - the executable method to be added to the registry</dd>
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalStateException.html" title="class or interface in java.lang" class="external-link">IllegalStateException</a></code> - If the method returns a reactive type that may emit several values and the registry does not collect them</dd>
 </dl>
 </div>
 </section>
@@ -488,18 +527,54 @@ The first is always the <code>McpTransportContext</code>, the second the request
 </section>
 </li>
 <li>
-<section class="detail" id="mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Exception)">
+<section class="detail" id="mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Throwable)">
 <h3>mcpError</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">io.modelcontextprotocol.spec.McpError</span>&nbsp;<span class="element-name">mcpError</span><wbr><span class="parameters">(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a>&nbsp;ex)</span></div>
-<div class="block">Converts an exception thrown while invoking a method into the error returned to the client.</div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</span></div>
+<div class="block">Maps a failure of a method to the protocol error sent to the client: a failure that an <a href="../exceptions/McpErrorExceptionMapper.html" title="interface in io.micronaut.mcp.server.exceptions"><code>McpErrorExceptionMapper</code></a> maps is mapped by
+it, another <code>McpError</code> is returned unchanged, and any other failure becomes an internal error.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>method</code> - The method that was invoked</dd>
-<dd><code>ex</code> - The exception</dd>
+<dd><code>throwable</code> - The failure</dd>
 <dt>Returns:</dt>
-<dd>The error</dd>
+<dd>The protocol error</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="failWithMcpError(io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry.Method,java.lang.Throwable)">
+<h3>failWithMcpError</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">failWithMcpError</span><wbr><span class="parameters">(io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry.Method&lt;?&gt;&nbsp;m,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</span></div>
+<div class="block">An error handler for <code>AbstractMcpMethodRegistry.Method.call(Supplier, Object, Function, Function)</code> and <code>AbstractMcpMethodRegistry.Method.callAsync(Supplier, Function, Function)</code> that fails with the protocol error of the failure.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><span id="failWithMcpError(io.micronaut.mcp.server.registry.AbstractMcpMethodRegistry.Method,java.lang.Throwable)-type-param-R"><code>R</code> - The result type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>m</code> - The method that was invoked</dd>
+<dd><code>throwable</code> - The failure</dd>
+<dt>Returns:</dt>
+<dd>Never returns</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="resultArgument(io.micronaut.inject.ExecutableMethod)">
+<h3>resultArgument</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type">io.micronaut.core.type.Argument&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">resultArgument</span><wbr><span class="parameters">(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;method)</span></div>
+<div class="block">The type of the value a method produces: the method return type, or its first type argument when the method returns
+a reactive type or a <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link"><code>CompletionStage</code></a>.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>method</code> - The method</dd>
+<dt>Returns:</dt>
+<dd>The result argument</dd>
 </dl>
 </div>
 </section>
