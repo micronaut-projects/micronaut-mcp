@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import reactor.core.Exceptions;
+import io.modelcontextprotocol.spec.McpTransportSessionNotFoundException;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -79,6 +80,11 @@ class MicronautStreamableHttpClientTransportTest implements TestPropertyProvider
             Map.entry("micronaut.mcp.client.http.small.url", url + "/mcp"),
             Map.entry("micronaut.mcp.client.http.small.http-client", "MICRONAUT"),
             Map.entry("micronaut.mcp.client.http.small.max-message-size", "1KB"),
+            // Without a path, the endpoint is /mcp, as with the JDK HTTP client
+            Map.entry("micronaut.mcp.client.http.root.url", url),
+            Map.entry("micronaut.mcp.client.http.root.http-client", "MICRONAUT"),
+            Map.entry("micronaut.mcp.client.http.root-query.url", url + "?tenant=acme"),
+            Map.entry("micronaut.mcp.client.http.root-query.http-client", "MICRONAUT"),
             // The service names the server, the connection the path of the endpoint
             Map.entry("micronaut.http.services.crafted-service.url", url),
             Map.entry("micronaut.mcp.client.http.service.url", "http://unused.invalid/mcp"),
@@ -276,6 +282,59 @@ class MicronautStreamableHttpClientTransportTest implements TestPropertyProvider
         assertTooLarge(transport.sendMessage(toolsList("1")));
         assertTooLarge(transport.sendMessage(toolsList("2")));
         assertStatus(HttpStatus.BAD_REQUEST, transport.sendMessage(toolsList("3")));
+    }
+
+    @Test
+    void aUrlWithoutPathUsesTheMcpEndpoint() {
+        transport("root", new CopyOnWriteArrayList<>()).sendMessage(toolsList("1")).block(TIMEOUT);
+        transport("root-query", new CopyOnWriteArrayList<>()).sendMessage(toolsList("2")).block(TIMEOUT);
+        List<Request> requests = server.await("POST", 2);
+        assertEquals(List.of("/mcp", "/mcp"), requests.stream().map(request -> request.uri().getPath()).toList());
+        assertNull(requests.getFirst().uri().getRawQuery());
+        assertEquals("tenant=acme", requests.getLast().uri().getRawQuery());
+    }
+
+    @Test
+    void aStreamClosedBeforeTheResponseIsResumedFromItsLastEvent() {
+        List<McpSchema.JSONRPCMessage> received = new CopyOnWriteArrayList<>();
+        McpClientTransport transport = transport("crafted", received);
+        // A priming event, then the server closes the stream; the response is delivered on the resumed stream
+        server.on("POST tools/list", events(utf8("id: e1\nretry: 10\ndata: \n\n")));
+        server.on("GET", events(utf8("id: e2\ndata: {\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"tools\":[]}}\n\n")));
+
+        transport.sendMessage(toolsList("1")).block(TIMEOUT);
+
+        assertEquals("e1", server.requests("GET").getFirst().header("Last-Event-ID"));
+        McpSchema.JSONRPCResponse response = assertInstanceOf(McpSchema.JSONRPCResponse.class, received.getFirst());
+        assertEquals("1", response.id());
+    }
+
+    @Test
+    void theMaximumSizeIsCountedInBytes() {
+        McpClientTransport transport = transport("small", new CopyOnWriteArrayList<>());
+        // Fewer characters than the maximum, but more bytes, over two lines that are each smaller than the maximum
+        server.on("POST tools/list", events(utf8("data: " + "é".repeat(300) + "\n"), utf8("data: " + "é".repeat(300) + "\n\n")));
+        server.on("POST tools/list", json(400, "{\"jsonrpc\":\"2.0\",\"id\":\"2\",\"error\":{\"code\":-32602,\"message\":\"" + "é".repeat(600) + "\"}}"));
+
+        assertTooLarge(transport.sendMessage(toolsList("1")));
+        assertStatus(HttpStatus.BAD_REQUEST, transport.sendMessage(toolsList("2")));
+    }
+
+    @Test
+    void anExpiredSessionIsReportedToTheClientSession() {
+        McpClientTransport transport = transport("crafted", new CopyOnWriteArrayList<>());
+        List<Throwable> errors = new CopyOnWriteArrayList<>();
+        transport.setExceptionHandler(errors::add);
+        server.on("POST initialize", json(200, INITIALIZE_RESULT, SESSION_ID, "expiring"));
+        server.on("POST tools/list", status(404));
+
+        transport.sendMessage(initialize()).block(TIMEOUT);
+        Mono<Void> expired = transport.sendMessage(toolsList("2"));
+        assertThrows(RuntimeException.class, () -> expired.block(TIMEOUT));
+
+        // The client session initializes a new session when it is told the server no longer knows this one
+        assertInstanceOf(McpTransportSessionNotFoundException.class, errors.getFirst());
+        transport.closeGracefully().block(TIMEOUT);
     }
 
     @Test

@@ -33,6 +33,7 @@ import java.util.List;
 @Singleton
 @Internal
 @Requires(classes = StreamingHttpClient.class)
+@Requires(beans = MicronautMcpHttpClients.class)
 final class MicronautHttpClientTransports {
     private final MicronautMcpHttpClients clients;
     private final McpJsonMapper jsonMapper;

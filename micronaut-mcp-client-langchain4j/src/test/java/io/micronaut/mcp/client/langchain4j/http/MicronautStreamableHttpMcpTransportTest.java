@@ -9,9 +9,11 @@ import dev.langchain4j.mcp.protocol.McpCallToolRequest;
 import dev.langchain4j.mcp.protocol.McpGetPromptRequest;
 import dev.langchain4j.mcp.protocol.McpInitializationNotification;
 import dev.langchain4j.mcp.protocol.McpInitializeRequest;
+import dev.langchain4j.mcp.protocol.McpListToolsRequest;
 import dev.langchain4j.mcp.protocol.McpPingRequest;
 import dev.langchain4j.mcp.protocol.McpReadResourceRequest;
 import io.micronaut.context.BeanContext;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -19,10 +21,12 @@ import io.micronaut.http.client.exceptions.ReadTimeoutException;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.client.http.McpHttpSessionNotFoundException;
 import io.micronaut.mcp.client.langchain4j.http.CraftedMcpServer.Request;
+import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.test.support.TestPropertyProvider;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,15 +76,18 @@ class MicronautStreamableHttpMcpTransportTest implements TestPropertyProvider {
     @Override
     public Map<String, String> getProperties() {
         String url = "http://localhost:" + server.port() + "/mcp";
-        return Map.of(
-            "micronaut.mcp.client.http.crafted.url", url,
-            "micronaut.mcp.client.http.crafted.http-client", "MICRONAUT",
-            "micronaut.mcp.client.http.crafted.headers.X-Api-Key", "secret",
-            "micronaut.mcp.client.http.impatient.url", url,
-            "micronaut.mcp.client.http.impatient.http-client", "MICRONAUT",
-            "micronaut.mcp.client.http.impatient.request-timeout", "1s",
-            "micronaut.mcp.client.http.unreachable.url", "http://localhost:" + SocketUtils.findAvailableTcpPort() + "/mcp",
-            "micronaut.mcp.client.http.unreachable.http-client", "MICRONAUT");
+        return Map.ofEntries(
+            Map.entry("micronaut.mcp.client.http.crafted.url", url),
+            Map.entry("micronaut.mcp.client.http.crafted.http-client", "MICRONAUT"),
+            Map.entry("micronaut.mcp.client.http.crafted.headers.X-Api-Key", "secret"),
+            Map.entry("micronaut.mcp.client.http.impatient.url", url),
+            Map.entry("micronaut.mcp.client.http.impatient.http-client", "MICRONAUT"),
+            Map.entry("micronaut.mcp.client.http.impatient.request-timeout", "1s"),
+            Map.entry("micronaut.mcp.client.http.unreachable.url", "http://localhost:" + SocketUtils.findAvailableTcpPort() + "/mcp"),
+            Map.entry("micronaut.mcp.client.http.unreachable.http-client", "MICRONAUT"),
+            Map.entry("micronaut.mcp.client.http.tenant.url", url),
+            Map.entry("micronaut.mcp.client.http.tenant.http-client", "MICRONAUT"),
+            Map.entry("spec.name", "MicronautStreamableHttpMcpTransportTest"));
     }
 
     @BeforeEach
@@ -207,6 +214,81 @@ class MicronautStreamableHttpMcpTransportTest implements TestPropertyProvider {
 
         assertEquals("s2", assertInstanceOf(McpHttpSessionNotFoundException.class, error).getSessionId());
         assertEquals(0, failures.get(), "The server was reached");
+    }
+
+    @Test
+    void theVersionAnEarlierProtocolNegotiatesIsSentFromTheInitializedNotificationOn() throws Exception {
+        McpTransport transport = transport("crafted");
+        server.on("POST initialize", json(200, INITIALIZE_RESULT, SESSION_ID, "s1"));
+        server.on("POST ping", json(200, "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{}}"));
+
+        transport.sendInitializeRequest(new McpInitializeRequest(1L)).get(10, TimeUnit.SECONDS);
+        transport.sendRequest(new McpPingRequest(2L)).get(10, TimeUnit.SECONDS);
+
+        List<Request> requests = server.await("POST", 3);
+        assertNull(requests.get(0).header("MCP-Protocol-Version"));
+        assertEquals("2025-11-25", requests.get(1).header("MCP-Protocol-Version"));
+        assertEquals("2025-11-25", requests.get(2).header("MCP-Protocol-Version"));
+    }
+
+    @Test
+    void requestsThatFindTheSameSessionExpiredShareOneNewSession() throws Exception {
+        McpTransport transport = transport("crafted");
+        server.on("POST initialize", json(200, INITIALIZE_RESULT, SESSION_ID, "s1"));
+        transport.sendInitializeRequest(new McpInitializeRequest(1L)).get(10, TimeUnit.SECONDS);
+        server.on("POST ping", json(404, ""));
+        server.on("POST tools/list", json(404, ""));
+        server.on("POST initialize", json(200, INITIALIZE_RESULT, SESSION_ID, "s2"));
+        server.on("POST ping", json(200, "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{}}"));
+        server.on("POST tools/list", json(200, "{\"jsonrpc\":\"2.0\",\"id\":3,\"result\":{\"tools\":[]}}"));
+
+        CompletableFuture<String> ping = transport.sendRequest(new McpPingRequest(2L));
+        CompletableFuture<String> tools = transport.sendRequest(new McpListToolsRequest(3L, null));
+
+        ping.get(10, TimeUnit.SECONDS);
+        tools.get(10, TimeUnit.SECONDS);
+        assertEquals(2, server.requests("POST").stream().filter(r -> r.body().contains("\"initialize\"")).count(),
+            "One new session for both requests");
+    }
+
+    @Test
+    void theNewSessionIsInitializedWithTheHeadersOfTheCaller() throws Exception {
+        McpTransport transport = transport("tenant");
+        server.on("POST initialize", json(200, INITIALIZE_RESULT, SESSION_ID, "s1"));
+        server.on("POST ping", json(404, ""));
+        server.on("POST initialize", json(200, INITIALIZE_RESULT, SESSION_ID, "s2"));
+        server.on("POST ping", json(200, "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{}}"));
+        TenantHeaders.TENANT.set("acme");
+        try {
+            transport.sendInitializeRequest(new McpInitializeRequest(1L)).get(10, TimeUnit.SECONDS);
+            transport.sendRequest(new McpPingRequest(2L)).get(10, TimeUnit.SECONDS);
+        } finally {
+            TenantHeaders.TENANT.remove();
+        }
+
+        List<Request> initializations = server.requests("POST").stream().filter(r -> r.body().contains("\"initialize\"")).toList();
+        assertEquals(2, initializations.size());
+        assertEquals("acme", initializations.getLast().header("X-Tenant"));
+    }
+
+    /**
+     * A request-scoped header, which the headers provider computes on the thread of the caller.
+     */
+    @Requires(property = "spec.name", value = "MicronautStreamableHttpMcpTransportTest")
+    @Singleton
+    static class TenantHeaders implements McpClientHeadersProvider {
+        static final ThreadLocal<String> TENANT = new ThreadLocal<>();
+
+        @Override
+        public boolean supports(McpClientHttpConfiguration connection) {
+            return connection.getName().equals("tenant");
+        }
+
+        @Override
+        public Map<String, String> headers(McpClientHttpConfiguration connection) {
+            String tenant = TENANT.get();
+            return tenant != null ? Map.of("X-Tenant", tenant) : Map.of();
+        }
     }
 
     @Test

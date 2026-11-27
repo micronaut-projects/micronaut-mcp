@@ -57,7 +57,10 @@ import java.util.concurrent.ExecutorService;
 @Singleton
 @Internal
 @Requires(classes = StreamingHttpClient.class)
+// Only http-client-core can be on the classpath, without the Micronaut HTTP client that provides the registry
+@Requires(beans = StreamingHttpClientRegistry.class)
 public final class MicronautMcpHttpClients {
+    private static final String DEFAULT_ENDPOINT = "/mcp";
     private final StreamingHttpClientRegistry<?> registry;
     private final BeanContext beanContext;
     private final List<McpClientHeadersProvider> headersProviders;
@@ -86,7 +89,7 @@ public final class MicronautMcpHttpClients {
 
     private Endpoint endpoint(McpClientHttpConfiguration configuration) {
         URI url = configuration.getUrl();
-        String path = url.getRawPath() + (url.getRawQuery() != null ? "?" + url.getRawQuery() : "");
+        String path = path(url);
         URI origin = URI.create(url.getScheme() + "://" + url.getRawAuthority());
         String serviceId = configuration.getServiceId();
         if (serviceId != null) {
@@ -97,6 +100,8 @@ public final class MicronautMcpHttpClients {
                 metadata.addDeclaredAnnotation(Client.class.getName(), Map.of(AnnotationMetadata.VALUE_MEMBER, serviceId));
                 return new Endpoint(registry.getStreamingHttpClient(metadata), path);
             }
+            // The service configures the client, the connection names the server. The registry resolves such a client
+            // without its id, so the filters scoped to the service id do not apply to it
             HttpClientConfiguration serviceConfiguration = service.<HttpClientConfiguration>map(s -> s).orElseGet(this::defaultConfiguration);
             return new Endpoint(registry.resolveStreamingHttpClient(null, LoadBalancer.fixed(origin), serviceConfiguration, beanContext), path);
         }
@@ -108,6 +113,15 @@ public final class MicronautMcpHttpClients {
             clientConfiguration.setReadTimeout(timeout);
         }
         return new Endpoint(registry.resolveStreamingHttpClient(null, LoadBalancer.fixed(origin), clientConfiguration, beanContext), path);
+    }
+
+    /**
+     * @return The path and query of the endpoint, with {@code /mcp} as the path of a URL without one, as the transport of
+     * the JDK HTTP client of the MCP Java SDK does, so that switching HTTP clients does not change the endpoint
+     */
+    private static String path(URI url) {
+        String path = url.getRawPath() == null || url.getRawPath().isEmpty() ? DEFAULT_ENDPOINT : url.getRawPath();
+        return path + (url.getRawQuery() != null ? "?" + url.getRawQuery() : "");
     }
 
     private HttpClientConfiguration defaultConfiguration() {

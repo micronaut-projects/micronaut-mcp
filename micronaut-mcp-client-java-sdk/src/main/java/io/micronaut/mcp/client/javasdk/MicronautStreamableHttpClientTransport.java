@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -64,6 +65,7 @@ final class MicronautStreamableHttpClientTransport implements McpClientTransport
     private final McpJsonMapper jsonMapper;
     private final AtomicReference<Function<Mono<McpSchema.JSONRPCMessage>, Mono<McpSchema.JSONRPCMessage>>> handler =
         new AtomicReference<>(Function.identity());
+    private final AtomicReference<Consumer<Throwable>> exceptionHandler = new AtomicReference<>(e -> { });
     private final AtomicReference<Disposable> listening = new AtomicReference<>();
     private final AtomicBoolean closed = new AtomicBoolean();
 
@@ -85,6 +87,15 @@ final class MicronautStreamableHttpClientTransport implements McpClientTransport
         return Mono.empty();
     }
 
+    /**
+     * @param handler The handler the client session registers, which initializes a new session when the server no longer
+     * knows the current one
+     */
+    @Override
+    public void setExceptionHandler(Consumer<Throwable> handler) {
+        exceptionHandler.set(handler);
+    }
+
     @Override
     public Mono<Void> sendMessage(McpSchema.JSONRPCMessage message) {
         return Mono.deferContextual(reactorContext -> {
@@ -100,16 +111,42 @@ final class MicronautStreamableHttpClientTransport implements McpClientTransport
                 reactorContext.getOrDefault(McpTransportContext.KEY, McpTransportContext.EMPTY), reactorContext);
             Object requestId = message instanceof McpSchema.JSONRPCRequest request ? request.id() : null;
             boolean initialize = message instanceof McpSchema.JSONRPCRequest request && McpSchema.METHOD_INITIALIZE.equals(request.method());
-            Mono<Void> sent = exchange.post(json, headers, initialize)
+            Mono<Void> sent = exchange.post(json, headers, initialize, requestId != null ? response -> isResponseTo(response, requestId) : null)
                 .concatMap(response -> receive(response, requestId))
                 .then()
-                .onErrorMap(McpHttpSessionNotFoundException.class, e -> new McpTransportSessionNotFoundException(e.getSessionId(), e));
+                .onErrorMap(McpHttpSessionNotFoundException.class, this::sessionExpired);
             if (message instanceof McpSchema.JSONRPCNotification notification
                 && McpSchema.METHOD_NOTIFICATION_INITIALIZED.equals(notification.method())) {
                 sent = sent.doOnSuccess(ignored -> listen());
             }
             return sent;
         });
+    }
+
+    /**
+     * Tells the client session that the server no longer knows the session, so that it initializes a new one.
+     *
+     * @return The error the request fails with
+     */
+    private McpTransportSessionNotFoundException sessionExpired(McpHttpSessionNotFoundException e) {
+        McpTransportSessionNotFoundException expired = new McpTransportSessionNotFoundException(e.getSessionId(), e);
+        exceptionHandler.get().accept(expired);
+        return expired;
+    }
+
+    /**
+     * @return Whether the message is the response to the request, which ends the resumption of its stream
+     */
+    private boolean isResponseTo(String json, Object requestId) {
+        if (!json.contains("\"result\"") && !json.contains("\"error\"")) {
+            return false;
+        }
+        try {
+            Map<String, Object> message = jsonMapper.readValue(json, MAP_TYPE);
+            return !message.containsKey("method") && requestId.toString().equals(String.valueOf(message.get("id")));
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     private Mono<Void> receive(String json, @Nullable Object requestId) {
@@ -158,7 +195,12 @@ final class MicronautStreamableHttpClientTransport implements McpClientTransport
             .retryWhen(Retry.backoff(Long.MAX_VALUE, RECONNECT_DELAY)
                 .maxBackoff(MAX_RECONNECT_DELAY)
                 .filter(e -> !closed.get() && !isFinal(e)))
-            .onErrorResume(MicronautStreamableHttpClientTransport::isFinal, e -> Flux.empty())
+            .onErrorResume(MicronautStreamableHttpClientTransport::isFinal, e -> {
+                if (e instanceof McpHttpSessionNotFoundException expired) {
+                    sessionExpired(expired);
+                }
+                return Flux.empty();
+            })
             .subscribe();
         Disposable previous = listening.getAndSet(stream);
         if (previous != null) {

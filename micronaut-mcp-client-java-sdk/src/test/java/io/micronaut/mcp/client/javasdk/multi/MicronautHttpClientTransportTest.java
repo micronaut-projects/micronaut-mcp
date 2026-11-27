@@ -122,15 +122,18 @@ class MicronautHttpClientTransportTest implements TestPropertyProvider {
     @Test
     void aSessionTheServerNoLongerKnowsIsInitializedAgain() {
         McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("filtered", Map.of());
+        int sessions = Sessions.SESSIONS.get();
         Sessions.FORGET_SESSION.set(true);
         try {
             client.callTool(request);
         } catch (RuntimeException e) {
-            // The client may fail the request that found the session gone
-            assertTrue(e instanceof McpTransportSessionNotFoundException || e.getCause() instanceof McpTransportSessionNotFoundException, String.valueOf(e));
+            // The client fails the request that found the session gone, as the SDK does once the transport tells it
+            assertTrue(e instanceof McpTransportSessionNotFoundException || e.getCause() instanceof McpTransportSessionNotFoundException
+                || String.valueOf(e.getMessage()).contains("session"), String.valueOf(e));
         }
         assertFalse(Sessions.FORGET_SESSION.get(), "The server answered that it no longer knows the session");
         assertEquals("from the client filter", text(client.callTool(request)));
+        assertTrue(Sessions.SESSIONS.get() > sessions, "The client initialized a new session");
         assertTrue(Sessions.INITIALIZE_WITH_SESSION.isEmpty(), "Initialize is sent without a session id");
     }
 

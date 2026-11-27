@@ -29,6 +29,7 @@ import jakarta.inject.Singleton;
 @Singleton
 @Internal
 @Requires(classes = StreamingHttpClient.class)
+@Requires(beans = MicronautMcpHttpClients.class)
 public final class MicronautHttpClientTransports {
     private final MicronautMcpHttpClients clients;
 
