@@ -33,6 +33,7 @@ import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
+import reactor.util.retry.Retry;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -179,8 +180,7 @@ public final class MicronautMcpHttpExchange {
         }
         // Neither the scheduler of the exchange, over an executor service, nor the schedulers of Reactor, which the
         // application may replace, can be relied on to delay
-        Executor delayed = CompletableFuture.delayedExecutor(stream.retry.toMillis(), TimeUnit.MILLISECONDS);
-        return Mono.fromFuture(() -> CompletableFuture.runAsync(() -> { }, delayed)).thenMany(Flux.defer(() -> {
+        return reconnectDelay(stream, DEFAULT_RETRY).thenMany(Flux.defer(() -> {
             MutableHttpRequest<?> request = HttpRequest.GET(uri)
                 .header(HttpHeaders.ACCEPT, MediaType.TEXT_EVENT_STREAM)
                 .header(LAST_EVENT_ID, lastEventId);
@@ -196,15 +196,38 @@ public final class MicronautMcpHttpExchange {
     /**
      * Opens the stream of the messages the server sends on its own, such as requests and notifications.
      *
-     * @param headers The headers of the request
      * @return The messages of the stream. Fails with {@link McpHttpSessionNotFoundException} when the server no longer knows
      * the session, and with an {@link HttpClientResponseException} of status 405 when the server does not offer a stream.
      */
-    public Flux<String> listen(Map<String, String> headers) {
-        MutableHttpRequest<?> request = HttpRequest.GET(uri).header(HttpHeaders.ACCEPT, MediaType.TEXT_EVENT_STREAM);
-        headers.forEach(request::header);
-        String session = sessionHeaders(request);
-        return exchange(request, session, false, new StreamState());
+    public Flux<String> listen() {
+        return Flux.defer(() -> {
+            StreamState stream = new StreamState();
+            Flux<String> get = Flux.defer(() -> {
+                MutableHttpRequest<?> request = HttpRequest.GET(uri).header(HttpHeaders.ACCEPT, MediaType.TEXT_EVENT_STREAM);
+                headers().forEach(request::header);
+                if (stream.lastEventId != null) {
+                    request.header(LAST_EVENT_ID, stream.lastEventId);
+                }
+                String session = sessionHeaders(request);
+                return exchange(request, session, false, stream);
+            });
+            return get.repeatWhen(ends -> ends.concatMap(ignored -> reconnectDelay(stream, DEFAULT_RETRY)))
+                .retryWhen(Retry.from(errors -> errors.concatMap(signal -> {
+                    Throwable e = signal.failure();
+                    if (e instanceof McpHttpSessionNotFoundException
+                        || e instanceof HttpClientResponseException response && response.getStatus() == HttpStatus.METHOD_NOT_ALLOWED) {
+                        return Mono.error(e);
+                    }
+                    long backoff = Math.min(30, 1L << Math.min(5, signal.totalRetries()));
+                    return reconnectDelay(stream, Duration.ofSeconds(backoff));
+                })));
+        });
+    }
+
+    private static Mono<Long> reconnectDelay(StreamState stream, Duration fallback) {
+        Duration retry = stream.retry != null ? stream.retry : fallback;
+        Executor delayed = CompletableFuture.delayedExecutor(retry.toMillis(), TimeUnit.MILLISECONDS);
+        return Mono.fromFuture(() -> CompletableFuture.supplyAsync(() -> 0L, delayed));
     }
 
     private @Nullable String sessionHeaders(MutableHttpRequest<?> request) {
@@ -293,7 +316,7 @@ public final class MicronautMcpHttpExchange {
      */
     private static final class StreamState {
         private volatile @Nullable String lastEventId;
-        private volatile Duration retry = DEFAULT_RETRY;
+        private volatile @Nullable Duration retry;
         private volatile boolean responded;
     }
 
@@ -426,7 +449,7 @@ public final class MicronautMcpHttpExchange {
         private void lastEventId(String id) {
             // An id with a NUL is ignored, as an event source does
             if (id.indexOf('\0') < 0) {
-                stream.lastEventId = id;
+                stream.lastEventId = id.isEmpty() ? null : id;
             }
         }
 

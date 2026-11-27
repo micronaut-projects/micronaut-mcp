@@ -34,10 +34,8 @@ import org.jspecify.annotations.Nullable;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -54,8 +52,6 @@ import java.util.function.Function;
 final class MicronautStreamableHttpClientTransport implements McpClientTransport {
     private static final List<String> PROTOCOL_VERSIONS = List.of(ProtocolVersions.MCP_2025_03_26,
         ProtocolVersions.MCP_2025_06_18, ProtocolVersions.MCP_2025_11_25);
-    private static final Duration RECONNECT_DELAY = Duration.ofSeconds(1);
-    private static final Duration MAX_RECONNECT_DELAY = Duration.ofSeconds(30);
     private static final TypeRef<Map<String, Object>> MAP_TYPE = new TypeRef<>() {
     };
 
@@ -188,13 +184,8 @@ final class MicronautStreamableHttpClientTransport implements McpClientTransport
         if (closed.get()) {
             return;
         }
-        Disposable stream = Flux.defer(() -> exchange.listen(exchange.headers()))
+        Disposable stream = exchange.listen()
             .concatMap(message -> receive(message, null))
-            // The server may end the stream at any time
-            .repeatWhen(ends -> ends.delayElements(RECONNECT_DELAY).takeWhile(ignored -> !closed.get()))
-            .retryWhen(Retry.backoff(Long.MAX_VALUE, RECONNECT_DELAY)
-                .maxBackoff(MAX_RECONNECT_DELAY)
-                .filter(e -> !closed.get() && !isFinal(e)))
             .onErrorResume(MicronautStreamableHttpClientTransport::isFinal, e -> {
                 if (e instanceof McpHttpSessionNotFoundException expired) {
                     sessionExpired(expired);

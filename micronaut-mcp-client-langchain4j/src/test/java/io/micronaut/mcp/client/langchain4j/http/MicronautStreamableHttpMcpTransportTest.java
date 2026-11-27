@@ -197,6 +197,10 @@ class MicronautStreamableHttpMcpTransportTest implements TestPropertyProvider {
         Throwable error = failure(transport.sendRequest(new McpPingRequest(2L)));
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, assertInstanceOf(HttpClientResponseException.class, error).getStatus());
+        server.on("POST initialize", json(200, INITIALIZE_RESULT, SESSION_ID, "replacement"));
+        server.on("POST ping", json(200, "{\"jsonrpc\":\"2.0\",\"id\":3,\"result\":{}}"));
+        transport.sendRequest(new McpPingRequest(3L)).get(10, TimeUnit.SECONDS);
+        assertEquals("replacement", server.requests("POST").getLast().header(SESSION_ID));
     }
 
     @Test

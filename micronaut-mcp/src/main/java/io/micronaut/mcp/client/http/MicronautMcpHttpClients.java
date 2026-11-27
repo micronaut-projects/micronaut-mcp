@@ -41,7 +41,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
@@ -93,17 +92,13 @@ public final class MicronautMcpHttpClients {
         URI origin = URI.create(url.getScheme() + "://" + url.getRawAuthority());
         String serviceId = configuration.getServiceId();
         if (serviceId != null) {
-            Optional<ServiceHttpClientConfiguration> service = beanContext.findBean(ServiceHttpClientConfiguration.class, Qualifiers.byName(serviceId));
-            if (service.isPresent() && !service.get().getUrls().isEmpty()) {
-                // The service names the server, the request carries the path of the endpoint
-                MutableAnnotationMetadata metadata = new MutableAnnotationMetadata();
-                metadata.addDeclaredAnnotation(Client.class.getName(), Map.of(AnnotationMetadata.VALUE_MEMBER, serviceId));
-                return new Endpoint(registry.getStreamingHttpClient(metadata), path);
-            }
-            // The service configures the client, the connection names the server. The registry resolves such a client
-            // without its id, so the filters scoped to the service id do not apply to it
-            HttpClientConfiguration serviceConfiguration = service.<HttpClientConfiguration>map(s -> s).orElseGet(this::defaultConfiguration);
-            return new Endpoint(registry.resolveStreamingHttpClient(null, LoadBalancer.fixed(origin), serviceConfiguration, beanContext), path);
+            boolean serviceHasUrls = beanContext.findBean(ServiceHttpClientConfiguration.class, Qualifiers.byName(serviceId))
+                .map(service -> !service.getUrls().isEmpty()).orElse(false);
+            // The client ID selects service configuration and filters. An absolute request URI bypasses load balancing
+            // when the connection supplies the origin.
+            MutableAnnotationMetadata metadata = new MutableAnnotationMetadata();
+            metadata.addDeclaredAnnotation(Client.class.getName(), Map.of(AnnotationMetadata.VALUE_MEMBER, serviceId));
+            return new Endpoint(registry.getStreamingHttpClient(metadata), serviceHasUrls ? path : origin + path);
         }
         HttpClientConfiguration clientConfiguration = new ConnectionHttpClientConfiguration(defaultConfiguration());
         // MCP does not use redirects, and following one could send the token of a user to another server

@@ -1,8 +1,13 @@
 package io.micronaut.mcp.client.javasdk;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.annotation.ClientFilter;
+import io.micronaut.http.annotation.RequestFilter;
+import io.micronaut.http.client.StreamingHttpClientRegistry;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.exceptions.ReadTimeoutException;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -17,19 +22,20 @@ import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpTransportSessionNotFoundException;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import reactor.core.Exceptions;
-import io.modelcontextprotocol.spec.McpTransportSessionNotFoundException;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -111,7 +117,7 @@ class MicronautStreamableHttpClientTransportTest implements TestPropertyProvider
     }
 
     @Test
-    void theStandaloneStreamDeliversTheMessagesOfTheServerUntilTheSessionEnds() {
+    void theStandaloneStreamDeliversTheMessagesOfTheServerUntilTheSessionEnds() throws Exception {
         server.on("POST initialize", json(200, INITIALIZE_RESULT, SESSION_ID, "s1"));
         server.on("GET", events(
             utf8(": a comment\r\nevent: message\r\nid: 1\r\n"),
@@ -126,12 +132,17 @@ class MicronautStreamableHttpClientTransportTest implements TestPropertyProvider
         server.on("GET", json(404, ""));
         List<McpSchema.JSONRPCMessage> received = new CopyOnWriteArrayList<>();
         McpClientTransport transport = transport("crafted", received);
+        CompletableFuture<Throwable> expired = new CompletableFuture<>();
+        transport.setExceptionHandler(expired::complete);
 
         transport.sendMessage(initialize()).block(TIMEOUT);
         transport.sendMessage(initialized()).block(TIMEOUT);
 
         List<Request> streams = server.await("GET", 2);
         Request stream = streams.getFirst();
+        assertNull(stream.header("Last-Event-ID"));
+        assertEquals("1", streams.get(1).header("Last-Event-ID"));
+        assertInstanceOf(McpTransportSessionNotFoundException.class, expired.get(10, TimeUnit.SECONDS));
         assertEquals("s1", stream.header(SESSION_ID));
         assertEquals(PROTOCOL_VERSION, stream.header("MCP-Protocol-Version"));
         assertEquals("secret", stream.header("X-Api-Key"));
@@ -359,6 +370,7 @@ class MicronautStreamableHttpClientTransportTest implements TestPropertyProvider
         server.on("POST tools/list", delayed(Duration.ofSeconds(3), json(200, INITIALIZE_RESULT)));
         Mono<Void> sent = transport.sendMessage(toolsList("1"));
         assertInstanceOf(ReadTimeoutException.class, Exceptions.unwrap(assertThrows(RuntimeException.class, () -> sent.block(TIMEOUT))));
+        assertEquals("impatient", server.requests("POST").getFirst().header("X-Service"));
     }
 
     @Test
@@ -367,11 +379,21 @@ class MicronautStreamableHttpClientTransportTest implements TestPropertyProvider
         server.on("POST initialize", json(200, INITIALIZE_RESULT));
         transport.sendMessage(initialize()).block(TIMEOUT);
         assertEquals(1, server.requests("POST").size());
+        assertNull(server.requests("POST").getFirst().header("X-Service"));
     }
 
     @Test
     void theConnectionsOfTheMicronautHttpClientHaveNoJdkTransport() {
         assertTrue(beanContext.findBean(HttpClientStreamableHttpTransport.Builder.class, Qualifiers.byName("crafted")).isEmpty());
+    }
+
+    @Test
+    void theJdkClientFactoryWorksWithoutAStreamingRegistry() {
+        try (ApplicationContext context = ApplicationContext.run(Map.of("micronaut.http.client.netty.enabled", false))) {
+            assertTrue(context.findBean(StreamingHttpClientRegistry.class).isEmpty());
+            assertTrue(context.findBean(MicronautHttpClientTransports.class).isEmpty());
+            assertTrue(context.findBean(McpClientFactory.class).isPresent());
+        }
     }
 
     @Test
@@ -419,5 +441,13 @@ class MicronautStreamableHttpClientTransportTest implements TestPropertyProvider
 
     private static void pauseLongerThanTheReconnectDelay() {
         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1_500));
+    }
+
+    @ClientFilter(serviceId = "impatient", patterns = "/**")
+    static class ServiceFilter {
+        @RequestFilter
+        void filter(MutableHttpRequest<?> request) {
+            request.header("X-Service", "impatient");
+        }
     }
 }

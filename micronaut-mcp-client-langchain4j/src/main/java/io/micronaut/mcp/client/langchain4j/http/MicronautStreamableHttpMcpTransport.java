@@ -40,6 +40,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -103,7 +104,14 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
     @Override
     public CompletableFuture<String> sendRequest(McpCallContext context) {
         // The headers are computed on the thread that calls the client
-        return execute(context, exchange.headers(), false);
+        Map<String, String> headers = exchange.headers();
+        Renewal current = renewal.get();
+        if (current != null && current.initialized().state() != Future.State.SUCCESS) {
+            // A new caller must wait for the handshake too. It can retry a failed handshake with its own headers.
+            return renew(current.expiredSession(), initializeRequest.get(), headers)
+                .thenCompose(ignored -> execute(context, headers, true));
+        }
+        return execute(context, headers, false);
     }
 
     @Override
@@ -129,8 +137,7 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
     }
 
     private void updateProtocolVersion() {
-        // As the LangChain4j HTTP transport: the header is only sent with the 2026-07-28 protocol, whose detection
-        // falls back to the initialization of earlier versions, and which has no sessions
+        // Protocol detection supplies the modern version. A legacy handshake obtains its version from the server.
         boolean modern = modernProtocol.get();
         exchange.setProtocolVersion(modern ? protocolVersion.get() : negotiatedVersion.get());
         exchange.setSessionless(modern);
@@ -256,15 +263,13 @@ final class MicronautStreamableHttpMcpTransport implements McpTransport {
     private CompletableFuture<String> renew(String expiredSession, McpInitializeRequest initialize, Map<String, String> headers) {
         while (true) {
             Renewal current = renewal.get();
-            if (current != null && current.expiredSession().equals(expiredSession)) {
+            if (current != null && current.expiredSession().equals(expiredSession) && !current.initialized().isCompletedExceptionally()) {
                 return current.initialized();
             }
             CompletableFuture<String> initialized = new CompletableFuture<>();
             if (renewal.compareAndSet(current, new Renewal(expiredSession, initialized))) {
                 initialize(initialize, headers).whenComplete((response, e) -> {
                     if (e != null) {
-                        // A later request may try again
-                        renewal.compareAndSet(new Renewal(expiredSession, initialized), null);
                         initialized.completeExceptionally(e);
                     } else {
                         initialized.complete(response);
