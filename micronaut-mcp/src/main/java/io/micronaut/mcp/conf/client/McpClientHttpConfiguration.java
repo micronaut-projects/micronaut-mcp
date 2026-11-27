@@ -55,8 +55,6 @@ public interface McpClientHttpConfiguration extends McpClientConnectionConfigura
     boolean isLogResponses();
 
     /**
-     * Only used by the LangChain4j client.
-     *
      * @return The headers sent with every request, such as {@code Authorization}
      * @since 2.2.0
      */

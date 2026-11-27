@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  * The configuration of a connection to an MCP server started as a process, which the client talks to over its standard
- * input and output. Only used by the LangChain4j client.
+ * input and output.
  *
  * @since 2.2.0
  */

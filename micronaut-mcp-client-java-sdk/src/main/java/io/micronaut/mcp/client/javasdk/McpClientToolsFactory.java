@@ -22,8 +22,6 @@ import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
-import io.micronaut.scheduling.TaskExecutors;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -31,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Creates the {@link McpClientTools} of each connection, and the primary one of every connection.
@@ -64,15 +62,16 @@ final class McpClientToolsFactory {
 
     @Primary
     @Singleton
-    McpClientTools allTools(List<McpClientConnectionConfiguration> connections,
-                            @Named(TaskExecutors.BLOCKING) ExecutorService blockingExecutor) {
+    McpClientTools allTools(List<McpClientConnectionConfiguration> connections) {
         List<String> names = connections.stream().map(McpClientConnectionConfiguration::getName).toList();
         return () -> {
-            // The servers are asked concurrently, and those that cannot be reached are skipped
-            List<CompletableFuture<List<McpClientTool>>> tools = names.stream()
-                .map(name -> CompletableFuture.supplyAsync(() -> toolsOf(name), blockingExecutor))
-                .toList();
-            return tools.stream().flatMap(t -> t.join().stream()).toList();
+            // Callers may already occupy every thread of Micronaut's blocking executor.
+            try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                List<CompletableFuture<List<McpClientTool>>> tools = names.stream()
+                    .map(name -> CompletableFuture.supplyAsync(() -> toolsOf(name), executor))
+                    .toList();
+                return tools.stream().flatMap(t -> t.join().stream()).toList();
+            }
         };
     }
 
