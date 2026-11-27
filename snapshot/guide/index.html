@@ -274,6 +274,9 @@
 <div class="ulist">
 <ul>
 <li>
+<p>The STDIO server now accepts up to 16,777,216 UTF-16 code units per inbound JSON-RPC line, excluding the line terminator. A longer line ends the stdio session without a JSON-RPC error response. Clients that send large tool arguments must keep the entire serialized request within this limit.</p>
+</li>
+<li>
 <p>With the HTTP transport, the requests and notifications handed to the SDK carry their parameters as parsed JSON: <code>McpSchema.JSONRPCRequest.params()</code> and <code>McpSchema.JSONRPCNotification.params()</code> are now an <code>io.micronaut.json.tree.JsonNode</code> (an object or an array) instead of a <code>Map</code>. They are still a <code>Map</code> (or a <code>List</code>) when the application replaces the <code>McpJsonMapper</code> bean, even with a mapper that delegates to the Micronaut one. The SDK handlers convert the parameters with the <code>McpJsonMapper</code>, so this only affects code that replaces or decorates the <code>McpStatelessServerHandler</code> bean and reads <code>params()</code> directly. Such code can convert the parameters with the <code>McpJsonMapper</code> bean, which accepts both forms: <code>mcpJsonMapper.convertValue(request.params(), new TypeRef&lt;Map&lt;String, Object&gt;&gt;() { })</code>.</p>
 </li>
 <li>
