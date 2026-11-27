@@ -18,39 +18,33 @@ package io.micronaut.mcp.conf.client;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.convert.format.MapFormat;
+import io.micronaut.core.naming.conventions.StringConvention;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Map;
 
 /**
  * {@link EachProperty} implementation of {@link McpClientHttpConfiguration}.
  */
 @EachProperty(McpClientHttpConfiguration.PREFIX)
 @Internal
-final class McpClientHttpConfigurationProperties implements McpClientHttpConfiguration {
-    private final String name;
+final class McpClientHttpConfigurationProperties extends AbstractMcpClientConnectionConfigurationProperties implements McpClientHttpConfiguration {
     private URI url;
     private Duration timeout;
     private boolean logRequests;
     private boolean logResponses;
+    private Map<String, String> headers = Map.of();
 
     /**
      * Constructor.
      * @param name Name Qualifier
      */
     McpClientHttpConfigurationProperties(@Parameter String name) {
-        this.name = name;
-    }
-
-    /**
-     *
-     * @return The name qualifier
-     */
-    @Override
-    public String getName() {
-        return name;
+        super(name);
     }
 
     /**
@@ -78,8 +72,11 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
     }
 
     /**
+     * The timeout of the HTTP calls of the LangChain4j transport. The Java SDK client uses it as the timeout of an MCP
+     * request. To limit how long an MCP request, such as a tool call, may take with the LangChain4j client, set
+     * `request-timeout`.
      *
-     * @param timeout The duration to wait for server responses before timing out requests.
+     * @param timeout The timeout of the HTTP calls
      */
     public void setTimeout(@Nullable Duration timeout) {
         this.timeout = timeout;
@@ -109,5 +106,19 @@ final class McpClientHttpConfigurationProperties implements McpClientHttpConfigu
      */
     public void setLogResponses(boolean logResponses) {
         this.logResponses = logResponses;
+    }
+
+    @Override
+    public @NonNull Map<String, String> getHeaders() {
+        return headers;
+    }
+
+    /**
+     * The headers sent with every request, such as `Authorization`. Only used by the LangChain4j client.
+     *
+     * @param headers The headers sent with every request
+     */
+    public void setHeaders(@MapFormat(transformation = MapFormat.MapTransformation.FLAT, keyFormat = StringConvention.RAW) @Nullable Map<String, String> headers) {
+        this.headers = headers != null ? headers : Map.of();
     }
 }

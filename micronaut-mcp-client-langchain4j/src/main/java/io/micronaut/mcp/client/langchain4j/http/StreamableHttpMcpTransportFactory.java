@@ -21,7 +21,6 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
-import jakarta.inject.Singleton;
 
 @Factory
 @Internal
@@ -37,11 +36,15 @@ final class StreamableHttpMcpTransportFactory {
         }
         builder.logRequests(config.isLogRequests());
         builder.logResponses(config.isLogResponses());
+        if (!config.getHeaders().isEmpty()) {
+            builder.customHeaders(config.getHeaders());
+        }
         return builder;
     }
 
+    // A new transport for each client, which owns and closes it
     @EachBean(StreamableHttpMcpTransport.Builder.class)
-    @Singleton
+    @Prototype
     StreamableHttpMcpTransport createStreamableHttpMcpTransport(StreamableHttpMcpTransport.Builder builder) {
         return builder.build();
     }
