@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * The request a tool, prompt, resource or completion method is invoked for. Declare a parameter of this type to report
- * progress, send log messages to the client, or check whether the request was cancelled.
+ * progress, send log messages to the client, or check whether the client disconnected.
  *
  * <pre>
  * &#64;Tool
@@ -108,15 +108,11 @@ public interface McpRequestContext {
     }
 
     /**
-     * Whether the client stopped waiting for the result. Over the HTTP transport, that is when the client closes the
-     * event stream of the response, so only once the response has become an event stream with the first notification:
-     * the server does not detect a client that goes away before. It is always {@code false} over STDIO, and when the
-     * response is sent as JSON: the {@code notifications/cancelled} message of the protocol is not handled on either
-     * transport.
-     *
-     * @return Whether the client stopped waiting for the result
+     * @return Whether the server observed the client disconnect from this HTTP response stream.
+     * A disconnect stops event delivery and the invocation continues. This returns {@code false} for
+     * STDIO, plain JSON responses and before a disconnect is observed.
      */
-    boolean isCancelled();
+    boolean isClientDisconnected();
 
     /**
      * Asks the user for information through the client. Only the STDIO transport can send requests to the client.

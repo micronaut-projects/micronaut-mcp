@@ -416,7 +416,6 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
          * it can receive without an argument binder, {@link #REQUEST_CONTEXT}, or {@link #NOT_BOUND} when there is no declared match.
          */
         private final int[] boundIndexes;
-        private final boolean declaresRequestContext;
         private final boolean collectsValues;
         private final boolean usesBlockingExecutor;
         /**
@@ -448,7 +447,6 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
             for (int a = 0; a < arguments.length; a++) {
                 boundIndexes[a] = boundIndex(arguments[a].getType(), boundParameterTypes);
             }
-            this.declaresRequestContext = Arrays.stream(boundIndexes).anyMatch(index -> index == REQUEST_CONTEXT);
             this.collectsValues = collectsValues(method, collectsValues);
             // Resolved here, so that an unknown executor fails the startup rather than every invocation
             String executorName = method.stringValue(ExecuteOn.class).orElse(null);
@@ -598,12 +596,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
                                      Function<@Nullable Object, R> mapper,
                                      Function<Throwable, R> errorHandler) {
             if (scheduler == null) {
-                // Invoked on the thread that received the request, where its request context must not wait for an
-                // answer of the client
-                Supplier<@Nullable Object> onReceivingThread = declaresRequestContext
-                    ? () -> DefaultMcpRequestContext.onReceivingThread(invocation)
-                    : invocation;
-                return invokeNow(onReceivingThread, mapper, errorHandler);
+                return invokeNow(invocation, mapper, errorHandler);
             }
             return schedule(() -> invokeNow(invocation, mapper, errorHandler), scheduler);
         }
@@ -728,7 +721,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
             Class<?> type = argument.getType();
             int index = boundIndexes[i];
             if (index == REQUEST_CONTEXT) {
-                return DefaultMcpRequestContext.of(context, values[0]);
+                return DefaultMcpRequestContext.of(context, values[0], scheduler == null);
             }
             if (type.isInstance(transportContext)) {
                 return transportContext;

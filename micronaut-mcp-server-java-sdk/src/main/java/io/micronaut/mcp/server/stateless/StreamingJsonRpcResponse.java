@@ -27,7 +27,6 @@ import io.modelcontextprotocol.spec.McpSchema;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Disposable;
 import reactor.core.publisher.MonoSink;
 import reactor.core.publisher.Sinks;
 
@@ -40,10 +39,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * the request sends a notification before its result, in which case it becomes an event stream of the notifications
  * followed by the result.
  *
- * <p>Once the response is an event stream, a client that closes it cancels the stream: the subscription to the result is
- * disposed, {@link #isCancelled()} becomes {@code true} and further notifications are dropped. Cancelling the response
- * before the first notification does the same, but the HTTP server does not cancel a response it has not received yet
- * when the client goes away, so in practice only the event stream is cancelled.</p>
+ * <p>A disconnect stops event delivery. The invocation continues because a transport disconnect can happen
+ * independently of protocol cancellation.</p>
  *
  * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#sending-messages-to-the-server">Sending messages to the server</a>
  */
@@ -71,35 +68,22 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
     private final McpSchema.JSONRPCRequest request;
     private @Nullable BlockingQueue<Event<Object>> queue;
     private Sinks.@Nullable Many<Event<Object>> events;
-    private @Nullable Disposable subscription;
     private boolean finished;
     private boolean overflowed;
     private final AtomicLong pendingChars = new AtomicLong();
-    private volatile boolean cancelled;
+    private volatile boolean disconnected;
 
     StreamingJsonRpcResponse(MonoSink<HttpResponse<?>> response, McpSchema.JSONRPCRequest request) {
         this.response = response;
         this.request = request;
-        // Only cancels the response itself: once it succeeds with the stream, cancelling the stream cancels the request
-        response.onCancel(this::cancel);
-    }
-
-    /**
-     * @param subscription The subscription to the result of the request, disposed if the client goes away
-     */
-    synchronized void subscription(Disposable subscription) {
-        if (cancelled) {
-            subscription.dispose();
-        } else {
-            this.subscription = subscription;
-        }
+        response.onCancel(this::disconnect);
     }
 
     @Override
     public void emit(McpSchema.JSONRPCNotification notification) {
         HttpResponse<?> stream = null;
         synchronized (this) {
-            if (finished || cancelled) {
+            if (finished || disconnected) {
                 return;
             }
             if (events == null) {
@@ -152,7 +136,7 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
     private HttpResponse<?> startStream() {
         queue = new ArrayBlockingQueue<>(BUFFER_SIZE);
         events = Sinks.many().unicast().onBackpressureBuffer(queue);
-        return HttpResponse.ok(events.asFlux().doOnNext(this::delivered).doOnCancel(this::cancel))
+        return HttpResponse.ok(events.asFlux().doOnNext(this::delivered).doOnCancel(this::disconnect))
             .contentType(MediaType.TEXT_EVENT_STREAM_TYPE)
             // Each event must reach the client as it is sent: no cache, and no buffering by a reverse proxy such as nginx
             .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-transform")
@@ -199,22 +183,12 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
     }
 
     @Override
-    public boolean isCancelled() {
-        return cancelled;
+    public boolean isClientDisconnected() {
+        return disconnected;
     }
 
-    private void cancel() {
-        Disposable toDispose;
-        synchronized (this) {
-            if (cancelled || finished) {
-                return;
-            }
-            cancelled = true;
-            toDispose = subscription;
-        }
-        if (toDispose != null) {
-            toDispose.dispose();
-        }
+    private synchronized void disconnect() {
+        disconnected = true;
     }
 
     /**
@@ -235,7 +209,7 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
      */
     void complete(HttpResponse<?> result) {
         synchronized (this) {
-            if (finished) {
+            if (finished || disconnected) {
                 return;
             }
             if (!finishJson()) {
@@ -253,7 +227,7 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
      */
     void completeEmpty() {
         synchronized (this) {
-            if (finished) {
+            if (finished || disconnected) {
                 return;
             }
             if (!finishJson()) {
@@ -274,7 +248,7 @@ final class StreamingJsonRpcResponse implements McpNotificationEmitter {
      */
     void fail(Throwable error) {
         synchronized (this) {
-            if (finished) {
+            if (finished || disconnected) {
                 return;
             }
             if (!finishJson()) {
