@@ -150,6 +150,10 @@ loadScripts(document, 'script');</script>
 </dl>
 <h2 class="title" id="I:C">C</h2>
 <dl class="index">
+<dt><a href="io/micronaut/mcp/server/observability/McpServerObserver.html#CANCELLED" class="member-name-link">CANCELLED</a> - Static variable in interface io.micronaut.mcp.server.observability.<a href="io/micronaut/mcp/server/observability/McpServerObserver.html" title="interface in io.micronaut.mcp.server.observability">McpServerObserver</a></dt>
+<dd>
+<div class="block">The error type of an operation on the reactive server whose subscription was cancelled before it produced a value.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/exceptions/McpErrorExceptionMapper.html#canMap(java.lang.Class)" class="member-name-link">canMap(Class)</a> - Method in interface io.micronaut.mcp.server.exceptions.<a href="io/micronaut/mcp/server/exceptions/McpErrorExceptionMapper.html" title="interface in io.micronaut.mcp.server.exceptions">McpErrorExceptionMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/primitives/prompts/ClasspathPrompt.html" class="type-name-link" title="class in io.micronaut.mcp.primitives.prompts">ClasspathPrompt</a> - Class in <a href="io/micronaut/mcp/primitives/prompts/package-summary.html">io.micronaut.mcp.primitives.prompts</a></dt>
@@ -699,6 +703,10 @@ the <a href="io/micronaut/mcp/server/context/McpNotificationEmitter.html" title=
 <dd>
 <div class="block">Classes for JSON serialization for MCP Java SDK.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/server/observability/package-summary.html">io.micronaut.mcp.server.observability</a> - package io.micronaut.mcp.server.observability</dt>
+<dd>
+<div class="block">Observability of the MCP server.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/registry/package-summary.html">io.micronaut.mcp.server.registry</a> - package io.micronaut.mcp.server.registry</dt>
 <dd>
 <div class="block">Classes related to process the <a href="io/micronaut/mcp/annotations/Tool.html" title="annotation interface in io.micronaut.mcp.annotations"><code>Tool</code></a> and <a href="io/micronaut/mcp/annotations/Prompt.html" title="annotation interface in io.micronaut.mcp.annotations"><code>Prompt</code></a> annotations.</div>
@@ -911,6 +919,15 @@ URI of an image, is required, the theme is <code>light</code> or <code>dark</cod
 <dd>
 <div class="block">MCP Server Info Configuration.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/server/observability/McpServerObserver.html" class="type-name-link" title="interface in io.micronaut.mcp.server.observability">McpServerObserver</a> - Interface in <a href="io/micronaut/mcp/server/observability/package-summary.html">io.micronaut.mcp.server.observability</a></dt>
+<dd>
+<div class="block">Observes the operations of the MCP server: calls of annotated tools, gets of annotated prompts, reads of annotated
+resources and resource templates, and annotated completions.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/observability/McpServerObserver.Observation.html" class="type-name-link" title="interface in io.micronaut.mcp.server.observability">McpServerObserver.Observation</a> - Interface in <a href="io/micronaut/mcp/server/observability/package-summary.html">io.micronaut.mcp.server.observability</a></dt>
+<dd>
+<div class="block">The observation of an operation.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/registry/CompletionRegistry.html#MEMBER_DESCRIPTION" class="member-name-link">MEMBER_DESCRIPTION</a> - Static variable in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/CompletionRegistry.html" title="class in io.micronaut.mcp.server.registry">CompletionRegistry</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/registry/PromptRegistry.html#MEMBER_DESCRIPTION" class="member-name-link">MEMBER_DESCRIPTION</a> - Static variable in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a></dt>
@@ -1072,6 +1089,10 @@ URI of an image, is required, the theme is <code>light</code> or <code>dark</cod
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#NAME_PROPERTY" class="member-name-link">NAME_PROPERTY</a> - Static variable in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/server/observability/McpServerObserver.Observation.html#NOOP" class="member-name-link">NOOP</a> - Static variable in interface io.micronaut.mcp.server.observability.<a href="io/micronaut/mcp/server/observability/McpServerObserver.Observation.html" title="interface in io.micronaut.mcp.server.observability">McpServerObserver.Observation</a></dt>
+<dd>
+<div class="block">An observation that records nothing.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/stdio/StdioServerTransportProviderReplacement.html#notifyClients(java.lang.String,java.lang.Object)" class="member-name-link">notifyClients(String, Object)</a> - Method in class io.micronaut.mcp.server.stdio.<a href="io/micronaut/mcp/server/stdio/StdioServerTransportProviderReplacement.html" title="class in io.micronaut.mcp.server.stdio">StdioServerTransportProviderReplacement</a></dt>
 <dd>&nbsp;</dd>
 </dl>
@@ -1083,6 +1104,11 @@ URI of an image, is required, the theme is <code>light</code> or <code>dark</cod
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/annotations/Tool.ToolAnnotations.html#openWorldHint()" class="member-name-link">openWorldHint()</a> - Element in annotation interface io.micronaut.mcp.annotations.<a href="io/micronaut/mcp/annotations/Tool.ToolAnnotations.html" title="annotation interface in io.micronaut.mcp.annotations">Tool.ToolAnnotations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/server/observability/McpServerObserver.html#OTHER_ERROR" class="member-name-link">OTHER_ERROR</a> - Static variable in interface io.micronaut.mcp.server.observability.<a href="io/micronaut/mcp/server/observability/McpServerObserver.html" title="interface in io.micronaut.mcp.server.observability">McpServerObserver</a></dt>
+<dd>
+<div class="block">The error type of a protocol error whose code is outside the range JSON-RPC reserves (-32768 to -32000), which
+includes every code of JSON-RPC and MCP.</div>
+</dd>
 </dl>
 <h2 class="title" id="I:P">P</h2>
 <dl class="index">
@@ -1429,6 +1455,10 @@ resource updates.</div>
 <dd>
 <div class="block">Starts the MCP Server.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/server/observability/McpServerObserver.html#start(java.lang.String,java.lang.String)" class="member-name-link">start(String, String)</a> - Method in interface io.micronaut.mcp.server.observability.<a href="io/micronaut/mcp/server/observability/McpServerObserver.html" title="interface in io.micronaut.mcp.server.observability">McpServerObserver</a></dt>
+<dd>
+<div class="block">Called when an operation starts.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/conf/Transport.html#STDIO" class="member-name-link">STDIO</a> - Enum constant in enum class io.micronaut.mcp.conf.<a href="io/micronaut/mcp/conf/Transport.html" title="enum class in io.micronaut.mcp.conf">Transport</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/client/langchain4j/stdio/StdioMcpTransportConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.client.langchain4j.stdio">StdioMcpTransportConfiguration</a> - Interface in <a href="io/micronaut/mcp/client/langchain4j/stdio/package-summary.html">io.micronaut.mcp.client.langchain4j.stdio</a></dt>
@@ -1448,6 +1478,10 @@ System streams.</div>
 <dd>
 <div class="block">Creates a new StdioServerTransportProvider with the specified ObjectMapper and
 streams.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/observability/McpServerObserver.Observation.html#stop(java.lang.String)" class="member-name-link">stop(String)</a> - Method in interface io.micronaut.mcp.server.observability.<a href="io/micronaut/mcp/server/observability/McpServerObserver.Observation.html" title="interface in io.micronaut.mcp.server.observability">McpServerObserver.Observation</a></dt>
+<dd>
+<div class="block">Called when the operation ends.</div>
 </dd>
 <dt><a href="io/micronaut/mcp/server/registry/CompletionRegistry.html#streamMethods()" class="member-name-link">streamMethods()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/CompletionRegistry.html" title="class in io.micronaut.mcp.server.registry">CompletionRegistry</a></dt>
 <dd>
@@ -1532,6 +1566,12 @@ entire test plan (suite) finishes.</div>
 <dt><a href="io/micronaut/mcp/annotations/Tool.html" class="type-name-link" title="annotation interface in io.micronaut.mcp.annotations">Tool</a> - Annotation Interface in <a href="io/micronaut/mcp/annotations/package-summary.html">io.micronaut.mcp.annotations</a></dt>
 <dd>
 <div class="block">Method annotation to define an MCP Tool.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/observability/McpServerObserver.html#TOOL_ERROR" class="member-name-link">TOOL_ERROR</a> - Static variable in interface io.micronaut.mcp.server.observability.<a href="io/micronaut/mcp/server/observability/McpServerObserver.html" title="interface in io.micronaut.mcp.server.observability">McpServerObserver</a></dt>
+<dd>
+<div class="block">The error type of a tool call whose result is a tool execution error: the tool threw an exception that no
+<a href="io/micronaut/mcp/server/exceptions/McpErrorExceptionMapper.html" title="interface in io.micronaut.mcp.server.exceptions"><code>McpErrorExceptionMapper</code></a> maps to a protocol error, or the arguments of the
+call could not be bound or validated.</div>
 </dd>
 <dt><a href="io/micronaut/mcp/annotations/Tool.ToolAnnotations.html" class="type-name-link" title="annotation interface in io.micronaut.mcp.annotations">Tool.ToolAnnotations</a> - Annotation Interface in <a href="io/micronaut/mcp/annotations/package-summary.html">io.micronaut.mcp.annotations</a></dt>
 <dd>
