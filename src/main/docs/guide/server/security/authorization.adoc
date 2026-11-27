@@ -64,6 +64,8 @@ Use `host-header: Host` if the proxy keeps the `Host` header instead of setting 
 
 If you change `micronaut.mcp.server.endpoint`, use the same path in the `intercept-url-map` pattern. The metadata path follows the endpoint: `/.well-known/oauth-protected-resource/<endpoint>`.
 
+With a `micronaut.server.context-path`, such as `/ctx`, the `intercept-url-map` pattern includes it (`/ctx/mcp`), and the challenge advertises the metadata at the root of the host, as RFC 9728 requires: `/.well-known/oauth-protected-resource/ctx/mcp`. Micronaut serves it under the context path, at `/ctx/.well-known/oauth-protected-resource/ctx/mcp`, so the proxy in front of the server must route the advertised path there. Its `resource` is then the canonical URL of the endpoint, `https://mcp.example.com/ctx/mcp`, which is the audience to validate.
+
 Tools, prompts and resources receive the authenticated principal through the <<context, transport context>>:
 
 snippet::io.micronaut.mcp.docs.security.WhoAmITools[project-base="test-suite-docs", tags="imports,clazz"]
