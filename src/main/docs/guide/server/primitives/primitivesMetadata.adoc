@@ -2,11 +2,13 @@ Methods annotated with `@Tool`, `@Prompt`, `@Resource` or `@ResourceTemplate` ca
 
 snippet::io.micronaut.mcp.docs.metadata.WeatherTools[project-base="test-suite-docs", tags="imports,clazz"]
 
-Every `@Icon` requires a `src` that is an HTTPS URL or a `data:image/...` URI (an HTTP URL is accepted, for example for local development) without a user name or password, and its `theme`, when set, must be `light` or `dark` in lowercase. Each `@Meta` key must be non-empty and declared at most once per method. The server fails to start when one of these rules is broken.
+Every `@Icon` requires a `src` that is an HTTPS URL or a `data:image/...` URI (an HTTP URL is accepted, for example for local development) without a user name or password, and its `theme`, when set, must be `light` or `dark` in lowercase. An image data URI needs an image media type and a non-empty payload separated by a comma. An invalid icon causes startup to fail.
 
 TIP: Icons are repeated in every list response that includes their primitive. When many primitives share an icon, prefer an HTTPS URL over a `data:` URI to keep the responses small. Clients should treat icons, SVG ones in particular, as untrusted content.
 
-A `@Meta` key may start with a prefix: a reverse DNS name followed by `/`. Prefixes whose second label is `modelcontextprotocol` or `mcp`, such as `io.modelcontextprotocol/`, are reserved by the specification; this is not checked.
+A `@Meta` key must be non-empty and follow the https://modelcontextprotocol.io/specification/2025-11-25/basic/index#_meta[MCP key format]. For example, `com.example/display-name` has the prefix `com.example/` and the name `display-name`. MCP reserves prefixes whose second label is `modelcontextprotocol` or `mcp`, such as `io.modelcontextprotocol/`.
+
+Repeating the same key and value on a method produces one metadata entry. A malformed key or conflicting values for the same key cause startup to fail.
 
 The values of `@Meta` are always strings. For numbers, booleans or objects, define the primitive with a factory instead (see <<toolsFactory, Tools with a Factory>>, <<promptsFactory, Prompts with a Factory>> and <<resourcesFactory, Resources with a Factory>>) and set its `_meta` there.
 
