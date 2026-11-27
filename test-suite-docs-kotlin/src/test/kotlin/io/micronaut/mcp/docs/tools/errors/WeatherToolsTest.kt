@@ -31,7 +31,7 @@ class WeatherToolsTest {
     @Test
     fun anExceptionIsAToolExecutionError() {
         JSONAssert.assertEquals("""
-            {"result":{"content":[{"type":"text","text":"The forecast service is not available"}],"isError":true}}""",
+            {"result":{"content":[{"type":"text","text":"Tool forecast failed"}],"isError":true}}""",
             call("forecast", "Madrid"), false)
     }
 

@@ -35,7 +35,7 @@ class WeatherToolsTest:
     def an_exception_is_a_tool_execution_error(self) -> None:
         result = self.call("forecast", "Madrid")
         assert result["isError"] is True
-        assert result["content"][0]["text"] == "The forecast service is not available"
+        assert result["content"][0]["text"] == "Tool forecast failed"
 
     @Test
     def an_mcp_error_is_a_protocol_error(self) -> None:
