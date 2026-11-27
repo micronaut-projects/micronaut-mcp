@@ -16,4 +16,7 @@
 /**
  * Health of the MCP clients.
  */
+@NullMarked
 package io.micronaut.mcp.client.langchain4j.health;
+
+import org.jspecify.annotations.NullMarked;

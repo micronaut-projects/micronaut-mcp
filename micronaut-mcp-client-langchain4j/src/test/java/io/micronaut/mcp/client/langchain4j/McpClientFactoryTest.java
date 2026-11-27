@@ -4,6 +4,7 @@ import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClientListener;
 import dev.langchain4j.mcp.client.logging.McpLogMessageHandler;
 import dev.langchain4j.mcp.client.transport.McpTransport;
+import dev.langchain4j.mcp.client.transport.stdio.StdioMcpTransport;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
@@ -23,12 +24,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class McpClientFactoryTest {
     private final McpClientFactory factory = new McpClientFactory();
+    private final McpTransport unusedTransport = new StdioMcpTransport.Builder().command(List.of("unused")).build();
 
     @Test
     void theSettingsOfTheConnectionAreAppliedToTheBuilder() throws ReflectiveOperationException {
         McpClientListener listener = new McpClientListener() { };
         McpLogMessageHandler logHandler = message -> { };
-        DefaultMcpClient.Builder builder = factory.crateMcpClientBuilder(connection(Duration.ofSeconds(5), Duration.ofSeconds(7), false),
+        DefaultMcpClient.Builder builder = factory.crateMcpClientBuilder(unusedTransport,
+            connection(Duration.ofSeconds(5), Duration.ofSeconds(7), false),
             List.of(listener), logHandler);
         assertEquals("weather", field(builder, "key"));
         assertEquals(Boolean.FALSE, field(builder, "autoHealthCheck"));
@@ -42,7 +45,8 @@ class McpClientFactoryTest {
 
     @Test
     void unsetSettingsLeaveTheDefaultsOfTheClient() throws ReflectiveOperationException {
-        DefaultMcpClient.Builder builder = factory.crateMcpClientBuilder(connection(null, null, true), List.of(), null);
+        DefaultMcpClient.Builder builder = factory.crateMcpClientBuilder(unusedTransport,
+            connection(null, null, true), List.of(), null);
         for (String timeout : List.of("initializationTimeout", "toolExecutionTimeout", "resourcesTimeout", "promptsTimeout", "pingTimeout", "logHandler")) {
             assertNull(field(builder, timeout), timeout);
         }
@@ -55,7 +59,7 @@ class McpClientFactoryTest {
         IllegalStateException failure = new IllegalStateException("The server cannot be started");
         McpTransport transport = transport(failure, closed, null);
         IllegalStateException thrown = assertThrows(IllegalStateException.class,
-            () -> factory.createMcpClient(connection(null, null, false), new DefaultMcpClient.Builder(), transport));
+            () -> factory.createMcpClient(factory.crateMcpClientBuilder(transport, null, List.of(), null)));
         assertSame(failure, thrown);
         assertTrue(closed.get(), "The transport is closed");
     }
@@ -64,10 +68,14 @@ class McpClientFactoryTest {
     void aTransportThatFailsToCloseDoesNotHideTheFailure() {
         AtomicBoolean closed = new AtomicBoolean();
         IllegalStateException failure = new IllegalStateException("The server cannot be started");
-        McpTransport transport = transport(failure, closed, new IOException("The transport cannot be closed"));
+        IOException closeFailure = new IOException("The transport cannot be closed");
+        McpTransport transport = transport(failure, closed, closeFailure);
+        DefaultMcpClient.Builder builder = factory.crateMcpClientBuilder(unusedTransport, null, List.of(), null);
+        builder.transport(transport);
         IllegalStateException thrown = assertThrows(IllegalStateException.class,
-            () -> factory.createMcpClient(connection(null, null, false), new DefaultMcpClient.Builder(), transport));
+            () -> factory.createMcpClient(builder));
         assertSame(failure, thrown);
+        assertEquals(List.of(closeFailure), List.of(thrown.getSuppressed()));
         assertTrue(closed.get(), "Closing the transport is attempted");
     }
 
