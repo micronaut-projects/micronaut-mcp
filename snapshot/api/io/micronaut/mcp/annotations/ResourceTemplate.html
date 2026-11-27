@@ -54,6 +54,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list" tabindex="-1">
 <li><a href="#" tabindex="0">Description</a></li>
 <li><a href="#field-summary" tabindex="0">Field Summary</a></li>
+<li><a href="#annotation-interface-required-element-summary" tabindex="0">Required Element Summary</a></li>
 <li><a href="#annotation-interface-optional-element-summary" tabindex="0">Optional Element Summary</a></li>
 <li><a href="#field-detail" tabindex="0">Field Details</a>
 <ol class="toc-list">
@@ -136,6 +137,21 @@ Supported return types:
 </div>
 </section>
 </li>
+<!-- =========== ANNOTATION INTERFACE REQUIRED MEMBER SUMMARY =========== -->
+<li>
+<section class="member-summary" id="annotation-interface-required-element-summary">
+<h2>Required Element Summary</h2>
+<div class="caption"><span>Required Elements</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Required Element</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#uriTemplate()" class="member-name-link">uriTemplate</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+</div>
+</section>
+</li>
 <!-- =========== ANNOTATION INTERFACE OPTIONAL MEMBER SUMMARY =========== -->
 <li>
 <section class="member-summary" id="annotation-interface-optional-element-summary">
@@ -163,9 +179,6 @@ Supported return types:
 <div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#title()" class="member-name-link">title</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#uriTemplate()" class="member-name-link">uriTemplate</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -242,11 +255,10 @@ Supported return types:
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">uriTemplate</span></div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The resource URI this handler serves (e.g. ""file:///{path}").</dd>
-</dl>
-<dl class="notes">
-<dt>Default:</dt>
-<dd><code>"pgn://round/{round}"</code></dd>
+<dd>The RFC 6570 URI template of the resources this handler serves (e.g. "book://book/{title}"). Matched variables are
+percent-decoded with URI decoding, so a <code>+</code> is not turned into a space. A simple variable, such as <code>{title}</code>,
+matches a single segment and rejects an encoded <code>/</code>; use a reserved variable, such as <code>{+title}</code>, for values
+that may contain an encoded <code>/</code>.</dd>
 </dl>
 </div>
 </section>
