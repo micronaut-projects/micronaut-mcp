@@ -93,7 +93,7 @@ class McpControllerTest {
                 default -> throw new UnsupportedOperationException(method.getName());
             };
         });
-        McpController controller = new McpController(
+        McpController controller = new McpReactiveController(
             proxy(McpStatelessServerHandler.class, (proxy, method, args) -> {
                 throw new AssertionError("the handler must not be called");
             }),
@@ -108,7 +108,7 @@ class McpControllerTest {
             "method", JsonNode.createStringNode("tools/call"),
             "params", JsonNode.createObjectNode(Map.of("name", JsonNode.createStringNode("echo")))));
 
-        HttpResponse<?> response = controller.handlePost(HttpRequest.POST("/mcp", ""), body).block();
+        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), body).block();
 
         assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
@@ -137,7 +137,7 @@ class McpControllerTest {
             Function<McpSchema.JSONRPCRequest, Mono<McpSchema.JSONRPCResponse>> handler) {
         McpController controller = controller(new StubHandler(handler, Mono::empty));
 
-        HttpResponse<?> response = controller.handlePost(HttpRequest.POST("/mcp", ""), request(id)).block();
+        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), request(id)).block();
 
         assertNotNull(response);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatus());
@@ -158,7 +158,7 @@ class McpControllerTest {
             request -> Mono.error(McpError.builder(McpSchema.ErrorCodes.METHOD_NOT_FOUND).message("Unknown tool").build()),
             Mono::empty));
 
-        HttpResponse<?> response = controller.handlePost(HttpRequest.POST("/mcp", ""), request(JsonNode.createNumberNode(5))).block();
+        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), request(JsonNode.createNumberNode(5))).block();
 
         assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
@@ -182,7 +182,7 @@ class McpControllerTest {
     void aNotificationHandlerFailureIsAServerErrorThatIsLoggedOnce(Supplier<Mono<Void>> handler) {
         McpController controller = controller(new StubHandler(request -> Mono.empty(), handler));
 
-        HttpResponse<?> response = controller.handlePost(HttpRequest.POST("/mcp", ""), notification()).block();
+        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), notification()).block();
 
         assertNotNull(response);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatus());
@@ -197,7 +197,7 @@ class McpControllerTest {
         McpController controller = controller(new StubHandler(request -> Mono.empty(),
             () -> Mono.error(McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS).message("Bad params").build())));
 
-        HttpResponse<?> response = controller.handlePost(HttpRequest.POST("/mcp", ""), notification()).block();
+        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), notification()).block();
 
         assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
@@ -212,7 +212,7 @@ class McpControllerTest {
             throw new IllegalStateException(SECRET);
         }, Mono::empty));
 
-        controller.handlePost(HttpRequest.POST("/mcp", ""), request(JsonNode.createNumberNode(5), method)).block();
+        controller.handle(HttpRequest.POST("/mcp", ""), request(JsonNode.createNumberNode(5), method)).block();
 
         assertEquals("Failed to handle JSON-RPC request " + loggedName, singleError().getFormattedMessage());
     }
@@ -250,7 +250,7 @@ class McpControllerTest {
     }
 
     private static McpController controller(McpStatelessServerHandler handler) {
-        return new McpController(handler,
+        return new McpReactiveController(handler,
             request -> McpTransportContext.EMPTY,
             proxy(JsonMapper.class, (proxy, method, args) -> {
                 throw new UnsupportedOperationException(method.getName());

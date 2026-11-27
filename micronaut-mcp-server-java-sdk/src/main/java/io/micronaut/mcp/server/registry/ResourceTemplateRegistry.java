@@ -22,6 +22,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.http.uri.UriMatchTemplate;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.modelcontextprotocol.common.McpTransportContext;
@@ -133,7 +134,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         Method<B> m,
         UriMatchTemplate uriTemplate
     ) {
-        return (exchange, request) -> Mono.just(invokeAndMap(m, uriTemplate, exchange, request));
+        return (exchange, request) -> invokeAndMapAsync(m, uriTemplate, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> statelessSyncHandler(
@@ -147,22 +148,34 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         Method<B> m,
         UriMatchTemplate uriTemplate
     ) {
-        return (ctx, request) -> Mono.just(invokeAndMap(m, uriTemplate, ctx, request));
+        return (ctx, request) -> invokeAndMapAsync(m, uriTemplate, ctx, request);
     }
 
     private <B> McpSchema.ReadResourceResult invokeAndMap(Method<B> m,
                                                           UriMatchTemplate uriTemplate,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
+        return m.call(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
+            mcpTransportContext, result -> map(m, request, result), e -> failWithMcpError(m, e));
+    }
+
+    private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
+                                                                     UriMatchTemplate uriTemplate,
+                                                                     Object mcpTransportContext,
+                                                                     McpSchema.ReadResourceRequest request) {
+        return m.callAsync(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
+            result -> map(m, request, result), e -> failWithMcpError(m, e));
+    }
+
+    private <B> McpSchema.ReadResourceResult map(Method<B> m, McpSchema.ReadResourceRequest request, @Nullable Object result) {
         ExecutableMethod<B, Object> method = m.method();
-        Object result = m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request);
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
         }
-        if (result instanceof String s) {
+        if (result instanceof CharSequence text) {
             String mimeType = method.stringValue(ResourceTemplate.class, MIME_TYPE_PROPERTY)
                 .orElse(ResourceTemplate.DEFAULT_MIME_TYPE);
-            McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(request.uri(), mimeType, s);
+            McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(request.uri(), mimeType, text.toString());
             return new McpSchema.ReadResourceResult(List.of(contents));
         }
         // Unsupported return type: return empty contents

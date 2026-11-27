@@ -19,6 +19,7 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.annotations.PromptCompletion;
 import io.micronaut.mcp.annotations.ResourceCompletion;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
@@ -30,6 +31,8 @@ import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +50,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     McpServerFeatures.AsyncCompletionSpecification,
     McpStatelessServerFeatures.SyncCompletionSpecification,
     McpStatelessServerFeatures.AsyncCompletionSpecification> {
+    private static final int MAX_COMPLETIONS = 100;
     private static final Logger LOG = LoggerFactory.getLogger(CompletionRegistry.class);
     private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.CompleteRequest.class, McpSchema.CompleteRequest.CompleteArgument.class};
     private final ArgumentBinderRegistry<McpSchema.CompleteRequest> argumentBinderRegistry;
@@ -112,7 +116,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.CompleteRequest, Mono<McpSchema.CompleteResult>> asyncHandler(
         Method<B> m
     ) {
-        return (exchange, request) -> Mono.just(invokeAndMap(m, exchange, request));
+        return (exchange, request) -> invokeAndMapAsync(m, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.CompleteRequest, McpSchema.CompleteResult> statelessSyncHandler(
@@ -124,36 +128,68 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
     private <B> BiFunction<McpTransportContext, McpSchema.CompleteRequest, Mono<McpSchema.CompleteResult>> statelessAsyncHandler(
         Method<B> m
     ) {
-        return (ctx, request) -> Mono.just(invokeAndMap(m, ctx, request));
+        return (ctx, request) -> invokeAndMapAsync(m, ctx, request);
     }
 
     private <B> McpSchema.CompleteResult invokeAndMap(Method<B> m,
                                                       Object mcpTransportContext,
                                                       McpSchema.CompleteRequest request) {
-        Object result = m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument());
+        return m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
+            mcpTransportContext, CompletionRegistry::map, e -> failWithMcpError(m, e));
+    }
+
+    private <B> Mono<McpSchema.CompleteResult> invokeAndMapAsync(Method<B> m,
+                                                                 Object mcpTransportContext,
+                                                                 McpSchema.CompleteRequest request) {
+        return m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request, request.argument()),
+            CompletionRegistry::map, e -> failWithMcpError(m, e));
+    }
+
+    private static McpSchema.CompleteResult map(@Nullable Object result) {
         if (result instanceof McpSchema.CompleteResult r) {
             return r;
         }
-        try {
-            List<String> values = asStringList(result);
-            return completeResult(values);
-        } catch (IllegalArgumentException e) {
-            if (LOG.isWarnEnabled()) {
-                LOG.warn("return type is not {} or List<String>", McpSchema.CompleteResult.class.getSimpleName());
-            }
+        if (result == null) {
+            return completeResult(Collections.emptyList(), true);
         }
-        return completeResult(Collections.emptyList());
+        try {
+            return completeResult(asStringList(result), true);
+        } catch (IllegalArgumentException _) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("Completion result is not a {} or a List<String>: {}", McpSchema.CompleteResult.class.getSimpleName(), result.getClass().getName());
+            }
+            return completeResult(Collections.emptyList(), true);
+        }
     }
 
-    private static McpSchema.CompleteResult completeResult(List<String> values) {
-        return new McpSchema.CompleteResult(new McpSchema.CompleteResult.CompleteCompletion(values, values.size(), false));
-    }
-
+    /**
+     * @param result The result of a completion method
+     * @return The result as a list of strings, with the text of each {@link CharSequence}
+     * @throws IllegalArgumentException If the result is not a list of character sequences
+     */
     public static List<String> asStringList(Object result) {
-        if (result instanceof List<?> list && list.stream().allMatch(String.class::isInstance)) {
-            return list.stream().map(String.class::cast).toList();
+        if (result instanceof List<?> list && list.stream().allMatch(CharSequence.class::isInstance)) {
+            return list.stream().map(Object::toString).toList();
         }
         throw new IllegalArgumentException("Not a List<String>");
+    }
+
+    @Override
+    protected boolean collectsValues(ExecutableMethod<?, ?> method) {
+        // A publisher of completion values, such as a Flux<String>, is collected into the list of values
+        return CharSequence.class.isAssignableFrom(resultArgument(method).getType());
+    }
+
+    static Mono<McpSchema.CompleteResult> collectCompletions(Publisher<?> publisher) {
+        // One extra suggestion establishes hasMore without consuming the rest of the publisher.
+        return Flux.from(publisher).take(MAX_COMPLETIONS + 1L).collectList()
+            .map(values -> completeResult(asStringList(values), values.size() <= MAX_COMPLETIONS));
+    }
+
+    private static McpSchema.CompleteResult completeResult(List<String> values, boolean totalKnown) {
+        boolean hasMore = values.size() > MAX_COMPLETIONS;
+        return new McpSchema.CompleteResult(new McpSchema.CompleteResult.CompleteCompletion(
+            hasMore ? values.subList(0, MAX_COMPLETIONS) : values, totalKnown ? values.size() : null, hasMore));
     }
 
     private static <B> McpSchema.CompleteReference toCompletion(ExecutableMethod<B, Object> method) {

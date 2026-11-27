@@ -140,7 +140,7 @@ class MethodBindingTest {
         ExecutableMethod<Greeter, Object> executable = executable(definition, "contextual");
         Class<?>[] requestFirst = {String.class, McpTransportContext.class};
         assertThrows(IllegalArgumentException.class,
-            () -> new AbstractMcpMethodRegistry.Method<>(beanContext, definition, executable, requestFirst));
+            () -> new AbstractMcpMethodRegistry.Method<>(beanContext, definition, executable, requestFirst, false));
     }
 
     @Test
@@ -172,7 +172,7 @@ class MethodBindingTest {
 
     private <B> AbstractMcpMethodRegistry.Method<B> method(Class<B> beanType, String name, Class<?>[] boundParameterTypes) {
         BeanDefinition<B> definition = beanContext.getBeanDefinition(beanType);
-        return new AbstractMcpMethodRegistry.Method<>(beanContext, definition, executable(definition, name), boundParameterTypes);
+        return new AbstractMcpMethodRegistry.Method<>(beanContext, definition, executable(definition, name), boundParameterTypes, false);
     }
 
     @SuppressWarnings("unchecked")

@@ -193,44 +193,39 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                                                                         boolean structuredOutput,
                                                                         Object mcpTransportContext,
                                                                         McpSchema.CallToolRequest callToolRequest) {
-        McpSchema.CallToolResult result = callToolToResult(m, structuredOutput, mcpTransportContext, callToolRequest);
-        if (result == null) {
-            return Mono.empty();
-        }
-        return Mono.just(result);
+        return m.callAsync(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
+            result -> toCallToolResult(m, structuredOutput, result), e -> failWithMcpError(m, e));
     }
 
     private <B> McpSchema.CallToolResult callToolToResult(Method<B> m,
                                                           boolean structuredOutput,
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
-        ExecutableMethod<B, Object> method = m.method();
-        Argument<?> returnClass = method.getReturnType().asArgument();
-        try {
-            Object result = m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest);
-            String text = "";
-            if (returnClass.isAssignableFrom(McpSchema.CallToolResult.class)) {
-                return (McpSchema.CallToolResult) result;
-            } else if (structuredOutput) {
-                return structuredToolResult(method, result);
-            } else if (returnClass.isAssignableFrom(String.class)) {
-                text = result.toString();
-            } else if (Enum.class.isAssignableFrom(result.getClass())) {
-                text = result.toString();
-            } else {
-                try {
-                    text = jsonMapper.writeValueAsString(result);
-                } catch (IOException e) {
-                    if (LOG.isErrorEnabled()) {
-                        LOG.error(e.getMessage(), e);
-                    }
-                    return McpSchema.CallToolResult.builder().addTextContent(text).isError(true).build();
-                }
-            }
-            return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
-        } catch (Exception ex) {
-            throw mcpError(method, ex);
+        return m.call(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
+            mcpTransportContext, result -> toCallToolResult(m, structuredOutput, result), e -> failWithMcpError(m, e));
+    }
+
+    private <B> McpSchema.CallToolResult toCallToolResult(Method<B> m, boolean structuredOutput, @Nullable Object result) {
+        if (result instanceof McpSchema.CallToolResult callToolResult) {
+            return callToolResult;
         }
+        if (structuredOutput) {
+            return structuredToolResult(m.method(), result);
+        }
+        String text = "";
+        if (result instanceof CharSequence || result instanceof Enum<?>) {
+            text = result.toString();
+        } else if (result != null) {
+            try {
+                text = jsonMapper.writeValueAsString(result);
+            } catch (IOException e) {
+                if (LOG.isErrorEnabled()) {
+                    LOG.error(e.getMessage(), e);
+                }
+                return McpSchema.CallToolResult.builder().addTextContent(text).isError(true).build();
+            }
+        }
+        return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
     }
 
     private McpSchema.CallToolResult structuredToolResult(ExecutableMethod<?, ?> method, @Nullable Object result) {
@@ -286,8 +281,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     }
 
     private Optional<String> toolOutputSchema(ExecutableMethod<?, ?> method) {
-        Class<?> returnClass = method.getReturnType().getType();
-        return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(returnClass);
+        return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(resultArgument(method).getType());
     }
 
     private static String toolArgumentName(Argument<?> argument) {

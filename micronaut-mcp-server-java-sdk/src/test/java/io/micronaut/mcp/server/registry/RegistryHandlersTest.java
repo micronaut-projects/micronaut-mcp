@@ -8,10 +8,11 @@ import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.PromptCompletion;
 import io.micronaut.mcp.annotations.Resource;
 import io.micronaut.mcp.annotations.ResourceTemplate;
-import io.micronaut.core.bind.exceptions.UnsatisfiedArgumentException;
 import io.micronaut.jsonschema.JsonSchema;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.common.McpTransportContext;
@@ -21,6 +22,7 @@ import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -47,6 +51,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "spec.name", value = "RegistryHandlersTest")
+@Property(name = "micronaut.executors.blocking.type", value = "fixed")
+@Property(name = "micronaut.executors.blocking.n-threads", value = "1")
 @MicronautTest(startApplication = false)
 class RegistryHandlersTest {
     private static final McpTransportContext CONTEXT = McpTransportContext.create(Map.of());
@@ -97,6 +103,14 @@ class RegistryHandlersTest {
         var count = find(toolRegistry.getStatelessSyncSpecs(), s -> s.tool().name().equals("count")).callHandler();
         assertEquals("1", text(count.apply(CONTEXT, counter)));
         assertEquals("1", text(count.apply(CONTEXT, counter)));
+    }
+
+    @Test
+    void stdioSyncDispatchesToTheBlockingExecutor(@Named(TaskExecutors.BLOCKING) ExecutorService executor) throws Exception {
+        long worker = executor.submit(() -> Thread.currentThread().threadId()).get(5, TimeUnit.SECONDS);
+        var spec = find(toolRegistry.getSyncSpecs(), s -> s.tool().name().equals("blockingWorker"));
+        var request = new McpSchema.CallToolRequest("blockingWorker", Map.of());
+        assertEquals(Long.toString(worker), text(spec.callHandler().apply(SYNC_EXCHANGE, request)));
     }
 
     @Test
@@ -241,8 +255,9 @@ class RegistryHandlersTest {
         var handler = find(resourceTemplateRegistry.getStatelessSyncSpecs(), s -> s.resourceTemplate().uriTemplate().equals("handlers://pages/{page}")).readHandler();
         assertEquals("page 7", resource(handler.apply(CONTEXT, new McpSchema.ReadResourceRequest("handlers://pages/7"))));
         assertEquals("page 8", resource(handler.apply(CONTEXT, new McpSchema.ReadResourceRequest("handlers://pages/8"))));
-        // a URI that does not match the template has no variables, so the page is missing
-        assertThrows(UnsatisfiedArgumentException.class, () -> handler.apply(CONTEXT, new McpSchema.ReadResourceRequest("handlers://other/7")));
+        // a URI that does not match the template has no variables, so the page is missing, which is invalid params
+        McpError error = assertThrows(McpError.class, () -> handler.apply(CONTEXT, new McpSchema.ReadResourceRequest("handlers://other/7")));
+        assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
     }
 
     @Test
@@ -348,6 +363,12 @@ class RegistryHandlersTest {
         volatile Object request;
         volatile Object context;
         volatile Object argument;
+
+        @Tool
+        @ExecuteOn(TaskExecutors.BLOCKING)
+        String blockingWorker() {
+            return Long.toString(Thread.currentThread().threadId());
+        }
 
         @Tool
         String echo(String text) {
