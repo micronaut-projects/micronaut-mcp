@@ -63,6 +63,7 @@ class HttpConnectionCustomisationTest {
             "spec.name", CLIENT,
             "micronaut.mcp.client.http.remote.url", url,
             "micronaut.mcp.client.http.remote.headers.X-Api-Key", "secret",
+            "micronaut.mcp.client.http.remote.propagate-authorization", "true",
             "micronaut.mcp.client.http.remote.request-timeout", "500ms",
             "micronaut.mcp.client.http.other.url", url,
             "micronaut.mcp.client.http.other.headers.X-Api-Key", "other"));
@@ -106,6 +107,16 @@ class HttpConnectionCustomisationTest {
         int before = counter.count.get();
         other.listTools();
         assertEquals(before + 1, counter.count.get(), "The listener is notified once of the tool list");
+    }
+
+    @Test
+    void theDynamicConnectionFetchesTheCatalogOnEveryLookup() {
+        McpClient remote = client.getBean(McpClient.class, Qualifiers.byName("remote"));
+        ToolsListCounter counter = client.getBean(ToolsListCounter.class);
+        int before = counter.count.get();
+        remote.listTools();
+        remote.listTools();
+        assertEquals(before + 2, counter.count.get());
     }
 
     @Test

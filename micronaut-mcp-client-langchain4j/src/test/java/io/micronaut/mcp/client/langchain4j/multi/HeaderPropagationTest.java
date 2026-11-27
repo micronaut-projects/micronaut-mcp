@@ -47,6 +47,7 @@ class HeaderPropagationTest implements TestPropertyProvider {
             "micronaut.server.port", String.valueOf(port),
             "micronaut.mcp.client.http.self.url", "http://localhost:" + port + "/mcp",
             "micronaut.mcp.client.http.self.propagate-authorization", "true",
+            "micronaut.mcp.client.http.self.headers.x-tenant", "fallback",
             "micronaut.mcp.client.http.self.headers.X-Static", "static");
     }
 
@@ -78,7 +79,7 @@ class HeaderPropagationTest implements TestPropertyProvider {
         @Tool
         String headers() {
             return ServerRequestContext.currentRequest()
-                .map(r -> r.getHeaders().get("Authorization") + " | " + r.getHeaders().get("X-Tenant") + " | " + r.getHeaders().get("X-Static"))
+                .map(r -> r.getHeaders().get("Authorization") + " | " + String.join(",", r.getHeaders().getAll("X-Tenant")) + " | " + r.getHeaders().get("X-Static"))
                 .orElse("no request");
         }
     }

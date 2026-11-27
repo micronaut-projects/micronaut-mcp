@@ -37,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Property(name = "micronaut.mcp.server.info.version", value = "1.0.0")
 @Property(name = "micronaut.mcp.server.transport", value = "HTTP")
 @Property(name = "moon.enabled", value = "false")
+@Property(name = "micronaut.propagation", value = "scoped-value")
 @Property(name = "spec.name", value = "HeaderPropagationTest")
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

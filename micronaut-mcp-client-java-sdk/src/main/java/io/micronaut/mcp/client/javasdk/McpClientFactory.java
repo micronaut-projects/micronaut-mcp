@@ -163,11 +163,11 @@ final class McpClientFactory {
         String name = configuration.getName();
         McpClient.SyncSpec spec = McpClient.sync(transport(configuration))
             .jsonSchemaValidator(jsonSchemaValidator)
-            .capabilities(capabilities())
-            // The server lists its tools again when they change, which refreshes the cache of McpClientTools
-            .toolsChangeConsumer(tools -> connectionClients.toolsChanged(name, tools));
+            .capabilities(capabilities());
         if (configuration instanceof McpClientHttpConfiguration http && McpClientRequestHeaders.isDynamic(http, headersProviders)) {
             spec.transportContextProvider(() -> McpClientTransportHeaders.transportContext(McpClientRequestHeaders.headers(http, headersProviders)));
+        } else {
+            spec.toolsChangeConsumer(tools -> connectionClients.toolsChanged(name, tools));
         }
         Duration requestTimeout = requestTimeout(configuration);
         if (requestTimeout != null) {
@@ -208,7 +208,7 @@ final class McpClientFactory {
             return spec.build();
         }
         String name = configuration.getName();
-        connectionClients.claim(name, McpSyncClient.class);
+        var claim = connectionClients.claim(name, McpSyncClient.class);
         McpSyncClient client = null;
         try {
             client = spec.build();
@@ -220,7 +220,7 @@ final class McpClientFactory {
                     try {
                         created.initialize();
                     } catch (RuntimeException e) {
-                        initializationFailed(name, McpSyncClient.class, created, e);
+                        initializationFailed(name, McpSyncClient.class, created, claim, e);
                     }
                 });
             } else {
@@ -228,10 +228,10 @@ final class McpClientFactory {
             }
             return client;
         } catch (RuntimeException e) {
-            connectionClients.release(name, McpSyncClient.class);
             if (client != null) {
                 closeQuietly(name, client::closeGracefully);
             }
+            connectionClients.release(name, claim);
             throw e;
         }
     }
@@ -284,7 +284,7 @@ final class McpClientFactory {
             return spec.build();
         }
         String name = configuration.getName();
-        connectionClients.claim(name, McpAsyncClient.class);
+        var claim = connectionClients.claim(name, McpAsyncClient.class);
         McpAsyncClient client = null;
         try {
             client = spec.build();
@@ -293,18 +293,18 @@ final class McpClientFactory {
                 // the blocking executor, as closing the client waits for its transport
                 McpAsyncClient created = client;
                 client.initialize().subscribe(result -> { },
-                    e -> blockingScheduler.schedule(() -> initializationFailed(name, McpAsyncClient.class, created, e)));
+                    e -> blockingScheduler.schedule(() -> initializationFailed(name, McpAsyncClient.class, created, claim, e)));
             } else {
                 // Bounded by the initialization timeout of the client
                 client.initialize().block();
             }
             return client;
         } catch (RuntimeException e) {
-            connectionClients.release(name, McpAsyncClient.class);
             if (client != null) {
                 McpAsyncClient failed = client;
                 closeQuietly(name, () -> McpAsyncClientCloser.close(failed));
             }
+            connectionClients.release(name, claim);
             throw e;
         }
     }
@@ -314,14 +314,19 @@ final class McpClientFactory {
      * client is destroyed, which closes it with its transport, such as the process of a STDIO server, and the connection
      * is released, so that the next request for the client creates it afresh.
      */
-    private <T> void initializationFailed(String name, Class<T> type, T client, Throwable error) {
+    private <T> void initializationFailed(String name, Class<T> type, T client, McpConnectionClients.Claim claim, Throwable error) {
         LOG.warn("The MCP client of the connection {} failed to initialize, it is created again the next time it is requested", name, error);
         try {
-            beanContext.destroyBean(client);
+            // A fast failure can reach this worker before the factory returns. A qualified lookup waits until Micronaut
+            // publishes the singleton, so destruction removes the failed registration as well as closing its transport.
+            var registration = beanContext.getBeanRegistration(type, Qualifiers.byName(name));
+            if (registration.getBean() == client) {
+                beanContext.destroyBean(registration);
+            }
         } catch (RuntimeException e) {
             LOG.warn("Failed to close the MCP client of the connection {}", name, e);
         } finally {
-            connectionClients.release(name, type);
+            connectionClients.release(name, claim);
         }
     }
 
