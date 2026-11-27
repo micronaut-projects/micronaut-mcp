@@ -63,6 +63,29 @@ public interface McpClientHttpConfiguration extends McpClientConnectionConfigura
         return Map.of();
     }
 
+    /**
+     * The MCP authorization specification forbids passing through a token whose audience is not the MCP server, so only
+     * enable this for trusted servers that share the audience of the token. Otherwise exchange the token in a
+     * {@link McpClientHeadersProvider}. The MCP session of the connection is shared by every user, so the server must not
+     * bind sessions to users.
+     *
+     * @return Whether to send the {@code Authorization} header of the HTTP request the server is handling, for example the
+     * bearer token of the user, to the MCP server
+     * @since 2.2.0
+     */
+    default boolean isPropagateAuthorization() {
+        return false;
+    }
+
+    /**
+     * @return Whether to {@link #isPropagateAuthorization() propagate} the {@code Authorization} header whatever its
+     * scheme, for example Basic credentials, instead of only bearer tokens
+     * @since 2.2.0
+     */
+    default boolean isPropagateAnyAuthorizationScheme() {
+        return false;
+    }
+
     @NonNull
     static McpClientHttpConfiguration of(@NonNull String name,
                                            @NonNull URI url) {

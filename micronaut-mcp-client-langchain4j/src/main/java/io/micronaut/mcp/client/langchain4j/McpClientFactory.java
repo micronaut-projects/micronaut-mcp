@@ -27,6 +27,10 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
+import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
+import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
+import io.micronaut.mcp.conf.client.McpClientRequestHeaders;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
@@ -39,6 +43,17 @@ import java.util.List;
 @Internal
 @Factory
 final class McpClientFactory {
+    private final List<McpClientHeadersProvider> headersProviders;
+
+    McpClientFactory() {
+        this(List.of());
+    }
+
+    @Inject
+    McpClientFactory(List<McpClientHeadersProvider> headersProviders) {
+        this.headersProviders = headersProviders;
+    }
+
     @EachBean(McpTransport.class)
     @Prototype
     DefaultMcpClient.Builder crateMcpClientBuilder(McpTransport transport,
@@ -63,6 +78,11 @@ final class McpClientFactory {
                 .resourcesTimeout(requestTimeout)
                 .promptsTimeout(requestTimeout)
                 .pingTimeout(requestTimeout);
+        }
+        if (configuration instanceof McpClientHttpConfiguration http && McpClientRequestHeaders.isDynamic(http, headersProviders)) {
+            // The tools, resources and prompts a server lists may depend on the credentials of the caller, which the
+            // headers of each request carry, so they are listed for each caller instead of being shared by every one
+            builder.cacheToolList(false).cacheResourceList(false).cachePromptList(false);
         }
         return builder;
     }

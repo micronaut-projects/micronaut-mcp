@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 @Internal
 final class McpConnectionClients {
-    private final Map<String, Class<?>> kinds = new ConcurrentHashMap<>();
+    private final Map<String, Claim> claims = new ConcurrentHashMap<>();
     private final Map<String, List<McpSchema.Tool>> tools = new ConcurrentHashMap<>();
 
     /**
@@ -39,26 +39,34 @@ final class McpConnectionClients {
      *
      * @param connection The name of the connection
      * @param kind The kind of client
+     * @return The claim for this particular client creation
      * @throws IllegalStateException If the connection has a client of the other kind
      */
-    void claim(String connection, Class<?> kind) {
-        Class<?> existing = kinds.putIfAbsent(connection, kind);
-        if (existing != null && existing != kind) {
-            throw new IllegalStateException("The MCP connection " + connection + " already has a client of type "
-                + existing.getSimpleName() + ". Use either the McpSyncClient or the McpAsyncClient of a connection, not both: "
-                + "each would open its own session, and start its own process over STDIO. McpClientTools uses the McpSyncClient.");
-        }
+    Claim claim(String connection, Class<?> kind) {
+        return claims.compute(connection, (name, existing) -> {
+            if (existing != null && existing.kind != kind) {
+                throw new IllegalStateException("The MCP connection " + name + " already has a client of type "
+                    + existing.kind.getSimpleName() + ". Use either the McpSyncClient or the McpAsyncClient of a connection, not both: "
+                    + "each would open its own session, and start its own process over STDIO. McpClientTools uses the McpSyncClient.");
+            }
+            return new Claim(kind);
+        });
     }
 
     /**
      * Forgets the client of a connection, which failed to initialize or is closed.
      *
      * @param connection The name of the connection
-     * @param kind The kind of client
+     * @param claim The claim acquired when this client was created
      */
-    void release(String connection, Class<?> kind) {
-        kinds.remove(connection, kind);
-        tools.remove(connection);
+    void release(String connection, Claim claim) {
+        claims.computeIfPresent(connection, (name, current) -> {
+            if (current == claim) {
+                tools.remove(name);
+                return null;
+            }
+            return current;
+        });
     }
 
     /**
@@ -90,5 +98,16 @@ final class McpConnectionClients {
         List<McpSchema.Tool> listed = List.copyOf(serverTools);
         List<McpSchema.Tool> existing = tools.putIfAbsent(connection, listed);
         return existing != null ? existing : listed;
+    }
+
+    /**
+     * Identifies one client creation while destruction and replacement of a singleton overlap.
+     */
+    static final class Claim {
+        private final Class<?> kind;
+
+        private Claim(Class<?> kind) {
+            this.kind = kind;
+        }
     }
 }

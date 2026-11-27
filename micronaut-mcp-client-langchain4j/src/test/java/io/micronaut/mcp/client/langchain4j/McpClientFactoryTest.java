@@ -6,14 +6,17 @@ import dev.langchain4j.mcp.client.logging.McpLogMessageHandler;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.stdio.StdioMcpTransport;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
+import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class McpClientFactoryTest {
-    private final McpClientFactory factory = new McpClientFactory();
+    private final McpClientFactory factory = new McpClientFactory(List.of());
     private final McpTransport unusedTransport = new StdioMcpTransport.Builder().command(List.of("unused")).build();
 
     @Test
@@ -51,6 +54,18 @@ class McpClientFactoryTest {
             assertNull(field(builder, timeout), timeout);
         }
         assertEquals(Boolean.TRUE, field(builder, "autoHealthCheck"));
+    }
+
+    @Test
+    void onlyConnectionsWithDynamicHeadersDisableTheDiscoveryCaches() throws ReflectiveOperationException {
+        McpClientHttpConfiguration http = McpClientHttpConfiguration.of("remote", URI.create("http://localhost/mcp"));
+        McpClientFactory dynamicFactory = new McpClientFactory(List.of(connection -> Map.of("X-Region", "west")));
+        DefaultMcpClient.Builder dynamic = dynamicFactory.crateMcpClientBuilder(unusedTransport, http, List.of(), null);
+        DefaultMcpClient.Builder fixed = factory.crateMcpClientBuilder(unusedTransport, http, List.of(), null);
+        for (String setting : List.of("cacheToolList", "cacheResourceList", "cachePromptList")) {
+            assertEquals(Boolean.FALSE, field(dynamic, setting), setting);
+            assertNull(field(fixed, setting), setting);
+        }
     }
 
     @Test

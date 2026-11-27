@@ -27,7 +27,8 @@ import java.util.List;
 
 /**
  * The tools of the server of one connection. The tools are listed once, then cached until the server notifies that they
- * changed.
+ * changed, unless the headers of the connection are computed for each request, which may change the tools the server
+ * lists, in which case they are listed for each call.
  */
 @Internal
 final class ConnectionMcpClientTools implements McpClientTools {
@@ -36,12 +37,15 @@ final class ConnectionMcpClientTools implements McpClientTools {
     private final McpConnectionClients connectionClients;
     private final @Nullable McpClientToolFilter filter;
     private final @Nullable McpClientToolNameMapper nameMapper;
+    private final boolean cached;
 
     ConnectionMcpClientTools(String client,
                              BeanContext beanContext,
                              McpConnectionClients connectionClients,
                              @Nullable McpClientToolFilter filter,
-                             @Nullable McpClientToolNameMapper nameMapper) {
+                             @Nullable McpClientToolNameMapper nameMapper,
+                             boolean cached) {
+        this.cached = cached;
         this.client = client;
         this.beanContext = beanContext;
         this.connectionClients = connectionClients;
@@ -53,10 +57,16 @@ final class ConnectionMcpClientTools implements McpClientTools {
     public List<McpClientTool> tools() {
         // The client is initialized when it is created, which is attempted again on the next call if it fails
         McpSyncClient mcpClient = beanContext.getBean(McpSyncClient.class, Qualifiers.byName(client));
-        List<McpSchema.Tool> serverTools = connectionClients.tools(client);
-        if (serverTools == null) {
-            // Lists every page of tools
-            serverTools = connectionClients.toolsListed(client, mcpClient.listTools().tools());
+        List<McpSchema.Tool> serverTools;
+        if (!cached) {
+            // Listed for each caller, whose credentials may change the tools the server lists
+            serverTools = mcpClient.listTools().tools();
+        } else {
+            serverTools = connectionClients.tools(client);
+            if (serverTools == null) {
+                // Lists every page of tools
+                serverTools = connectionClients.toolsListed(client, mcpClient.listTools().tools());
+            }
         }
         List<McpClientTool> tools = new ArrayList<>(serverTools.size());
         for (McpSchema.Tool tool : serverTools) {

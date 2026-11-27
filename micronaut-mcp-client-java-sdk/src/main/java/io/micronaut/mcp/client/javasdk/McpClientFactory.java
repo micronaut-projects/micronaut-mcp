@@ -22,14 +22,19 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.async.propagation.ReactorPropagation;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
+import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
 import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
+import io.micronaut.mcp.conf.client.McpClientRequestHeaders;
 import io.micronaut.mcp.conf.client.McpClientStdioConfiguration;
 import io.micronaut.scheduling.TaskExecutors;
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
+import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.client.transport.ServerParameters;
 import io.modelcontextprotocol.client.transport.StdioClientTransport;
@@ -46,11 +51,14 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
+import reactor.util.context.ContextView;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -70,6 +78,7 @@ final class McpClientFactory {
     private final List<McpLoggingHandler> loggingHandlers;
     private final List<McpProgressHandler> progressHandlers;
     private final List<McpListChangedListener> listChangedListeners;
+    private final List<McpClientHeadersProvider> headersProviders;
     private final McpConnectionClients connectionClients;
     private final Scheduler blockingScheduler;
 
@@ -81,8 +90,10 @@ final class McpClientFactory {
                      List<McpLoggingHandler> loggingHandlers,
                      List<McpProgressHandler> progressHandlers,
                      List<McpListChangedListener> listChangedListeners,
+                     List<McpClientHeadersProvider> headersProviders,
                      McpConnectionClients connectionClients,
                      @Named(TaskExecutors.BLOCKING) ExecutorService blockingExecutor) {
+        this.headersProviders = headersProviders;
         this.mcpJsonMapper = mcpJsonMapper;
         this.beanContext = beanContext;
         this.samplingHandler = samplingHandler;
@@ -114,7 +125,29 @@ final class McpClientFactory {
             configuration.getHeaders().forEach(request::header);
             builder.requestBuilder(request);
         }
+        // The synchronous client computes the headers in its transport context provider, on the thread that calls it. For
+        // the asynchronous client, they are computed here, in the Micronaut context propagated by the subscriber
+        builder.asyncHttpRequestCustomizer((request, method, endpoint, body, context) -> Mono.deferContextual(reactorContext -> {
+            headers(configuration, context, reactorContext).forEach(request::setHeader);
+            return Mono.just(request);
+        }));
         return builder;
+    }
+
+    private Map<String, String> headers(McpClientHttpConfiguration configuration, McpTransportContext context, ContextView reactorContext) {
+        if (context.get(McpClientTransportHeaders.HEADERS) instanceof Map<?, ?> supplied) {
+            Map<String, String> overrides = new LinkedHashMap<>();
+            supplied.forEach((name, value) -> overrides.put(name.toString(), value.toString()));
+            return McpClientRequestHeaders.merge(new LinkedHashMap<>(configuration.getHeaders()), overrides);
+        }
+        if (!McpClientRequestHeaders.isDynamic(configuration, headersProviders)) {
+            return configuration.getHeaders();
+        }
+        // Without a propagated context, for example for the answers to the requests of the server, the headers providers
+        // run without an HTTP request: the context of this thread, such as an event loop, may be that of another request
+        PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(reactorContext).orElseGet(PropagatedContext::empty);
+        // The supplier form, which a scoped-value propagation requires
+        return propagatedContext.propagate(() -> McpClientRequestHeaders.headers(configuration, headersProviders));
     }
 
     @EachBean(HttpClientStreamableHttpTransport.Builder.class)
@@ -144,9 +177,12 @@ final class McpClientFactory {
         String name = configuration.getName();
         McpClient.SyncSpec spec = McpClient.sync(transport(name))
             .jsonSchemaValidator(jsonSchemaValidator)
-            .capabilities(capabilities())
-            // The server lists its tools again when they change, which refreshes the cache of McpClientTools
-            .toolsChangeConsumer(tools -> connectionClients.toolsChanged(name, tools));
+            .capabilities(capabilities());
+        if (configuration instanceof McpClientHttpConfiguration http && McpClientRequestHeaders.isDynamic(http, headersProviders)) {
+            spec.transportContextProvider(() -> McpClientTransportHeaders.transportContext(McpClientRequestHeaders.headers(http, headersProviders)));
+        } else {
+            spec.toolsChangeConsumer(tools -> connectionClients.toolsChanged(name, tools));
+        }
         Duration requestTimeout = requestTimeout(configuration);
         if (requestTimeout != null) {
             spec.requestTimeout(requestTimeout);
@@ -186,17 +222,30 @@ final class McpClientFactory {
             return spec.build();
         }
         String name = configuration.getName();
-        connectionClients.claim(name, McpSyncClient.class);
+        var claim = connectionClients.claim(name, McpSyncClient.class);
         McpSyncClient client = null;
         try {
             client = spec.build();
-            client.initialize();
+            if (Schedulers.isInNonBlockingThread()) {
+                // An event loop must not block, so the client initializes on the blocking executor instead, and a
+                // failure is cleaned up there
+                McpSyncClient created = client;
+                blockingScheduler.schedule(() -> {
+                    try {
+                        created.initialize();
+                    } catch (RuntimeException e) {
+                        initializationFailed(name, McpSyncClient.class, created, claim, e);
+                    }
+                });
+            } else {
+                client.initialize();
+            }
             return client;
         } catch (RuntimeException e) {
-            connectionClients.release(name, McpSyncClient.class);
             if (client != null) {
                 closeQuietly(name, client::closeGracefully);
             }
+            connectionClients.release(name, claim);
             throw e;
         }
     }
@@ -249,20 +298,49 @@ final class McpClientFactory {
             return spec.build();
         }
         String name = configuration.getName();
-        connectionClients.claim(name, McpAsyncClient.class);
+        var claim = connectionClients.claim(name, McpAsyncClient.class);
         McpAsyncClient client = null;
         try {
             client = spec.build();
-            // Bounded by the initialization timeout of the client
-            client.initialize().block();
+            if (Schedulers.isInNonBlockingThread()) {
+                // An event loop must not block, so the client initializes without waiting, and a failure is cleaned up on
+                // the blocking executor, as closing the client waits for its transport
+                McpAsyncClient created = client;
+                client.initialize().subscribe(result -> { },
+                    e -> blockingScheduler.schedule(() -> initializationFailed(name, McpAsyncClient.class, created, claim, e)));
+            } else {
+                // Bounded by the initialization timeout of the client
+                client.initialize().block();
+            }
             return client;
         } catch (RuntimeException e) {
-            connectionClients.release(name, McpAsyncClient.class);
             if (client != null) {
                 McpAsyncClient failed = client;
                 closeQuietly(name, () -> McpAsyncClientCloser.close(failed));
             }
+            connectionClients.release(name, claim);
             throw e;
+        }
+    }
+
+    /**
+     * Cleans up a client whose initialization failed after it was returned, as a failure while it is created is: the
+     * client is destroyed, which closes it with its transport, such as the process of a STDIO server, and the connection
+     * is released, so that the next request for the client creates it afresh.
+     */
+    private <T> void initializationFailed(String name, Class<T> type, T client, McpConnectionClients.Claim claim, Throwable error) {
+        LOG.warn("The MCP client of the connection {} failed to initialize, it is created again the next time it is requested", name, error);
+        try {
+            // A fast failure can reach this worker before the factory returns. A qualified lookup waits until Micronaut
+            // publishes the singleton, so destruction removes the failed registration as well as closing its transport.
+            var registration = beanContext.getBeanRegistration(type, Qualifiers.byName(name));
+            if (registration.getBean() == client) {
+                beanContext.destroyBean(registration);
+            }
+        } catch (RuntimeException e) {
+            LOG.warn("Failed to close the MCP client of the connection {}", name, e);
+        } finally {
+            connectionClients.release(name, claim);
         }
     }
 
