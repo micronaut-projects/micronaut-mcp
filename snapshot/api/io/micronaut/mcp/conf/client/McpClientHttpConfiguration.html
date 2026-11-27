@@ -68,6 +68,11 @@ loadScripts(document, 'script');</script>
 <li><a href="#isLogRequests()" tabindex="0">isLogRequests()</a></li>
 <li><a href="#isLogResponses()" tabindex="0">isLogResponses()</a></li>
 <li><a href="#getHeaders()" tabindex="0">getHeaders()</a></li>
+<li><a href="#isPropagateAuthorization()" tabindex="0">isPropagateAuthorization()</a></li>
+<li><a href="#getHttpClient()" tabindex="0">getHttpClient()</a></li>
+<li><a href="#getServiceId()" tabindex="0">getServiceId()</a></li>
+<li><a href="#getMaxMessageSize()" tabindex="0">getMaxMessageSize()</a></li>
+<li><a href="#isPropagateAnyAuthorizationScheme()" tabindex="0">isPropagateAnyAuthorizationScheme()</a></li>
 <li><a href="#of(java.lang.String,java.net.URI)" tabindex="0">of(String, URI)</a></li>
 </ol>
 </li>
@@ -120,25 +125,41 @@ extends <a href="McpClientConnectionConfiguration.html" title="interface in io.m
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getHeaders()" class="member-name-link">getHeaders</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
-<div class="block">Only used by the LangChain4j client.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTimeout()" class="member-name-link">getTimeout</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/URI.html" title="class or interface in java.net" class="external-link">URI</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getUrl()" class="member-name-link">getUrl</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="McpHttpClientType.html" title="enum class in io.micronaut.mcp.conf.client">McpHttpClientType</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getHttpClient()" class="member-name-link">getHttpClient</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default long</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getMaxMessageSize()" class="member-name-link">getMaxMessageSize</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getServiceId()" class="member-name-link">getServiceId</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTimeout()" class="member-name-link">getTimeout</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isLogRequests()" class="member-name-link">isLogRequests</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/URI.html" title="class or interface in java.net" class="external-link">URI</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getUrl()" class="member-name-link">getUrl</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isLogResponses()" class="member-name-link">isLogResponses</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isLogRequests()" class="member-name-link">isLogRequests</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="McpClientHttpConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientHttpConfiguration</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(java.lang.String,java.net.URI)" class="member-name-link">of</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isLogResponses()" class="member-name-link">isLogResponses</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isPropagateAnyAuthorizationScheme()" class="member-name-link">isPropagateAnyAuthorizationScheme</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isPropagateAuthorization()" class="member-name-link">isPropagateAuthorization</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">The MCP authorization specification forbids passing through a token whose audience is not the MCP server, so only
+enable this for trusted servers that share the audience of the token.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="McpClientHttpConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientHttpConfiguration</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(java.lang.String,java.net.URI)" class="member-name-link">of</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/URI.html" title="class or interface in java.net" class="external-link">URI</a>&nbsp;url)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -236,10 +257,87 @@ extends <a href="McpClientConnectionConfiguration.html" title="interface in io.m
 <h3>getHeaders</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">getHeaders</span>()</div>
-<div class="block">Only used by the LangChain4j client.</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The headers sent with every request, such as <code>Authorization</code></dd>
+<dt>Since:</dt>
+<dd>2.2.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isPropagateAuthorization()">
+<h3>isPropagateAuthorization</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isPropagateAuthorization</span>()</div>
+<div class="block">The MCP authorization specification forbids passing through a token whose audience is not the MCP server, so only
+enable this for trusted servers that share the audience of the token. Otherwise exchange the token in a
+<a href="McpClientHeadersProvider.html" title="interface in io.micronaut.mcp.conf.client"><code>McpClientHeadersProvider</code></a>. The MCP session of the connection is shared by every user, so the server must not
+bind sessions to users.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether to send the <code>Authorization</code> header of the HTTP request the server is handling, for example the
+bearer token of the user, to the MCP server</dd>
+<dt>Since:</dt>
+<dd>2.2.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getHttpClient()">
+<h3>getHttpClient</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="McpHttpClientType.html" title="enum class in io.micronaut.mcp.conf.client">McpHttpClientType</a></span>&nbsp;<span class="element-name">getHttpClient</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The HTTP client to send the requests with</dd>
+<dt>Since:</dt>
+<dd>2.2.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getServiceId()">
+<h3>getServiceId</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getServiceId</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The id of the <code>micronaut.http.services</code> entry that configures the Micronaut HTTP client, or <code>null</code>
+for the default client configuration. Only used with <a href="McpHttpClientType.html#MICRONAUT"><code>McpHttpClientType.MICRONAUT</code></a>.</dd>
+<dt>Since:</dt>
+<dd>2.2.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getMaxMessageSize()">
+<h3>getMaxMessageSize</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">long</span>&nbsp;<span class="element-name">getMaxMessageSize</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The maximum size, in bytes, of a message of the server that the client buffers: a JSON response, an event of
+a stream, or an error. Only used with <a href="McpHttpClientType.html#MICRONAUT"><code>McpHttpClientType.MICRONAUT</code></a>. Default value 16 MiB.</dd>
+<dt>Since:</dt>
+<dd>2.2.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isPropagateAnyAuthorizationScheme()">
+<h3>isPropagateAnyAuthorizationScheme</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isPropagateAnyAuthorizationScheme</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether to <a href="#isPropagateAuthorization()"><code>propagate</code></a> the <code>Authorization</code> header whatever its
+scheme, for example Basic credentials, instead of only bearer tokens</dd>
 <dt>Since:</dt>
 <dd>2.2.0</dd>
 </dl>

@@ -89,7 +89,8 @@ loadScripts(document, 'script');</script>
 </li>
 <li>
 <div id="class-summary">
-<div class="caption"><span>Interfaces</span></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button><button id="class-summary-tab3" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab3', 2)" class="table-tab">Enum Classes</button></div>
+<div id="class-summary.tabpanel" role="tabpanel" aria-labelledby="class-summary-tab0">
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
@@ -101,14 +102,28 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">The configuration of a named connection to an MCP server, over any transport.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="McpClientHttpConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientHttpConfiguration</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="McpClientHeadersProvider.html" title="interface in io.micronaut.mcp.conf.client">McpClientHeadersProvider</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="block">Provides headers for the requests MCP clients send over HTTP, computed for each request, for example to send an OAuth
+access token that is refreshed, or a token exchanged for one whose audience is the MCP server.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="McpClientHttpConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientHttpConfiguration</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">MCP Client HTTP Configuration.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="McpClientRequestHeaders.html" title="class in io.micronaut.mcp.conf.client">McpClientRequestHeaders</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="block">Computes the headers of a request an MCP client sends over HTTP.</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab1"><a href="McpClientStdioConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientStdioConfiguration</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">The configuration of a connection to an MCP server started as a process, which the client talks to over its standard
 input and output.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab3"><a href="McpHttpClientType.html" title="enum class in io.micronaut.mcp.conf.client">McpHttpClientType</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab3">
+<div class="block">The HTTP client an MCP client sends its requests with.</div>
+</div>
 </div>
 </div>
 </div>

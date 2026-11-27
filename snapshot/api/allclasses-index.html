@@ -151,31 +151,74 @@ the <a href="io/micronaut/mcp/server/context/McpNotificationEmitter.html" title=
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Checks the connections that MCP clients are created for.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/client/langchain4j/health/McpClientHealthEnabledCondition.html" title="class in io.micronaut.mcp.client.langchain4j.health">McpClientHealthEnabledCondition</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/conf/client/McpClientHeadersProvider.html" title="interface in io.micronaut.mcp.conf.client">McpClientHeadersProvider</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
+<div class="block">Provides headers for the requests MCP clients send over HTTP, computed for each request, for example to send an OAuth
+access token that is refreshed, or a token exchanged for one whose audience is the MCP server.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/client/langchain4j/health/McpClientHealthEnabledCondition.html" title="class in io.micronaut.mcp.client.langchain4j.health">McpClientHealthEnabledCondition</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Enables the <code>mcp</code> health indicator unless "endpoints.health.mcp.enabled" converts to
 <code>false</code>, whatever its case, for example <code>FALSE</code>.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientHttpConfiguration</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientHttpConfiguration</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
 <div class="block">MCP Client HTTP Configuration.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/conf/client/McpClientRequestHeaders.html" title="class in io.micronaut.mcp.conf.client">McpClientRequestHeaders</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Computes the headers of a request an MCP client sends over HTTP.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/conf/client/McpClientStdioConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientStdioConfiguration</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
 <div class="block">The configuration of a connection to an MCP server started as a process, which the client talks to over its standard
 input and output.</div>
 </div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="io/micronaut/mcp/client/javasdk/McpClientTool.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTool</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="block">A tool of an MCP server.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/client/javasdk/McpClientToolFilter.html" title="interface in io.micronaut.mcp.client.javasdk">McpClientToolFilter</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
+<div class="block">Selects the tools <a href="io/micronaut/mcp/client/javasdk/McpClientTools.html" title="interface in io.micronaut.mcp.client.javasdk"><code>McpClientTools</code></a> provides, given the name of the connection to the server and the tool.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/client/javasdk/McpClientToolNameMapper.html" title="interface in io.micronaut.mcp.client.javasdk">McpClientToolNameMapper</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
+<div class="block">Names the tools <a href="io/micronaut/mcp/client/javasdk/McpClientTools.html" title="interface in io.micronaut.mcp.client.javasdk"><code>McpClientTools</code></a> provides, given the name of the connection to the server and the tool, for
+example to prefix them with the connection name so that the tools of different servers cannot clash.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/client/javasdk/McpClientTools.html" title="interface in io.micronaut.mcp.client.javasdk">McpClientTools</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
+<div class="block">The tools of MCP servers, to offer them to a model or call them, without depending on an AI framework.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/client/javasdk/McpClientTransportHeaders.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTransportHeaders</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Supplies the headers of the requests that the MCP clients of HTTP connections send, through the
+<code>McpTransportContext</code>.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/client/javasdk/McpElicitationHandler.html" title="interface in io.micronaut.mcp.client.javasdk">McpElicitationHandler</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
+<div class="block">Answers the elicitation requests of MCP servers, which ask the user for information through the client.</div>
+</div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/server/exceptions/McpErrorExceptionMapper.html" title="interface in io.micronaut.mcp.server.exceptions">McpErrorExceptionMapper&lt;T&gt;</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
 <div class="block">API to define mappers from exceptions to <code>McpError</code>, the JSON-RPC error sent to the client.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/server/McpHttpServer.html" title="interface in io.micronaut.mcp.server">McpHttpServer</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="io/micronaut/mcp/conf/client/McpHttpClientType.html" title="enum class in io.micronaut.mcp.conf.client">McpHttpClientType</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab3">
+<div class="block">The HTTP client an MCP client sends its requests with.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/server/McpHttpServer.html" title="interface in io.micronaut.mcp.server">McpHttpServer</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
 <div class="block">An MCP Server.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/server/McpHttpServerSupplier.html" title="interface in io.micronaut.mcp.server">McpHttpServerSupplier</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/server/McpHttpServerSupplier.html" title="interface in io.micronaut.mcp.server">McpHttpServerSupplier</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
 <div class="block">Strategy interface for resolving a <a href="io/micronaut/mcp/server/McpHttpServer.html" title="interface in io.micronaut.mcp.server"><code>McpHttpServer</code></a>.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab5"><a href="io/micronaut/mcp/client/http/McpHttpSessionNotFoundException.html" title="class in io.micronaut.mcp.client.http">McpHttpSessionNotFoundException</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab5">
+<div class="block">Raised when the MCP server no longer knows the session of the client, which must initialize a new one.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/server/McpIconFactory.html" title="class in io.micronaut.mcp.server">McpIconFactory</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
@@ -184,8 +227,16 @@ follow the same rules: a <code>src</code> that is an https or http URL without a
 URI of an image, is required, the theme is <code>light</code> or <code>dark</code>, and empty values are left out.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/server/McpIntrospection.html" title="class in io.micronaut.mcp.server">McpIntrospection</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
-<div class="block">Serde imports for MCP JDK classes.</div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">Deprecated, for removal: This API element is subject to removal in a future version.
+<div class="deprecation-comment">Not used, to be removed</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/client/javasdk/McpListChangedListener.html" title="interface in io.micronaut.mcp.client.javasdk">McpListChangedListener</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
+<div class="block">Notified when an MCP server changes its tools, prompts or resources.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/client/javasdk/McpLoggingHandler.html" title="interface in io.micronaut.mcp.client.javasdk">McpLoggingHandler</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
+<div class="block">Receives the log messages MCP servers send to the client.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/server/context/McpNotificationEmitter.html" title="interface in io.micronaut.mcp.server.context">McpNotificationEmitter</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
@@ -199,9 +250,17 @@ URI of an image, is required, the theme is <code>light</code> or <code>dark</cod
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
 <div class="block">MCP Primitive configuration.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/server/context/McpRequestContext.html" title="interface in io.micronaut.mcp.server.context">McpRequestContext</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/client/javasdk/McpProgressHandler.html" title="interface in io.micronaut.mcp.client.javasdk">McpProgressHandler</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
+<div class="block">Receives the progress MCP servers report for the requests the client sent with a progress token.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/server/context/McpRequestContext.html" title="interface in io.micronaut.mcp.server.context">McpRequestContext</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
 <div class="block">The request a tool, prompt, resource or completion method is invoked for.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/client/javasdk/McpSamplingHandler.html" title="interface in io.micronaut.mcp.client.javasdk">McpSamplingHandler</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
+<div class="block">Answers the sampling requests of MCP servers, which ask the client to sample a language model.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerConfiguration</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
@@ -237,15 +296,31 @@ prefix them with the client key so that tools of different servers cannot clash.
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab6">
 <div class="block">The container of repeated <a href="io/micronaut/mcp/annotations/Meta.html" title="annotation interface in io.micronaut.mcp.annotations"><code>Meta</code></a> annotations.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/server/json/MicronautJsonSchemaValidator.html" title="class in io.micronaut.mcp.server.json">MicronautJsonSchemaValidator</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/client/langchain4j/http/MicronautHttpClientTransports.html" title="class in io.micronaut.mcp.client.langchain4j.http">MicronautHttpClientTransports</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Creates the transports of the HTTP connections that use the Micronaut HTTP client.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/server/json/MicronautJsonSchemaValidator.html" title="class in io.micronaut.mcp.server.json">MicronautJsonSchemaValidator</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">MCP <code>JsonSchemaValidator</code> backed by Micronaut JSON Schema Validator <code>JsonSchemaValidator</code>.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/info/MicronautMcpAnnotationsModuleInfo.html" title="class in io.micronaut.mcp.info">MicronautMcpAnnotationsModuleInfo</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/info/MicronautMcpClientJavaSdkModuleInfo.html" title="class in io.micronaut.mcp.info">MicronautMcpClientJavaSdkModuleInfo</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/info/MicronautMcpAnnotationsModuleInfo.html" title="class in io.micronaut.mcp.info">MicronautMcpAnnotationsModuleInfo</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/info/MicronautMcpClientLangchain4jModuleInfo.html" title="class in io.micronaut.mcp.info">MicronautMcpClientLangchain4jModuleInfo</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/info/MicronautMcpClientJavaSdkModuleInfo.html" title="class in io.micronaut.mcp.info">MicronautMcpClientJavaSdkModuleInfo</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/info/MicronautMcpClientLangchain4jModuleInfo.html" title="class in io.micronaut.mcp.info">MicronautMcpClientLangchain4jModuleInfo</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/client/http/MicronautMcpHttpClients.html" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpClients</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Creates the exchanges of the HTTP connections that use the Micronaut HTTP client, over one Micronaut HTTP client for
+each connection.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpExchange</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Sends the JSON-RPC messages of an MCP client to a server over Streamable HTTP with the Micronaut HTTP client, and
+reads the messages of the response, a JSON body or an event stream, as they arrive.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/info/MicronautMcpJavaSdkJsonModuleInfo.html" title="class in io.micronaut.mcp.info">MicronautMcpJavaSdkJsonModuleInfo</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html" title="class in io.micronaut.mcp.server.json">MicronautMcpJsonMapper</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">

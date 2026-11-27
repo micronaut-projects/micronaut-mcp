@@ -151,6 +151,10 @@ loadScripts(document, 'script');</script>
 </dl>
 <h2 class="title" id="I:C">C</h2>
 <dl class="index">
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTool.html#call(java.util.Map)" class="member-name-link">call(Map)</a> - Method in record class io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpClientTool.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTool</a></dt>
+<dd>
+<div class="block">Calls the tool.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/observability/McpServerObserver.html#CANCELLED" class="member-name-link">CANCELLED</a> - Static variable in interface io.micronaut.mcp.server.observability.<a href="io/micronaut/mcp/server/observability/McpServerObserver.html" title="interface in io.micronaut.mcp.server.observability">McpServerObserver</a></dt>
 <dd>
 <div class="block">The error type of an operation on the reactive server whose subscription was cancelled before it produced a value.</div>
@@ -165,9 +169,17 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/mcp/primitives/prompts/ClasspathPrompt.html#%3Cinit%3E(java.lang.String)" class="member-name-link">ClasspathPrompt(String)</a> - Constructor for class io.micronaut.mcp.primitives.prompts.<a href="io/micronaut/mcp/primitives/prompts/ClasspathPrompt.html" title="class in io.micronaut.mcp.primitives.prompts">ClasspathPrompt</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTool.html#client()" class="member-name-link">client()</a> - Method in record class io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpClientTool.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTool</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/mcp/client/javasdk/McpClientTool.html#param-client"><code>client</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/client/langchain4j/ConnectionMcpClient.html#close()" class="member-name-link">close()</a> - Method in class io.micronaut.mcp.client.langchain4j.<a href="io/micronaut/mcp/client/langchain4j/ConnectionMcpClient.html" title="class in io.micronaut.mcp.client.langchain4j">ConnectionMcpClient</a></dt>
 <dd>
 <div class="block">Forgets the client of the connection without closing it, as the client bean is closed with the bean context.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html#close(java.util.Map)" class="member-name-link">close(Map)</a> - Method in class io.micronaut.mcp.client.http.<a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpExchange</a></dt>
+<dd>
+<div class="block">Ends the session with the server, if it started one, waiting a bounded time for the server to answer.</div>
 </dd>
 <dt><a href="io/micronaut/mcp/server/stdio/StdioServerTransportProviderReplacement.html#closeGracefully()" class="member-name-link">closeGracefully()</a> - Method in class io.micronaut.mcp.server.stdio.<a href="io/micronaut/mcp/server/stdio/StdioServerTransportProviderReplacement.html" title="class in io.micronaut.mcp.server.stdio">StdioServerTransportProviderReplacement</a></dt>
 <dd>&nbsp;</dd>
@@ -205,6 +217,8 @@ be reached fails the calls to its client, which the tool providers skip, instead
 <dt><a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html#convertValue(java.lang.Object,io.modelcontextprotocol.json.TypeRef)" class="member-name-link">convertValue(Object, TypeRef)</a> - Method in class io.micronaut.mcp.server.json.<a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html" title="class in io.micronaut.mcp.server.json">MicronautMcpJsonMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html#convertValue(java.lang.Object,java.lang.Class)" class="member-name-link">convertValue(Object, Class)</a> - Method in class io.micronaut.mcp.server.json.<a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html" title="class in io.micronaut.mcp.server.json">MicronautMcpJsonMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/langchain4j/http/MicronautHttpClientTransports.html#create(io.micronaut.mcp.conf.client.McpClientHttpConfiguration)" class="member-name-link">create(McpClientHttpConfiguration)</a> - Method in class io.micronaut.mcp.client.langchain4j.http.<a href="io/micronaut/mcp/client/langchain4j/http/MicronautHttpClientTransports.html" title="class in io.micronaut.mcp.client.langchain4j.http">MicronautHttpClientTransports</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/McpHttpServer.html#createDefault()" class="member-name-link">createDefault()</a> - Static method in interface io.micronaut.mcp.server.<a href="io/micronaut/mcp/server/McpHttpServer.html" title="interface in io.micronaut.mcp.server">McpHttpServer</a></dt>
 <dd>
@@ -347,8 +361,14 @@ the <a href="io/micronaut/mcp/server/context/McpNotificationEmitter.html" title=
 <dd>
 <div class="block">Asks the user for information through the client.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpElicitationHandler.html#elicit(java.lang.String,io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest)" class="member-name-link">elicit(String, McpSchema.ElicitFormRequest)</a> - Method in interface io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpElicitationHandler.html" title="interface in io.micronaut.mcp.client.javasdk">McpElicitationHandler</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/context/McpNotificationEmitter.html#emit(io.modelcontextprotocol.spec.McpSchema.JSONRPCNotification)" class="member-name-link">emit(McpSchema.JSONRPCNotification)</a> - Method in interface io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/McpNotificationEmitter.html" title="interface in io.micronaut.mcp.server.context">McpNotificationEmitter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTool.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpClientTool.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTool</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/context/BlockingMcpRequestContext.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/BlockingMcpRequestContext.html" title="class in io.micronaut.mcp.server.context">BlockingMcpRequestContext</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
@@ -377,6 +397,8 @@ the <a href="io/micronaut/mcp/server/context/McpNotificationEmitter.html" title=
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/client/http/MicronautMcpHttpClients.html#exchange(io.micronaut.mcp.conf.client.McpClientHttpConfiguration,java.lang.String)" class="member-name-link">exchange(McpClientHttpConfiguration, String)</a> - Method in class io.micronaut.mcp.client.http.<a href="io/micronaut/mcp/client/http/MicronautMcpHttpClients.html" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpClients</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/client/langchain4j/ConnectionMcpClient.html#executeTool(dev.langchain4j.agent.tool.ToolExecutionRequest)" class="member-name-link">executeTool(ToolExecutionRequest)</a> - Method in class io.micronaut.mcp.client.langchain4j.<a href="io/micronaut/mcp/client/langchain4j/ConnectionMcpClient.html" title="class in io.micronaut.mcp.client.langchain4j">ConnectionMcpClient</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/client/langchain4j/ConnectionMcpClient.html#executeTool(dev.langchain4j.agent.tool.ToolExecutionRequest,dev.langchain4j.invocation.InvocationContext)" class="member-name-link">executeTool(ToolExecutionRequest, InvocationContext)</a> - Method in class io.micronaut.mcp.client.langchain4j.<a href="io/micronaut/mcp/client/langchain4j/ConnectionMcpClient.html" title="class in io.micronaut.mcp.client.langchain4j">ConnectionMcpClient</a></dt>
@@ -486,16 +508,16 @@ the <a href="io/micronaut/mcp/server/context/McpNotificationEmitter.html" title=
 <dt><a href="io/micronaut/mcp/conf/client/McpClientStdioConfiguration.html#getEnvironment()" class="member-name-link">getEnvironment()</a> - Method in interface io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientStdioConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientStdioConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html#getHeaders()" class="member-name-link">getHeaders()</a> - Method in interface io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientHttpConfiguration</a></dt>
-<dd>
-<div class="block">Only used by the LangChain4j client.</div>
-</dd>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html#getHttpClient()" class="member-name-link">getHttpClient()</a> - Method in interface io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientHttpConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/McpServerInfoConfiguration.html#getIcons()" class="member-name-link">getIcons()</a> - Method in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/McpServerInfoConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerInfoConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/client/McpClientConnectionConfiguration.html#getInitializationTimeout()" class="member-name-link">getInitializationTimeout()</a> - Method in interface io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientConnectionConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientConnectionConfiguration</a></dt>
-<dd>
-<div class="block">Only used by the LangChain4j client.</div>
-</dd>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/McpServerInfoConfiguration.html#getInstructions()" class="member-name-link">getInstructions()</a> - Method in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/McpServerInfoConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerInfoConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html#getMaxMessageSize()" class="member-name-link">getMaxMessageSize()</a> - Method in interface io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientHttpConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/IconConfiguration.html#getMimeType()" class="member-name-link">getMimeType()</a> - Method in class io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/IconConfiguration.html" title="class in io.micronaut.mcp.conf.server">IconConfiguration</a></dt>
 <dd>&nbsp;</dd>
@@ -525,7 +547,8 @@ the <a href="io/micronaut/mcp/server/context/McpNotificationEmitter.html" title=
 </dd>
 <dt><a href="io/micronaut/mcp/conf/client/McpClientConnectionConfiguration.html#getRequestTimeout()" class="member-name-link">getRequestTimeout()</a> - Method in interface io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientConnectionConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientConnectionConfiguration</a></dt>
 <dd>
-<div class="block">Only used by the LangChain4j client.</div>
+<div class="block">For Java SDK HTTP clients, <a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html#getTimeout()"><code>McpClientHttpConfiguration.getTimeout()</code></a> supplies the request timeout
+when this setting is absent.</div>
 </dd>
 <dt><a href="io/micronaut/mcp/server/AbstractMcpServerFactory.html#getResources(io.micronaut.mcp.server.registry.ResourceRegistry)" class="member-name-link">getResources(ResourceRegistry)</a> - Method in class io.micronaut.mcp.server.<a href="io/micronaut/mcp/server/AbstractMcpServerFactory.html" title="class in io.micronaut.mcp.server">AbstractMcpServerFactory</a></dt>
 <dd>
@@ -535,6 +558,10 @@ the <a href="io/micronaut/mcp/server/context/McpNotificationEmitter.html" title=
 <dd>
 <div class="block">Retrieves a list of resources templates from the provided <a href="io/micronaut/mcp/server/registry/ResourceTemplateRegistry.html" title="class in io.micronaut.mcp.server.registry"><code>ResourceTemplateRegistry</code></a>.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html#getServiceId()" class="member-name-link">getServiceId()</a> - Method in interface io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientHttpConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/http/McpHttpSessionNotFoundException.html#getSessionId()" class="member-name-link">getSessionId()</a> - Method in exception class io.micronaut.mcp.client.http.<a href="io/micronaut/mcp/client/http/McpHttpSessionNotFoundException.html" title="class in io.micronaut.mcp.client.http">McpHttpSessionNotFoundException</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/IconConfiguration.html#getSizes()" class="member-name-link">getSizes()</a> - Method in class io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/IconConfiguration.html" title="class in io.micronaut.mcp.conf.server">IconConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/IconConfiguration.html#getSrc()" class="member-name-link">getSrc()</a> - Method in class io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/IconConfiguration.html" title="class in io.micronaut.mcp.conf.server">IconConfiguration</a></dt>
@@ -611,6 +638,10 @@ or <a href="io/micronaut/mcp/conf/client/McpClientStdioConfiguration.html#PREFIX
 </dl>
 <h2 class="title" id="I:H">H</h2>
 <dl class="index">
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTool.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpClientTool.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTool</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/context/BlockingMcpRequestContext.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/BlockingMcpRequestContext.html" title="class in io.micronaut.mcp.server.context">BlockingMcpRequestContext</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
@@ -649,6 +680,19 @@ or <a href="io/micronaut/mcp/conf/client/McpClientStdioConfiguration.html#PREFIX
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#hasNotifyingMethods()" class="member-name-link">hasNotifyingMethods()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html#headers()" class="member-name-link">headers()</a> - Method in class io.micronaut.mcp.client.http.<a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpExchange</a></dt>
+<dd>
+<div class="block">Computes the headers of a request on the calling thread: the static headers of the connection, and those of the
+headers providers.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpClientHeadersProvider.html#headers(io.micronaut.mcp.conf.client.McpClientHttpConfiguration)" class="member-name-link">headers(McpClientHttpConfiguration)</a> - Method in interface io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientHeadersProvider.html" title="interface in io.micronaut.mcp.conf.client">McpClientHeadersProvider</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpClientRequestHeaders.html#headers(io.micronaut.mcp.conf.client.McpClientHttpConfiguration,java.util.List)" class="member-name-link">headers(McpClientHttpConfiguration, List)</a> - Static method in class io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientRequestHeaders.html" title="class in io.micronaut.mcp.conf.client">McpClientRequestHeaders</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTransportHeaders.html#HEADERS" class="member-name-link">HEADERS</a> - Static variable in class io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpClientTransportHeaders.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTransportHeaders</a></dt>
+<dd>
+<div class="block">The key of the <code>McpTransportContext</code> entry, a <code>Map&lt;String, String&gt;</code>, that holds the headers to send.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/context/MicronautMcpTransportContext.html#host()" class="member-name-link">host()</a> - Method in interface io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/MicronautMcpTransportContext.html" title="interface in io.micronaut.mcp.server.context">MicronautMcpTransportContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/Transport.html#HTTP" class="member-name-link">HTTP</a> - Enum constant in enum class io.micronaut.mcp.conf.<a href="io/micronaut/mcp/conf/Transport.html" title="enum class in io.micronaut.mcp.conf">Transport</a></dt>
@@ -722,8 +766,18 @@ or <a href="io/micronaut/mcp/conf/client/McpClientStdioConfiguration.html#PREFIX
 <dd>
 <div class="block">If you supplied a template such as `Name: ${firstName} ${lastName}` and map of values such as `[firstName: Sergio, lastName: Amo] it returns `Name: Sergio Amo`.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html#invalidateSession(io.micronaut.mcp.client.http.McpHttpSessionNotFoundException)" class="member-name-link">invalidateSession(McpHttpSessionNotFoundException)</a> - Method in class io.micronaut.mcp.client.http.<a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpExchange</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/annotations/package-summary.html">io.micronaut.mcp.annotations</a> - package io.micronaut.mcp.annotations</dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/http/package-summary.html">io.micronaut.mcp.client.http</a> - package io.micronaut.mcp.client.http</dt>
+<dd>
+<div class="block">The Streamable HTTP transport of MCP clients on the Micronaut HTTP client.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/package-summary.html">io.micronaut.mcp.client.javasdk</a> - package io.micronaut.mcp.client.javasdk</dt>
+<dd>
+<div class="block">Classes related with MCP Java SDK Client.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/client/langchain4j/package-summary.html">io.micronaut.mcp.client.langchain4j</a> - package io.micronaut.mcp.client.langchain4j</dt>
 <dd>
 <div class="block">Classes related with Langchain4J MCP Client.</div>
@@ -731,6 +785,10 @@ or <a href="io/micronaut/mcp/conf/client/McpClientStdioConfiguration.html#PREFIX
 <dt><a href="io/micronaut/mcp/client/langchain4j/health/package-summary.html">io.micronaut.mcp.client.langchain4j.health</a> - package io.micronaut.mcp.client.langchain4j.health</dt>
 <dd>
 <div class="block">Health of the MCP clients.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/langchain4j/http/package-summary.html">io.micronaut.mcp.client.langchain4j.http</a> - package io.micronaut.mcp.client.langchain4j.http</dt>
+<dd>
+<div class="block">Classes related with Langchain4J MCP Client and Streamable HTTP transport.</div>
 </dd>
 <dt><a href="io/micronaut/mcp/client/langchain4j/stdio/package-summary.html">io.micronaut.mcp.client.langchain4j.stdio</a> - package io.micronaut.mcp.client.langchain4j.stdio</dt>
 <dd>
@@ -805,6 +863,8 @@ allowed, so that local tools such as the MCP Inspector can connect.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/context/McpRequestContext.html#isClientDisconnected()" class="member-name-link">isClientDisconnected()</a> - Method in interface io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/McpRequestContext.html" title="interface in io.micronaut.mcp.server.context">McpRequestContext</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpClientRequestHeaders.html#isDynamic(io.micronaut.mcp.conf.client.McpClientHttpConfiguration,java.util.List)" class="member-name-link">isDynamic(McpClientHttpConfiguration, List)</a> - Static method in class io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientRequestHeaders.html" title="class in io.micronaut.mcp.conf.client">McpClientRequestHeaders</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/McpPrimitiveConfiguration.html#isListChanged()" class="member-name-link">isListChanged()</a> - Method in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/McpPrimitiveConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpPrimitiveConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/PromptsConfiguration.html#isListChanged()" class="member-name-link">isListChanged()</a> - Method in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/PromptsConfiguration.html" title="interface in io.micronaut.mcp.conf.server">PromptsConfiguration</a></dt>
@@ -831,6 +891,13 @@ allowed, so that local tools such as the MCP Inspector can connect.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#isNotEmpty()" class="member-name-link">isNotEmpty()</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html#isPropagateAnyAuthorizationScheme()" class="member-name-link">isPropagateAnyAuthorizationScheme()</a> - Method in interface io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientHttpConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html#isPropagateAuthorization()" class="member-name-link">isPropagateAuthorization()</a> - Method in interface io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html" title="interface in io.micronaut.mcp.conf.client">McpClientHttpConfiguration</a></dt>
+<dd>
+<div class="block">The MCP authorization specification forbids passing through a token whose audience is not the MCP server, so only
+enable this for trusted servers that share the audience of the token.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html#isReactive()" class="member-name-link">isReactive()</a> - Method in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/primitives/prompts/PromptArgument.html#isRequired()" class="member-name-link">isRequired()</a> - Method in class io.micronaut.mcp.primitives.prompts.<a href="io/micronaut/mcp/primitives/prompts/PromptArgument.html" title="class in io.micronaut.mcp.primitives.prompts">PromptArgument</a></dt>
@@ -840,6 +907,10 @@ allowed, so that local tools such as the MCP Inspector can connect.</div>
 </dl>
 <h2 class="title" id="I:J">J</h2>
 <dl class="index">
+<dt><a href="io/micronaut/mcp/conf/client/McpHttpClientType.html#JDK" class="member-name-link">JDK</a> - Enum constant in enum class io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpHttpClientType.html" title="enum class in io.micronaut.mcp.conf.client">McpHttpClientType</a></dt>
+<dd>
+<div class="block">The JDK HTTP client, used by the MCP client libraries.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/exceptions/JsonRrpcResponseUtils.html#jsonrpcResponse(io.modelcontextprotocol.spec.McpError,io.modelcontextprotocol.spec.McpSchema.JSONRPCMessage)" class="member-name-link">jsonrpcResponse(McpError, McpSchema.JSONRPCMessage)</a> - Static method in class io.micronaut.mcp.server.exceptions.<a href="io/micronaut/mcp/server/exceptions/JsonRrpcResponseUtils.html" title="class in io.micronaut.mcp.server.exceptions">JsonRrpcResponseUtils</a></dt>
 <dd>
 <div class="block">If the MCP error is related to a listing request to a primitive, it returns an empty response for that primitive instead of an error.</div>
@@ -875,6 +946,10 @@ allowed, so that local tools such as the MCP Inspector can connect.</div>
 <div class="block">The STDIO connection named <a href="io/micronaut/mcp/client/langchain4j/stdio/LegacyMcpClientStdioConfiguration.html#NAME">"stdio"</a> that the deprecated <a href="io/micronaut/mcp/client/langchain4j/stdio/LegacyMcpClientStdioConfiguration.html#PROPERTY">"langchain4j.mcp.client.transport.stdio.commands"</a> property declares when the deprecated
 <a href="io/micronaut/mcp/client/langchain4j/stdio/LegacyMcpClientStdioConfiguration.html#TRANSPORT">"micronaut.mcp.client.transport"</a> property is <a href="io/micronaut/mcp/client/langchain4j/stdio/LegacyMcpClientStdioConfiguration.html#TRANSPORT_STDIO">"STDIO"</a>.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html#listen()" class="member-name-link">listen()</a> - Method in class io.micronaut.mcp.client.http.<a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpExchange</a></dt>
+<dd>
+<div class="block">Opens the stream of the messages the server sends on its own, such as requests and notifications.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/client/langchain4j/ConnectionMcpClient.html#listPrompts()" class="member-name-link">listPrompts()</a> - Method in class io.micronaut.mcp.client.langchain4j.<a href="io/micronaut/mcp/client/langchain4j/ConnectionMcpClient.html" title="class in io.micronaut.mcp.client.langchain4j">ConnectionMcpClient</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/client/langchain4j/ConnectionMcpClient.html#listResources()" class="member-name-link">listResources()</a> - Method in class io.micronaut.mcp.client.langchain4j.<a href="io/micronaut/mcp/client/langchain4j/ConnectionMcpClient.html" title="class in io.micronaut.mcp.client.langchain4j">ConnectionMcpClient</a></dt>
@@ -905,6 +980,8 @@ allowed, so that local tools such as the MCP Inspector can connect.</div>
 <dd>
 <div class="block">Sends a log message to the client.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpLoggingHandler.html#log(java.lang.String,io.modelcontextprotocol.spec.McpSchema.LoggingMessageNotification)" class="member-name-link">log(String, McpSchema.LoggingMessageNotification)</a> - Method in interface io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpLoggingHandler.html" title="interface in io.micronaut.mcp.client.javasdk">McpLoggingHandler</a></dt>
+<dd>&nbsp;</dd>
 </dl>
 <h2 class="title" id="I:M">M</h2>
 <dl class="index">
@@ -932,6 +1009,10 @@ allowed, so that local tools such as the MCP Inspector can connect.</div>
 <dd>
 <div class="block">A request designates a resource template by the URI of a resource it matches.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTool.html#mcpClient()" class="member-name-link">mcpClient()</a> - Method in record class io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpClientTool.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTool</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/mcp/client/javasdk/McpClientTool.html#param-mcpClient"><code>mcpClient</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/conf/client/McpClientConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf.client">McpClientConfiguration</a> - Interface in <a href="io/micronaut/mcp/conf/client/package-summary.html">io.micronaut.mcp.conf.client</a></dt>
 <dd>
 <div class="block">MCP Client Configuration.</div>
@@ -948,6 +1029,11 @@ allowed, so that local tools such as the MCP Inspector can connect.</div>
 <dd>
 <div class="block">Checks the connections that MCP clients are created for.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpClientHeadersProvider.html" class="type-name-link" title="interface in io.micronaut.mcp.conf.client">McpClientHeadersProvider</a> - Interface in <a href="io/micronaut/mcp/conf/client/package-summary.html">io.micronaut.mcp.conf.client</a></dt>
+<dd>
+<div class="block">Provides headers for the requests MCP clients send over HTTP, computed for each request, for example to send an OAuth
+access token that is refreshed, or a token exchanged for one whose audience is the MCP server.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/client/langchain4j/health/McpClientHealthEnabledCondition.html" class="type-name-link" title="class in io.micronaut.mcp.client.langchain4j.health">McpClientHealthEnabledCondition</a> - Class in <a href="io/micronaut/mcp/client/langchain4j/health/package-summary.html">io.micronaut.mcp.client.langchain4j.health</a></dt>
 <dd>
 <div class="block">Enables the <code>mcp</code> health indicator unless "endpoints.health.mcp.enabled" converts to
@@ -959,10 +1045,44 @@ allowed, so that local tools such as the MCP Inspector can connect.</div>
 <dd>
 <div class="block">MCP Client HTTP Configuration.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpClientRequestHeaders.html" class="type-name-link" title="class in io.micronaut.mcp.conf.client">McpClientRequestHeaders</a> - Class in <a href="io/micronaut/mcp/conf/client/package-summary.html">io.micronaut.mcp.conf.client</a></dt>
+<dd>
+<div class="block">Computes the headers of a request an MCP client sends over HTTP.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/conf/client/McpClientStdioConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf.client">McpClientStdioConfiguration</a> - Interface in <a href="io/micronaut/mcp/conf/client/package-summary.html">io.micronaut.mcp.conf.client</a></dt>
 <dd>
 <div class="block">The configuration of a connection to an MCP server started as a process, which the client talks to over its standard
 input and output.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTool.html" class="type-name-link" title="class in io.micronaut.mcp.client.javasdk">McpClientTool</a> - Record Class in <a href="io/micronaut/mcp/client/javasdk/package-summary.html">io.micronaut.mcp.client.javasdk</a></dt>
+<dd>
+<div class="block">A tool of an MCP server.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTool.html#%3Cinit%3E(java.lang.String,java.lang.String,io.modelcontextprotocol.spec.McpSchema.Tool,io.modelcontextprotocol.client.McpSyncClient)" class="member-name-link">McpClientTool(String, String, McpSchema.Tool, McpSyncClient)</a> - Constructor for record class io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpClientTool.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTool</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>McpClientTool</code> record class.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientToolFilter.html" class="type-name-link" title="interface in io.micronaut.mcp.client.javasdk">McpClientToolFilter</a> - Interface in <a href="io/micronaut/mcp/client/javasdk/package-summary.html">io.micronaut.mcp.client.javasdk</a></dt>
+<dd>
+<div class="block">Selects the tools <a href="io/micronaut/mcp/client/javasdk/McpClientTools.html" title="interface in io.micronaut.mcp.client.javasdk"><code>McpClientTools</code></a> provides, given the name of the connection to the server and the tool.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientToolNameMapper.html" class="type-name-link" title="interface in io.micronaut.mcp.client.javasdk">McpClientToolNameMapper</a> - Interface in <a href="io/micronaut/mcp/client/javasdk/package-summary.html">io.micronaut.mcp.client.javasdk</a></dt>
+<dd>
+<div class="block">Names the tools <a href="io/micronaut/mcp/client/javasdk/McpClientTools.html" title="interface in io.micronaut.mcp.client.javasdk"><code>McpClientTools</code></a> provides, given the name of the connection to the server and the tool, for
+example to prefix them with the connection name so that the tools of different servers cannot clash.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTools.html" class="type-name-link" title="interface in io.micronaut.mcp.client.javasdk">McpClientTools</a> - Interface in <a href="io/micronaut/mcp/client/javasdk/package-summary.html">io.micronaut.mcp.client.javasdk</a></dt>
+<dd>
+<div class="block">The tools of MCP servers, to offer them to a model or call them, without depending on an AI framework.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTransportHeaders.html" class="type-name-link" title="class in io.micronaut.mcp.client.javasdk">McpClientTransportHeaders</a> - Class in <a href="io/micronaut/mcp/client/javasdk/package-summary.html">io.micronaut.mcp.client.javasdk</a></dt>
+<dd>
+<div class="block">Supplies the headers of the requests that the MCP clients of HTTP connections send, through the
+<code>McpTransportContext</code>.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpElicitationHandler.html" class="type-name-link" title="interface in io.micronaut.mcp.client.javasdk">McpElicitationHandler</a> - Interface in <a href="io/micronaut/mcp/client/javasdk/package-summary.html">io.micronaut.mcp.client.javasdk</a></dt>
+<dd>
+<div class="block">Answers the elicitation requests of MCP servers, which ask the user for information through the client.</div>
 </dd>
 <dt><a href="io/micronaut/mcp/server/registry/CompletionRegistry.html#mcpError(io.micronaut.inject.ExecutableMethod,java.lang.Throwable)" class="member-name-link">mcpError(ExecutableMethod, Throwable)</a> - Method in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/CompletionRegistry.html" title="class in io.micronaut.mcp.server.registry">CompletionRegistry</a></dt>
 <dd>
@@ -993,6 +1113,10 @@ it, another <code>McpError</code> is returned unchanged, and any other failure b
 <dd>
 <div class="block">API to define mappers from exceptions to <code>McpError</code>, the JSON-RPC error sent to the client.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpHttpClientType.html" class="type-name-link" title="enum class in io.micronaut.mcp.conf.client">McpHttpClientType</a> - Enum Class in <a href="io/micronaut/mcp/conf/client/package-summary.html">io.micronaut.mcp.conf.client</a></dt>
+<dd>
+<div class="block">The HTTP client an MCP client sends its requests with.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/McpHttpServer.html" class="type-name-link" title="interface in io.micronaut.mcp.server">McpHttpServer</a> - Interface in <a href="io/micronaut/mcp/server/package-summary.html">io.micronaut.mcp.server</a></dt>
 <dd>
 <div class="block">An MCP Server.</div>
@@ -1001,6 +1125,12 @@ it, another <code>McpError</code> is returned unchanged, and any other failure b
 <dd>
 <div class="block">Strategy interface for resolving a <a href="io/micronaut/mcp/server/McpHttpServer.html" title="interface in io.micronaut.mcp.server"><code>McpHttpServer</code></a>.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/client/http/McpHttpSessionNotFoundException.html" class="type-name-link" title="class in io.micronaut.mcp.client.http">McpHttpSessionNotFoundException</a> - Exception Class in <a href="io/micronaut/mcp/client/http/package-summary.html">io.micronaut.mcp.client.http</a></dt>
+<dd>
+<div class="block">Raised when the MCP server no longer knows the session of the client, which must initialize a new one.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/http/McpHttpSessionNotFoundException.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.Throwable)" class="member-name-link">McpHttpSessionNotFoundException(String, String, Throwable)</a> - Constructor for exception class io.micronaut.mcp.client.http.<a href="io/micronaut/mcp/client/http/McpHttpSessionNotFoundException.html" title="class in io.micronaut.mcp.client.http">McpHttpSessionNotFoundException</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/McpIconFactory.html" class="type-name-link" title="class in io.micronaut.mcp.server">McpIconFactory</a> - Class in <a href="io/micronaut/mcp/server/package-summary.html">io.micronaut.mcp.server</a></dt>
 <dd>
 <div class="block">Builds the MCP icons declared with <code>@Icon</code> or configured under <code>micronaut.mcp.server.info.icons</code>, so both
@@ -1009,10 +1139,22 @@ URI of an image, is required, the theme is <code>light</code> or <code>dark</cod
 </dd>
 <dt><a href="io/micronaut/mcp/server/McpIntrospection.html" class="type-name-link" title="class in io.micronaut.mcp.server">McpIntrospection</a> - Class in <a href="io/micronaut/mcp/server/package-summary.html">io.micronaut.mcp.server</a></dt>
 <dd>
-<div class="block">Serde imports for MCP JDK classes.</div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Not used, to be removed</div>
+</div>
 </dd>
 <dt><a href="io/micronaut/mcp/server/McpIntrospection.html#%3Cinit%3E()" class="member-name-link">McpIntrospection()</a> - Constructor for class io.micronaut.mcp.server.<a href="io/micronaut/mcp/server/McpIntrospection.html" title="class in io.micronaut.mcp.server">McpIntrospection</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
+&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpListChangedListener.html" class="type-name-link" title="interface in io.micronaut.mcp.client.javasdk">McpListChangedListener</a> - Interface in <a href="io/micronaut/mcp/client/javasdk/package-summary.html">io.micronaut.mcp.client.javasdk</a></dt>
+<dd>
+<div class="block">Notified when an MCP server changes its tools, prompts or resources.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpLoggingHandler.html" class="type-name-link" title="interface in io.micronaut.mcp.client.javasdk">McpLoggingHandler</a> - Interface in <a href="io/micronaut/mcp/client/javasdk/package-summary.html">io.micronaut.mcp.client.javasdk</a></dt>
+<dd>
+<div class="block">Receives the log messages MCP servers send to the client.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/context/McpNotificationEmitter.html" class="type-name-link" title="interface in io.micronaut.mcp.server.context">McpNotificationEmitter</a> - Interface in <a href="io/micronaut/mcp/server/context/package-summary.html">io.micronaut.mcp.server.context</a></dt>
 <dd>
 <div class="block">Sends the notifications of an HTTP request to its client, on the stream the response is upgraded to.</div>
@@ -1025,9 +1167,17 @@ URI of an image, is required, the theme is <code>light</code> or <code>dark</cod
 <dd>
 <div class="block">MCP Primitive configuration.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpProgressHandler.html" class="type-name-link" title="interface in io.micronaut.mcp.client.javasdk">McpProgressHandler</a> - Interface in <a href="io/micronaut/mcp/client/javasdk/package-summary.html">io.micronaut.mcp.client.javasdk</a></dt>
+<dd>
+<div class="block">Receives the progress MCP servers report for the requests the client sent with a progress token.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/context/McpRequestContext.html" class="type-name-link" title="interface in io.micronaut.mcp.server.context">McpRequestContext</a> - Interface in <a href="io/micronaut/mcp/server/context/package-summary.html">io.micronaut.mcp.server.context</a></dt>
 <dd>
 <div class="block">The request a tool, prompt, resource or completion method is invoked for.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpSamplingHandler.html" class="type-name-link" title="interface in io.micronaut.mcp.client.javasdk">McpSamplingHandler</a> - Interface in <a href="io/micronaut/mcp/client/javasdk/package-summary.html">io.micronaut.mcp.client.javasdk</a></dt>
+<dd>
+<div class="block">Answers the sampling requests of MCP servers, which ask the client to sample a language model.</div>
 </dd>
 <dt><a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf.server">McpServerConfiguration</a> - Interface in <a href="io/micronaut/mcp/conf/server/package-summary.html">io.micronaut.mcp.conf.server</a></dt>
 <dd>
@@ -1085,6 +1235,11 @@ prefix them with the client key so that tools of different servers cannot clash.
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#MEMBER_TITLE" class="member-name-link">MEMBER_TITLE</a> - Static variable in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpClientRequestHeaders.html#merge(java.util.Map,java.util.Map)" class="member-name-link">merge(Map, Map)</a> - Static method in class io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientRequestHeaders.html" title="class in io.micronaut.mcp.conf.client">McpClientRequestHeaders</a></dt>
+<dd>
+<div class="block">Puts headers into others, replacing those with the same name whatever its case, as HTTP field names are case
+insensitive: otherwise both <code>authorization</code> and <code>Authorization</code> would be sent.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/exceptions/InputErrorMapper.html#message(T)" class="member-name-link">message(T)</a> - Method in interface io.micronaut.mcp.server.exceptions.<a href="io/micronaut/mcp/server/exceptions/InputErrorMapper.html" title="interface in io.micronaut.mcp.server.exceptions">InputErrorMapper</a></dt>
 <dd>
 <div class="block">The message of the error, which a tool sends as a tool execution error without building an <code>McpError</code>.</div>
@@ -1125,6 +1280,15 @@ prefix them with the client key so that tools of different servers cannot clash.
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#methods" class="member-name-link">methods</a> - Variable in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpHttpClientType.html#MICRONAUT" class="member-name-link">MICRONAUT</a> - Enum constant in enum class io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpHttpClientType.html" title="enum class in io.micronaut.mcp.conf.client">McpHttpClientType</a></dt>
+<dd>
+<div class="block">The Micronaut HTTP client, which applies the configuration of the <code>micronaut.http.services</code> entry named by
+<a href="io/micronaut/mcp/conf/client/McpClientHttpConfiguration.html#getServiceId()"><code>McpClientHttpConfiguration.getServiceId()</code></a>, and the client filters of the application.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/langchain4j/http/MicronautHttpClientTransports.html" class="type-name-link" title="class in io.micronaut.mcp.client.langchain4j.http">MicronautHttpClientTransports</a> - Class in <a href="io/micronaut/mcp/client/langchain4j/http/package-summary.html">io.micronaut.mcp.client.langchain4j.http</a></dt>
+<dd>
+<div class="block">Creates the transports of the HTTP connections that use the Micronaut HTTP client.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/json/MicronautJsonSchemaValidator.html" class="type-name-link" title="class in io.micronaut.mcp.server.json">MicronautJsonSchemaValidator</a> - Class in <a href="io/micronaut/mcp/server/json/package-summary.html">io.micronaut.mcp.server.json</a></dt>
 <dd>
 <div class="block">MCP <code>JsonSchemaValidator</code> backed by Micronaut JSON Schema Validator <code>JsonSchemaValidator</code>.</div>
@@ -1142,6 +1306,20 @@ prefix them with the client key so that tools of different servers cannot clash.
 <dt><a href="io/micronaut/mcp/info/MicronautMcpClientLangchain4jModuleInfo.html" class="type-name-link" title="class in io.micronaut.mcp.info">MicronautMcpClientLangchain4jModuleInfo</a> - Class in <a href="io/micronaut/mcp/info/package-summary.html">io.micronaut.mcp.info</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/info/MicronautMcpClientLangchain4jModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautMcpClientLangchain4jModuleInfo()</a> - Constructor for class io.micronaut.mcp.info.<a href="io/micronaut/mcp/info/MicronautMcpClientLangchain4jModuleInfo.html" title="class in io.micronaut.mcp.info">MicronautMcpClientLangchain4jModuleInfo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/http/MicronautMcpHttpClients.html" class="type-name-link" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpClients</a> - Class in <a href="io/micronaut/mcp/client/http/package-summary.html">io.micronaut.mcp.client.http</a></dt>
+<dd>
+<div class="block">Creates the exchanges of the HTTP connections that use the Micronaut HTTP client, over one Micronaut HTTP client for
+each connection.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html" class="type-name-link" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpExchange</a> - Class in <a href="io/micronaut/mcp/client/http/package-summary.html">io.micronaut.mcp.client.http</a></dt>
+<dd>
+<div class="block">Sends the JSON-RPC messages of an MCP client to a server over Streamable HTTP with the Micronaut HTTP client, and
+reads the messages of the response, a JSON body or an event stream, as they arrive.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/info/MicronautMcpJavaSdkJsonModuleInfo.html" class="type-name-link" title="class in io.micronaut.mcp.info">MicronautMcpJavaSdkJsonModuleInfo</a> - Class in <a href="io/micronaut/mcp/info/package-summary.html">io.micronaut.mcp.info</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/info/MicronautMcpJavaSdkJsonModuleInfo.html#%3Cinit%3E()" class="member-name-link">MicronautMcpJavaSdkJsonModuleInfo()</a> - Constructor for class io.micronaut.mcp.info.<a href="io/micronaut/mcp/info/MicronautMcpJavaSdkJsonModuleInfo.html" title="class in io.micronaut.mcp.info">MicronautMcpJavaSdkJsonModuleInfo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html" class="type-name-link" title="class in io.micronaut.mcp.server.json">MicronautMcpJsonMapper</a> - Class in <a href="io/micronaut/mcp/server/json/package-summary.html">io.micronaut.mcp.server.json</a></dt>
 <dd>
@@ -1206,6 +1384,10 @@ prefix them with the client key so that tools of different servers cannot clash.
 <dd>
 <div class="block">The name of the tool argument.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTool.html#name()" class="member-name-link">name()</a> - Method in record class io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpClientTool.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTool</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/mcp/client/javasdk/McpClientTool.html#param-name"><code>name</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/client/langchain4j/stdio/LegacyMcpClientStdioConfiguration.html#NAME" class="member-name-link">NAME</a> - Static variable in class io.micronaut.mcp.client.langchain4j.stdio.<a href="io/micronaut/mcp/client/langchain4j/stdio/LegacyMcpClientStdioConfiguration.html" title="class in io.micronaut.mcp.client.langchain4j.stdio">LegacyMcpClientStdioConfiguration</a></dt>
 <dd>
 <div class="block">The name of the connection.</div>
@@ -1253,6 +1435,16 @@ includes every code of JSON-RPC and MCP.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/modelcontextprotocol/server/http/tck/PingTest.html#PONG" class="member-name-link">PONG</a> - Static variable in class io.modelcontextprotocol.server.http.tck.<a href="io/modelcontextprotocol/server/http/tck/PingTest.html" title="class in io.modelcontextprotocol.server.http.tck">PingTest</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html#post(java.lang.String,java.util.Map,boolean)" class="member-name-link">post(String, Map, boolean)</a> - Method in class io.micronaut.mcp.client.http.<a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpExchange</a></dt>
+<dd>
+<div class="block">Sends a JSON-RPC message.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html#post(java.lang.String,java.util.Map,boolean,java.util.function.Predicate)" class="member-name-link">post(String, Map, boolean, Predicate)</a> - Method in class io.micronaut.mcp.client.http.<a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpExchange</a></dt>
+<dd>
+<div class="block">Sends a JSON-RPC message, resuming the event stream of the response when the server closes it before it sends the
+response, as the server may: with a <code>GET</code> that carries the <code>Last-Event-ID</code> of the stream, after the
+<code>retry</code> delay of the stream, until the response arrives, the cursor is cleared, or the subscriber cancels.</div>
+</dd>
 <dt><a href="io/modelcontextprotocol/server/http/tck/HttpRequestUtils.html#POST(io.micronaut.mcp.server.McpHttpServer,java.lang.String)" class="member-name-link">POST(McpHttpServer, String)</a> - Static method in class io.modelcontextprotocol.server.http.tck.<a href="io/modelcontextprotocol/server/http/tck/HttpRequestUtils.html" title="class in io.modelcontextprotocol.server.http.tck">HttpRequestUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/client/langchain4j/stdio/StdioMcpTransportConfiguration.html#PREFIX" class="member-name-link">PREFIX</a> - Static variable in interface io.micronaut.mcp.client.langchain4j.stdio.<a href="io/micronaut/mcp/client/langchain4j/stdio/StdioMcpTransportConfiguration.html" title="interface in io.micronaut.mcp.client.langchain4j.stdio">StdioMcpTransportConfiguration</a></dt>
@@ -1313,6 +1505,8 @@ includes every code of JSON-RPC and MCP.</div>
 <dd>
 <div class="block">Reports progress, if the client asked for it with a progress token.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpProgressHandler.html#progress(java.lang.String,io.modelcontextprotocol.spec.McpSchema.ProgressNotification)" class="member-name-link">progress(String, McpSchema.ProgressNotification)</a> - Method in interface io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpProgressHandler.html" title="interface in io.micronaut.mcp.client.javasdk">McpProgressHandler</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/context/DefaultMcpRequestContext.html#progressToken()" class="member-name-link">progressToken()</a> - Method in class io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/DefaultMcpRequestContext.html" title="class in io.micronaut.mcp.server.context">DefaultMcpRequestContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/context/McpRequestContext.html#progressToken()" class="member-name-link">progressToken()</a> - Method in interface io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/McpRequestContext.html" title="interface in io.micronaut.mcp.server.context">McpRequestContext</a></dt>
@@ -1349,6 +1543,8 @@ protocol allows.</div>
 <dt><a href="io/modelcontextprotocol/server/http/tck/PromptsListTest.html#PROMPTS_LIST" class="member-name-link">PROMPTS_LIST</a> - Static variable in class io.modelcontextprotocol.server.http.tck.<a href="io/modelcontextprotocol/server/http/tck/PromptsListTest.html" title="class in io.modelcontextprotocol.server.http.tck">PromptsListTest</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/modelcontextprotocol/server/http/tck/PromptsListTest.html#PROMPTS_LIST_RESULT" class="member-name-link">PROMPTS_LIST_RESULT</a> - Static variable in class io.modelcontextprotocol.server.http.tck.<a href="io/modelcontextprotocol/server/http/tck/PromptsListTest.html" title="class in io.modelcontextprotocol.server.http.tck">PromptsListTest</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpListChangedListener.html#promptsChanged(java.lang.String,java.util.List)" class="member-name-link">promptsChanged(String, List)</a> - Method in interface io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpListChangedListener.html" title="interface in io.micronaut.mcp.client.javasdk">McpListChangedListener</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/PromptsConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf.server">PromptsConfiguration</a> - Interface in <a href="io/micronaut/mcp/conf/server/package-summary.html">io.micronaut.mcp.conf.server</a></dt>
 <dd>
@@ -1402,6 +1598,10 @@ or off.</div>
 <dt><a href="io/micronaut/mcp/conf/server/McpServerInfoConfiguration.html#PROPERTY_VERSION" class="member-name-link">PROPERTY_VERSION</a> - Static variable in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/McpServerInfoConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerInfoConfiguration</a></dt>
 <dd>
 <div class="block">configuration property name for an MCP Server version.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html#PROTOCOL_VERSION" class="member-name-link">PROTOCOL_VERSION</a> - Static variable in class io.micronaut.mcp.client.http.<a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpExchange</a></dt>
+<dd>
+<div class="block">The header of the negotiated protocol version.</div>
 </dd>
 <dt><a href="io/micronaut/mcp/server/context/MicronautMcpTransportContext.html#protocolVersion()" class="member-name-link">protocolVersion()</a> - Method in interface io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/MicronautMcpTransportContext.html" title="interface in io.micronaut.mcp.server.context">MicronautMcpTransportContext</a></dt>
 <dd>&nbsp;</dd>
@@ -1473,6 +1673,8 @@ for the health details and the logs.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/modelcontextprotocol/server/http/tck/ResourcesListTest.html#RESOURCES_LIST_RESULT" class="member-name-link">RESOURCES_LIST_RESULT</a> - Static variable in class io.modelcontextprotocol.server.http.tck.<a href="io/modelcontextprotocol/server/http/tck/ResourcesListTest.html" title="class in io.modelcontextprotocol.server.http.tck">ResourcesListTest</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpListChangedListener.html#resourcesChanged(java.lang.String,java.util.List)" class="member-name-link">resourcesChanged(String, List)</a> - Method in interface io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpListChangedListener.html" title="interface in io.micronaut.mcp.client.javasdk">McpListChangedListener</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/ResourcesConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf.server">ResourcesConfiguration</a> - Interface in <a href="io/micronaut/mcp/conf/server/package-summary.html">io.micronaut.mcp.conf.server</a></dt>
 <dd>
 <div class="block">MCP Resources configuration.</div>
@@ -1537,6 +1739,8 @@ a reactive type or a <a href="https://docs.oracle.com/en/java/javase/25/docs/api
 <dd>
 <div class="block">Asks the client to sample a language model.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpSamplingHandler.html#sample(java.lang.String,io.modelcontextprotocol.spec.McpSchema.CreateMessageRequest)" class="member-name-link">sample(String, McpSchema.CreateMessageRequest)</a> - Method in interface io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpSamplingHandler.html" title="interface in io.micronaut.mcp.client.javasdk">McpSamplingHandler</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/tools/search/SearchTool.html#search(io.micronaut.mcp.server.tools.search.SearchRequest,io.modelcontextprotocol.common.McpTransportContext)" class="member-name-link">search(SearchRequest, McpTransportContext)</a> - Method in interface io.micronaut.mcp.server.tools.search.<a href="io/micronaut/mcp/server/tools/search/SearchTool.html" title="interface in io.micronaut.mcp.server.tools.search">SearchTool</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/tools/search/SearchRequest.html" class="type-name-link" title="class in io.micronaut.mcp.server.tools.search">SearchRequest</a> - Record Class in <a href="io/micronaut/mcp/server/tools/search/package-summary.html">io.micronaut.mcp.server.tools.search</a></dt>
@@ -1574,6 +1778,10 @@ resource updates.</div>
 <dd>
 <div class="block">The server information sent in the response to <code>initialize</code>.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html#SESSION_ID" class="member-name-link">SESSION_ID</a> - Static variable in class io.micronaut.mcp.client.http.<a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpExchange</a></dt>
+<dd>
+<div class="block">The header of the session id.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/context/MicronautMcpTransportContext.html#sessionId()" class="member-name-link">sessionId()</a> - Method in interface io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/MicronautMcpTransportContext.html" title="interface in io.micronaut.mcp.server.context">MicronautMcpTransportContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/primitives/prompts/ClasspathPrompt.html#setArguments(java.util.List)" class="member-name-link">setArguments(List)</a> - Method in class io.micronaut.mcp.primitives.prompts.<a href="io/micronaut/mcp/primitives/prompts/ClasspathPrompt.html" title="class in io.micronaut.mcp.primitives.prompts">ClasspathPrompt</a></dt>
@@ -1592,11 +1800,15 @@ resource updates.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/primitives/prompts/ClasspathPrompt.html#setPath(java.lang.String)" class="member-name-link">setPath(String)</a> - Method in class io.micronaut.mcp.primitives.prompts.<a href="io/micronaut/mcp/primitives/prompts/ClasspathPrompt.html" title="class in io.micronaut.mcp.primitives.prompts">ClasspathPrompt</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html#setProtocolVersion(java.lang.String)" class="member-name-link">setProtocolVersion(String)</a> - Method in class io.micronaut.mcp.client.http.<a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpExchange</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/primitives/prompts/PromptArgument.html#setRequired(boolean)" class="member-name-link">setRequired(boolean)</a> - Method in class io.micronaut.mcp.primitives.prompts.<a href="io/micronaut/mcp/primitives/prompts/PromptArgument.html" title="class in io.micronaut.mcp.primitives.prompts">PromptArgument</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/client/langchain4j/ConnectionMcpClient.html#setRoots(java.util.List)" class="member-name-link">setRoots(List)</a> - Method in class io.micronaut.mcp.client.langchain4j.<a href="io/micronaut/mcp/client/langchain4j/ConnectionMcpClient.html" title="class in io.micronaut.mcp.client.langchain4j">ConnectionMcpClient</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/stdio/StdioServerTransportProviderReplacement.html#setSessionFactory(io.modelcontextprotocol.spec.McpServerSession.Factory)" class="member-name-link">setSessionFactory(McpServerSession.Factory)</a> - Method in class io.micronaut.mcp.server.stdio.<a href="io/micronaut/mcp/server/stdio/StdioServerTransportProviderReplacement.html" title="class in io.micronaut.mcp.server.stdio">StdioServerTransportProviderReplacement</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html#setSessionless(boolean)" class="member-name-link">setSessionless(boolean)</a> - Method in class io.micronaut.mcp.client.http.<a href="io/micronaut/mcp/client/http/MicronautMcpHttpExchange.html" title="class in io.micronaut.mcp.client.http">MicronautMcpHttpExchange</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/IconConfiguration.html#setSizes(java.util.List)" class="member-name-link">setSizes(List)</a> - Method in class io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/IconConfiguration.html" title="class in io.micronaut.mcp.conf.server">IconConfiguration</a></dt>
 <dd>&nbsp;</dd>
@@ -1683,6 +1895,10 @@ entire test plan (suite) finishes.</div>
 </dd>
 <dt><a href="io/modelcontextprotocol/server/http/tck/SuiteShutdownExtension.html#%3Cinit%3E()" class="member-name-link">SuiteShutdownExtension()</a> - Constructor for class io.modelcontextprotocol.server.http.tck.<a href="io/modelcontextprotocol/server/http/tck/SuiteShutdownExtension.html" title="class in io.modelcontextprotocol.server.http.tck">SuiteShutdownExtension</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpClientHeadersProvider.html#supports(io.micronaut.mcp.conf.client.McpClientHttpConfiguration)" class="member-name-link">supports(McpClientHttpConfiguration)</a> - Method in interface io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpClientHeadersProvider.html" title="interface in io.micronaut.mcp.conf.client">McpClientHeadersProvider</a></dt>
+<dd>
+<div class="block">Selects connections when Micronaut configures their transports and discovery caches.</div>
+</dd>
 </dl>
 <h2 class="title" id="I:T">T</h2>
 <dl class="index">
@@ -1732,6 +1948,10 @@ entire test plan (suite) finishes.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#TITLE_PROPERTY" class="member-name-link">TITLE_PROPERTY</a> - Static variable in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTool.html#tool()" class="member-name-link">tool()</a> - Method in record class io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpClientTool.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTool</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/mcp/client/javasdk/McpClientTool.html#param-tool"><code>tool</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/annotations/Tool.html" class="type-name-link" title="annotation interface in io.micronaut.mcp.annotations">Tool</a> - Annotation Interface in <a href="io/micronaut/mcp/annotations/package-summary.html">io.micronaut.mcp.annotations</a></dt>
 <dd>
 <div class="block">Method annotation to define an MCP Tool.</div>
@@ -1754,6 +1974,10 @@ call could not be bound or validated.</div>
 <dd>
 <div class="block">The registry of <a href="io/micronaut/mcp/annotations/Tool.html" title="annotation interface in io.micronaut.mcp.annotations"><code>Tool</code></a>s.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTools.html#tools()" class="member-name-link">tools()</a> - Method in interface io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpClientTools.html" title="interface in io.micronaut.mcp.client.javasdk">McpClientTools</a></dt>
+<dd>
+<div class="block">Lists the tools, creating clients on first use.</div>
+</dd>
 <dt><a href="io/modelcontextprotocol/server/http/tck/async/Tools.html" class="type-name-link" title="class in io.modelcontextprotocol.server.http.tck.async">Tools</a> - Class in <a href="io/modelcontextprotocol/server/http/tck/async/package-summary.html">io.modelcontextprotocol.server.http.tck.async</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/modelcontextprotocol/server/http/tck/async/Tools.html#%3Cinit%3E()" class="member-name-link">Tools()</a> - Constructor for class io.modelcontextprotocol.server.http.tck.async.<a href="io/modelcontextprotocol/server/http/tck/async/Tools.html" title="class in io.modelcontextprotocol.server.http.tck.async">Tools</a></dt>
@@ -1772,6 +1996,8 @@ call could not be bound or validated.</div>
 </dd>
 <dt><a href="io/modelcontextprotocol/server/http/tck/ToolsCallTest.html#%3Cinit%3E()" class="member-name-link">ToolsCallTest()</a> - Constructor for class io.modelcontextprotocol.server.http.tck.<a href="io/modelcontextprotocol/server/http/tck/ToolsCallTest.html" title="class in io.modelcontextprotocol.server.http.tck">ToolsCallTest</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpListChangedListener.html#toolsChanged(java.lang.String,java.util.List)" class="member-name-link">toolsChanged(String, List)</a> - Method in interface io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpListChangedListener.html" title="interface in io.micronaut.mcp.client.javasdk">McpListChangedListener</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/ToolsConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf.server">ToolsConfiguration</a> - Interface in <a href="io/micronaut/mcp/conf/server/package-summary.html">io.micronaut.mcp.conf.server</a></dt>
 <dd>
 <div class="block">MCP Tools configuration.</div>
@@ -1782,6 +2008,10 @@ call could not be bound or validated.</div>
 </dd>
 <dt><a href="io/modelcontextprotocol/server/http/tck/ToolsTest.html#%3Cinit%3E()" class="member-name-link">ToolsTest()</a> - Constructor for class io.modelcontextprotocol.server.http.tck.<a href="io/modelcontextprotocol/server/http/tck/ToolsTest.html" title="class in io.modelcontextprotocol.server.http.tck">ToolsTest</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTool.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpClientTool.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTool</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/context/BlockingMcpRequestContext.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/BlockingMcpRequestContext.html" title="class in io.micronaut.mcp.server.context">BlockingMcpRequestContext</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
@@ -1841,6 +2071,8 @@ call could not be bound or validated.</div>
 <dt><a href="io/micronaut/mcp/server/context/DefaultMcpRequestContext.html#transportContext()" class="member-name-link">transportContext()</a> - Method in class io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/DefaultMcpRequestContext.html" title="class in io.micronaut.mcp.server.context">DefaultMcpRequestContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/context/McpRequestContext.html#transportContext()" class="member-name-link">transportContext()</a> - Method in interface io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/McpRequestContext.html" title="interface in io.micronaut.mcp.server.context">McpRequestContext</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTransportHeaders.html#transportContext(java.util.Map)" class="member-name-link">transportContext(Map)</a> - Static method in class io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpClientTransportHeaders.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTransportHeaders</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf.server">TransportSecurityConfiguration</a> - Interface in <a href="io/micronaut/mcp/conf/server/package-summary.html">io.micronaut.mcp.conf.server</a></dt>
 <dd>
@@ -1912,11 +2144,20 @@ call could not be bound or validated.</div>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpHttpClientType.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpHttpClientType.html" title="enum class in io.micronaut.mcp.conf.client">McpHttpClientType</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/conf/Transport.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.mcp.conf.<a href="io/micronaut/mcp/conf/Transport.html" title="enum class in io.micronaut.mcp.conf">Transport</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
 <dt><a href="io/micronaut/mcp/annotations/Audience.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.mcp.annotations.<a href="io/micronaut/mcp/annotations/Audience.html" title="enum class in io.micronaut.mcp.annotations">Audience</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/conf/client/McpHttpClientType.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.mcp.conf.client.<a href="io/micronaut/mcp/conf/client/McpHttpClientType.html" title="enum class in io.micronaut.mcp.conf.client">McpHttpClientType</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
@@ -1929,6 +2170,11 @@ the order they are declared.</div>
 </dl>
 <h2 class="title" id="I:W">W</h2>
 <dl class="index">
+<dt><a href="io/micronaut/mcp/client/javasdk/McpClientTransportHeaders.html#withHeaders(reactor.util.context.Context,java.util.Map)" class="member-name-link">withHeaders(Context, Map)</a> - Static method in class io.micronaut.mcp.client.javasdk.<a href="io/micronaut/mcp/client/javasdk/McpClientTransportHeaders.html" title="class in io.micronaut.mcp.client.javasdk">McpClientTransportHeaders</a></dt>
+<dd>
+<div class="block">Adds the headers to send to a Reactor context, as the transport context that the asynchronous client reads from
+the context of its subscriber.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html#writeValueAsBytes(java.lang.Object)" class="member-name-link">writeValueAsBytes(Object)</a> - Method in class io.micronaut.mcp.server.json.<a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html" title="class in io.micronaut.mcp.server.json">MicronautMcpJsonMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html#writeValueAsString(java.lang.Object)" class="member-name-link">writeValueAsString(Object)</a> - Method in class io.micronaut.mcp.server.json.<a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapper.html" title="class in io.micronaut.mcp.server.json">MicronautMcpJsonMapper</a></dt>

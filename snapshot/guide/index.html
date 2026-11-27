@@ -327,6 +327,12 @@
 <li>
 <p>The application fails to start when two MCP client connections have the same name, when an HTTP connection has no <code>url</code>, or when a STDIO connection has no <code>command</code>.</p>
 </li>
+<li>
+<p>The Java SDK clients connect to their server when the bean is created, so injecting a client of a server that cannot be reached throws a <code>BeanInstantiationException</code>, which can fail the startup of the application. Inject a <code>jakarta.inject.Provider</code> or a <code>BeanProvider</code> of the client to connect when it is first used.</p>
+</li>
+<li>
+<p>A connection has either a synchronous or an asynchronous Java SDK client: creating the second one fails. Declare a connection for each if the application needs both.</p>
+</li>
 </ul>
 </div>
 </div>
@@ -5965,15 +5971,14 @@ class MyResourceTemplates {
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.initialization-timeout</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer the initialization. Only used by the LangChain4j client, whose default
- is 30 seconds.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer the initialization. The LangChain4j client defaults to 30 seconds.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.request-timeout</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer an MCP request, such as a tool call or a ping. Only used by the
- LangChain4j client, whose defaults are 60 seconds for requests and 10 seconds for pings.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer an MCP request, such as a tool call or a ping. The LangChain4j client defaults to
+ 60 seconds for requests and 10 seconds for pings.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
@@ -6012,7 +6017,39 @@ class MyResourceTemplates {
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.headers</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The headers sent with every request, such as <code>Authorization</code>. Only used by the LangChain4j client.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The headers sent with every request, such as <code>Authorization</code>.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.http-client</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/mcp/conf/client/McpHttpClientType.html">McpHttpClientType</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The HTTP client to send the requests with. Default value {@code JDK}.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.service-id</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The id of the {@code micronaut.http.services} entry that configures the Micronaut HTTP client</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.max-message-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The maximum size of a message of the server that the Micronaut HTTP client buffers, such as {@code 16MB}. Default
+ value 16 MiB.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.propagate-authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to send the {@code Authorization} header of the HTTP request the server is handling to the MCP server. Default value {@code false}.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.propagate-any-authorization-scheme</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to propagate the {@code Authorization} header whatever its scheme, instead of only bearer tokens. Default
+ value {@code false}.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
@@ -6057,25 +6094,77 @@ runtime = [
 </p>
 </div>
 <div class="paragraph">
-<p>It creates a client for each HTTP connection of <code>micronaut.mcp.client.http</code>, using its <code>url</code>, and its <code>timeout</code> as the request timeout of the client.</p>
+<p>Declare a named connection for each MCP server under <code>micronaut.mcp.client.http</code> or <code>micronaut.mcp.client.stdio</code>, as for the <a href="#clientLangchain4j">LangChain4j client</a>. For each connection there is an <code>io.modelcontextprotocol.client.McpSyncClient</code> and an <code>io.modelcontextprotocol.client.McpAsyncClient</code> bean, qualified by the name of the connection.</p>
 </div>
-<div class="admonitionblock note">
+<div class="paragraph">
+<p>For an HTTP connection, set <code>url</code> to the full MCP endpoint, including its path and any query parameters. A URL with no path uses <code>/mcp</code>. The client sends the configured <code>headers</code> to that endpoint.</p>
+</div>
+<div class="admonitionblock important">
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-note" title="Note"></i>
+<i class="fa icon-important" title="Important"></i>
 </td>
 <td class="content">
-The <code>headers</code>, <code>initialization-timeout</code>, <code>request-timeout</code>, <code>auto-health-check</code>, <code>log-requests</code> and <code>log-responses</code> settings of a connection, and the STDIO connections of <code>micronaut.mcp.client.stdio</code>, are only used by the <a href="#clientLangchain4j">LangChain4j MCP Client</a>.
+Use either the synchronous or the asynchronous client of a connection, not both. Each client opens its own session over its own transport, which for STDIO would start a second server process, so creating the second client of a connection fails. <code>McpClientTools</code> uses the synchronous client.
 </td>
 </tr>
 </table>
 </div>
 <div class="paragraph">
-<p>Additionally, if you are building an <a href="#serverJavaSdk">MCP Server</a>, you can test it by injecting a bean of type <code>io.modelcontextprotocol.client.McpSyncClient</code> or <code>io.modelcontextprotocol.client.McpAsyncClient</code> in your tests. The MCP Client pointing to your MCP Server has a <a href="https://docs.micronaut.io/latest/guide/#qualifiers">name qualifier</a> with value <code>embeddedServer</code>.</p>
+<p>A configured client starts its initialization handshake when Micronaut creates the bean. On a blocking thread, creation waits for the handshake. On an event loop, initialization continues in the background and client operations await readiness. If the handshake fails, Micronaut closes the client and its transport and removes the failed singleton. Inject a qualified <code>BeanProvider</code> to resolve a fresh client on a later attempt. When the application stops, the clients are closed gracefully, waiting up to 10 seconds for their transport to close.</p>
 </div>
 <div class="paragraph">
-<p>To customize client creation for your application&#8217;s needs, define
+<p>Declare beans of these types to answer the requests of servers and receive their notifications. Each method receives the name of the connection: The asynchronous client calls them on the blocking executor, so they may block.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Bean type</th>
+<th class="tableblock halign-left valign-top">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>io.micronaut.mcp.client.javasdk.McpSamplingHandler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Answers <a href="https://modelcontextprotocol.io/specification/2025-11-25/client/sampling">sampling</a> requests; the clients then advertise the sampling capability</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>io.micronaut.mcp.client.javasdk.McpElicitationHandler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Answers <a href="https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation">elicitation</a> requests; the clients then advertise the elicitation capability</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>io.micronaut.mcp.client.javasdk.McpLoggingHandler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Receives log messages</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>io.micronaut.mcp.client.javasdk.McpProgressHandler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Receives progress notifications for requests sent with a progress token</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>io.micronaut.mcp.client.javasdk.McpListChangedListener</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Notified when a server changes its tools, prompts or resources</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>To offer server tools to a model without depending on an AI framework, inject <code>io.micronaut.mcp.client.javasdk.McpClientTools</code>. The primary bean lists tools from all connections concurrently in the caller&#8217;s Micronaut context and skips unreachable servers. A bean qualified by connection name lists only that server&#8217;s tools. Each <code>McpClientTool</code> can be called. Connections with dynamic HTTP headers fetch the catalog on every lookup. Other connections cache it until the server notifies the client of a change. Declare <code>McpClientToolFilter</code> and <code>McpClientToolNameMapper</code> beans to select and name the tools.</p>
+</div>
+<div class="paragraph">
+<p>If you are building an <a href="#serverJavaSdk">MCP Server</a>, you can test it by injecting a bean of type <code>io.modelcontextprotocol.client.McpSyncClient</code> or <code>io.modelcontextprotocol.client.McpAsyncClient</code> in your tests. The MCP Client pointing to your MCP Server has a <a href="https://docs.micronaut.io/latest/guide/#qualifiers">name qualifier</a> with value <code>embeddedServer</code>.</p>
+</div>
+<div class="paragraph">
+<p>The <a href="#clientLangchain4j">authorization</a> of the HTTP connections applies to both clients. Read its warnings about passing tokens through and sharing a session between users before enabling <code>propagate-authorization</code>. The asynchronous client computes the headers in the context its subscriber propagates, such as the request a reactive controller is handling. To supply the headers of a request of the asynchronous client yourself, add them to the Reactor context of the request with <code>io.micronaut.mcp.client.javasdk.McpClientTransportHeaders.withHeaders</code>, in <code>contextWrite</code>.</p>
+</div>
+<div class="paragraph">
+<p>Applications can also supply an <code>McpClient.SyncSpec</code> or <code>McpClient.AsyncSpec</code> bean directly. Without a matching connection configuration, the resulting client inherits the spec&#8217;s qualifier and uses the SDK&#8217;s lazy initialization.</p>
+</div>
+<div class="paragraph">
+<p>To customize client creation further, define
 <a href="https://docs.micronaut.io/latest/api/io/micronaut/context/event/BeanCreatedEventListener.html">BeanCreatedEventListener</a>s
 for <code>HttpClientStreamableHttpTransport.Builder</code>, <code>McpClient.SyncSpec</code>, or <code>McpClient.AsyncSpec</code>.</p>
 </div>
@@ -6529,6 +6618,285 @@ micronaut.mcp.client.stdio.stdio.command: [npx, -y, "@modelcontextprotocol/serve
 </div>
 <div class="paragraph">
 <p>The application logs a warning when it uses either deprecated property. See also the <a href="#breaks">breaking changes</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_authorization">Authorization</h3>
+<div class="paragraph">
+<p>To call MCP servers on behalf of the user, set <code>propagate-authorization</code> on an HTTP connection: the <code>Authorization</code> header of the HTTP request the application is handling, such as the user&#8217;s bearer token, is sent to the MCP server. Only bearer tokens are propagated; set <code>propagate-any-authorization-scheme</code> to also propagate other schemes, such as Basic credentials.</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.mcp.client.http.weather.url=https://weather.example.com/mcp
+micronaut.mcp.client.http.weather.propagate-authorization=true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  mcp:
+    client:
+      http:
+        weather:
+          url: https://weather.example.com/mcp
+          propagate-authorization: true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.mcp.client.http.weather]
+url = "https://weather.example.com/mcp"
+propagate-authorization = true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  mcp {
+    client {
+      http {
+        weather {
+          url = "https://weather.example.com/mcp"
+          propagateAuthorization = true
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    mcp {
+      client {
+        http {
+          weather {
+            url = "https://weather.example.com/mcp"
+            propagate-authorization = true
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "mcp": {
+      "client": {
+        "http": {
+          "weather": {
+            "url": "https://weather.example.com/mcp",
+            "propagate-authorization": true
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>To compute headers for each request otherwise, for example to send an OAuth access token that is refreshed, declare a bean of type <code>io.micronaut.mcp.conf.client.McpClientHeadersProvider</code>. Both apply to the LangChain4j and the Java SDK clients, and are evaluated on the thread that calls the client: call it from the thread handling the request for the <code>Authorization</code> header to be propagated. The asynchronous Java SDK client evaluates them in the context its subscriber propagates, such as the request a reactive controller is handling.</p>
+</div>
+<div class="paragraph">
+<p>A headers provider is asked for every connection, unless it overrides <code>supports(McpClientHttpConfiguration)</code>: check the connection, so that a token meant for one MCP server is not sent to the others.</p>
+</div>
+<div class="paragraph">
+<p>Provider headers override static headers even when the names use different capitalization. Connections that propagate authorization or use a headers provider fetch tool, resource, and prompt catalogs on each lookup so the server can select the entries visible to the current caller.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+The <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization">MCP authorization specification</a> forbids passing through a token whose audience is not the MCP server: a server that follows it rejects the token, and one that skips the audience check becomes a confused deputy. Only propagate the <code>Authorization</code> header to MCP servers that accept the tokens issued for the application, for example servers of the same organization behind the same authorization server. Otherwise exchange the user&#8217;s token for one whose audience is the MCP server, for example with <a href="https://datatracker.ietf.org/doc/html/rfc8693">OAuth 2.0 Token Exchange</a>, in a custom <code>McpClientHeadersProvider</code>.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+The client of a connection, and so its MCP session, is shared by every user of the application: the session is created for the first user, and the propagated <code>Authorization</code> header applies to each request, not to the session. An MCP server that binds its sessions to the user that initialized them, as the specification recommends, rejects or mixes up the calls of other users. Connections that propagate authorization need a server without user-bound sessions, or a connection for each user.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Initialization, pings, reconnections, and replies to server requests can all run outside a user request. If the MCP server requires authentication for those operations, configure a headers provider that can supply application credentials when the current request is absent, for example a client credentials token.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_micronaut_http_client">Micronaut HTTP Client</h3>
+<div class="paragraph">
+<p>By default the clients send their requests with the JDK HTTP client. Set <code>http-client</code> to <code>MICRONAUT</code> on an HTTP connection to use the Micronaut HTTP client instead, with the <code>micronaut-http-client</code> dependency: the client filters of the application apply, and <code>service-id</code> names the <code>micronaut.http.services</code> entry that configures the client, for example its SSL, proxy or timeouts. The service ID selects filters such as <code>@ClientFilter(serviceId = "weather")</code> even when the service entry omits <code>url</code>. In that case, the connection URL supplies the host. With either HTTP client, a URL without a path uses <code>/</code> for LangChain4j and <code>/mcp</code> for the MCP Java SDK. Without <code>service-id</code>, the default client configuration applies, with the <code>request-timeout</code> of the connection, or its <code>timeout</code>, as the read timeout.</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.mcp.client.http.weather.url=https://weather.example.com/mcp
+micronaut.mcp.client.http.weather.http-client=MICRONAUT
+micronaut.mcp.client.http.weather.service-id=weather
+micronaut.http.services.weather.read-timeout=60s
+micronaut.http.services.weather.follow-redirects=false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  mcp:
+    client:
+      http:
+        weather:
+          url: https://weather.example.com/mcp
+          http-client: MICRONAUT
+          service-id: weather
+  http:
+    services:
+      weather:
+        read-timeout: 60s
+        follow-redirects: false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.mcp.client.http.weather]
+url = "https://weather.example.com/mcp"
+http-client = "MICRONAUT"
+service-id = "weather"
+
+[micronaut.http.services.weather]
+read-timeout = "60s"
+follow-redirects = false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  mcp {
+    client {
+      http {
+        weather {
+          url = "https://weather.example.com/mcp"
+          httpClient = "MICRONAUT"
+          serviceId = "weather"
+        }
+      }
+    }
+  }
+  http {
+    services {
+      weather {
+        readTimeout = "60s"
+        followRedirects = false
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    mcp {
+      client {
+        http {
+          weather {
+            url = "https://weather.example.com/mcp"
+            http-client = "MICRONAUT"
+            service-id = "weather"
+          }
+        }
+      }
+    }
+    http {
+      services {
+        weather {
+          read-timeout = "60s"
+          follow-redirects = false
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "mcp": {
+      "client": {
+        "http": {
+          "weather": {
+            "url": "https://weather.example.com/mcp",
+            "http-client": "MICRONAUT",
+            "service-id": "weather"
+          }
+        }
+      }
+    },
+    "http": {
+      "services": {
+        "weather": {
+          "read-timeout": "60s",
+          "follow-redirects": false
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>This applies to the LangChain4j and the Java SDK clients. Responses streamed as server-sent events are read as they arrive. A message of the server larger than <code>max-message-size</code> (default <code>16MB</code>), counted in bytes, fails the request. When the server closes the stream of a response before it sends the response, the client resumes it from its last event, after the <code>retry</code> delay the server sets. The Java SDK client listens to the stream of the messages the server sends on its own, such as the notifications that its tools changed, reconnecting when it ends; as the LangChain4j HTTP transport, the LangChain4j client does not.</p>
+</div>
+<div class="paragraph">
+<p>The <code>request-timeout</code> or <code>timeout</code> of a connection becomes the <code>read-timeout</code> of its client, and redirects are not followed, since MCP does not use them and following one could send the token of a user to another server. With <code>service-id</code> the <code>micronaut.http.services</code> entry configures the client instead: set its <code>read-timeout</code> and <code>follow-redirects: false</code> there. The <code>read-idle-timeout</code> of the client (default <code>5m</code>) still applies: it closes the stream of a server that stays quiet that long, and the Java SDK client then reconnects.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+The client filters of the application apply to the requests sent to MCP servers, including third-party ones. Restrict the filters that add credentials, for example with <code>@ClientFilter(serviceId = &#8230;&#8203;)</code> or path patterns, so that they do not reach MCP servers they are not meant for.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+The responses are read on the event loop of the Micronaut HTTP client, which by default is shared with the HTTP server. Never call a blocking client API, such as the LangChain4j client or the Java SDK <code>McpSyncClient</code>, on an event loop: it would wait for a response that the blocked event loop cannot read. Call them from a thread that may block, for example with <code>@ExecuteOn(TaskExecutors.BLOCKING)</code>, or use the asynchronous Java SDK client. The messages are parsed, and the handlers called, on the blocking executor.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect2">

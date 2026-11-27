@@ -227,15 +227,14 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.initialization-timeout</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer the initialization. Only used by the LangChain4j client, whose default
- is 30 seconds.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer the initialization. The LangChain4j client defaults to 30 seconds.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.request-timeout</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer an MCP request, such as a tool call or a ping. Only used by the
- LangChain4j client, whose defaults are 60 seconds for requests and 10 seconds for pings.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer an MCP request, such as a tool call or a ping. The LangChain4j client defaults to
+ 60 seconds for requests and 10 seconds for pings.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
@@ -274,7 +273,39 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.headers</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.util.Map</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The headers sent with every request, such as <code>Authorization</code>. Only used by the LangChain4j client.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The headers sent with every request, such as <code>Authorization</code>.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.http-client</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/mcp/conf/client/McpHttpClientType.html">McpHttpClientType</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The HTTP client to send the requests with. Default value {@code JDK}.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.service-id</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.lang.String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The id of the {@code micronaut.http.services} entry that configures the Micronaut HTTP client</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.max-message-size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The maximum size of a message of the server that the Micronaut HTTP client buffers, such as {@code 16MB}. Default
+ value 16 MiB.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.propagate-authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to send the {@code Authorization} header of the HTTP request the server is handling to the MCP server. Default value {@code false}.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.http.*.propagate-any-authorization-scheme</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to propagate the {@code Authorization} header whatever its scheme, instead of only bearer tokens. Default
+ value {@code false}.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
@@ -301,15 +332,14 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.stdio.*.initialization-timeout</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer the initialization. Only used by the LangChain4j client, whose default
- is 30 seconds.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer the initialization. The LangChain4j client defaults to 30 seconds.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.client.stdio.*.request-timeout</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer an MCP request, such as a tool call or a ping. Only used by the
- LangChain4j client, whose defaults are 60 seconds for requests and 10 seconds for pings.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">How long to wait for the server to answer an MCP request, such as a tool call or a ping. The LangChain4j client defaults to
+ 60 seconds for requests and 10 seconds for pings.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>

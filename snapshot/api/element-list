@@ -1,6 +1,9 @@
 io.micronaut.mcp.annotations
+io.micronaut.mcp.client.http
+io.micronaut.mcp.client.javasdk
 io.micronaut.mcp.client.langchain4j
 io.micronaut.mcp.client.langchain4j.health
+io.micronaut.mcp.client.langchain4j.http
 io.micronaut.mcp.client.langchain4j.stdio
 io.micronaut.mcp.conf
 io.micronaut.mcp.conf.client
