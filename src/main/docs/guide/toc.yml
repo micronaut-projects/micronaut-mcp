@@ -65,6 +65,7 @@ server:
           resourceTemplateVariableDecoding: Resource Template Variable Decoding
         resourcesTemplatesFactory: Resource Templates with a Factory
     primitivesMetadata: Icons, Metadata and Resource Hints
+    dynamicPrimitives: Adding and Removing Primitives at Runtime
     completions:
       title: Completions
       promptCompletionAnnotation:

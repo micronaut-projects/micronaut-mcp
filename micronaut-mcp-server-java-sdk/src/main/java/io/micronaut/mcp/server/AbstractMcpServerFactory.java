@@ -22,9 +22,6 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.mcp.conf.server.IconConfiguration;
 import io.micronaut.mcp.conf.server.McpServerInfoConfiguration;
-import io.micronaut.mcp.conf.server.PromptsConfiguration;
-import io.micronaut.mcp.conf.server.ResourcesConfiguration;
-import io.micronaut.mcp.conf.server.ToolsConfiguration;
 import io.micronaut.mcp.server.registry.CompletionRegistry;
 import io.micronaut.mcp.server.registry.PromptRegistry;
 import io.micronaut.mcp.server.registry.ResourceRegistry;
@@ -34,6 +31,8 @@ import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.schema.JsonSchemaValidator;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +51,9 @@ import java.util.List;
  */
 @Internal
 public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractMcpServerFactory.class);
+
     /**
      * Retrieves a list of tools from the provided {@link ToolRegistry}.
      *
@@ -59,6 +61,17 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
      * @return a list of tools retrieved from the provided tool registry
      */
     protected abstract List<T> getTools(ToolRegistry toolRegistry);
+
+    /**
+     * Whether the server can send notifications to clients outside the response to a request, such as list changes and
+     * resource updates. A stateless server cannot, so it does not advertise them even when they are configured.
+     *
+     * @return Whether the server sends notifications
+     * @since 2.2.0
+     */
+    protected boolean sendsNotifications() {
+        return true;
+    }
 
     /**
      * The server information sent in the response to {@code initialize}.
@@ -156,11 +169,7 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
      * @param jsonMapper MCP JSON Mapper
      * @param jsonSchemaValidator MCP JSON schema validator
      * @param configuration MCP Server Info Configuration
-     * @param toolsConfiguration Tools Configuration
-     * @param promptsConfiguration Prompts Configuration
-     * @param resourcesConfiguration Resources Configuration
-     * @param capabilitiesBuilder Capabilities Builder
-     * @param capabilitiesProvider Capabilities Provider
+     * @param capabilitiesProvider Capabilities Provider, see {@link ServerCapabilitiesFactory}
      * @param toolRegistry Tool Registry
      * @param promptRegistry Prompt Registry
      * @param resourceRegistry Resource Registry
@@ -180,39 +189,76 @@ public abstract class AbstractMcpServerFactory<Spec, S, T, C, P, R, U> {
                                    McpJsonMapper jsonMapper,
                                    JsonSchemaValidator jsonSchemaValidator,
                                    @Nullable McpServerInfoConfiguration configuration,
-                                  ToolsConfiguration toolsConfiguration,
-                                  PromptsConfiguration promptsConfiguration,
-                                  ResourcesConfiguration resourcesConfiguration,
-                                  McpSchema.ServerCapabilities.Builder capabilitiesBuilder,
-                                  Provider<McpSchema.ServerCapabilities> capabilitiesProvider,
-                                  ToolRegistry toolRegistry,
-                                  PromptRegistry promptRegistry,
-                                  ResourceRegistry resourceRegistry,
-                                  ResourceTemplateRegistry resourceTemplateRegistry,
-                                  CompletionRegistry completionRegistry,
-                                  List<T> tools,
-                                  List<C> completions,
-                                  List<P> prompts,
-                                  List<R> resources,
+                                   Provider<McpSchema.ServerCapabilities> capabilitiesProvider,
+                                   ToolRegistry toolRegistry,
+                                   PromptRegistry promptRegistry,
+                                   ResourceRegistry resourceRegistry,
+                                   ResourceTemplateRegistry resourceTemplateRegistry,
+                                   CompletionRegistry completionRegistry,
+                                   List<T> tools,
+                                   List<C> completions,
+                                   List<P> prompts,
+                                   List<R> resources,
                                    List<U> resourceTemplates) {
         List<T> allTools = CollectionUtils.concat(tools, getTools(toolRegistry));
-        if (!allTools.isEmpty()) {
-            capabilitiesBuilder.tools(toolsConfiguration.isListChanged());
-        }
         List<P> allPrompts = CollectionUtils.concat(prompts, getPrompts(promptRegistry));
-        if (!allPrompts.isEmpty()) {
-            capabilitiesBuilder.prompts(promptsConfiguration.isListChanged());
-        }
         List<R> allResources = CollectionUtils.concat(resources, getResources(resourceRegistry));
         List<U> allResourceTemplates = CollectionUtils.concat(resourceTemplates, getResourceTemplates(resourceTemplateRegistry));
-        if (!allResourceTemplates.isEmpty() || !allResources.isEmpty()) {
-            capabilitiesBuilder.resources(resourcesConfiguration.isSubscribe(), resourcesConfiguration.isListChanged());
-        }
         List<C> allCompletions = CollectionUtils.concat(completions, getCompletions(completionRegistry));
-        if (!allCompletions.isEmpty()) {
-            capabilitiesBuilder.completions();
+        // ServerCapabilitiesFactory decides which capabilities the server advertises
+        McpSchema.ServerCapabilities capabilities = capabilitiesProvider.get();
+        if (!sendsNotifications()) {
+            List<String> notifications = advertisedNotifications(capabilities);
+            if (!notifications.isEmpty()) {
+                LOG.debug("The server cannot send notifications outside the response to a request, so it advertises listChanged and subscribe as false instead of true for: {}",
+                    notifications);
+            }
+            capabilities = withoutNotifications(capabilities);
         }
-        return createMcpServerSpec(transport, jsonMapper, jsonSchemaValidator, configuration, capabilitiesProvider.get(), allTools, allCompletions, allPrompts, allResources, allResourceTemplates);
+        return createMcpServerSpec(transport, jsonMapper, jsonSchemaValidator, configuration, capabilities, allTools, allCompletions, allPrompts, allResources, allResourceTemplates);
+    }
+
+    /**
+     * The list changes and resource subscriptions the capabilities advertise.
+     *
+     * @param capabilities The capabilities
+     * @return The names of the flags that are {@code true}
+     */
+    private static List<String> advertisedNotifications(McpSchema.ServerCapabilities capabilities) {
+        List<String> notifications = new ArrayList<>(4);
+        if (capabilities.tools() != null && Boolean.TRUE.equals(capabilities.tools().listChanged())) {
+            notifications.add("tools.listChanged");
+        }
+        if (capabilities.prompts() != null && Boolean.TRUE.equals(capabilities.prompts().listChanged())) {
+            notifications.add("prompts.listChanged");
+        }
+        if (capabilities.resources() != null && Boolean.TRUE.equals(capabilities.resources().listChanged())) {
+            notifications.add("resources.listChanged");
+        }
+        if (capabilities.resources() != null && Boolean.TRUE.equals(capabilities.resources().subscribe())) {
+            notifications.add("resources.subscribe");
+        }
+        return notifications;
+    }
+
+    /**
+     * Copies the capabilities, keeping every other component, with list changes and resource subscriptions turned off.
+     *
+     * @param capabilities The capabilities
+     * @return The capabilities without notifications
+     */
+    private static McpSchema.ServerCapabilities withoutNotifications(McpSchema.ServerCapabilities capabilities) {
+        McpSchema.ServerCapabilities.Builder builder = capabilities.mutate();
+        if (capabilities.prompts() != null) {
+            builder.prompts(false);
+        }
+        if (capabilities.resources() != null) {
+            builder.resources(false, false);
+        }
+        if (capabilities.tools() != null) {
+            builder.tools(false);
+        }
+        return builder.build();
     }
 
 }
