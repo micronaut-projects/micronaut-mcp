@@ -6,11 +6,13 @@ In a method annotated with `@Tool`, you can use as a return type:
 
 Any of these can also be produced asynchronously, by returning a single value reactive type such as `Mono<T>`, a `Publisher<T>` that emits at most one value, or a `CompletionStage<T>`. Other reactive types, such as RxJava's `Single`, are converted with the conversion service. The value it produces is used as if the method had returned it, and the result is chosen from that value rather than from the declared return type. A `@JsonSchema` type produced this way is still used as the structured output; producing no value is then a tool error.
 
-A method returning a type that may emit several values, such as `Flux<T>`, fails the startup, unless it is annotated with `@SingleResult`. The exception are completion methods: the values of a `Flux<String>` returned by a `@PromptCompletion` or `@ResourceCompletion` method are collected into the completion values. A `Publisher<T>` that emits more than one value fails the call.
+A method returning a type that may emit several values, such as `Flux<T>`, fails the startup, unless it is annotated with `@SingleResult`. A `Publisher<T>` that emits more than one value fails the call.
 
-The same applies to methods annotated with `@Prompt`, `@Resource`, `@ResourceTemplate`, `@PromptCompletion` and `@ResourceCompletion`.
+The single-value rules also apply to methods annotated with `@Prompt`, `@Resource`, `@ResourceTemplate`, `@PromptCompletion` and `@ResourceCompletion`.
+
+A `@PromptCompletion` or `@ResourceCompletion` method can also return a `Flux<String>` of suggestions. The response contains up to 100 suggestions in emission order. If the publisher emits a 101st suggestion, the server cancels the subscription, sets `hasMore` to `true`, and omits the unknown `total`.
 
 How the methods are invoked depends on `micronaut.mcp.server.reactive`:
 
-- When it is `false` (the default), the HTTP endpoint handles requests on the blocking executor, which uses virtual threads where they are available. Methods run on that thread, can block, and see the current request through `ServerRequestContext`. The server waits for asynchronous return values. A method annotated with `@ExecuteOn` runs on the named executor, for example to limit how many calls run concurrently, and the request thread waits for it.
+- When it is `false` (the default), the HTTP endpoint handles requests on the blocking executor, which uses virtual threads where they are available. Methods run on that thread, can block, and see the current request through `ServerRequestContext`. The server waits for asynchronous return values. A method annotated with `@ExecuteOn` runs on the named executor, for example to limit how many calls run concurrently, and the request thread waits for the result. If you configure a fixed-size HTTP blocking executor, use a separate executor for asynchronous work that a request waits for, or enable the reactive server.
 - When it is `true`, methods run on the thread that received the request, which must not block. Annotate a method with `@ExecuteOn` to run it on another executor, for example `@ExecuteOn(TaskExecutors.BLOCKING)`.

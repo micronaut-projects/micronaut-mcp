@@ -8,12 +8,14 @@ import io.modelcontextprotocol.spec.McpSchema;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.callTool;
 import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.callToolError;
 import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.complete;
 import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.text;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * Assertions on {@link ExecutionModelTools} that hold in both execution models.
@@ -45,8 +47,12 @@ final class ExecutionModelAssertions {
         // @ExecuteOn is honoured, with the request in scope
         assertEquals("true true", text(callTool(httpClient, jsonMapper, "onIo")));
         // a publisher of completion values is collected
-        assertEquals(List.of("Alice", "Bob"), complete(httpClient, jsonMapper, "greet"));
+        assertEquals(Map.of("values", List.of("Alice", "Bob"), "total", 2, "hasMore", false), complete(httpClient, jsonMapper, "greet"));
         // the text of any CharSequence is a completion value
-        assertEquals(List.of("Carol"), complete(httpClient, jsonMapper, "farewell"));
+        assertEquals(List.of("Carol"), complete(httpClient, jsonMapper, "farewell").get("values"));
+        var limited = complete(httpClient, jsonMapper, "manySuggestions");
+        assertEquals(IntStream.range(0, 100).mapToObj(Integer::toString).toList(), limited.get("values"));
+        assertEquals(true, limited.get("hasMore"));
+        assertFalse(limited.containsKey("total"));
     }
 }
