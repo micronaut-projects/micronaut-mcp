@@ -44,9 +44,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface Meta {
 
     /**
-     * @return The key. It may start with a prefix: a reverse DNS name followed by {@code /}. Prefixes whose second label is
-     * {@code modelcontextprotocol} or {@code mcp}, such as {@code io.modelcontextprotocol/}, are reserved by the specification;
-     * this is not checked. An empty key, or a key repeated on the same method, fails the startup.
+     * @return A non-empty key following the MCP metadata key grammar. A key may have a reverse DNS prefix followed by
+     * {@code /}, as in {@code com.example/category}. MCP reserves prefixes whose second label is
+     * {@code modelcontextprotocol} or {@code mcp}. Repeating the same key and value on a method produces one entry.
+     * A malformed key or conflicting values for one key cause startup to fail.
      */
     String key();
 

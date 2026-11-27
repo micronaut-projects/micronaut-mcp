@@ -38,14 +38,18 @@ class McpIconFactoryTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"https://example.com/sun.svg", "HTTPS://example.com/sun.svg", "http://localhost:8080/sun.svg",
-        "https://my_host/sun.svg", "data:image/png;base64,iVBORw0KGgo=", "DATA:image/svg+xml,%3Csvg%2F%3E"})
+        "https://my_host:65535/sun.svg", "https://[::1]/sun.svg", "http://[::1]:8080/sun.svg",
+        "data:image/png;base64,iVBORw0KGgo=", "DATA:image/svg+xml,%3Csvg%2F%3E", "data:image/svg+xml;charset=utf-8,%3Csvg%2F%3E"})
     void httpsHttpAndDataSourcesAreAccepted(String src) {
         assertEquals(src, McpIconFactory.icon(OWNER, src, null, List.of(), null).src());
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"javascript:alert(1)", "file:///etc/passwd", "ftp://example.com/sun.svg", "example.com/sun.svg",
-        "httpx://example.com", "http:sun.svg", "https:///sun.svg", "https://exa mple.com", "data:text/html,<script>x</script>", " data:image/png;base64,AA"})
+        "httpx://example.com", "http:sun.svg", "https:///sun.svg", "https://exa mple.com", "http://:8080/icon.png",
+        "https://example.org:abc/icon.png", "https://[::1]:65536/icon.png", "http://my_host:-1/icon.png",
+        "data:text/html,<script>x</script>", " data:image/png;base64,AA", "data:image/png", "data:image/png;base64,",
+        "data:image/,payload", "data:image/png;,payload", "data:image/svg+xml,%GG"})
     void otherSourcesAreRejectedWithoutRepeatingThem(String src) {
         IllegalStateException error = assertThrows(IllegalStateException.class, () -> McpIconFactory.icon(OWNER, src, null, List.of(), null));
         assertEquals("The icon has a src that is not an https or http URL, or a data: URI of an image", error.getMessage());
