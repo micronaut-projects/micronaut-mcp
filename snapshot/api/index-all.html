@@ -199,6 +199,10 @@ loadScripts(document, 'script');</script>
 </dl>
 <h2 class="title" id="I:D">D</h2>
 <dl class="index">
+<dt><a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html#DEFAULT_ALLOW_LOOPBACK_ORIGINS" class="member-name-link">DEFAULT_ALLOW_LOOPBACK_ORIGINS</a> - Static variable in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html" title="interface in io.micronaut.mcp.conf.server">TransportSecurityConfiguration</a></dt>
+<dd>
+<div class="block">Whether loopback origins are allowed by default.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/tools/fetch/FetchTool.html#DEFAULT_DESCRIPTION" class="member-name-link">DEFAULT_DESCRIPTION</a> - Static variable in interface io.micronaut.mcp.server.tools.fetch.<a href="io/micronaut/mcp/server/tools/fetch/FetchTool.html" title="interface in io.micronaut.mcp.server.tools.fetch">FetchTool</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/tools/search/SearchTool.html#DEFAULT_DESCRIPTION" class="member-name-link">DEFAULT_DESCRIPTION</a> - Static variable in interface io.micronaut.mcp.server.tools.search.<a href="io/micronaut/mcp/server/tools/search/SearchTool.html" title="interface in io.micronaut.mcp.server.tools.search">SearchTool</a></dt>
@@ -207,6 +211,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html#DEFAULT_ENABLED" class="member-name-link">DEFAULT_ENABLED</a> - Static variable in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html#DEFAULT_ENABLED" class="member-name-link">DEFAULT_ENABLED</a> - Static variable in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html" title="interface in io.micronaut.mcp.conf.server">TransportSecurityConfiguration</a></dt>
+<dd>
+<div class="block">Whether the <code>Origin</code> and <code>MCP-Protocol-Version</code> request headers are validated by default.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html#DEFAULT_ENDPOINT" class="member-name-link">DEFAULT_ENDPOINT</a> - Static variable in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/server/registry/ToolRegistry.html#DEFAULT_IDEMPOTENT_HINT_VALUE" class="member-name-link">DEFAULT_IDEMPOTENT_HINT_VALUE</a> - Static variable in class io.micronaut.mcp.server.registry.<a href="io/micronaut/mcp/server/registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a></dt>
@@ -375,6 +383,8 @@ loadScripts(document, 'script');</script>
 <h2 class="title" id="I:G">G</h2>
 <dl class="index">
 <dt><a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapperSupplier.html#get()" class="member-name-link">get()</a> - Method in class io.micronaut.mcp.server.json.<a href="io/micronaut/mcp/server/json/MicronautMcpJsonMapperSupplier.html" title="class in io.micronaut.mcp.server.json">MicronautMcpJsonMapperSupplier</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html#getAllowedOrigins()" class="member-name-link">getAllowedOrigins()</a> - Method in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html" title="interface in io.micronaut.mcp.conf.server">TransportSecurityConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/primitives/prompts/ClasspathPrompt.html#getArguments()" class="member-name-link">getArguments()</a> - Method in class io.micronaut.mcp.primitives.prompts.<a href="io/micronaut/mcp/primitives/prompts/ClasspathPrompt.html" title="class in io.micronaut.mcp.primitives.prompts">ClasspathPrompt</a></dt>
 <dd>&nbsp;</dd>
@@ -672,6 +682,11 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/modelcontextprotocol/server/http/tck/async/package-summary.html">io.modelcontextprotocol.server.http.tck.async</a> - package io.modelcontextprotocol.server.http.tck.async</dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html#isAllowLoopbackOrigins()" class="member-name-link">isAllowLoopbackOrigins()</a> - Method in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html" title="interface in io.micronaut.mcp.conf.server">TransportSecurityConfiguration</a></dt>
+<dd>
+<div class="block">Whether loopback origins (<code>localhost</code>, <code>127.0.0.1</code> and <code>[::1]</code>, with http or https and any port) are
+allowed, so that local tools such as the MCP Inspector can connect.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/conf/server/McpPrimitiveConfiguration.html#isListChanged()" class="member-name-link">isListChanged()</a> - Method in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/McpPrimitiveConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpPrimitiveConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/PromptsConfiguration.html#isListChanged()" class="member-name-link">isListChanged()</a> - Method in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/PromptsConfiguration.html" title="interface in io.micronaut.mcp.conf.server">PromptsConfiguration</a></dt>
@@ -1026,6 +1041,10 @@ URI of an image, is required, the theme is <code>light</code> or <code>dark</cod
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/ToolsConfiguration.html#PREFIX" class="member-name-link">PREFIX</a> - Static variable in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/ToolsConfiguration.html" title="interface in io.micronaut.mcp.conf.server">ToolsConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html#PREFIX" class="member-name-link">PREFIX</a> - Static variable in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html" title="interface in io.micronaut.mcp.conf.server">TransportSecurityConfiguration</a></dt>
+<dd>
+<div class="block">Transport security configuration prefix.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/server/context/MicronautMcpTransportContext.html#principal()" class="member-name-link">principal()</a> - Method in interface io.micronaut.mcp.server.context.<a href="io/micronaut/mcp/server/context/MicronautMcpTransportContext.html" title="interface in io.micronaut.mcp.server.context">MicronautMcpTransportContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/annotations/Resource.html#priority()" class="member-name-link">priority()</a> - Element in annotation interface io.micronaut.mcp.annotations.<a href="io/micronaut/mcp/annotations/Resource.html" title="annotation interface in io.micronaut.mcp.annotations">Resource</a></dt>
@@ -1084,6 +1103,11 @@ URI of an image, is required, the theme is <code>light</code> or <code>dark</cod
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html#PROPERTY_ENABLED" class="member-name-link">PROPERTY_ENABLED</a> - Static variable in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html#PROPERTY_ENABLED" class="member-name-link">PROPERTY_ENABLED</a> - Static variable in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html" title="interface in io.micronaut.mcp.conf.server">TransportSecurityConfiguration</a></dt>
+<dd>
+<div class="block">The property that turns the validation of the <code>Origin</code> and <code>MCP-Protocol-Version</code> request headers on
+or off.</div>
+</dd>
 <dt><a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html#PROPERTY_ENDPOINT" class="member-name-link">PROPERTY_ENDPOINT</a> - Static variable in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/McpServerInfoConfiguration.html#PROPERTY_NAME" class="member-name-link">PROPERTY_NAME</a> - Static variable in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/McpServerInfoConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerInfoConfiguration</a></dt>
@@ -1472,6 +1496,10 @@ entire test plan (suite) finishes.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html#TRANSPORT_STDIO" class="member-name-link">TRANSPORT_STDIO</a> - Static variable in interface io.micronaut.mcp.conf.server.<a href="io/micronaut/mcp/conf/server/McpServerConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/mcp/conf/server/TransportSecurityConfiguration.html" class="type-name-link" title="interface in io.micronaut.mcp.conf.server">TransportSecurityConfiguration</a> - Interface in <a href="io/micronaut/mcp/conf/server/package-summary.html">io.micronaut.mcp.conf.server</a></dt>
+<dd>
+<div class="block">Protection of the Streamable HTTP endpoint against DNS rebinding and unsupported clients.</div>
+</dd>
 </dl>
 <h2 class="title" id="I:U">U</h2>
 <dl class="index">
