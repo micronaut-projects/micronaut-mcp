@@ -17,7 +17,6 @@ import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.callTool;
 import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.callToolError;
 import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.text;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * How the failures of the {@link ToolErrorTools} are reported. The subclasses run these tests in each execution model.
@@ -32,34 +31,16 @@ abstract class AbstractToolExecutionErrorsTest {
     JsonMapper jsonMapper;
 
     @ParameterizedTest
-    @ValueSource(strings = {"failing", "failingPublisher", "failingOnExecutor", "failingAsync"})
-    void aFailureWithoutAMapperIsAToolExecutionError(String tool) throws IOException {
-        assertToolError("the backend is down", callTool(httpClient, jsonMapper, tool));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"failingWithoutMessage", "failingWithBlankMessage"})
-    void aFailureWithoutAMessageIsDescribedByTheToolAndItsClass(String tool) throws IOException {
-        assertToolError("Tool " + tool + " failed (IllegalStateException)", callTool(httpClient, jsonMapper, tool));
+    @ValueSource(strings = {"failing", "failingPublisher", "failingOnExecutor", "failingAsync",
+        "failingWithoutMessage", "failingWithBlankMessage", "failingAnonymously",
+        "checkedPublisher", "checkedFuture", "failingNested"})
+    void anUnmappedFailureReturnsOnlyTheToolName(String tool) throws IOException {
+        assertToolError("Tool " + tool + " failed", callTool(httpClient, jsonMapper, tool));
     }
 
     @Test
-    void anInputErrorWithoutAMessageIsDescribedByTheToolAndItsClass() throws IOException {
-        assertToolError("Tool failingInputErrorWithoutMessage failed (SerdeException)",
-            callTool(httpClient, jsonMapper, "failingInputErrorWithoutMessage"));
-    }
-
-    @Test
-    void aFailureOfAnAnonymousClassWithoutAMessageIsDescribedByTheClassName() throws IOException {
-        Map<String, Object> result = callTool(httpClient, jsonMapper, "failingAnonymously");
-        assertEquals(Boolean.TRUE, result.get("isError"));
-        assertTrue(text(result).startsWith("Tool failingAnonymously failed (" + ToolErrorTools.class.getName() + "$"), text(result));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"checkedPublisher", "checkedFuture", "failingNested"})
-    void aCheckedExceptionIsUnwrapped(String tool) throws IOException {
-        assertToolError("boom", callTool(httpClient, jsonMapper, tool));
+    void anInputErrorWithoutAMessageReportsInvalidArguments() throws IOException {
+        assertToolError("Invalid arguments", callTool(httpClient, jsonMapper, "failingInputErrorWithoutMessage"));
     }
 
     @Test
@@ -105,13 +86,10 @@ abstract class AbstractToolExecutionErrorsTest {
         assertEquals("no such city", error.get("message"));
     }
 
-    @Test
-    void aResultThatCannotBeSerializedIsAToolExecutionError() throws IOException {
-        Map<String, Object> result = callTool(httpClient, jsonMapper, "unserializable");
-        assertEquals(Boolean.TRUE, result.get("isError"));
-        assertTrue(text(result).startsWith("The result of tool unserializable could not be serialized: "), text(result));
-        // the reason names the type that could not be serialized
-        assertTrue(text(result).contains("Unserializable"), text(result));
+    @ParameterizedTest
+    @ValueSource(strings = {"unserializable", "unserializableEnum"})
+    void aResultThatCannotBeSerializedIsAToolExecutionError(String tool) throws IOException {
+        assertToolError("The result of tool " + tool + " could not be serialized", callTool(httpClient, jsonMapper, tool));
     }
 
     private static void assertToolError(String message, Map<String, Object> result) {

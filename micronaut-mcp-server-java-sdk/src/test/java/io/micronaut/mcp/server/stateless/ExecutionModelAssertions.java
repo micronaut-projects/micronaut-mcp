@@ -31,7 +31,7 @@ final class ExecutionModelAssertions {
         // a publisher emitting more than one value fails instead of dropping values
         Map<String, Object> twoValues = callTool(httpClient, jsonMapper, "twoValues");
         assertEquals(Boolean.TRUE, twoValues.get("isError"));
-        assertEquals("Source emitted more than one item", text(twoValues));
+        assertEquals("Tool twoValues failed", text(twoValues));
         // an McpError is sent as is
         Map<String, Object> error = callToolError(httpClient, jsonMapper, "invalidParams", HttpStatus.BAD_REQUEST);
         assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.get("code"));

@@ -49,7 +49,10 @@ class ToolErrorTools {
 
     @Tool
     String failingWithLineBreak() {
-        throw new IllegalStateException("Unknown city: Gotham\n12:00:00.000 INFO forged line");
+        var cause = new IOException("upstream\r\ntimeout");
+        var failure = new IllegalStateException("Unknown city:\nGotham", cause);
+        failure.addSuppressed(new IOException("cleanup\u2028failed"));
+        throw failure;
     }
 
     @Tool
@@ -143,6 +146,20 @@ class ToolErrorTools {
     @Tool
     Object unserializable() {
         return new Unserializable();
+    }
+
+    @Tool
+    Object unserializableEnum() {
+        return BrokenText.VALUE;
+    }
+
+    private enum BrokenText {
+        VALUE;
+
+        @Override
+        public String toString() {
+            throw new IllegalStateException("internal formatting details");
+        }
     }
 
     static final class Unserializable {
