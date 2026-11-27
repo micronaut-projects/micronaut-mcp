@@ -13,8 +13,9 @@ import io.micronaut.mcp.annotations.ResourceTemplate;
 import io.micronaut.jsonschema.JsonSchema;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
-import io.micronaut.serde.annotation.Serdeable;
+import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -59,6 +61,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Property(name = "spec.name", value = "RegistryHandlersTest")
 // The executor metrics binder wraps executors, so CountingExecutor could not be injected by its type
 @Property(name = "micronaut.metrics.binders.executor.enabled", value = "false")
+@Property(name = "micronaut.executors.blocking.type", value = "fixed")
+@Property(name = "micronaut.executors.blocking.n-threads", value = "1")
 @MicronautTest(startApplication = false)
 class RegistryHandlersTest {
     private static final McpTransportContext CONTEXT = McpTransportContext.create(Map.of());
@@ -113,6 +117,14 @@ class RegistryHandlersTest {
         var count = find(toolRegistry.getStatelessSyncSpecs(), s -> s.tool().name().equals("count")).callHandler();
         assertEquals("1", text(count.apply(CONTEXT, counter)));
         assertEquals("1", text(count.apply(CONTEXT, counter)));
+    }
+
+    @Test
+    void stdioSyncDispatchesToTheBlockingExecutor(@Named(TaskExecutors.BLOCKING) ExecutorService executor) throws Exception {
+        long worker = executor.submit(() -> Thread.currentThread().threadId()).get(5, TimeUnit.SECONDS);
+        var spec = find(toolRegistry.getSyncSpecs(), s -> s.tool().name().equals("blockingWorker"));
+        var request = new McpSchema.CallToolRequest("blockingWorker", Map.of());
+        assertEquals(Long.toString(worker), text(spec.callHandler().apply(SYNC_EXCHANGE, request)));
     }
 
     @Test
@@ -454,6 +466,12 @@ class RegistryHandlersTest {
         volatile Object request;
         volatile Object context;
         volatile Object argument;
+
+        @Tool
+        @ExecuteOn(TaskExecutors.BLOCKING)
+        String blockingWorker() {
+            return Long.toString(Thread.currentThread().threadId());
+        }
 
         @Tool
         String echo(String text) {
