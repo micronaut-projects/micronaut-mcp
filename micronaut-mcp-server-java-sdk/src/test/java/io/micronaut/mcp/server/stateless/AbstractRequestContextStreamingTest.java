@@ -204,7 +204,7 @@ abstract class AbstractRequestContextStreamingTest {
             {"jsonrpc": "2.0", "id": 30, "method": "tools/call", "params": {"name": "notifyThenThrow", "arguments": {}}}""").body());
         assertEquals(2, tool.size(), String.valueOf(tool));
         assertTrue(tool.get(0).contains("notifications/message"), tool.get(0));
-        assertTrue(tool.get(1).contains("\"id\":30") && tool.get(1).contains("\"isError\":true") && tool.get(1).contains("import failed"), tool.get(1));
+        assertTrue(tool.get(1).contains("\"id\":30") && tool.get(1).contains("\"isError\":true") && tool.get(1).contains("Tool notifyThenThrow failed"), tool.get(1));
         // A prompt that fails produces a JSON-RPC error without the details of the exception, in a response that is already a stream with the status 200
         HttpResponse<String> response = post(ACCEPT_BOTH, """
             {"jsonrpc": "2.0", "id": 31, "method": "prompts/get", "params": {"name": "failingPrompt", "arguments": {}}}""");
@@ -220,7 +220,8 @@ abstract class AbstractRequestContextStreamingTest {
             String body = post(ACCEPT_BOTH, """
                 {"jsonrpc": "2.0", "id": 32, "method": "tools/call", "params": {"name": "%s", "arguments": {}}}""".formatted(tool)).body();
             String result = data(body).getLast();
-            assertTrue(result.contains("\"isError\":true") && result.contains("is not supported over the stateless HTTP transport"), result);
+            // the reason, which is meant for the developer, is logged
+            assertTrue(result.contains("\"isError\":true") && result.contains("Tool " + tool + " failed"), result);
         }
     }
 
