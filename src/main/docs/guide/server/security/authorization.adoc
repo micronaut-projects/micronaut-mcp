@@ -62,9 +62,25 @@ micronaut:
 
 Use `host-header: Host` if the proxy keeps the `Host` header instead of setting `X-Forwarded-Host`.
 
-If you change `micronaut.mcp.server.endpoint`, use the same path in the `intercept-url-map` pattern. The metadata path follows the endpoint: `/.well-known/oauth-protected-resource/<endpoint>`.
+If you change `micronaut.mcp.server.endpoint`, update the `intercept-url-map` pattern and the JWT audience to match the new path. Publish a single canonical endpoint URL without a trailing slash. Micronaut's router accepts a trailing-slash alias, but the stock challenge uses the request path and the metadata may omit the slash from its `resource`. Clients following https://datatracker.ietf.org/doc/html/rfc9728#section-3.3[RFC 9728] reject that mismatch. If you expose the alias, configure your proxy or an application request filter to return a `308 Permanent Redirect` to the canonical path before authentication. A 308 preserves the POST method and body.
 
-With a `micronaut.server.context-path`, such as `/ctx`, the `intercept-url-map` pattern includes it (`/ctx/mcp`), and the challenge advertises the metadata at the root of the host, as RFC 9728 requires: `/.well-known/oauth-protected-resource/ctx/mcp`. Micronaut serves it under the context path, at `/ctx/.well-known/oauth-protected-resource/ctx/mcp`, so the proxy in front of the server must route the advertised path there. Its `resource` is then the canonical URL of the endpoint, `https://mcp.example.com/ctx/mcp`, which is the audience to validate.
+If you set `micronaut.server.context-path`, the stock metadata controller is mounted under that context path. The public metadata URL in the challenge still starts at the origin root, so configure your proxy to forward it to the controller. For example, with a context path of `/ctx` and an endpoint of `/mcp`, use these mappings:
+
+[cols="1,1",options="header"]
+|===
+| Public request path | Proxy action
+
+| `/ctx/mcp/`
+| Return a 308 redirect to `/ctx/mcp`.
+
+| `/ctx/mcp`
+| Forward to `/ctx/mcp` on the application.
+
+| `/.well-known/oauth-protected-resource/ctx/mcp`
+| Forward to `/ctx/.well-known/oauth-protected-resource/ctx/mcp` on the application.
+|===
+
+Keep `/ctx/mcp` after `oauth-protected-resource` in the upstream path. The metadata controller uses that suffix to construct the `resource`. Set the audience to `https://mcp.example.com/ctx/mcp`. Keep `/mcp` in `intercept-url-map` because Micronaut Security prepends the context path by default.
 
 Tools, prompts and resources receive the authenticated principal through the <<context, transport context>>:
 

@@ -74,15 +74,12 @@ final class McpBlockingController extends McpController {
     @Post
     Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable McpRequestBody requestBody) {
         JsonNode body = requestBody != null ? requestBody.value() : null;
-        if (streamingPolicy.mayStream(request, body)) {
-            // The server writes a response only once the route returns, so a primitive that may stream runs on another
-            // thread of the blocking executor, and the response completes with its first notification or its result
-            return handle(request, body, true).subscribeOn(blockingScheduler);
-        }
-        // The server invokes the primitive on this blocking thread, with the subscriber context of the filters
-        return Mono.deferContextual(context -> {
+        boolean streaming = streamingPolicy.mayStream(request, body);
+        Mono<HttpResponse<?>> result = Mono.deferContextual(context -> {
             var requestContext = PropagatedContext.getOrEmpty().plus(new BlockingMcpRequestContext(Thread.currentThread(), context));
-            return Mono.from(ReactivePropagation.propagate(requestContext, handle(request, body, false)));
+            return Mono.from(ReactivePropagation.propagate(requestContext, handle(request, body, streaming)));
         });
+        // Let the route return so the first notification can be written while the worker continues.
+        return streaming ? result.subscribeOn(blockingScheduler) : result;
     }
 }
