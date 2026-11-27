@@ -275,21 +275,16 @@ public final class MicronautMcpHttpExchange {
      * @return The number of bytes of the value in UTF-8, without encoding it
      */
     private static long utf8Length(CharSequence value) {
-        long bytes = 0;
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
+        // An unpaired surrogate is a code point of its own, which UTF-8 encoders replace with 3 bytes
+        return value.codePoints().mapToLong(c -> {
             if (c < 0x80) {
-                bytes++;
-            } else if (c < 0x800) {
-                bytes += 2;
-            } else if (Character.isHighSurrogate(c) && i + 1 < value.length() && Character.isLowSurrogate(value.charAt(i + 1))) {
-                bytes += 4;
-                i++;
-            } else {
-                bytes += 3;
+                return 1;
             }
-        }
-        return bytes;
+            if (c < 0x800) {
+                return 2;
+            }
+            return c < 0x10000 ? 3 : 4;
+        }).sum();
     }
 
     /**
@@ -422,16 +417,22 @@ public final class MicronautMcpHttpExchange {
                 }
                 data.append(field, start, field.length());
             } else if (field.startsWith("id:")) {
-                String id = value(field, 3);
-                // An id with a NUL is ignored, as an event source does
-                if (id.indexOf('\0') < 0) {
-                    stream.lastEventId = id;
-                }
+                lastEventId(value(field, 3));
             } else if (field.startsWith("retry:")) {
-                String retry = value(field, 6);
-                if (!retry.isEmpty() && retry.length() < 10 && retry.chars().allMatch(Character::isDigit)) {
-                    stream.retry = Duration.ofMillis(Long.parseLong(retry));
-                }
+                retry(value(field, 6));
+            }
+        }
+
+        private void lastEventId(String id) {
+            // An id with a NUL is ignored, as an event source does
+            if (id.indexOf('\0') < 0) {
+                stream.lastEventId = id;
+            }
+        }
+
+        private void retry(String retry) {
+            if (!retry.isEmpty() && retry.length() < 10 && retry.chars().allMatch(Character::isDigit)) {
+                stream.retry = Duration.ofMillis(Long.parseLong(retry));
             }
         }
 

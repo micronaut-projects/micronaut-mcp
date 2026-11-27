@@ -144,7 +144,7 @@ final class MicronautStreamableHttpClientTransport implements McpClientTransport
         try {
             Map<String, Object> message = jsonMapper.readValue(json, MAP_TYPE);
             return !message.containsKey("method") && requestId.toString().equals(String.valueOf(message.get("id")));
-        } catch (IOException e) {
+        } catch (IOException _) {
             return false;
         }
     }
