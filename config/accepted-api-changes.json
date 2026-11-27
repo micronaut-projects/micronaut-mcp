@@ -450,8 +450,8 @@
     "reason": "Generated bean definition of the internal STDIO transport factory, whose beans now exist per named connection"
   },
   {
-    "type": "io.micronaut.mcp.client.langchain4j.$McpClientFactory$CreateMcpClient1$Definition",
-    "member": "Method io.micronaut.mcp.client.langchain4j.$McpClientFactory$CreateMcpClient1$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
-    "reason": "Generated bean definition of the internal client factory, whose client now receives its builder and transport as parameters"
+    "type": "io.micronaut.mcp.client.langchain4j.$McpClientFactory$CrateMcpClientBuilder0$Definition",
+    "member": "Method io.micronaut.mcp.client.langchain4j.$McpClientFactory$CrateMcpClientBuilder0$Definition.instantiate(io.micronaut.context.BeanResolutionContext,io.micronaut.context.BeanContext)",
+    "reason": "The generated client builder definition now accepts the optional configuration qualified by the transport name"
   }
 ]
