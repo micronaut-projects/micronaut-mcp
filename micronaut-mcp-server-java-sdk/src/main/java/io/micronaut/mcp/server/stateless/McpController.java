@@ -24,8 +24,12 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.json.JsonMapper;
+import io.micronaut.json.tree.JsonNode;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.mcp.server.exceptions.JsonRrpcResponseUtils;
+import io.micronaut.mcp.server.json.MicronautMcpJsonMapper;
+import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
@@ -35,8 +39,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * This class exposes a POST endpoint in route {@value McpServerConfiguration#DEFAULT_ENDPOINT}.
@@ -52,45 +57,86 @@ final class McpController {
     private static final String KEY_ID = "id";
     private static final String KEY_JSONRPC = "jsonrpc";
     private static final String KEY_PARAMS = "params";
+    private static final String INVALID_BATCH = "Invalid Request: batches are not supported, send one JSON-RPC message per request";
+    private static final String INVALID_BODY = "Invalid Request: the body must be a JSON object";
+    private static final String INVALID_JSONRPC = "Invalid Request: \"jsonrpc\" must be \"2.0\"";
+    private static final String INVALID_METHOD = "Invalid Request: \"method\" must be a string";
+    private static final String INVALID_ID = "Invalid Request: \"id\" must be a string or an integer";
+    private static final String INVALID_PARAMS = "Invalid Request: \"params\" must be an object or an array";
+    private static final String UNREADABLE_PARAMS = "Invalid Request: \"params\" could not be read";
+    private static final String INTERNAL_ERROR = "Internal error";
+    private static final int MAX_LOGGED_METHOD_LENGTH = 64;
 
     private final McpStatelessServerHandler mcpHandler;
     private final McpTransportContextExtractor<HttpRequest<?>> contextExtractor;
+    private final JsonMapper jsonMapper;
+    private final boolean passJsonTrees;
 
     McpController(McpStatelessServerHandler mcpHandler,
-                  McpTransportContextExtractor<HttpRequest<?>> contextExtractor) {
+                  McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
+                  JsonMapper jsonMapper,
+                  McpJsonMapper mcpJsonMapper) {
         this.mcpHandler = mcpHandler;
         this.contextExtractor = contextExtractor;
+        this.jsonMapper = jsonMapper;
+        // The Micronaut MCP JSON mapper converts the parsed parameters directly; any other mapper gets them as a Map
+        this.passJsonTrees = mcpJsonMapper instanceof MicronautMcpJsonMapper;
     }
 
     @SuppressWarnings("java:S3740")
     @Post
-    public Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body Map<String, Object> body) {
+    public Mono<HttpResponse<?>> post(HttpRequest<?> request, @Body McpRequestBody body) {
+        return handlePost(request, body.value());
+    }
+
+    Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, JsonNode body) {
+        McpSchema.JSONRPCMessage jsonRpcMessage;
+        try {
+            jsonRpcMessage = jsonRpcMessage(body);
+        } catch (InvalidRequestException e) {
+            return Mono.just(HttpResponse.badRequest(invalidRequest(e.getMessage())));
+        }
         McpTransportContext transportContext = contextExtractor.extract(request);
-        McpSchema.JSONRPCMessage jsonRpcMessage = jsonRpcMessage(body);
         if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
             return handleJsonRpcRequest(jsonrpcRequest, transportContext);
-        } else if (jsonRpcMessage instanceof McpSchema.JSONRPCNotification notification) {
-            return handleJsonRpcNotification(notification, transportContext);
         }
-        return Mono.just(HttpResponse.badRequest(mcpError(McpSchema.ErrorCodes.INVALID_REQUEST, "The server accepts either requests or notifications")));
+        return handleJsonRpcNotification((McpSchema.JSONRPCNotification) jsonRpcMessage, transportContext);
     }
 
     @SuppressWarnings("java:S3740")
     private Mono<HttpResponse<?>> handleJsonRpcNotification(McpSchema.JSONRPCNotification jsonrpcNotification, McpTransportContext transportContext) {
-        return mcpHandler.handleNotification(transportContext, jsonrpcNotification)
-            .map((Function<Void, HttpResponse<?>>) response -> HttpResponse.accepted())
-            .defaultIfEmpty(HttpResponse.accepted())
+        // deferred so that a handler that throws is answered like one that emits an error
+        return Mono.defer(() -> mcpHandler.handleNotification(transportContext, jsonrpcNotification))
             .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
-            .onErrorResume(McpError.class, e -> exceptionJsonRpcResponse(e, jsonrpcNotification))
-            .onErrorResume(throwable -> exceptionJsonRpcResponse(throwable, jsonrpcNotification));
+            .then(Mono.<HttpResponse<?>>fromSupplier(HttpResponse::accepted))
+            .onErrorResume(e -> notificationFailure(e, jsonrpcNotification));
     }
 
-    private Mono<HttpResponse<?>> exceptionJsonRpcResponse(Throwable e, McpSchema.JSONRPCMessage jsonrpcMessage) {
-        McpError mcpError = mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Failed to handle request: " + e.getMessage());
-        return exceptionJsonRpcResponse(mcpError, jsonrpcMessage);
+    // A notification has no id, so no JSON-RPC response can carry its error: the HTTP status alone reports it
+    private Mono<HttpResponse<?>> notificationFailure(Throwable e, McpSchema.JSONRPCNotification jsonrpcNotification) {
+        if (e instanceof McpError mcpError) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to handle JSON-RPC notification {}: {}", loggable(jsonrpcNotification.method()), mcpError.getMessage());
+            }
+            McpSchema.JSONRPCResponse.JSONRPCError error = mcpError.getJsonRpcError();
+            return Mono.just(HttpResponse.status(error != null ? status(error) : HttpStatus.INTERNAL_SERVER_ERROR));
+        }
+        if (LOG.isErrorEnabled()) {
+            LOG.error("Failed to handle JSON-RPC notification {}", loggable(jsonrpcNotification.method()), e);
+        }
+        return Mono.just(HttpResponse.serverError());
     }
 
-    private Mono<HttpResponse<?>> exceptionJsonRpcResponse(McpError e, McpSchema.JSONRPCMessage jsonrpcMessage) {
+    private Mono<HttpResponse<?>> internalErrorResponse(Throwable e, McpSchema.JSONRPCRequest jsonrpcRequest) {
+        // an exception other than an McpError is a server fault: log it, and do not show its message to the client
+        if (LOG.isErrorEnabled()) {
+            LOG.error("Failed to handle JSON-RPC request {}", loggable(jsonrpcRequest.method()), e);
+        }
+        McpError mcpError = mcpError(McpSchema.ErrorCodes.INTERNAL_ERROR, INTERNAL_ERROR);
+        return exceptionJsonRpcResponse(mcpError, jsonrpcRequest);
+    }
+
+    private Mono<HttpResponse<?>> exceptionJsonRpcResponse(McpError e, McpSchema.JSONRPCRequest jsonrpcMessage) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Failed to handle JSON RPC Message: {}", e.getMessage());
         }
@@ -102,21 +148,89 @@ final class McpController {
     @NonNull
     private Mono<HttpResponse<?>> handleJsonRpcRequest(McpSchema.@NonNull JSONRPCRequest jsonrpcRequest,
                                                        @NonNull McpTransportContext transportContext) {
-        Mono<HttpResponse<?>> mono = mcpHandler.handleRequest(transportContext, jsonrpcRequest)
+        // deferred so that a handler that throws instead of returning an error reaches the JSON-RPC error mapping
+        Mono<HttpResponse<?>> mono = Mono.defer(() -> mcpHandler.handleRequest(transportContext, jsonrpcRequest))
             .contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext))
             .map(rsp -> HttpResponse.status(status(rsp)).body(rsp));
         return mono
             .onErrorResume(McpError.class, e -> exceptionJsonRpcResponse(e, jsonrpcRequest))
-            .onErrorResume(throwable -> exceptionJsonRpcResponse(throwable, jsonrpcRequest));
+            .onErrorResume(throwable -> internalErrorResponse(throwable, jsonrpcRequest));
     }
 
-    private McpSchema.@Nullable JSONRPCMessage jsonRpcMessage(@NonNull Map<String, Object> body) {
-        if (body.containsKey(KEY_METHOD) && body.containsKey(KEY_ID)) {
-            return new McpSchema.JSONRPCRequest(body.get(KEY_JSONRPC).toString(), body.get(KEY_METHOD).toString(), body.get(KEY_ID), body.get(KEY_PARAMS));
-        } else if (body.containsKey(KEY_METHOD) && !body.containsKey(KEY_ID)) {
-            return new McpSchema.JSONRPCNotification(body.get(KEY_JSONRPC).toString(), body.get(KEY_METHOD).toString(), body.get(KEY_PARAMS));
+    private McpSchema.JSONRPCMessage jsonRpcMessage(@Nullable JsonNode body) throws InvalidRequestException {
+        if (body == null || !body.isObject()) {
+            throw new InvalidRequestException(body != null && body.isArray() ? INVALID_BATCH : INVALID_BODY);
         }
+        JsonNode jsonrpc = body.get(KEY_JSONRPC);
+        if (jsonrpc == null || !jsonrpc.isString() || !McpSchema.JSONRPC_VERSION.equals(jsonrpc.getStringValue())) {
+            throw new InvalidRequestException(INVALID_JSONRPC);
+        }
+        JsonNode method = body.get(KEY_METHOD);
+        if (method == null || !method.isString()) {
+            throw new InvalidRequestException(INVALID_METHOD);
+        }
+        Object params = params(body.get(KEY_PARAMS));
+        JsonNode id = body.get(KEY_ID);
+        if (id == null) {
+            return new McpSchema.JSONRPCNotification(jsonrpc.getStringValue(), method.getStringValue(), params);
+        }
+        Object requestId = id(id);
+        if (requestId == null) {
+            throw new InvalidRequestException(INVALID_ID);
+        }
+        return new McpSchema.JSONRPCRequest(jsonrpc.getStringValue(), method.getStringValue(), requestId, params);
+    }
+
+    private @Nullable Object params(@Nullable JsonNode params) throws InvalidRequestException {
+        if (params == null || params.isNull()) {
+            return null;
+        }
+        if (!params.isObject() && !params.isArray()) {
+            // JSON-RPC parameters are structured values
+            throw new InvalidRequestException(INVALID_PARAMS);
+        }
+        if (passJsonTrees) {
+            return params;
+        }
+        try {
+            if (jsonMapper.getStreamConfig().useBigDecimalForFloats()) {
+                return jsonMapper.readValue(jsonMapper.writeValueAsBytes(params), Object.class);
+            }
+            return jsonMapper.readValueFromTree(params, Object.class);
+        } catch (IOException _) {
+            throw new InvalidRequestException(UNREADABLE_PARAMS);
+        }
+    }
+
+    private static @Nullable Object id(JsonNode id) {
+        if (id.isString()) {
+            return id.getStringValue();
+        }
+        if (id.isNumber()) {
+            Number number = id.getNumberValue();
+            if (number instanceof Integer || number instanceof Long) {
+                return number;
+            }
+            if (number instanceof BigInteger integer && integer.bitLength() < Long.SIZE) {
+                return integer.longValue();
+            }
+        }
+        // MCP request ids are strings or integers
         return null;
+    }
+
+    // The method is client input: only a short printable name is written to the log
+    private static String loggable(String method) {
+        String name = method.length() > MAX_LOGGED_METHOD_LENGTH ? method.substring(0, MAX_LOGGED_METHOD_LENGTH) : method;
+        return name.chars().allMatch(c -> c > ' ' && c < 0x7f) ? name : "<non-printable method>";
+    }
+
+    // JSON-RPC answers a message that is not a valid request with a null id, which the SDK response type does not allow
+    private static JsonNode invalidRequest(String message) {
+        return JsonNode.createObjectNode(Map.of(
+            KEY_JSONRPC, JsonNode.createStringNode(McpSchema.JSONRPC_VERSION),
+            KEY_ID, JsonNode.nullNode(),
+            "error", JsonNode.from(Map.of("code", McpSchema.ErrorCodes.INVALID_REQUEST, "message", message))));
     }
 
     @NonNull
@@ -148,5 +262,14 @@ final class McpController {
         return McpError.builder(error)
             .message(message)
             .build();
+    }
+
+    /**
+     * A message that is not a valid JSON-RPC request or notification. It has no stack trace: it is answered, not logged.
+     */
+    private static final class InvalidRequestException extends Exception {
+        InvalidRequestException(String message) {
+            super(message, null, false, false);
+        }
     }
 }

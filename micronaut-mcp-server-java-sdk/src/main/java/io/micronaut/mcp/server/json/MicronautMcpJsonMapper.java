@@ -30,9 +30,11 @@ import java.io.IOException;
 @Internal
 public final class MicronautMcpJsonMapper implements McpJsonMapper {
     private final JsonMapper jsonMapper;
+    private final boolean useBigDecimalForFloats;
 
     MicronautMcpJsonMapper(JsonMapper jsonMapper) {
         this.jsonMapper = jsonMapper;
+        this.useBigDecimalForFloats = jsonMapper.getStreamConfig().useBigDecimalForFloats();
     }
 
     @Override
@@ -57,19 +59,21 @@ public final class MicronautMcpJsonMapper implements McpJsonMapper {
 
     @Override
     public <T> T convertValue(Object fromValue, Class<T> type) {
-        try {
-            JsonNode jsonNode = jsonMapper.writeValueToTree(fromValue);
-            return jsonMapper.readValueFromTree(jsonNode, type);
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Error converting value", e);
-        }
+        return convertValue(fromValue, Argument.of(type));
     }
 
     @Override
     public <T> T convertValue(Object fromValue, TypeRef<T> type) {
+        return convertValue(fromValue, toArgument(type));
+    }
+
+    private <T> T convertValue(Object fromValue, Argument<T> type) {
         try {
-            JsonNode jsonNode = jsonMapper.writeValueToTree(fromValue);
-            return jsonMapper.readValueFromTree(jsonNode, toArgument(type));
+            if (useBigDecimalForFloats && fromValue instanceof JsonNode) {
+                // The Jackson tree parser cannot decode BigDecimal values into untyped SDK fields.
+                return jsonMapper.readValue(jsonMapper.writeValueAsBytes(fromValue), type);
+            }
+            return jsonMapper.readValueFromTree(toTree(fromValue), type);
         } catch (IOException e) {
             throw new IllegalArgumentException("Error converting value", e);
         }
@@ -83,6 +87,11 @@ public final class MicronautMcpJsonMapper implements McpJsonMapper {
     @Override
     public byte[] writeValueAsBytes(Object value) throws IOException {
         return jsonMapper.writeValueAsBytes(value);
+    }
+
+    private JsonNode toTree(Object value) throws IOException {
+        // The HTTP transport passes the request parameters as the tree it parsed the request into
+        return value instanceof JsonNode jsonNode ? jsonNode : jsonMapper.writeValueToTree(value);
     }
 
     @SuppressWarnings("unchecked")

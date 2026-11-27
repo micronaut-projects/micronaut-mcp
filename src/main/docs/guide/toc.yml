@@ -1,6 +1,7 @@
 introduction:
   title: Introduction
 releaseHistory: Release History
+breaks: Breaking Changes
 server:
   title: MCP Server
   serverJavaSdk: MCP Server Java SDK
