@@ -9,7 +9,7 @@ dependencies {
     compileOnly(mn.jackson.databind)
     annotationProcessor(mnSerde.micronaut.serde.processor)
     testImplementation(mnSerde.micronaut.serde.jackson)
-    api(libs.managed.mcp.java.sdk)
+    api(projects.micronautMcpJavaSdkJson)
     api(projects.micronautMcp)
     api(projects.micronautMcpAnnotations)
     annotationProcessor(mnJsonSchema.micronaut.json.schema.processor)
@@ -38,4 +38,16 @@ micronautBuild {
 }
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// The 2.1 server jar included the JSON API that the server now exposes transitively.
+val sdkJsonApi by configurations.creating {
+    isCanBeConsumed = false
+    isTransitive = false
+}
+dependencies {
+    sdkJsonApi(projects.micronautMcpJavaSdkJson)
+}
+tasks.withType<me.champeau.gradle.japicmp.JapicmpTask>().configureEach {
+    newArchives.from(sdkJsonApi)
 }

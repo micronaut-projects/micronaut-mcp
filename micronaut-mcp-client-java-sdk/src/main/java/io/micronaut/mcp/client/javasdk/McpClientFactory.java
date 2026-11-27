@@ -19,6 +19,7 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -46,6 +47,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
+import java.net.URI;
 import java.net.http.HttpRequest;
 import java.time.Duration;
 import java.util.List;
@@ -96,9 +98,17 @@ final class McpClientFactory {
     @EachBean(McpClientHttpConfiguration.class)
     @Prototype
     HttpClientStreamableHttpTransport.Builder transportBuilder(McpClientHttpConfiguration configuration) {
+        URI url = configuration.getUrl();
         HttpClientStreamableHttpTransport.Builder builder = HttpClientStreamableHttpTransport
-            .builder(configuration.getUrl().toString())
+            .builder(url.toString())
             .jsonMapper(mcpJsonMapper);
+        // The SDK resolves its endpoint against the base URI. Supply an absolute URI to retain
+        // the configured authority, raw path and query, including a path starting with two slashes.
+        if (!url.getRawPath().isEmpty()) {
+            builder.endpoint(url.toASCIIString());
+        } else if (url.getRawQuery() != null) {
+            builder.endpoint("/mcp?" + url.getRawQuery());
+        }
         if (!configuration.getHeaders().isEmpty()) {
             HttpRequest.Builder request = HttpRequest.newBuilder();
             configuration.getHeaders().forEach(request::header);
@@ -166,15 +176,20 @@ final class McpClientFactory {
         return spec;
     }
 
-    @EachBean(McpClientConnectionConfiguration.class)
+    @EachBean(McpClient.SyncSpec.class)
     @Bean(preDestroy = "closeGracefully")
     @Singleton
-    McpSyncClient mcpSyncClient(McpClientConnectionConfiguration configuration) {
+    McpSyncClient mcpSyncClient(McpClient.SyncSpec spec,
+                                @Parameter @Nullable McpClientConnectionConfiguration configuration) {
+        if (configuration == null) {
+            // Application-provided specs keep the SDK's lazy initialization.
+            return spec.build();
+        }
         String name = configuration.getName();
         connectionClients.claim(name, McpSyncClient.class);
         McpSyncClient client = null;
         try {
-            client = beanContext.getBean(McpClient.SyncSpec.class, Qualifiers.byName(name)).build();
+            client = spec.build();
             client.initialize();
             return client;
         } catch (RuntimeException e) {
@@ -225,14 +240,19 @@ final class McpClientFactory {
     }
 
     // Closed by McpAsyncClientCloser
-    @EachBean(McpClientConnectionConfiguration.class)
+    @EachBean(McpClient.AsyncSpec.class)
     @Singleton
-    McpAsyncClient mcpAysncClient(McpClientConnectionConfiguration configuration) {
+    McpAsyncClient mcpAsyncClient(McpClient.AsyncSpec spec,
+                                  @Parameter @Nullable McpClientConnectionConfiguration configuration) {
+        if (configuration == null) {
+            // Application-provided specs keep the SDK's lazy initialization.
+            return spec.build();
+        }
         String name = configuration.getName();
         connectionClients.claim(name, McpAsyncClient.class);
         McpAsyncClient client = null;
         try {
-            client = beanContext.getBean(McpClient.AsyncSpec.class, Qualifiers.byName(name)).build();
+            client = spec.build();
             // Bounded by the initialization timeout of the client
             client.initialize().block();
             return client;
