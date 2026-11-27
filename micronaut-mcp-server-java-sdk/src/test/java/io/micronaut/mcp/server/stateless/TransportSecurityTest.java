@@ -188,7 +188,9 @@ class TransportSecurityTest {
         assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://localhost:6274@evil.example")));
         assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://[::1]:6274@evil.example")));
         assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://localhost:")));
+        assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://localhost:65536")));
         assertEquals(HttpStatus.FORBIDDEN, status(ping().header("Origin", "http://localhost/evil")));
+        assertEquals(HttpStatus.OK, status(ping().header("Origin", "http://localhost:65535")));
         assertEquals(HttpStatus.OK, status(ping().header("Origin", "http://localhost:6274/")));
     }
 
@@ -274,16 +276,20 @@ class TransportSecurityTest {
     @CsvSource(delimiter = '|', value = {
         "app.example.com | expected * or an origin, scheme://host[:port], without a path, for example 'https://app.example.com'",
         "https://app.example.com/ui | for example 'https://app.example.com'",
-        "https:// | expected * or an origin, scheme://host[:port], without a path",
-        "https://[] | expected * or an origin, scheme://host[:port], without a path",
-        "https://user@app.example.com | expected * or an origin, scheme://host[:port], without a path",
-        "https://app example.com | expected * or an origin, scheme://host[:port], without a path",
-        "https://[::g1] | expected * or an origin, scheme://host[:port], without a path",
         "https://app.example.com// | for example 'https://app.example.com'",
         "https://app.example.com:65536 | expected * or an origin, scheme://host[:port], without a path",
         "https://app.example.com:0 | expected * or an origin, scheme://host[:port], without a path",
         "https://app.example.com: | expected * or an origin, scheme://host[:port], without a path",
         "https://app.example.com:123456 | expected * or an origin, scheme://host[:port], without a path",
+        "https://app.example.com:443:443 | expected * or an origin, scheme://host[:port], without a path",
+        "1https://app.example.com | expected * or an origin, scheme://host[:port], without a path",
+        "https:://app.example.com | expected * or an origin, scheme://host[:port], without a path",
+        "https:// | expected * or an origin, scheme://host[:port], without a path",
+        "https://[] | expected * or an origin, scheme://host[:port], without a path",
+        "https://user@app.example.com | expected * or an origin, scheme://host[:port], without a path",
+        "https://app example.com | expected * or an origin, scheme://host[:port], without a path",
+        "https://[::g1] | expected * or an origin, scheme://host[:port], without a path",
+        "https://[abcd] | expected * or an origin, scheme://host[:port], without a path",
         "null | clients that send Origin: null, such as file:// pages and sandboxed iframes, can only be allowed with *",
         "https://*.example.com | wildcards are not supported in an origin; list each origin, for example https://app.example.com, or use * to allow every origin",
         "http://localhost:* | wildcards are not supported in an origin"})
