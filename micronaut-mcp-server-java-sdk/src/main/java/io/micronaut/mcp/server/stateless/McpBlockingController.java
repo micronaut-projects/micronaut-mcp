@@ -17,6 +17,8 @@ package io.micronaut.mcp.server.stateless;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.async.propagation.ReactivePropagation;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -25,12 +27,14 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
+import io.micronaut.mcp.server.context.BlockingMcpRequestContext;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
 import org.jspecify.annotations.Nullable;
+import reactor.core.publisher.Mono;
 
 /**
  * The MCP endpoint of a synchronous server. Requests are handled on the blocking executor, which runs on virtual threads
@@ -53,7 +57,10 @@ final class McpBlockingController extends McpController {
     // The route returns a JSON-RPC response or an error body, so the response body type is a wildcard
     @SuppressWarnings({"java:S3740", "java:S1452"})
     @Post
-    @Nullable HttpResponse<?> handlePost(HttpRequest<?> request, @Body @Nullable McpRequestBody body) {
-        return handle(request, body != null ? body.value() : null).block();
+    Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable McpRequestBody body) {
+        return Mono.deferContextual(context -> {
+            var requestContext = PropagatedContext.getOrEmpty().plus(new BlockingMcpRequestContext(Thread.currentThread(), context));
+            return Mono.from(ReactivePropagation.propagate(requestContext, handle(request, body != null ? body.value() : null)));
+        });
     }
 }

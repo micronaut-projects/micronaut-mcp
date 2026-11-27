@@ -55,10 +55,10 @@ final class ExecutionModelSupport {
     }
 
     @SuppressWarnings("unchecked")
-    static List<String> complete(HttpClient httpClient, JsonMapper jsonMapper, String prompt) throws IOException {
+    static Map<String, Object> complete(HttpClient httpClient, JsonMapper jsonMapper, String prompt) throws IOException {
         String body = httpClient.toBlocking().retrieve(HttpRequest.POST("/mcp", """
             {"jsonrpc": "2.0", "id": 1, "method": "completion/complete", "params": {"ref": {"type": "ref/prompt", "name": "%s"}, "argument": {"name": "name", "value": "A"}}}""".formatted(prompt)));
-        return (List<String>) ((Map<String, Object>) result(jsonMapper, body).get("completion")).get("values");
+        return (Map<String, Object>) result(jsonMapper, body).get("completion");
     }
 
     @SuppressWarnings("unchecked")
