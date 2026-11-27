@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,7 +45,7 @@ class DefaultMcpRequestContextTest {
     void theSyncExchangeSendsNotificationsAndRequests() {
         RecordingSession session = new RecordingSession();
         McpSyncServerExchange exchange = new McpSyncServerExchange(exchange(session));
-        McpRequestContext context = DefaultMcpRequestContext.of(exchange, REQUEST);
+        McpRequestContext context = DefaultMcpRequestContext.of(exchange, REQUEST, false);
         assertNotificationsAndRequests(context, session);
         assertSame(exchange.transportContext(), context.transportContext());
     }
@@ -52,24 +53,18 @@ class DefaultMcpRequestContextTest {
     @Test
     void theAsyncExchangeSendsNotificationsAndRequests() {
         RecordingSession session = new RecordingSession();
-        McpRequestContext context = DefaultMcpRequestContext.of(exchange(session), REQUEST);
+        McpRequestContext context = DefaultMcpRequestContext.of(exchange(session), REQUEST, false);
         assertNotificationsAndRequests(context, session);
     }
 
     @Test
     void theAsyncExchangeDoesNotWaitForTheClientOnTheReceivingThread() {
-        McpRequestContext context = DefaultMcpRequestContext.of(exchange(new RecordingSession()), REQUEST);
-        IllegalStateException elicit = assertThrows(IllegalStateException.class,
-            () -> DefaultMcpRequestContext.onReceivingThread(() -> context.elicit(ELICIT)));
+        McpRequestContext context = DefaultMcpRequestContext.of(exchange(new RecordingSession()), REQUEST, true);
+        IllegalStateException elicit = assertThrows(IllegalStateException.class, () -> context.elicit(ELICIT));
         assertTrue(elicit.getMessage().startsWith("Elicitation waits") && elicit.getMessage().contains("@ExecuteOn"), elicit.getMessage());
-        // a nested invocation keeps the outer one on the receiving thread
-        IllegalStateException sample = assertThrows(IllegalStateException.class, () -> DefaultMcpRequestContext.onReceivingThread(() -> {
-            DefaultMcpRequestContext.onReceivingThread(() -> null);
-            return context.sample(SAMPLE);
-        }));
+        IllegalStateException sample = assertThrows(IllegalStateException.class, () -> context.sample(SAMPLE));
         assertTrue(sample.getMessage().startsWith("Sampling waits"), sample.getMessage());
-        // off the receiving thread, the request is sent
-        assertEquals(McpSchema.ElicitResult.Action.ACCEPT, context.elicit(ELICIT).action());
+        assertEquals(McpSchema.ElicitResult.Action.ACCEPT, CompletableFuture.supplyAsync(() -> context.elicit(ELICIT)).join().action());
     }
 
     @Test
@@ -85,7 +80,7 @@ class DefaultMcpRequestContextTest {
         assertNull(DefaultMcpRequestContext.progressToken(withToken(1.5e300)));
         assertNull(DefaultMcpRequestContext.progressToken("not a request"));
         RecordingSession session = new RecordingSession();
-        McpRequestContext context = DefaultMcpRequestContext.of(exchange(session), withToken(Map.of("o", "AAAA")));
+        McpRequestContext context = DefaultMcpRequestContext.of(exchange(session), withToken(Map.of("o", "AAAA")), false);
         assertNull(context.progressToken());
         context.progress(1);
         assertEquals(List.of(), session.notifications);
@@ -99,9 +94,9 @@ class DefaultMcpRequestContextTest {
     void withoutAProgressTokenTheExchangesSendNoProgress() {
         McpSchema.CallToolRequest withoutToken = McpSchema.CallToolRequest.builder().name("tool").arguments(Map.of()).build();
         RecordingSession syncSession = new RecordingSession();
-        DefaultMcpRequestContext.of(new McpSyncServerExchange(exchange(syncSession)), withoutToken).progress(1, 2, "half");
+        DefaultMcpRequestContext.of(new McpSyncServerExchange(exchange(syncSession)), withoutToken, false).progress(1, 2, "half");
         RecordingSession asyncSession = new RecordingSession();
-        DefaultMcpRequestContext.of(exchange(asyncSession), withoutToken).progress(1, 2, "half");
+        DefaultMcpRequestContext.of(exchange(asyncSession), withoutToken, false).progress(1, 2, "half");
         assertEquals(List.of(), syncSession.notifications);
         assertEquals(List.of(), asyncSession.notifications);
     }
@@ -110,7 +105,7 @@ class DefaultMcpRequestContextTest {
     void aNotificationTheAsyncExchangeFailsToSendDoesNotFailTheMethod() {
         RecordingSession session = new RecordingSession();
         session.failNotifications = true;
-        McpRequestContext context = DefaultMcpRequestContext.of(exchange(session), REQUEST);
+        McpRequestContext context = DefaultMcpRequestContext.of(exchange(session), REQUEST, false);
         assertDoesNotThrow(() -> context.progress(1));
         assertDoesNotThrow(() -> context.log(McpSchema.LoggingLevel.INFO, "message"));
         assertEquals(List.of(), session.notifications);
@@ -122,29 +117,29 @@ class DefaultMcpRequestContextTest {
         MutableHttpRequest<?> request = HttpRequest.POST("/mcp", "");
         request.setAttribute(McpNotificationEmitter.ATTRIBUTE, emitter);
         McpRequestContext context = DefaultMcpRequestContext.of(
-            new HttpRequestMcpTransportContext(request, r -> null, new NoLocale()), REQUEST);
+            new HttpRequestMcpTransportContext(request, r -> null, new NoLocale()), REQUEST, false);
         context.progress(1);
         context.log(McpSchema.LoggingLevel.INFO, "message");
         assertEquals(List.of(McpSchema.METHOD_NOTIFICATION_PROGRESS, McpSchema.METHOD_NOTIFICATION_MESSAGE),
             emitter.notifications.stream().map(McpSchema.JSONRPCNotification::method).toList());
-        assertFalse(context.isCancelled());
-        emitter.cancelled = true;
-        assertTrue(context.isCancelled());
+        assertFalse(context.isClientDisconnected());
+        emitter.disconnected = true;
+        assertTrue(context.isClientDisconnected());
     }
 
     @Test
     void withoutAnExchangeOrAnEmitterNotificationsAreDroppedAndRequestsUnsupported() {
-        McpRequestContext context = DefaultMcpRequestContext.of(null, null);
+        McpRequestContext context = DefaultMcpRequestContext.of(null, null, false);
         assertSame(McpTransportContext.EMPTY, context.transportContext());
         assertNull(context.progressToken());
         context.progress(1);
         context.log(McpSchema.LoggingLevel.INFO, "message");
-        assertFalse(context.isCancelled());
+        assertFalse(context.isClientDisconnected());
         assertEquals("Elicitation is not supported over the stateless HTTP transport",
             assertThrows(UnsupportedOperationException.class, () -> context.elicit(ELICIT)).getMessage());
         assertEquals("Sampling is not supported over the stateless HTTP transport",
             assertThrows(UnsupportedOperationException.class, () -> context.sample(SAMPLE)).getMessage());
-        McpRequestContext withToken = DefaultMcpRequestContext.of(McpTransportContext.EMPTY, REQUEST);
+        McpRequestContext withToken = DefaultMcpRequestContext.of(McpTransportContext.EMPTY, REQUEST, false);
         assertEquals("token", withToken.progressToken());
         withToken.progress(1);
     }
@@ -156,7 +151,7 @@ class DefaultMcpRequestContextTest {
         assertEquals(List.of(McpSchema.METHOD_NOTIFICATION_PROGRESS, McpSchema.METHOD_NOTIFICATION_MESSAGE), session.notifications);
         assertEquals(McpSchema.ElicitResult.Action.ACCEPT, context.elicit(ELICIT).action());
         assertEquals("sampled", ((McpSchema.TextContent) context.sample(SAMPLE).content()).text());
-        assertFalse(context.isCancelled());
+        assertFalse(context.isClientDisconnected());
     }
 
     private static McpAsyncServerExchange exchange(RecordingSession session) {
@@ -211,7 +206,7 @@ class DefaultMcpRequestContextTest {
 
     private static final class RecordingEmitter implements McpNotificationEmitter {
         private final List<McpSchema.JSONRPCNotification> notifications = new ArrayList<>();
-        private boolean cancelled;
+        private boolean disconnected;
 
         @Override
         public void emit(McpSchema.JSONRPCNotification notification) {
@@ -219,8 +214,8 @@ class DefaultMcpRequestContextTest {
         }
 
         @Override
-        public boolean isCancelled() {
-            return cancelled;
+        public boolean isClientDisconnected() {
+            return disconnected;
         }
     }
 
