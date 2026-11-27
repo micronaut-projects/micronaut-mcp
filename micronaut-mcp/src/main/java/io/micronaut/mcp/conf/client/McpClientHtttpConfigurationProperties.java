@@ -116,7 +116,7 @@ final class McpClientHttpConfigurationProperties extends AbstractMcpClientConnec
     }
 
     /**
-     * The headers sent with every request, such as `Authorization`. Only used by the LangChain4j client.
+     * The headers sent with every request, such as `Authorization`.
      *
      * @param headers The headers sent with every request
      */
