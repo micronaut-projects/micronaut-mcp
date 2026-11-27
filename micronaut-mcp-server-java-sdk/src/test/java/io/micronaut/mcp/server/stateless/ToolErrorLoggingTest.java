@@ -2,6 +2,7 @@ package io.micronaut.mcp.server.stateless;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import io.micronaut.context.annotation.Property;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +27,7 @@ import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.callTool;
 import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.callToolError;
 import static io.micronaut.mcp.server.stateless.ExecutionModelSupport.text;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -68,17 +70,29 @@ class ToolErrorLoggingTest {
     void anUnexpectedFailureIsLoggedAtWarnWithTheException() throws IOException {
         callTool(httpClient, jsonMapper, "failing");
         ILoggingEvent event = single(Level.WARN);
-        assertEquals("Tool failing failed: the backend is down", event.getFormattedMessage());
-        assertNotNull(event.getThrowableProxy());
-        assertEquals(IllegalStateException.class.getName(), event.getThrowableProxy().getClassName());
+        assertTrue(event.getFormattedMessage().contains("java.lang.IllegalStateException: the backend is down"));
+        assertTrue(event.getFormattedMessage().contains("ToolErrorTools.failing("));
     }
 
     @Test
-    void lineBreaksInTheMessageAreNotLogged() throws IOException {
+    void theEncodedEventKeepsExceptionDetailsOnOneLine() throws IOException {
         Map<String, Object> result = callTool(httpClient, jsonMapper, "failingWithLineBreak");
-        // the model receives the message as is
-        assertEquals("Unknown city: Gotham\n12:00:00.000 INFO forged line", text(result));
-        assertEquals("Tool failingWithLineBreak failed: Unknown city: Gotham_12:00:00.000 INFO forged line", single(Level.WARN).getFormattedMessage());
+        assertEquals("Tool failingWithLineBreak failed", text(result));
+
+        PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+        encoder.setContext(logger.getLoggerContext());
+        encoder.setPattern("%msg%n%ex");
+        encoder.setCharset(StandardCharsets.UTF_8);
+        encoder.start();
+        try {
+            String output = new String(encoder.encode(single(Level.WARN)), StandardCharsets.UTF_8);
+            assertEquals(1, output.lines().count(), output);
+            assertTrue(output.contains("IllegalStateException: Unknown city: Gotham"), output);
+            assertTrue(output.contains("Caused by: java.io.IOException: upstream timeout"), output);
+            assertTrue(output.contains("Suppressed: java.io.IOException: cleanup failed"), output);
+        } finally {
+            encoder.stop();
+        }
     }
 
     @Test
@@ -86,7 +100,7 @@ class ToolErrorLoggingTest {
         callTool(httpClient, jsonMapper, "unserializable");
         ILoggingEvent event = single(Level.WARN);
         assertTrue(event.getFormattedMessage().startsWith("The result of tool unserializable could not be serialized: "), event.getFormattedMessage());
-        assertNotNull(event.getThrowableProxy());
+        assertNull(event.getThrowableProxy());
     }
 
     @Test
@@ -96,7 +110,7 @@ class ToolErrorLoggingTest {
         assertEquals(List.of(), events(Level.WARN));
         ILoggingEvent event = single(Level.DEBUG);
         assertEquals("Tool limited failed with an input error: count: must be less than or equal to 10", event.getFormattedMessage());
-        assertNotNull(event.getThrowableProxy());
+        assertNull(event.getThrowableProxy());
     }
 
     @Test
@@ -104,8 +118,8 @@ class ToolErrorLoggingTest {
         callToolError(httpClient, jsonMapper, "mapped", HttpStatus.BAD_REQUEST);
         assertEquals(List.of(), events(Level.WARN));
         ILoggingEvent event = single(Level.DEBUG);
-        assertEquals("Tool mapped failed with a mapped protocol error", event.getFormattedMessage());
-        assertNotNull(event.getThrowableProxy());
+        assertTrue(event.getFormattedMessage().startsWith("Tool mapped failed with a mapped protocol error: "), event.getFormattedMessage());
+        assertNull(event.getThrowableProxy());
     }
 
     private ILoggingEvent single(Level eventLevel) {

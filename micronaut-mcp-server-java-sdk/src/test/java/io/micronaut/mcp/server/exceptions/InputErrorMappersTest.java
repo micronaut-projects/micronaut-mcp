@@ -1,12 +1,13 @@
 package io.micronaut.mcp.server.exceptions;
 
-import io.micronaut.core.convert.ConversionError;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.serde.exceptions.SerdeException;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -43,9 +44,13 @@ class InputErrorMappersTest {
     }
 
     @Test
-    void anExceptionWithoutAMessageIsDescribedByItsClass() {
-        // The SDK rejects an error without a message
-        assertEquals("SerdeException", new SerdeExceptionMcpErrorMapper().map(new SerdeException()).getMessage());
+    void missingMessagesStillProduceAnInvalidParamsError() {
+        var mapper = new SerdeExceptionMcpErrorMapper();
+        for (SerdeException exception : List.of(new SerdeException(), new SerdeException("  "), new SerdeException() { })) {
+            McpError error = mapper.map(exception);
+            assertEquals(McpSchema.ErrorCodes.INVALID_PARAMS, error.getJsonRpcError().code());
+            assertEquals("Invalid arguments", error.getMessage());
+        }
     }
 
     @Test
