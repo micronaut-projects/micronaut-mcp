@@ -41,14 +41,17 @@ public interface InputErrorMapper<T extends Throwable> extends McpErrorException
 
     /**
      * @param exception The exception to map
-     * @return An invalid params error with the {@link #message(Throwable) message}, or the simple name of the class of
-     * the exception when it has no message, because the SDK requires a message
+     * @return A client-facing input error message, including when the exception has no message
      */
+    default String messageOrDefault(T exception) {
+        String message = message(exception);
+        return message == null || message.isBlank() ? "Invalid arguments" : message;
+    }
+
     @Override
     default McpError map(T exception) {
-        String message = message(exception);
         return McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS)
-            .message(message != null && !message.isBlank() ? message : exception.getClass().getSimpleName())
+            .message(messageOrDefault(exception))
             .build();
     }
 }
