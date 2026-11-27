@@ -1,0 +1,488 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.mcp.client.http;
+
+import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.io.buffer.ByteBuffer;
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.client.StreamingHttpClient;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.mcp.conf.client.McpClientHeadersProvider;
+import io.micronaut.mcp.conf.client.McpClientHttpConfiguration;
+import io.micronaut.mcp.conf.client.McpClientRequestHeaders;
+import org.jspecify.annotations.Nullable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Scheduler;
+import reactor.util.retry.Retry;
+
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
+
+/**
+ * Sends the JSON-RPC messages of an MCP client to a server over Streamable HTTP with the Micronaut HTTP client, and
+ * reads the messages of the response, a JSON body or an event stream, as they arrive. The messages are decoded on the
+ * event loop, then published on a scheduler that may block, which parses them and calls the client.
+ *
+ * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#streamable-http">Streamable HTTP</a>
+ */
+@Internal
+public final class MicronautMcpHttpExchange {
+    /**
+     * The header of the session id.
+     */
+    public static final String SESSION_ID = "Mcp-Session-Id";
+    /**
+     * The header of the negotiated protocol version.
+     */
+    public static final String PROTOCOL_VERSION = "MCP-Protocol-Version";
+    private static final String ACCEPT = MediaType.APPLICATION_JSON + ", " + MediaType.TEXT_EVENT_STREAM;
+    private static final Argument<String> ERROR_TYPE = Argument.STRING;
+    private static final Duration CLOSE_TIMEOUT = Duration.ofSeconds(5);
+    private static final String LAST_EVENT_ID = "Last-Event-ID";
+    private static final Duration DEFAULT_RETRY = Duration.ofSeconds(1);
+    // A data field may include "data: " before its payload and a carriage return after it.
+    private static final int SSE_LINE_OVERHEAD = 7;
+
+    private final StreamingHttpClient client;
+    private final String uri;
+    private final McpClientHttpConfiguration configuration;
+    private final List<McpClientHeadersProvider> headersProviders;
+    private final boolean dynamicHeaders;
+    private final Scheduler scheduler;
+    private final long maxMessageSize;
+    private final AtomicReference<String> sessionId = new AtomicReference<>();
+    private final AtomicReference<String> protocolVersion = new AtomicReference<>();
+    private final AtomicBoolean sessionless = new AtomicBoolean();
+    private final Sinks.Empty<Void> closed = Sinks.empty();
+
+    MicronautMcpHttpExchange(StreamingHttpClient client,
+                             String uri,
+                             McpClientHttpConfiguration configuration,
+                             List<McpClientHeadersProvider> headersProviders,
+                             Scheduler scheduler) {
+        this.client = client;
+        this.uri = uri;
+        this.configuration = configuration;
+        this.headersProviders = headersProviders;
+        this.dynamicHeaders = McpClientRequestHeaders.isDynamic(configuration, headersProviders);
+        this.scheduler = scheduler;
+        this.maxMessageSize = configuration.getMaxMessageSize();
+    }
+
+    /**
+     * @param protocolVersion The protocol version negotiated with the server, sent with every later request
+     */
+    public void setProtocolVersion(@Nullable String protocolVersion) {
+        this.protocolVersion.set(protocolVersion);
+    }
+
+    /**
+     * @param sessionless Whether the protocol has no sessions, as the 2026-07-28 protocol, so that no session id is sent
+     */
+    public void setSessionless(boolean sessionless) {
+        this.sessionless.set(sessionless);
+        if (sessionless) {
+            sessionId.set(null);
+        }
+    }
+
+    /**
+     * @param expired The error for the request whose session the server rejected
+     * @return Whether this request invalidated the active session
+     */
+    public boolean invalidateSession(McpHttpSessionNotFoundException expired) {
+        return sessionId.compareAndSet(expired.getSessionId(), null);
+    }
+
+    /**
+     * Computes the headers of a request on the calling thread: the static headers of the connection, and those of the
+     * headers providers.
+     *
+     * @return The headers
+     */
+    public Map<String, String> headers() {
+        return dynamicHeaders ? McpClientRequestHeaders.headers(configuration, headersProviders) : configuration.getHeaders();
+    }
+
+    /**
+     * Sends a JSON-RPC message.
+     *
+     * @param message The message, as JSON
+     * @param headers The headers of the request, such as those {@link #headers() computed} when the client was called
+     * @param initialize Whether the message initializes a session, which is then sent without the previous session id
+     * @return The messages of the response, as JSON: none for an accepted notification, one for a JSON response, or each
+     * message of an event stream, as it arrives. A JSON-RPC error answered with an error status is a message too. Fails
+     * with {@link McpHttpSessionNotFoundException} when the server no longer knows the session.
+     */
+    public Flux<String> post(String message, Map<String, String> headers, boolean initialize) {
+        return post(message, headers, initialize, null);
+    }
+
+    /**
+     * Sends a JSON-RPC message, resuming the event stream of the response when the server closes it before it sends the
+     * response, as the server may: with a {@code GET} that carries the {@code Last-Event-ID} of the stream, after the
+     * {@code retry} delay of the stream, until the response arrives, the cursor is cleared, or the subscriber cancels.
+     *
+     * @param message The message, as JSON
+     * @param headers The headers of the request
+     * @param initialize Whether the message initializes a session
+     * @param response Whether a message of the server is the response to this one, or {@code null} for a message that
+     * expects no response, whose stream is not resumed
+     * @return The messages of the response, see {@link #post(String, Map, boolean)}
+     */
+    public Flux<String> post(String message, Map<String, String> headers, boolean initialize, @Nullable Predicate<String> response) {
+        return Flux.defer(() -> {
+            MutableHttpRequest<String> request = HttpRequest.POST(uri, message)
+                .contentType(MediaType.APPLICATION_JSON_TYPE)
+                .header(HttpHeaders.ACCEPT, ACCEPT);
+            headers.forEach(request::header);
+            String session = initialize ? null : sessionId.get();
+            if (initialize) {
+                sessionId.set(null);
+            } else {
+                sessionHeaders(request, session);
+            }
+            StreamState stream = new StreamState(session);
+            Flux<String> messages = exchange(request, session, true, stream);
+            if (response == null) {
+                return messages;
+            }
+            long started = System.nanoTime();
+            Duration timeout = initialize ? configuration.getInitializationTimeout() : configuration.getRequestTimeout();
+            return messages.concatWith(Flux.defer(() -> resume(headers, stream, started, timeout))).takeUntil(response);
+        });
+    }
+
+    private Flux<String> resume(Map<String, String> headers, StreamState stream, long started, @Nullable Duration timeout) {
+        if (stream.lastEventId == null) {
+            return Flux.empty();
+        }
+        // A poll can return only a retry interval. Keep its cursor until a subsequent poll updates or clears it.
+        Flux<String> polls = Flux.defer(() -> {
+            MutableHttpRequest<?> request = HttpRequest.GET(uri)
+                .header(HttpHeaders.ACCEPT, MediaType.TEXT_EVENT_STREAM)
+                .header(LAST_EVENT_ID, stream.lastEventId);
+            headers.forEach(request::header);
+            sessionHeaders(request, stream.session);
+            return reconnectDelay(stream, DEFAULT_RETRY).thenMany(exchange(request, stream.session, false, stream));
+        }).repeat(() -> stream.lastEventId != null).takeUntilOther(closed.asMono());
+        if (timeout == null || !timeout.isPositive()) {
+            return polls;
+        }
+        // Reading each short poll can succeed even after the deadline for the original request.
+        long remaining = timeout.toNanos() - (System.nanoTime() - started);
+        return polls.takeUntilOther(Mono.fromFuture(() -> new CompletableFuture<Void>().orTimeout(remaining, TimeUnit.NANOSECONDS)));
+    }
+
+    /**
+     * Opens the stream of the messages the server sends on its own, such as requests and notifications.
+     *
+     * @return The messages of the stream. Fails with {@link McpHttpSessionNotFoundException} when the server no longer knows
+     * the session, and with an {@link HttpClientResponseException} of status 405 when the server does not offer a stream.
+     */
+    public Flux<String> listen() {
+        return Flux.defer(() -> {
+            StreamState stream = new StreamState(sessionId.get());
+            Flux<String> get = Flux.defer(() -> {
+                MutableHttpRequest<?> request = HttpRequest.GET(uri).header(HttpHeaders.ACCEPT, MediaType.TEXT_EVENT_STREAM);
+                headers().forEach(request::header);
+                if (stream.lastEventId != null) {
+                    request.header(LAST_EVENT_ID, stream.lastEventId);
+                }
+                sessionHeaders(request, stream.session);
+                return exchange(request, stream.session, false, stream);
+            });
+            return get.repeatWhen(ends -> ends.concatMap(ignored -> reconnectDelay(stream, DEFAULT_RETRY)))
+                .retryWhen(Retry.from(errors -> errors.concatMap(signal -> {
+                    Throwable e = signal.failure();
+                    if (e instanceof McpHttpSessionNotFoundException
+                        || e instanceof HttpClientResponseException response && response.getStatus() == HttpStatus.METHOD_NOT_ALLOWED) {
+                        return Mono.error(e);
+                    }
+                    long backoff = Math.min(30, 1L << Math.min(5, signal.totalRetries()));
+                    return reconnectDelay(stream, Duration.ofSeconds(backoff));
+                })));
+        });
+    }
+
+    private static Mono<Long> reconnectDelay(StreamState stream, Duration fallback) {
+        Duration retry = stream.retry != null ? stream.retry : fallback;
+        Executor delayed = CompletableFuture.delayedExecutor(retry.toMillis(), TimeUnit.MILLISECONDS);
+        return Mono.fromFuture(() -> CompletableFuture.supplyAsync(() -> 0L, delayed));
+    }
+
+    private void sessionHeaders(MutableHttpRequest<?> request, @Nullable String session) {
+        String version = protocolVersion.get();
+        if (version != null) {
+            request.header(PROTOCOL_VERSION, version);
+        }
+        if (session != null && !sessionless.get()) {
+            request.header(SESSION_ID, session);
+        }
+    }
+
+    private Flux<String> exchange(MutableHttpRequest<?> request, @Nullable String session, boolean errorMessages, StreamState stream) {
+        return Flux.defer(() -> {
+            ResponseDecoder decoder = new ResponseDecoder(splitsLines(request), stream);
+            return Flux.from(client.exchangeStream(request, ERROR_TYPE))
+                .concatMapIterable(decoder::chunk)
+                .concatWith(Flux.defer(() -> Flux.fromIterable(decoder.finish())));
+        }).onErrorResume(HttpClientResponseException.class, e -> errorBody(e, session, errorMessages))
+            .publishOn(scheduler);
+    }
+
+    private static boolean splitsLines(MutableHttpRequest<?> request) {
+        // As the Micronaut HTTP client, which splits the event stream of a request that only accepts one into lines
+        return MediaType.TEXT_EVENT_STREAM.equalsIgnoreCase(request.getHeaders().get(HttpHeaders.ACCEPT));
+    }
+
+    /**
+     * Ends the session with the server, if it started one, waiting a bounded time for the server to answer.
+     *
+     * @param headers The headers of the request
+     * @return A publisher completing when the session is ended
+     */
+    public Mono<Void> close(Map<String, String> headers) {
+        closed.tryEmitEmpty();
+        MutableHttpRequest<?> request = HttpRequest.DELETE(uri);
+        headers.forEach(request::header);
+        String session = sessionId.getAndSet(null);
+        sessionHeaders(request, session);
+        if (session == null) {
+            return Mono.empty();
+        }
+        return Flux.from(client.exchangeStream(request)).then()
+            .timeout(CLOSE_TIMEOUT)
+            .onErrorResume(e -> Mono.empty());
+    }
+
+    private Flux<String> errorBody(HttpClientResponseException e, @Nullable String session, boolean errorMessages) {
+        if (e.getStatus() == HttpStatus.NOT_FOUND && session != null) {
+            return Flux.error(new McpHttpSessionNotFoundException(session, "The MCP server " + configuration.getName() + " no longer knows the session " + session, e));
+        }
+        if (!errorMessages) {
+            return Flux.error(e);
+        }
+        // A JSON-RPC error answered with an error status is still a message for the client
+        String body = e.getResponse().getBody(String.class).orElse(null);
+        if (body != null && utf8Length(body) <= maxMessageSize && body.trim().startsWith("{") && body.contains("\"jsonrpc\"")) {
+            return Flux.just(body);
+        }
+        return Flux.error(e);
+    }
+
+    /**
+     * @return The number of bytes of the value in UTF-8, without encoding it
+     */
+    private static long utf8Length(CharSequence value) {
+        // An unpaired surrogate is a code point of its own, which UTF-8 encoders replace with 3 bytes
+        return value.codePoints().mapToLong(c -> {
+            if (c < 0x80) {
+                return 1;
+            }
+            if (c < 0x800) {
+                return 2;
+            }
+            return c < 0x10000 ? 3 : 4;
+        }).sum();
+    }
+
+    /**
+     * The state of an event stream that its resumption needs: the id of its last event and its reconnection delay
+     * belong to the session that opened the stream.
+     */
+    private static final class StreamState {
+        private volatile @Nullable String lastEventId;
+        private volatile @Nullable Duration retry;
+        private volatile @Nullable String session;
+
+        StreamState(@Nullable String session) {
+            this.session = session;
+        }
+    }
+
+    /**
+     * Decodes the body of one response, chunk by chunk. The lines of an event stream are split on their bytes, and each
+     * is decoded once complete, so that a character split across chunks is decoded whole. When the request only accepts
+     * an event stream, the Micronaut HTTP client splits the stream into lines itself, without their line ends, and each
+     * chunk is a line.
+     */
+    private final class ResponseDecoder {
+        private final boolean splitLines;
+        private final ByteArrayOutputStream body = new ByteArrayOutputStream();
+        private final ByteArrayOutputStream line = new ByteArrayOutputStream();
+        private final StringBuilder data = new StringBuilder();
+        private final StreamState stream;
+        private long dataBytes;
+        private boolean first = true;
+        private boolean eventStream;
+
+        ResponseDecoder(boolean splitLines, StreamState stream) {
+            this.splitLines = splitLines;
+            this.stream = stream;
+        }
+
+        List<String> chunk(HttpResponse<ByteBuffer<?>> response) {
+            if (response.code() >= HttpStatus.MULTIPLE_CHOICES.getCode()) {
+                // A redirect, which is not followed: nothing else would end the request
+                throw new HttpClientResponseException("The MCP server answered with status " + response.code(), response);
+            }
+            if (first) {
+                first = false;
+                if (!sessionless.get()) {
+                    response.getHeaders().findFirst(SESSION_ID).ifPresent(id -> {
+                        // Keep the identity of an echoed session id so a late response cannot replace a newer session.
+                        if (!id.equals(stream.session) && sessionId.compareAndSet(stream.session, id)) {
+                            stream.session = id;
+                        }
+                    });
+                }
+                eventStream = response.getContentType().map(MediaType.TEXT_EVENT_STREAM_TYPE::matches).orElse(false);
+            }
+            ByteBuffer<?> buffer = response.body();
+            if (buffer == null) {
+                return List.of();
+            }
+            // The client releases the buffer once this chunk is handled
+            byte[] bytes = buffer.toByteArray();
+            if (!eventStream) {
+                if (body.size() + (long) bytes.length > maxMessageSize) {
+                    throw tooLarge();
+                }
+                body.writeBytes(bytes);
+                return List.of();
+            }
+            if (splitLines) {
+                List<String> messages = new ArrayList<>(1);
+                field(decodeLine(bytes, 0, bytes.length), messages);
+                return messages;
+            }
+            return events(bytes);
+        }
+
+        List<String> finish() {
+            if (eventStream) {
+                List<String> messages = new ArrayList<>(1);
+                if (line.size() > 0) {
+                    field(decodeLine(line.toByteArray(), 0, line.size()), messages);
+                    line.reset();
+                }
+                field("", messages);
+                return messages;
+            }
+            String json = body.toString(StandardCharsets.UTF_8);
+            return json.isBlank() ? List.of() : List.of(json);
+        }
+
+        private List<String> events(byte[] bytes) {
+            List<String> messages = new ArrayList<>(1);
+            int start = 0;
+            for (int i = 0; i < bytes.length; i++) {
+                if (bytes[i] == '\n') {
+                    String text;
+                    if (line.size() == 0) {
+                        text = decodeLine(bytes, start, i);
+                    } else {
+                        line.write(bytes, start, i - start);
+                        text = decodeLine(line.toByteArray(), 0, line.size());
+                        line.reset();
+                    }
+                    field(text, messages);
+                    start = i + 1;
+                }
+            }
+            if (start < bytes.length) {
+                if (line.size() + (long) (bytes.length - start) - SSE_LINE_OVERHEAD > maxMessageSize) {
+                    throw tooLarge();
+                }
+                line.write(bytes, start, bytes.length - start);
+            }
+            return messages;
+        }
+
+        private static String decodeLine(byte[] bytes, int start, int end) {
+            int last = end > start && bytes[end - 1] == '\r' ? end - 1 : end;
+            return new String(bytes, start, last - start, StandardCharsets.UTF_8);
+        }
+
+        private void field(String field, List<String> messages) {
+            if (field.isEmpty()) {
+                // A blank line dispatches the event
+                if (!data.isEmpty()) {
+                    messages.add(data.toString());
+                    data.setLength(0);
+                    dataBytes = 0;
+                }
+            } else if (field.startsWith("data:")) {
+                int start = field.startsWith("data: ") ? 6 : 5;
+                if (!data.isEmpty()) {
+                    data.append('\n');
+                    dataBytes++;
+                }
+                // The size is counted in bytes, as the maximum is, not in UTF-16 code units
+                dataBytes += utf8Length(field.substring(start));
+                if (dataBytes > maxMessageSize) {
+                    throw tooLarge();
+                }
+                data.append(field, start, field.length());
+            } else if (field.startsWith("id:")) {
+                lastEventId(value(field, 3));
+            } else if (field.startsWith("retry:")) {
+                retry(value(field, 6));
+            }
+        }
+
+        private void lastEventId(String id) {
+            // An id with a NUL is ignored, as an event source does
+            if (id.indexOf('\0') < 0) {
+                stream.lastEventId = id.isEmpty() ? null : id;
+            }
+        }
+
+        private void retry(String retry) {
+            if (!retry.isEmpty() && retry.length() < 10 && retry.chars().allMatch(Character::isDigit)) {
+                stream.retry = Duration.ofMillis(Long.parseLong(retry));
+            }
+        }
+
+        private static String value(String field, int nameEnd) {
+            return field.startsWith(" ", nameEnd) ? field.substring(nameEnd + 1) : field.substring(nameEnd);
+        }
+
+        private IllegalStateException tooLarge() {
+            return new IllegalStateException("A message of the MCP server " + configuration.getName() + " exceeds the maximum size of "
+                + maxMessageSize + " bytes, set by max-message-size");
+        }
+    }
+}

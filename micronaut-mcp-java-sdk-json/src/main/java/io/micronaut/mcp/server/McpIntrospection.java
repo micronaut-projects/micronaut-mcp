@@ -16,17 +16,14 @@
 package io.micronaut.mcp.server;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.serde.annotation.SerdeImport;
-import io.modelcontextprotocol.spec.McpSchema;
 
 /**
- * Serde imports for MCP JDK classes.
+ * Formerly the serde imports for MCP JDK classes, which {@code io.micronaut.mcp.server.json.McpSchemaSerdeImports} now
+ * declares. Kept so that the class still exists.
+ *
+ * @deprecated Not used, to be removed
  */
-@SerdeImport(McpSchema.SetLevelRequest.class)
-@SerdeImport(McpSchema.LoggingLevel.class)
-@SerdeImport(McpSchema.Icon.class)
-@SerdeImport(McpSchema.CompleteReference.class)
-@SerdeImport(McpSchema.TextContent.class)
+@Deprecated(forRemoval = true, since = "2.2.0")
 @Internal
 public class McpIntrospection {
 }

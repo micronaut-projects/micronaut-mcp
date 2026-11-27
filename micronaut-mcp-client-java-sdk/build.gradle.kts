@@ -4,6 +4,7 @@ plugins {
 }
 dependencies {
     compileOnly(mn.micronaut.http.server)
+    compileOnly(mn.micronaut.http.client.core)
     api(projects.micronautMcpJavaSdkJson)
     api(projects.micronautMcp)
     implementation(mn.micronaut.core.reactive)

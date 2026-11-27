@@ -7,6 +7,8 @@ dependencies {
     implementation(platform("dev.langchain4j:langchain4j-bom:${mnLangchain4j.versions.langchain4j.asProvider().get()}"))
     api(libs.langchain4j.mcp)
     compileOnly(mn.micronaut.management)
+    compileOnly(mn.micronaut.http.client.core)
+    compileOnly(mn.reactor)
     // LangChain4j pulls in Jackson 2.x versions with known vulnerabilities
     implementation(platform(libs.jackson2.bom))
     testAnnotationProcessor(mn.micronaut.inject.java)

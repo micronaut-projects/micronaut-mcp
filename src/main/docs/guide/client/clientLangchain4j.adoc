@@ -161,6 +161,35 @@ IMPORTANT: The client of a connection, and so its MCP session, is shared by ever
 
 Initialization, pings, reconnections, and replies to server requests can all run outside a user request. If the MCP server requires authentication for those operations, configure a headers provider that can supply application credentials when the current request is absent, for example a client credentials token.
 
+=== Micronaut HTTP Client
+
+By default the clients send their requests with the JDK HTTP client. Set `http-client` to `MICRONAUT` on an HTTP connection to use the Micronaut HTTP client instead, with the `micronaut-http-client` dependency: the client filters of the application apply, and `service-id` names the `micronaut.http.services` entry that configures the client, for example its SSL, proxy or timeouts. The service ID selects filters such as `@ClientFilter(serviceId = "weather")` even when the service entry omits `url`. In that case, the connection URL supplies the host. With either HTTP client, a URL without a path uses `/` for LangChain4j and `/mcp` for the MCP Java SDK. Without `service-id`, the default client configuration applies, with the `request-timeout` of the connection, or its `timeout`, as the read timeout.
+
+[configuration]
+----
+micronaut:
+  mcp:
+    client:
+      http:
+        weather:
+          url: https://weather.example.com/mcp
+          http-client: MICRONAUT
+          service-id: weather
+  http:
+    services:
+      weather:
+        read-timeout: 60s
+        follow-redirects: false
+----
+
+This applies to the LangChain4j and the Java SDK clients. Responses streamed as server-sent events are read as they arrive. A message of the server larger than `max-message-size` (default `16MB`), counted in bytes, fails the request. When the server closes the stream of a response before it sends the response, the client resumes it from its last event, after the `retry` delay the server sets. The Java SDK client listens to the stream of the messages the server sends on its own, such as the notifications that its tools changed, reconnecting when it ends; as the LangChain4j HTTP transport, the LangChain4j client does not.
+
+The `request-timeout` or `timeout` of a connection becomes the `read-timeout` of its client, and redirects are not followed, since MCP does not use them and following one could send the token of a user to another server. With `service-id` the `micronaut.http.services` entry configures the client instead: set its `read-timeout` and `follow-redirects: false` there. The `read-idle-timeout` of the client (default `5m`) still applies: it closes the stream of a server that stays quiet that long, and the Java SDK client then reconnects.
+
+WARNING: The client filters of the application apply to the requests sent to MCP servers, including third-party ones. Restrict the filters that add credentials, for example with `@ClientFilter(serviceId = ...)` or path patterns, so that they do not reach MCP servers they are not meant for.
+
+WARNING: The responses are read on the event loop of the Micronaut HTTP client, which by default is shared with the HTTP server. Never call a blocking client API, such as the LangChain4j client or the Java SDK `McpSyncClient`, on an event loop: it would wait for a response that the blocked event loop cannot read. Call them from a thread that may block, for example with `@ExecuteOn(TaskExecutors.BLOCKING)`, or use the asynchronous Java SDK client. The messages are parsed, and the handlers called, on the blocking executor.
+
 === Testing an MCP server
 
 If you are building an MCP Server, you can test it by injecting a bean of type `dev.langchain4j.mcp.client.McpClient` in your tests.
