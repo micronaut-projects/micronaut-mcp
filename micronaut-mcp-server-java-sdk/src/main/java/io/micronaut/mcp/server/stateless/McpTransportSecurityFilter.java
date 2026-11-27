@@ -67,6 +67,7 @@ final class McpTransportSecurityFilter implements Ordered {
     private static final String WILDCARD = "*";
     private static final String ALLOWED_ORIGINS = TransportSecurityConfiguration.PREFIX + ".allowed-origins";
     private static final String SCHEME_SEPARATOR = "://";
+    private static final int MAX_PORT = 65_535;
     private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "[::1]");
     private static final Set<String> LOOPBACK_SCHEMES = Set.of("http", "https");
 
@@ -247,10 +248,35 @@ final class McpTransportSecurityFilter implements Ordered {
             + (example != null ? ", for example '" + example + "'" : ""));
     }
 
+    /**
+     * Whether a normalized value is a complete origin: a non-empty scheme, a host and an optional port between 1 and
+     * 65535, with nothing after them, not even a {@code /}, so that it can match the origin a browser sends.
+     */
     private static boolean isOrigin(String origin) {
         int schemeEnd = origin.indexOf(SCHEME_SEPARATOR);
         // The scheme must not be empty
-        return schemeEnd > 0 && isHost(host(origin));
+        if (schemeEnd <= 0 || origin.endsWith("/")) {
+            return false;
+        }
+        String host = host(origin);
+        if (!isHost(host)) {
+            return false;
+        }
+        int hostEnd = schemeEnd + SCHEME_SEPARATOR.length() + host.length();
+        return hostEnd == origin.length() || (origin.charAt(hostEnd) == ':' && isPort(origin.substring(hostEnd + 1)));
+    }
+
+    private static boolean isPort(String port) {
+        if (port.isEmpty() || port.length() > 5) {
+            return false;
+        }
+        for (int i = 0; i < port.length(); i++) {
+            if (port.charAt(i) < '0' || port.charAt(i) > '9') {
+                return false;
+            }
+        }
+        int value = Integer.parseInt(port);
+        return value >= 1 && value <= MAX_PORT;
     }
 
     /**
