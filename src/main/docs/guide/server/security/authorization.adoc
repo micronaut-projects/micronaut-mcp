@@ -1,0 +1,87 @@
+Secure the MCP endpoint with https://micronaut-projects.github.io/micronaut-security/latest/guide/[Micronaut Security]. MCP clients authenticate with OAuth 2.1 bearer tokens, so add `micronaut-security-jwt` to validate the tokens:
+
+dependency:micronaut-security-jwt[groupId=io.micronaut.security]
+
+and `micronaut-security-oauth2` (Micronaut Security 5; this recipe is tested with 5.5.2), which implements the https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization[authorization discovery] the specification requires:
+
+dependency:micronaut-security-oauth2[groupId=io.micronaut.security]
+
+
+- an unauthenticated request is answered with `401 Unauthorized` and a `WWW-Authenticate: Bearer resource_metadata="..."` challenge;
+- the https://www.rfc-editor.org/rfc/rfc9728[OAuth 2.0 Protected Resource Metadata] of the endpoint is served at `/.well-known/oauth-protected-resource/mcp`, naming the authorization servers of the configured OpenID clients.
+
+[configuration]
+----
+micronaut:
+  security:
+    token:
+      jwt:
+        claims-validators:
+          audience: https://mcp.example.com/mcp
+          issuer: https://idp.example.com
+          not-before: true
+        signatures:
+          jwks:
+            idp:
+              url: https://idp.example.com/.well-known/jwks.json
+    oauth2:
+      clients:
+        idp:
+          openid:
+            issuer: https://idp.example.com
+    intercept-url-map:
+      - pattern: /mcp
+        access:
+          - isAuthenticated()
+  server:
+    host-resolution:
+      allowed-hosts:
+        - https://mcp[.]example[.]com
+----
+
+The specification requires the server to accept only tokens issued for it, so that a token issued for another service cannot be used against the MCP server. Set the audience to the canonical URL of your MCP endpoint. Validate the issuer too, so that a token of another issuer that shares the provider's keys, such as another tenant, is rejected, and the not-before time.
+
+Micronaut Security accepts a token without an expiration (`exp`). If your provider can issue such tokens, register a `GenericJwtClaimsValidator` bean whose `validate` method returns `claims.contains(Claims.EXPIRATION_TIME)`, so that a leaked token cannot be used forever.
+
+Serve the endpoint over HTTPS only, with `micronaut.server.ssl` or behind a proxy that terminates TLS, as the bearer tokens are sent with every request.
+
+The `WWW-Authenticate` challenge and the `resource` of the protected resource metadata are built from the host the request names, in its `Host` or forwarded headers. List the hosts of the server in `micronaut.server.host-resolution.allowed-hosts`, regular expressions matched against `scheme://host[:port]`, so that a forged host, for example in a cached response, cannot send clients to another authorization server. A request whose host matches none of them is resolved to `http://localhost`, so clients would look for the metadata on their own machine. With the allowed hosts set, the `resource` is the canonical URL of the endpoint, the audience above.
+
+Behind a proxy that terminates TLS, the server sees plain HTTP. Name the headers the proxy sets, so that the resolved host is the `https` one the clients use. Once they are configured, only those headers are read, and the proxy must replace any copies the client sent:
+
+[configuration]
+----
+micronaut:
+  server:
+    host-resolution:
+      protocol-header: X-Forwarded-Proto
+      host-header: X-Forwarded-Host
+      allowed-hosts:
+        - https://mcp[.]example[.]com
+----
+
+Use `host-header: Host` if the proxy keeps the `Host` header instead of setting `X-Forwarded-Host`.
+
+If you change `micronaut.mcp.server.endpoint`, update the `intercept-url-map` pattern and the JWT audience to match the new path. Publish a single canonical endpoint URL without a trailing slash. Micronaut's router accepts a trailing-slash alias, but the stock challenge uses the request path and the metadata may omit the slash from its `resource`. Clients following https://datatracker.ietf.org/doc/html/rfc9728#section-3.3[RFC 9728] reject that mismatch. If you expose the alias, configure your proxy or an application request filter to return a `308 Permanent Redirect` to the canonical path before authentication. A 308 preserves the POST method and body.
+
+If you set `micronaut.server.context-path`, the stock metadata controller is mounted under that context path. The public metadata URL in the challenge still starts at the origin root, so configure your proxy to forward it to the controller. For example, with a context path of `/ctx` and an endpoint of `/mcp`, use these mappings:
+
+[cols="1,1",options="header"]
+|===
+| Public request path | Proxy action
+
+| `/ctx/mcp/`
+| Return a 308 redirect to `/ctx/mcp`.
+
+| `/ctx/mcp`
+| Forward to `/ctx/mcp` on the application.
+
+| `/.well-known/oauth-protected-resource/ctx/mcp`
+| Forward to `/ctx/.well-known/oauth-protected-resource/ctx/mcp` on the application.
+|===
+
+Keep `/ctx/mcp` after `oauth-protected-resource` in the upstream path. The metadata controller uses that suffix to construct the `resource`. Set the audience to `https://mcp.example.com/ctx/mcp`. Keep `/mcp` in `intercept-url-map` because Micronaut Security prepends the context path by default.
+
+Tools, prompts and resources receive the authenticated principal through the <<context, transport context>>:
+
+snippet::io.micronaut.mcp.docs.security.WhoAmITools[project-base="test-suite-docs", tags="imports,clazz"]

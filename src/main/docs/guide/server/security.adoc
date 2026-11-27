@@ -1,0 +1,1 @@
+Protect the HTTP endpoint of an MCP server against DNS rebinding attacks, and require clients to authenticate.

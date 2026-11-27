@@ -18,6 +18,10 @@ server:
   stdio: STDIO Transport
   testingYourMcpServer: Testing your MCP Server
   context: MCP Transport Context
+  security:
+    title: Security
+    transportSecurity: Transport Security
+    authorization: Authorization
   primitives:
     title: Primitives
     tools:
