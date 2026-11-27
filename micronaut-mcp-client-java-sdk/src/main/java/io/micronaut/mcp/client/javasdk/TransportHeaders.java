@@ -52,9 +52,9 @@ final class TransportHeaders {
                                        McpTransportContext context,
                                        ContextView reactorContext) {
         if (context.get(McpClientTransportHeaders.HEADERS) instanceof Map<?, ?> supplied) {
-            Map<String, String> headers = new LinkedHashMap<>(configuration.getHeaders());
-            supplied.forEach((name, value) -> headers.put(name.toString(), value.toString()));
-            return headers;
+            Map<String, String> overrides = new LinkedHashMap<>();
+            supplied.forEach((name, value) -> overrides.put(name.toString(), value.toString()));
+            return McpClientRequestHeaders.merge(new LinkedHashMap<>(configuration.getHeaders()), overrides);
         }
         if (!McpClientRequestHeaders.isDynamic(configuration, headersProviders)) {
             return configuration.getHeaders();
@@ -62,8 +62,7 @@ final class TransportHeaders {
         // Without a propagated context, for example for the answers to the requests of the server, the headers providers
         // run without an HTTP request: the context of this thread, such as an event loop, may be that of another request
         PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(reactorContext).orElseGet(PropagatedContext::empty);
-        try (var _ = propagatedContext.propagate()) {
-            return McpClientRequestHeaders.headers(configuration, headersProviders);
-        }
+        // The supplier form, which a scoped-value propagation requires
+        return propagatedContext.propagate(() -> McpClientRequestHeaders.headers(configuration, headersProviders));
     }
 }

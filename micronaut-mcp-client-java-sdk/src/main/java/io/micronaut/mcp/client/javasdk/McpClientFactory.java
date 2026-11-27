@@ -212,9 +212,18 @@ final class McpClientFactory {
         McpSyncClient client = null;
         try {
             client = spec.build();
-            if (!Schedulers.isInNonBlockingThread()) {
-                // On an event loop, which the synchronous client cannot be called from, it initializes when it is first
-                // used instead
+            if (Schedulers.isInNonBlockingThread()) {
+                // An event loop must not block, so the client initializes on the blocking executor instead, and a
+                // failure is cleaned up there
+                McpSyncClient created = client;
+                blockingScheduler.schedule(() -> {
+                    try {
+                        created.initialize();
+                    } catch (RuntimeException e) {
+                        initializationFailed(name, McpSyncClient.class, created, e);
+                    }
+                });
+            } else {
                 client.initialize();
             }
             return client;
@@ -279,9 +288,14 @@ final class McpClientFactory {
         McpAsyncClient client = null;
         try {
             client = spec.build();
-            if (!Schedulers.isInNonBlockingThread()) {
-                // Bounded by the initialization timeout of the client. On an event loop, the client initializes when it
-                // is first used instead
+            if (Schedulers.isInNonBlockingThread()) {
+                // An event loop must not block, so the client initializes without waiting, and a failure is cleaned up on
+                // the blocking executor, as closing the client waits for its transport
+                McpAsyncClient created = client;
+                client.initialize().subscribe(result -> { },
+                    e -> blockingScheduler.schedule(() -> initializationFailed(name, McpAsyncClient.class, created, e)));
+            } else {
+                // Bounded by the initialization timeout of the client
                 client.initialize().block();
             }
             return client;
@@ -292,6 +306,22 @@ final class McpClientFactory {
                 closeQuietly(name, () -> McpAsyncClientCloser.close(failed));
             }
             throw e;
+        }
+    }
+
+    /**
+     * Cleans up a client whose initialization failed after it was returned, as a failure while it is created is: the
+     * client is destroyed, which closes it with its transport, such as the process of a STDIO server, and the connection
+     * is released, so that the next request for the client creates it afresh.
+     */
+    private <T> void initializationFailed(String name, Class<T> type, T client, Throwable error) {
+        LOG.warn("The MCP client of the connection {} failed to initialize, it is created again the next time it is requested", name, error);
+        try {
+            beanContext.destroyBean(client);
+        } catch (RuntimeException e) {
+            LOG.warn("Failed to close the MCP client of the connection {}", name, e);
+        } finally {
+            connectionClients.release(name, type);
         }
     }
 
