@@ -345,7 +345,9 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.prompts.list-changed</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">whether the server will emit notifications when the list of available prompts changes. Default value <code>false</code>.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">whether the prompts capability is advertised even when the server has no prompts, so prompts can be added at
+                    runtime, and, over STDIO, whether the server notifies clients when the list of prompts changes. The HTTP
+                    transport always advertises <code>listChanged</code> as <code>false</code>. Default value <code>false</code>.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
@@ -372,13 +374,17 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.resources.subscribe</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">whether the client can subscribe to be notified of changes to individual resources. Default value <code>false</code>.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">whether the client can subscribe to be notified of changes to individual resources. It does not advertise the
+                  resources capability when the server has no resources unless <code>list-changed</code> is also <code>true</code>. The HTTP
+                  transport always advertises <code>subscribe</code> as <code>false</code>. Default value <code>false</code>.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.resources.list-changed</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">whether the server will emit notifications when the list of available resources changes. Default value <code>false</code>.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">whether the resources capability is advertised even when the server has no resources, so resources can be added at
+                    runtime, and, over STDIO, whether the server notifies clients when the list of resources changes. The HTTP
+                    transport always advertises <code>listChanged</code> as <code>false</code>. Default value <code>false</code>.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
@@ -405,7 +411,9 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.tools.list-changed</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">whether the server will emit notifications when the list of available tools changes. Default value <code>false</code>.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">whether the tools capability is advertised even when the server has no tools, so tools can be added at
+                    runtime, and, over STDIO, whether the server notifies clients when the list of tools changes. The HTTP
+                    transport always advertises <code>listChanged</code> as <code>false</code>. Default value <code>false</code>.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>

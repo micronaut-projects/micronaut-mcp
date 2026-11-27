@@ -193,19 +193,21 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-primitivesMetadata"><a href="#primitivesMetadata"><strong>4.9.4</strong><span>Icons, Metadata and Resource Hints</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-completions"><a href="#completions"><strong>4.9.5</strong><span>Completions</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-dynamicPrimitives"><a href="#dynamicPrimitives"><strong>4.9.5</strong><span>Adding and Removing Primitives at Runtime</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-promptCompletionAnnotation"><a href="#promptCompletionAnnotation"><strong>4.9.5.1</strong><span>Prompt Completions with Annotations</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-completions"><a href="#completions"><strong>4.9.6</strong><span>Completions</span></a></div>
         
-        <div class="toc-item" style="margin-left:40px" id="toc-item-promptCompletionParameter"><a href="#promptCompletionParameter"><strong>4.9.5.1.1</strong><span>PromptCompletion Annotation Method Parameters</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-promptCompletionAnnotation"><a href="#promptCompletionAnnotation"><strong>4.9.6.1</strong><span>Prompt Completions with Annotations</span></a></div>
         
-        <div class="toc-item" style="margin-left:40px" id="toc-item-promptCompletionReturnType"><a href="#promptCompletionReturnType"><strong>4.9.5.1.2</strong><span>PromptCompletion Annotation Method Return Type</span></a></div>
+        <div class="toc-item" style="margin-left:40px" id="toc-item-promptCompletionParameter"><a href="#promptCompletionParameter"><strong>4.9.6.1.1</strong><span>PromptCompletion Annotation Method Parameters</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-resourceCompletionAnnotation"><a href="#resourceCompletionAnnotation"><strong>4.9.5.2</strong><span>Resource Completions with Annotations</span></a></div>
+        <div class="toc-item" style="margin-left:40px" id="toc-item-promptCompletionReturnType"><a href="#promptCompletionReturnType"><strong>4.9.6.1.2</strong><span>PromptCompletion Annotation Method Return Type</span></a></div>
         
-        <div class="toc-item" style="margin-left:40px" id="toc-item-resourceCompletionParameter"><a href="#resourceCompletionParameter"><strong>4.9.5.2.1</strong><span>ResourceCompletion Annotation Method Parameters</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-resourceCompletionAnnotation"><a href="#resourceCompletionAnnotation"><strong>4.9.6.2</strong><span>Resource Completions with Annotations</span></a></div>
         
-        <div class="toc-item" style="margin-left:40px" id="toc-item-resourceCompletionReturnType"><a href="#resourceCompletionReturnType"><strong>4.9.5.2.2</strong><span>ResourceCompletion Annotation Method Return Type</span></a></div>
+        <div class="toc-item" style="margin-left:40px" id="toc-item-resourceCompletionParameter"><a href="#resourceCompletionParameter"><strong>4.9.6.2.1</strong><span>ResourceCompletion Annotation Method Parameters</span></a></div>
+        
+        <div class="toc-item" style="margin-left:40px" id="toc-item-resourceCompletionReturnType"><a href="#resourceCompletionReturnType"><strong>4.9.6.2.2</strong><span>ResourceCompletion Annotation Method Return Type</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-client"><a href="#client"><strong>5</strong><span>MCP Client</span></a></div>
         
@@ -301,6 +303,12 @@
 </li>
 <li>
 <p>The HTTP endpoint now validates the <code>Origin</code> and <code>MCP-Protocol-Version</code> request headers, as the MCP specification requires. A browser-based client whose origin is neither a loopback origin nor listed in <code>micronaut.mcp.server.transport-security.allowed-origins</code> now gets <code>403 Forbidden</code>; add its origin to the list (and enable CORS for it). A request with an <code>MCP-Protocol-Version</code> header naming a version the server does not support (it supports <code>2025-03-26</code>, <code>2025-06-18</code> and <code>2025-11-25</code>) now gets <code>400 Bad Request</code>. See <a href="#transportSecurity">Transport Security</a>.</p>
+</li>
+<li>
+<p>With the HTTP transport, the server advertises <code>listChanged</code> and <code>subscribe</code> as <code>false</code>. This overrides the <code>list-changed</code> and <code>subscribe</code> properties and any <code>BeanCreatedEventListener</code> of <code>McpSchema.ServerCapabilities.Builder</code>, because the server cannot send notifications outside the response to a request.</p>
+</li>
+<li>
+<p>A server with <code>list-changed</code> set to <code>true</code> for tools, prompts or resources advertises that capability even when it has none of them, so they can be added at runtime. Clients may then list them and get an empty list. Set <code>list-changed</code> to <code>false</code> if your clients should not see an empty capability.</p>
 </li>
 </ul>
 </div>
@@ -917,14 +925,14 @@ version = "1.0.0"</code></pre>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">HTTP</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessAsyncServer</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServer.StatelessAsyncSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessSyncServer</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServer.StatelessSyncSpecification</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">HTTP</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessSyncServer</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServer.StatelessSyncSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessAsyncServer</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServer.StatelessAsyncSpecification</code></p></td>
 </tr>
 </tbody>
 </table>
@@ -971,7 +979,7 @@ The bean type depends on the server type selected:</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.SyncPromptSpecification</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.SyncToolSpecification</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.SyncResourceSpecification</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpSchema.ResourceTemplate</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.SyncResourceTemplateSpecification</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">STDIO</p></td>
@@ -979,15 +987,15 @@ The bean type depends on the server type selected:</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.AsyncPromptSpecification</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.AsyncToolSpecification</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.AsyncResourceSpecification</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpSchema.ResourceTemplate</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.AsyncResourceTemplateSpecification</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">HTTP</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessServerFeatures.SyncPromptSpecification</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessServerFeatures.SyncToolSpecification</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpServerFeatures.SyncResourceSpecification</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpSchema.ResourceTemplate</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessServerFeatures.SyncResourceSpecification</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessServerFeatures.SyncResourceTemplateSpecification</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">HTTP</p></td>
@@ -995,7 +1003,7 @@ The bean type depends on the server type selected:</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessServerFeatures.AsyncPromptSpecification</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessServerFeatures.AsyncToolSpecification</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessServerFeatures.AsyncResourceSpecification</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpSchema.ResourceTemplate</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>McpStatelessServerFeatures.AsyncResourceTemplateSpecification</code></p></td>
 </tr>
 </tbody>
 </table>
@@ -1010,11 +1018,13 @@ The bean type depends on the server type selected:</p>
 
 
 <div class="paragraph">
-<p>Based on the primitive beans you defined, Micronaut instantiates a bean of type <code>McpSchema.ServerCapabilities</code>.</p>
+<p>The injectable <code>McpSchema.ServerCapabilities</code> bean exposes the capabilities configured through your primitive beans and the <code>list-changed</code> and <code>subscribe</code> properties. You can customize these capabilities with a <a href="https://docs.micronaut.io/latest/guide/#events"><code>BeanCreatedEventListener</code></a> for <code>McpSchema.ServerCapabilities.Builder</code>.</p>
 </div>
 <div class="paragraph">
-<p>Moreover, you can create a <a href="https://docs.micronaut.io/latest/guide/#events"><code>BeanCreatedEventListener</code></a> for <code>McpSchema.ServerCapabilities.Builder</code>
-to further customize the definition of the capabilities.</p>
+<p>To read the capabilities clients receive in the <code>initialize</code> response, call <code>getServerCapabilities()</code> on the active <a href="#serverInstance">SDK server bean</a>. For example, with HTTP and <code>micronaut.mcp.server.tools.list-changed=true</code>, the injectable capabilities bean reports <code>tools.listChanged</code> as <code>true</code> and the server advertises it as <code>false</code>.</p>
+</div>
+<div class="paragraph">
+<p>The HTTP server turns off <code>listChanged</code> and <code>subscribe</code> because it can send notifications only during a request. A <code>BeanCreatedEventListener</code> that replaces the capabilities on the server specification itself can override these flags, but clients would then wait for notifications that never arrive. See <a href="#dynamicPrimitives">Adding and Removing Primitives at Runtime</a>.</p>
 </div>
 
 <h2 id="stdio"><a class="anchor" href="#stdio"></a>4.4 STDIO Transport</h2>
@@ -2136,7 +2146,9 @@ class WhoAmITools {
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.tools.list-changed</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">whether the server will emit notifications when the list of available tools changes. Default value <code>false</code>.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">whether the tools capability is advertised even when the server has no tools, so tools can be added at
+                    runtime, and, over STDIO, whether the server notifies clients when the list of tools changes. The HTTP
+                    transport always advertises <code>listChanged</code> as <code>false</code>. Default value <code>false</code>.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
@@ -3596,7 +3608,9 @@ void isAnnotatedWithIntrospected() {
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.prompts.list-changed</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">whether the server will emit notifications when the list of available prompts changes. Default value <code>false</code>.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">whether the prompts capability is advertised even when the server has no prompts, so prompts can be added at
+                    runtime, and, over STDIO, whether the server notifies clients when the list of prompts changes. The HTTP
+                    transport always advertises <code>listChanged</code> as <code>false</code>. Default value <code>false</code>.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
@@ -3928,13 +3942,17 @@ class PromptsFactory {
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.resources.subscribe</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">whether the client can subscribe to be notified of changes to individual resources. Default value <code>false</code>.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">whether the client can subscribe to be notified of changes to individual resources. It does not advertise the
+                  resources capability when the server has no resources unless <code>list-changed</code> is also <code>true</code>. The HTTP
+                  transport always advertises <code>subscribe</code> as <code>false</code>. Default value <code>false</code>.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.mcp.server.resources.list-changed</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">whether the server will emit notifications when the list of available resources changes. Default value <code>false</code>.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">whether the resources capability is advertised even when the server has no resources, so resources can be added at
+                    runtime, and, over STDIO, whether the server notifies clients when the list of resources changes. The HTTP
+                    transport always advertises <code>listChanged</code> as <code>false</code>. Default value <code>false</code>.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 </tbody>
@@ -5057,7 +5075,230 @@ class WeatherResources {
 </div>
 </div>
 
-<h2 id="completions"><a class="anchor" href="#completions"></a>4.9.5 Completions</h2>
+<h2 id="dynamicPrimitives"><a class="anchor" href="#dynamicPrimitives"></a>4.9.5 Adding and Removing Primitives at Runtime</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/dynamicPrimitives.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Tools, prompts, resources and resource templates can also be added and removed while the server runs, through the MCP Java SDK server bean of the configured transport and <code>micronaut.mcp.server.reactive</code> setting, listed in <a href="#serverInstance">Server Instance</a>. Each bean takes the specification classes listed in <a href="#primitivesClassesPerServerType">Primitive types per Transport</a>. Completions cannot be added at runtime.</p>
+</div>
+<div class="paragraph">
+<p>A server that starts without tools, prompts or resources advertises the matching capability only when its <code>list-changed</code> property is <code>true</code>, so set it to add them at runtime. For example, for an HTTP server that adds tools:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.mcp.server.transport=HTTP
+micronaut.mcp.server.tools.list-changed=true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  mcp:
+    server:
+      transport: HTTP
+      tools:
+        list-changed: true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.mcp.server]
+transport = "HTTP"
+
+[micronaut.mcp.server.tools]
+list-changed = true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  mcp {
+    server {
+      transport = "HTTP"
+      tools {
+        listChanged = true
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    mcp {
+      server {
+        transport = "HTTP"
+        tools {
+          list-changed = true
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "mcp": {
+      "server": {
+        "transport": "HTTP",
+        "tools": {
+          "list-changed": true
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.modelcontextprotocol.server.McpStatelessServerFeatures;
+import io.modelcontextprotocol.server.McpStatelessSyncServer;
+import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.inject.Singleton;
+
+import java.util.Map;
+
+@Singleton
+class Plugins {
+    private final McpStatelessSyncServer server;
+
+    Plugins(McpStatelessSyncServer server) {
+        this.server = server;
+    }
+
+    void install(String name) {
+        server.addTool(McpStatelessServerFeatures.SyncToolSpecification.builder()
+            .tool(McpSchema.Tool.builder().name(name).inputSchema(Map.of("type", "object")).build())
+            .callHandler((context, request) -&gt; McpSchema.CallToolResult.builder().addTextContent("installed").build())
+            .build());
+    }
+
+    void uninstall(String name) {
+        server.removeTool(name);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from io.modelcontextprotocol.server import McpStatelessServerFeatures, McpStatelessSyncServer
+from io.modelcontextprotocol.spec import McpSchema
+from jakarta.inject import Singleton
+from java.util import Map
+
+@Singleton
+class Plugins:
+
+    def __init__(self, server: McpStatelessSyncServer):
+        self.server = server
+
+    def install(self, name: str) -&gt; None:
+        self.server.addTool(McpStatelessServerFeatures.SyncToolSpecification.builder()
+                            .tool(McpSchema.Tool.builder().name(name).inputSchema(Map.of("type", "object")).build())
+                            .callHandler(lambda context, request:
+                                         McpSchema.CallToolResult.builder().addTextContent("installed").build())
+                            .build())
+
+    def uninstall(self, name: str) -&gt; None:
+        self.server.removeTool(name)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import io.modelcontextprotocol.server.McpStatelessServerFeatures
+import io.modelcontextprotocol.server.McpStatelessSyncServer
+import io.modelcontextprotocol.spec.McpSchema
+import jakarta.inject.Singleton
+
+@Singleton
+class Plugins(private val server: McpStatelessSyncServer) {
+
+    fun install(name: String) {
+        server.addTool(McpStatelessServerFeatures.SyncToolSpecification.builder()
+            .tool(McpSchema.Tool.builder().name(name).inputSchema(mapOf&lt;String, Any&gt;("type" to "object")).build())
+            .callHandler { _, _ -&gt; McpSchema.CallToolResult.builder().addTextContent("installed").build() }
+            .build())
+    }
+
+    fun uninstall(name: String) {
+        server.removeTool(name)
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import io.modelcontextprotocol.server.McpStatelessServerFeatures
+import io.modelcontextprotocol.server.McpStatelessSyncServer
+import io.modelcontextprotocol.spec.McpSchema
+import jakarta.inject.Singleton
+
+@Singleton
+class Plugins {
+    private final McpStatelessSyncServer server
+
+    Plugins(McpStatelessSyncServer server) {
+        this.server = server
+    }
+
+    void install(String name) {
+        server.addTool(McpStatelessServerFeatures.SyncToolSpecification.builder()
+            .tool(McpSchema.Tool.builder().name(name).inputSchema([type: 'object'] as Map&lt;String, Object&gt;).build())
+            .callHandler { context, request -&gt; McpSchema.CallToolResult.builder().addTextContent("installed").build() }
+            .build())
+    }
+
+    void uninstall(String name) {
+        server.removeTool(name)
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Without it, <code>addTool</code>, <code>addPrompt</code>, <code>addResource</code> and <code>addResourceTemplate</code> fail with <code>IllegalStateException</code>, for example <code>Server must be configured with tool capabilities</code>. <code>resources.list-changed</code> also covers resource templates, and <code>resources.subscribe</code> alone does not advertise the resources capability.</p>
+</div>
+<div class="paragraph">
+<p>On <code>McpAsyncServer</code> and <code>McpStatelessAsyncServer</code>, <code>addTool</code>, <code>removeTool</code> and the other methods return a <code>Mono</code> that does nothing until it is subscribed to. Subscribe to it, or return it from a reactive method (<code>return server.addTool(spec);</code>), or the primitive is neither added nor removed.</p>
+</div>
+<div class="paragraph">
+<p>Over STDIO, when <code>micronaut.mcp.server.tools.list-changed</code> (or the <code>prompts</code> or <code>resources</code> equivalent) is <code>true</code>, the server notifies the client that the list changed. Otherwise, clients are not told that the list changed: they see a change only if they call <code>tools/list</code> (or <code>prompts/list</code>, <code>resources/list</code>) again, which many clients do only when they reconnect or start a new session. The HTTP transport cannot send notifications outside the response to a request, so it never advertises list changes or resource subscriptions, whatever the configuration, and its clients are never told. If clients must see changes right away, use the STDIO transport with <code>list-changed</code> set to <code>true</code>.</p>
+</div>
+<div class="paragraph">
+<p>Adding a primitive with an existing name or URI replaces the current registration. You can also replace or remove primitives declared with annotations, so use trusted names and URIs for these operations.</p>
+</div>
+<div class="paragraph">
+<p>When multiple callers can register a tool under the same name, serialize their <code>addTool</code> calls. The SDK removes the old tool and adds its replacement in separate steps. Overlapping calls can leave duplicate entries in <code>tools/list</code>. On a reactive server, wait for each registration&#8217;s <code>Mono</code> to complete before starting the next registration for that name.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+A primitive added at runtime is an MCP Java SDK specification, so its handler receives the SDK request as is. The features of the annotated primitives, such as argument binding, validation, the MCP Request Context and exception mapping, do not apply to it. Only the tool&#8217;s <code>inputSchema</code> constrains its arguments, so validate them in the handler or with a strict <code>inputSchema</code>, and keep sensitive details out of exception messages: the client receives the message of an exception the handler throws.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="completions"><a class="anchor" href="#completions"></a>4.9.6 Completions</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions.adoc"'>
@@ -5077,7 +5318,7 @@ class WeatherResources {
 </blockquote>
 </div>
 
-<h2 id="promptCompletionAnnotation"><a class="anchor" href="#promptCompletionAnnotation"></a>4.9.5.1 Prompt Completions with Annotations</h2>
+<h2 id="promptCompletionAnnotation"><a class="anchor" href="#promptCompletionAnnotation"></a>4.9.6.1 Prompt Completions with Annotations</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions/promptCompletionAnnotation.adoc"'>
@@ -5167,7 +5408,7 @@ Defining a prompt completion via an annotation currently does not work with <a h
 </table>
 </div>
 
-<h2 id="promptCompletionParameter"><a class="anchor" href="#promptCompletionParameter"></a>4.9.5.1.1 PromptCompletion Annotation Method Parameters</h2>
+<h2 id="promptCompletionParameter"><a class="anchor" href="#promptCompletionParameter"></a>4.9.6.1.1 PromptCompletion Annotation Method Parameters</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions/promptCompletionAnnotation/promptCompletionParameter.adoc"'>
@@ -5196,7 +5437,7 @@ Defining a prompt completion via an annotation currently does not work with <a h
 <p>You can also bind the completion argument&#8217;s name as a method parameter, as illustrated in the code listing above.</p>
 </div>
 
-<h2 id="promptCompletionReturnType"><a class="anchor" href="#promptCompletionReturnType"></a>4.9.5.1.2 PromptCompletion Annotation Method Return Type</h2>
+<h2 id="promptCompletionReturnType"><a class="anchor" href="#promptCompletionReturnType"></a>4.9.6.1.2 PromptCompletion Annotation Method Return Type</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions/promptCompletionAnnotation/promptCompletionReturnType.adoc"'>
@@ -5219,7 +5460,7 @@ Defining a prompt completion via an annotation currently does not work with <a h
 </ul>
 </div>
 
-<h2 id="resourceCompletionAnnotation"><a class="anchor" href="#resourceCompletionAnnotation"></a>4.9.5.2 Resource Completions with Annotations</h2>
+<h2 id="resourceCompletionAnnotation"><a class="anchor" href="#resourceCompletionAnnotation"></a>4.9.6.2 Resource Completions with Annotations</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions/resourceCompletionAnnotation.adoc"'>
@@ -5375,7 +5616,7 @@ class MyResourceTemplates {
 </div>
 </div>
 
-<h2 id="resourceCompletionParameter"><a class="anchor" href="#resourceCompletionParameter"></a>4.9.5.2.1 ResourceCompletion Annotation Method Parameters</h2>
+<h2 id="resourceCompletionParameter"><a class="anchor" href="#resourceCompletionParameter"></a>4.9.6.2.1 ResourceCompletion Annotation Method Parameters</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions/resourceCompletionAnnotation/resourceCompletionParameter.adoc"'>
@@ -5404,7 +5645,7 @@ class MyResourceTemplates {
 <p>You can also bind the completion argument&#8217;s name as a method parameter, as illustrated in the code listing above.</p>
 </div>
 
-<h2 id="resourceCompletionReturnType"><a class="anchor" href="#resourceCompletionReturnType"></a>4.9.5.2.2 ResourceCompletion Annotation Method Return Type</h2>
+<h2 id="resourceCompletionReturnType"><a class="anchor" href="#resourceCompletionReturnType"></a>4.9.6.2.2 ResourceCompletion Annotation Method Return Type</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-mcp/edit/2.2.x/src/main/docs/guide/server/primitives/completions/resourceCompletionAnnotation/resourceCompletionReturnType.adoc"'>

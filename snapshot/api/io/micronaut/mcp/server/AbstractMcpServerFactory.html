@@ -63,13 +63,14 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#getTools(io.micronaut.mcp.server.registry.ToolRegistry)" tabindex="0">getTools(ToolRegistry)</a></li>
+<li><a href="#sendsNotifications()" tabindex="0">sendsNotifications()</a></li>
 <li><a href="#serverInfo(io.micronaut.mcp.conf.server.McpServerInfoConfiguration)" tabindex="0">serverInfo(McpServerInfoConfiguration)</a></li>
 <li><a href="#getPrompts(io.micronaut.mcp.server.registry.PromptRegistry)" tabindex="0">getPrompts(PromptRegistry)</a></li>
 <li><a href="#getResources(io.micronaut.mcp.server.registry.ResourceRegistry)" tabindex="0">getResources(ResourceRegistry)</a></li>
 <li><a href="#getResourceTemplates(io.micronaut.mcp.server.registry.ResourceTemplateRegistry)" tabindex="0">getResourceTemplates(ResourceTemplateRegistry)</a></li>
 <li><a href="#getCompletions(io.micronaut.mcp.server.registry.CompletionRegistry)" tabindex="0">getCompletions(CompletionRegistry)</a></li>
 <li><a href="#createMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)" tabindex="0">createMcpServerSpec(S, McpJsonMapper, JsonSchemaValidator, McpServerInfoConfiguration, McpSchema.ServerCapabilities, List, List, List, List, List)</a></li>
-<li><a href="#buildMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.micronaut.mcp.conf.server.ToolsConfiguration,io.micronaut.mcp.conf.server.PromptsConfiguration,io.micronaut.mcp.conf.server.ResourcesConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.Builder,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,io.micronaut.mcp.server.registry.ResourceTemplateRegistry,io.micronaut.mcp.server.registry.CompletionRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)" tabindex="0">buildMcpServerSpec(S, McpJsonMapper, JsonSchemaValidator, McpServerInfoConfiguration, ToolsConfiguration, PromptsConfiguration, ResourcesConfiguration, McpSchema.ServerCapabilities.Builder, Provider, ToolRegistry, PromptRegistry, ResourceRegistry, ResourceTemplateRegistry, CompletionRegistry, List, List, List, List, List)</a></li>
+<li><a href="#buildMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,io.micronaut.mcp.server.registry.ResourceTemplateRegistry,io.micronaut.mcp.server.registry.CompletionRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)" tabindex="0">buildMcpServerSpec(S, McpJsonMapper, JsonSchemaValidator, McpServerInfoConfiguration, Provider, ToolRegistry, PromptRegistry, ResourceRegistry, ResourceTemplateRegistry, CompletionRegistry, List, List, List, List, List)</a></li>
 </ol>
 </li>
 </ol>
@@ -129,14 +130,10 @@ This class provides a framework for deriving specific implementations of MCP ser
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#type-param-Spec" title="type parameter in AbstractMcpServerFactory">Spec</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.micronaut.mcp.conf.server.ToolsConfiguration,io.micronaut.mcp.conf.server.PromptsConfiguration,io.micronaut.mcp.conf.server.ResourcesConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.Builder,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,io.micronaut.mcp.server.registry.ResourceTemplateRegistry,io.micronaut.mcp.server.registry.CompletionRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)" class="member-name-link">buildMcpServerSpec</a><wbr>(<a href="#type-param-S" title="type parameter in AbstractMcpServerFactory">S</a>&nbsp;transport,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,io.micronaut.mcp.server.registry.ResourceTemplateRegistry,io.micronaut.mcp.server.registry.CompletionRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)" class="member-name-link">buildMcpServerSpec</a><wbr>(<a href="#type-param-S" title="type parameter in AbstractMcpServerFactory">S</a>&nbsp;transport,
  io.modelcontextprotocol.json.McpJsonMapper&nbsp;jsonMapper,
  io.modelcontextprotocol.json.schema.JsonSchemaValidator&nbsp;jsonSchemaValidator,
  @Nullable <a href="../conf/server/McpServerInfoConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerInfoConfiguration</a>&nbsp;configuration,
- <a href="../conf/server/ToolsConfiguration.html" title="interface in io.micronaut.mcp.conf.server">ToolsConfiguration</a>&nbsp;toolsConfiguration,
- <a href="../conf/server/PromptsConfiguration.html" title="interface in io.micronaut.mcp.conf.server">PromptsConfiguration</a>&nbsp;promptsConfiguration,
- <a href="../conf/server/ResourcesConfiguration.html" title="interface in io.micronaut.mcp.conf.server">ResourcesConfiguration</a>&nbsp;resourcesConfiguration,
- io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.Builder&nbsp;capabilitiesBuilder,
  jakarta.inject.Provider&lt;io.modelcontextprotocol.spec.McpSchema.ServerCapabilities&gt;&nbsp;capabilitiesProvider,
  <a href="registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a>&nbsp;toolRegistry,
  <a href="registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a>&nbsp;promptRegistry,
@@ -188,9 +185,15 @@ This class provides a framework for deriving specific implementations of MCP ser
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Retrieves a list of tools from the provided <a href="registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry"><code>ToolRegistry</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static io.modelcontextprotocol.spec.McpSchema.Implementation</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#serverInfo(io.micronaut.mcp.conf.server.McpServerInfoConfiguration)" class="member-name-link">serverInfo</a><wbr>(<a href="../conf/server/McpServerInfoConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerInfoConfiguration</a>&nbsp;configuration)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sendsNotifications()" class="member-name-link">sendsNotifications</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Whether the server can send notifications to clients outside the response to a request, such as list changes and
+resource updates.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static io.modelcontextprotocol.spec.McpSchema.Implementation</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#serverInfo(io.micronaut.mcp.conf.server.McpServerInfoConfiguration)" class="member-name-link">serverInfo</a><wbr>(<a href="../conf/server/McpServerInfoConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerInfoConfiguration</a>&nbsp;configuration)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">The server information sent in the response to <code>initialize</code>.</div>
 </div>
 </div>
@@ -237,6 +240,22 @@ This class provides a framework for deriving specific implementations of MCP ser
 <dd><code>toolRegistry</code> - the registry of tools from which to retrieve the tools</dd>
 <dt>Returns:</dt>
 <dd>a list of tools retrieved from the provided tool registry</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="sendsNotifications()">
+<h3>sendsNotifications</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">sendsNotifications</span>()</div>
+<div class="block">Whether the server can send notifications to clients outside the response to a request, such as list changes and
+resource updates. A stateless server cannot, so it does not advertise them even when they are configured.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether the server sends notifications</dd>
+<dt>Since:</dt>
+<dd>2.2.0</dd>
 </dl>
 </div>
 </section>
@@ -355,18 +374,14 @@ name or password</dd>
 </section>
 </li>
 <li>
-<section class="detail" id="buildMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.micronaut.mcp.conf.server.ToolsConfiguration,io.micronaut.mcp.conf.server.PromptsConfiguration,io.micronaut.mcp.conf.server.ResourcesConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.Builder,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,io.micronaut.mcp.server.registry.ResourceTemplateRegistry,io.micronaut.mcp.server.registry.CompletionRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)">
-<h3 id="buildMcpServerSpec(java.lang.Object,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.micronaut.mcp.conf.server.ToolsConfiguration,io.micronaut.mcp.conf.server.PromptsConfiguration,io.micronaut.mcp.conf.server.ResourcesConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.Builder,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,io.micronaut.mcp.server.registry.ResourceTemplateRegistry,io.micronaut.mcp.server.registry.CompletionRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)">buildMcpServerSpec</h3>
+<section class="detail" id="buildMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,io.micronaut.mcp.server.registry.ResourceTemplateRegistry,io.micronaut.mcp.server.registry.CompletionRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)">
+<h3 id="buildMcpServerSpec(java.lang.Object,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,io.micronaut.mcp.server.registry.ResourceTemplateRegistry,io.micronaut.mcp.server.registry.CompletionRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)">buildMcpServerSpec</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Prototype
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="#type-param-Spec" title="type parameter in AbstractMcpServerFactory">Spec</a></span>&nbsp;<span class="element-name">buildMcpServerSpec</span><wbr><span class="parameters">(<a href="#type-param-S" title="type parameter in AbstractMcpServerFactory">S</a>&nbsp;transport,
  io.modelcontextprotocol.json.McpJsonMapper&nbsp;jsonMapper,
  io.modelcontextprotocol.json.schema.JsonSchemaValidator&nbsp;jsonSchemaValidator,
  @Nullable <a href="../conf/server/McpServerInfoConfiguration.html" title="interface in io.micronaut.mcp.conf.server">McpServerInfoConfiguration</a>&nbsp;configuration,
- <a href="../conf/server/ToolsConfiguration.html" title="interface in io.micronaut.mcp.conf.server">ToolsConfiguration</a>&nbsp;toolsConfiguration,
- <a href="../conf/server/PromptsConfiguration.html" title="interface in io.micronaut.mcp.conf.server">PromptsConfiguration</a>&nbsp;promptsConfiguration,
- <a href="../conf/server/ResourcesConfiguration.html" title="interface in io.micronaut.mcp.conf.server">ResourcesConfiguration</a>&nbsp;resourcesConfiguration,
- io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.Builder&nbsp;capabilitiesBuilder,
  jakarta.inject.Provider&lt;io.modelcontextprotocol.spec.McpSchema.ServerCapabilities&gt;&nbsp;capabilitiesProvider,
  <a href="registry/ToolRegistry.html" title="class in io.micronaut.mcp.server.registry">ToolRegistry</a>&nbsp;toolRegistry,
  <a href="registry/PromptRegistry.html" title="class in io.micronaut.mcp.server.registry">PromptRegistry</a>&nbsp;promptRegistry,
@@ -384,11 +399,7 @@ name or password</dd>
 <dd><code>jsonMapper</code> - MCP JSON Mapper</dd>
 <dd><code>jsonSchemaValidator</code> - MCP JSON schema validator</dd>
 <dd><code>configuration</code> - MCP Server Info Configuration</dd>
-<dd><code>toolsConfiguration</code> - Tools Configuration</dd>
-<dd><code>promptsConfiguration</code> - Prompts Configuration</dd>
-<dd><code>resourcesConfiguration</code> - Resources Configuration</dd>
-<dd><code>capabilitiesBuilder</code> - Capabilities Builder</dd>
-<dd><code>capabilitiesProvider</code> - Capabilities Provider</dd>
+<dd><code>capabilitiesProvider</code> - Capabilities Provider, see <code>ServerCapabilitiesFactory</code></dd>
 <dd><code>toolRegistry</code> - Tool Registry</dd>
 <dd><code>promptRegistry</code> - Prompt Registry</dd>
 <dd><code>resourceRegistry</code> - Resource Registry</dd>

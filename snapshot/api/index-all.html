@@ -145,7 +145,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Create a new builder.</div>
 </dd>
-<dt><a href="io/micronaut/mcp/server/AbstractMcpServerFactory.html#buildMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,io.micronaut.mcp.conf.server.ToolsConfiguration,io.micronaut.mcp.conf.server.PromptsConfiguration,io.micronaut.mcp.conf.server.ResourcesConfiguration,io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.Builder,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,io.micronaut.mcp.server.registry.ResourceTemplateRegistry,io.micronaut.mcp.server.registry.CompletionRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)" class="member-name-link">buildMcpServerSpec(S, McpJsonMapper, JsonSchemaValidator, McpServerInfoConfiguration, ToolsConfiguration, PromptsConfiguration, ResourcesConfiguration, McpSchema.ServerCapabilities.Builder, Provider, ToolRegistry, PromptRegistry, ResourceRegistry, ResourceTemplateRegistry, CompletionRegistry, List, List, List, List, List)</a> - Method in class io.micronaut.mcp.server.<a href="io/micronaut/mcp/server/AbstractMcpServerFactory.html" title="class in io.micronaut.mcp.server">AbstractMcpServerFactory</a></dt>
+<dt><a href="io/micronaut/mcp/server/AbstractMcpServerFactory.html#buildMcpServerSpec(S,io.modelcontextprotocol.json.McpJsonMapper,io.modelcontextprotocol.json.schema.JsonSchemaValidator,io.micronaut.mcp.conf.server.McpServerInfoConfiguration,jakarta.inject.Provider,io.micronaut.mcp.server.registry.ToolRegistry,io.micronaut.mcp.server.registry.PromptRegistry,io.micronaut.mcp.server.registry.ResourceRegistry,io.micronaut.mcp.server.registry.ResourceTemplateRegistry,io.micronaut.mcp.server.registry.CompletionRegistry,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)" class="member-name-link">buildMcpServerSpec(S, McpJsonMapper, JsonSchemaValidator, McpServerInfoConfiguration, Provider, ToolRegistry, PromptRegistry, ResourceRegistry, ResourceTemplateRegistry, CompletionRegistry, List, List, List, List, List)</a> - Method in class io.micronaut.mcp.server.<a href="io/micronaut/mcp/server/AbstractMcpServerFactory.html" title="class in io.micronaut.mcp.server">AbstractMcpServerFactory</a></dt>
 <dd>&nbsp;</dd>
 </dl>
 <h2 class="title" id="I:C">C</h2>
@@ -1377,6 +1377,11 @@ a reactive type or a <a href="https://docs.oracle.com/en/java/javase/25/docs/api
 <dt><a href="io/micronaut/mcp/server/tools/search/SearchTool.html" class="type-name-link" title="interface in io.micronaut.mcp.server.tools.search">SearchTool</a> - Interface in <a href="io/micronaut/mcp/server/tools/search/package-summary.html">io.micronaut.mcp.server.tools.search</a></dt>
 <dd>
 <div class="block">The search tool is responsible for returning a list of relevant search results from your MCP server's data source, given a user's query.</div>
+</dd>
+<dt><a href="io/micronaut/mcp/server/AbstractMcpServerFactory.html#sendsNotifications()" class="member-name-link">sendsNotifications()</a> - Method in class io.micronaut.mcp.server.<a href="io/micronaut/mcp/server/AbstractMcpServerFactory.html" title="class in io.micronaut.mcp.server">AbstractMcpServerFactory</a></dt>
+<dd>
+<div class="block">Whether the server can send notifications to clients outside the response to a request, such as list changes and
+resource updates.</div>
 </dd>
 <dt><a href="io/micronaut/mcp/server/AbstractMcpServerFactory.html#serverInfo(io.micronaut.mcp.conf.server.McpServerInfoConfiguration)" class="member-name-link">serverInfo(McpServerInfoConfiguration)</a> - Static method in class io.micronaut.mcp.server.<a href="io/micronaut/mcp/server/AbstractMcpServerFactory.html" title="class in io.micronaut.mcp.server">AbstractMcpServerFactory</a></dt>
 <dd>
