@@ -29,30 +29,30 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.List;
 
 /**
- * Creates an {@link McpClient} for each connection, over the transport of the connection.
+ * Creates an {@link McpClient} for each transport, applying the named connection settings when present.
  */
 @Internal
 @Factory
 final class McpClientFactory {
-    private static final Logger LOG = LoggerFactory.getLogger(McpClientFactory.class);
-
-    @EachBean(McpClientConnectionConfiguration.class)
+    @EachBean(McpTransport.class)
     @Prototype
-    DefaultMcpClient.Builder crateMcpClientBuilder(McpClientConnectionConfiguration configuration,
+    DefaultMcpClient.Builder crateMcpClientBuilder(McpTransport transport,
+                                                   @Parameter @Nullable McpClientConnectionConfiguration configuration,
                                                    List<McpClientListener> listeners,
                                                    @Nullable McpLogMessageHandler logMessageHandler) {
-        DefaultMcpClient.Builder builder = new DefaultMcpClient.Builder()
-            // The key identifies the client, for example in tool name mappers and filters
-            .key(configuration.getName())
-            .autoHealthCheck(configuration.isAutoHealthCheck())
-            .addListeners(listeners);
+        DefaultMcpClient.Builder builder = new TransportOwningBuilder(transport).addListeners(listeners);
+        if (logMessageHandler != null) {
+            builder.logHandler(logMessageHandler);
+        }
+        if (configuration == null) {
+            return builder;
+        }
+        builder.key(configuration.getName()).autoHealthCheck(configuration.isAutoHealthCheck());
         Duration initializationTimeout = configuration.getInitializationTimeout();
         if (initializationTimeout != null) {
             builder.initializationTimeout(initializationTimeout);
@@ -64,34 +64,48 @@ final class McpClientFactory {
                 .promptsTimeout(requestTimeout)
                 .pingTimeout(requestTimeout);
         }
-        if (logMessageHandler != null) {
-            builder.logHandler(logMessageHandler);
-        }
         return builder;
     }
 
-    @EachBean(McpClientConnectionConfiguration.class)
+    @EachBean(DefaultMcpClient.Builder.class)
     @Bean(preDestroy = "close")
     @Singleton
-    McpClient createMcpClient(McpClientConnectionConfiguration configuration,
-                              @Parameter DefaultMcpClient.Builder builder,
-                              @Parameter McpTransport transport) {
-        // The client owns its transport, which it closes. The builder and the transport are prototypes, so each attempt
-        // to create the client gets a new transport, and a failed attempt must close it so that it does not leave a
-        // server process running
-        try {
-            return builder.transport(transport).build();
-        } catch (RuntimeException e) {
-            close(transport, configuration);
-            throw e;
-        }
+    McpClient createMcpClient(DefaultMcpClient.Builder builder) {
+        return builder.build();
     }
 
-    private static void close(McpTransport transport, McpClientConnectionConfiguration configuration) {
-        try {
-            transport.close();
-        } catch (Exception e) {
-            LOG.warn("Failed to close the transport of the MCP connection {}", configuration.getName(), e);
+    /**
+     * The SDK client closes its transport after a successful build. If initialization fails, close the same
+     * transport the builder used, including one installed by a bean creation listener.
+     */
+    private static final class TransportOwningBuilder extends DefaultMcpClient.Builder {
+        private McpTransport transport;
+
+        TransportOwningBuilder(McpTransport transport) {
+            this.transport = transport;
+            super.transport(transport);
+        }
+
+        @Override
+        public DefaultMcpClient.Builder transport(McpTransport transport) {
+            this.transport = transport;
+            return super.transport(transport);
+        }
+
+        @Override
+        public DefaultMcpClient build() {
+            try {
+                return super.build();
+            } catch (RuntimeException failure) {
+                try {
+                    transport.close();
+                } catch (Exception closeFailure) {
+                    if (closeFailure != failure) {
+                        failure.addSuppressed(closeFailure);
+                    }
+                }
+                throw failure;
+            }
         }
     }
 }

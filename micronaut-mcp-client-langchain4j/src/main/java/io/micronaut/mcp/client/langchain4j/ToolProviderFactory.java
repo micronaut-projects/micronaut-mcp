@@ -25,11 +25,15 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.inject.BeanDefinition;
 import io.micronaut.mcp.conf.client.McpClientConnectionConfiguration;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Creates an {@link McpToolProvider} of the tools of every MCP client, and one per client, qualified by the name of its connection.
@@ -47,9 +51,19 @@ final class ToolProviderFactory {
 
     @Prototype
     @Primary
-    McpToolProvider.Builder toolProviderBuilder(List<McpClientConnectionConfiguration> connections, List<ConnectionMcpClient> clients) {
+    McpToolProvider.Builder toolProviderBuilder(List<McpClientConnectionConfiguration> connections,
+                                               List<ConnectionMcpClient> connectionClients,
+                                               BeanContext beanContext) {
         McpClientConnections.requireUniqueNames(connections);
-        return builder(List.copyOf(clients));
+        Set<String> connectionNames = connectionClients.stream().map(ConnectionMcpClient::key).collect(Collectors.toSet());
+        List<McpClient> clients = new ArrayList<>(connectionClients);
+        // Inspect definitions first so configured clients are only resolved through their shared lazy wrappers.
+        for (BeanDefinition<McpClient> definition : beanContext.getBeanDefinitions(McpClient.class)) {
+            if (definition.getBeanName().filter(connectionNames::contains).isEmpty()) {
+                clients.add(beanContext.getBean(definition));
+            }
+        }
+        return builder(clients);
     }
 
     @Singleton
