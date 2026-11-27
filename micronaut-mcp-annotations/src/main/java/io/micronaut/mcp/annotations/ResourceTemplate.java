@@ -68,9 +68,12 @@ public @interface ResourceTemplate {
     String name() default ELEMENT_NAME;
 
     /**
-     * @return The resource URI this handler serves (e.g. ""file:///{path}").
+     * @return The RFC 6570 URI template of the resources this handler serves (e.g. "book://book/{title}"). Matched variables are
+     * percent-decoded with URI decoding, so a {@code +} is not turned into a space. A simple variable, such as {@code {title}},
+     * matches a single segment and rejects an encoded {@code /}; use a reserved variable, such as {@code {+title}}, for values
+     * that may contain an encoded {@code /}.
      */
-    String uriTemplate() default "pgn://round/{round}";
+    String uriTemplate();
 
     /**
      * @return A concise human-readable title of the resource.
