@@ -17,6 +17,7 @@ package io.micronaut.mcp.server.stateless;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.async.propagation.ReactivePropagation;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpRequest;
@@ -27,6 +28,7 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.json.tree.JsonNode;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
+import io.micronaut.mcp.server.context.BlockingMcpRequestContext;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -35,10 +37,10 @@ import io.modelcontextprotocol.server.McpTransportContextExtractor;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Named;
 import org.jspecify.annotations.Nullable;
+import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -70,14 +72,17 @@ final class McpBlockingController extends McpController {
     // The route returns a JSON-RPC response or an error body, so the response body type is a wildcard
     @SuppressWarnings({"java:S3740", "java:S1452"})
     @Post
-    CompletableFuture<@Nullable HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable McpRequestBody requestBody) {
+    Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable McpRequestBody requestBody) {
         JsonNode body = requestBody != null ? requestBody.value() : null;
         if (streamingPolicy.mayStream(request, body)) {
             // The server writes a response only once the route returns, so a primitive that may stream runs on another
             // thread of the blocking executor, and the response completes with its first notification or its result
-            return handle(request, body, true).subscribeOn(blockingScheduler).toFuture();
+            return handle(request, body, true).subscribeOn(blockingScheduler);
         }
-        // The server invokes the primitive on this blocking thread
-        return CompletableFuture.completedFuture(handle(request, body, false).block());
+        // The server invokes the primitive on this blocking thread, with the subscriber context of the filters
+        return Mono.deferContextual(context -> {
+            var requestContext = PropagatedContext.getOrEmpty().plus(new BlockingMcpRequestContext(Thread.currentThread(), context));
+            return Mono.from(ReactivePropagation.propagate(requestContext, handle(request, body, false)));
+        });
     }
 }

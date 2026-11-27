@@ -37,6 +37,7 @@ import io.micronaut.core.type.ReturnType;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.mcp.server.context.BlockingMcpRequestContext;
 import io.micronaut.mcp.server.context.DefaultMcpRequestContext;
 import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
@@ -71,7 +72,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -641,13 +641,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
         private final int[] boundIndexes;
         private final boolean declaresRequestContext;
         private final boolean collectsValues;
-        private final @Nullable ExecutorService executor;
-        /**
-         * The executor a synchronous server invokes the method on: none when it is the executor the server already
-         * calls the method on, since waiting for a task queued on the executor that runs the waiting thread can
-         * exhaust a fixed-size pool.
-         */
-        private final @Nullable ExecutorService callExecutor;
+        private final boolean usesBlockingExecutor;
         /**
          * Whether the declared return type admits a reactive type or a {@link CompletionStage}, so that a plain value
          * of a declared class other than Object is mapped without looking for a reactive type that it could be converted to.
@@ -681,12 +675,10 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
             this.collectsValues = collectsValues(method, collectsValues);
             // Resolved here, so that an unknown executor fails the startup rather than every invocation
             String executorName = method.stringValue(ExecuteOn.class).orElse(null);
-            this.executor = executorName != null ? beanContext.getBean(ExecutorService.class, Qualifiers.byName(executorName)) : null;
+            ExecutorService executor = executorName != null ? beanContext.getBean(ExecutorService.class, Qualifiers.byName(executorName)) : null;
             this.scheduler = executor != null ? Schedulers.fromExecutorService(executor) : null;
-            // The synchronous servers call the methods on the blocking executor
-            this.callExecutor = executor != null
-                && executor == beanContext.findBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING)).orElse(null)
-                ? null : executor;
+            this.usesBlockingExecutor = executor != null
+                && executor == beanContext.findBean(ExecutorService.class, Qualifiers.byName(TaskExecutors.BLOCKING)).orElse(null);
             this.mayBeDeferred = mayBeDeferred(method.getReturnType());
         }
 
@@ -790,16 +782,28 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
                           Function<Throwable, R> errorHandler) {
             try {
                 Object value;
-                if (callExecutor == null) {
-                    value = await(invocation.get(), context);
+                if (scheduler != null && !alreadyOnBlockingExecutor()) {
+                    // Subscribe on the named executor, but wait on the caller so asynchronous work can use that executor too.
+                    Mono<Object> result = schedule(() -> {
+                        Object returned = invocation.get();
+                        return isDeferred(returned) ? toMono(returned) : Mono.justOrEmpty(returned);
+                    }, scheduler);
+                    value = block(result, context);
                 } else {
-                    Supplier<@Nullable Object> task = () -> await(invocation.get(), context);
-                    value = CompletableFuture.supplyAsync(PropagatedContext.wrapCurrent(task), callExecutor).join();
+                    value = await(invocation.get(), context);
                 }
                 return mapper.apply(value);
             } catch (Exception e) {
                 return errorHandler.apply(unwrap(e));
             }
+        }
+
+        private boolean alreadyOnBlockingExecutor() {
+            if (!usesBlockingExecutor) {
+                return false;
+            }
+            BlockingMcpRequestContext request = BlockingMcpRequestContext.current();
+            return request != null && request.thread() == Thread.currentThread();
         }
 
         /**
@@ -824,12 +828,11 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
                     : invocation;
                 return invokeNow(onReceivingThread, mapper, errorHandler);
             }
-            PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
-            return Mono.defer(() -> {
-                try (var _ = propagatedContext.propagate()) {
-                    return invokeNow(invocation, mapper, errorHandler);
-                }
-            }).subscribeOn(scheduler);
+            return schedule(() -> invokeNow(invocation, mapper, errorHandler), scheduler);
+        }
+
+        private static <R> Mono<R> schedule(Supplier<Mono<R>> task, Scheduler scheduler) {
+            return Mono.defer(PropagatedContext.wrapCurrent(task)).subscribeOn(scheduler);
         }
 
         private <R> Mono<R> invokeNow(Supplier<@Nullable Object> invocation,
@@ -873,10 +876,17 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
             if (!isDeferred(result)) {
                 return result;
             }
-            Mono<Object> mono = toMono(result);
+            return block(toMono(result), context);
+        }
+
+        private static @Nullable Object block(Mono<Object> mono, @Nullable Object context) {
             McpTransportContext transportContext = resolveMcpTransportContext(context);
             if (transportContext != null) {
                 mono = mono.contextWrite(ctx -> ctx.put(McpTransportContext.KEY, transportContext));
+            }
+            BlockingMcpRequestContext request = BlockingMcpRequestContext.current();
+            if (request != null) {
+                mono = mono.contextWrite(request.context());
             }
             return mono.block();
         }
@@ -890,7 +900,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
                 ? (Publisher<Object>) p
                 : Publishers.convertToPublisher(beanContext.getConversionService(), result);
             if (collectsValues) {
-                return Flux.from(publisher).collectList().map(Object.class::cast);
+                return CompletionRegistry.collectCompletions(publisher).map(Object.class::cast);
             }
             if (publisher instanceof Mono<Object> mono) {
                 return mono;
