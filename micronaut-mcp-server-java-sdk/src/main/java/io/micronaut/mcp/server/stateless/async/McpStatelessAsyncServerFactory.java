@@ -50,6 +50,11 @@ final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpS
     McpStatelessServerFeatures.AsyncResourceTemplateSpecification> {
 
     @Override
+    protected boolean sendsNotifications() {
+        return false;
+    }
+
+    @Override
     protected List<McpStatelessServerFeatures.AsyncToolSpecification> getTools(ToolRegistry toolRegistry) {
         return toolRegistry.getStatelessAsyncSpecs();
     }
@@ -95,7 +100,10 @@ final class McpStatelessAsyncServerFactory extends AbstractMcpServerFactory<McpS
             .resourceTemplates(resourcesTemplates)
             .resources(resources);
         if (configuration != null) {
-            spec.serverInfo(configuration.getName(), configuration.getVersion());
+            spec.serverInfo(serverInfo(configuration));
+            if (configuration.getInstructions() != null) {
+                spec.instructions(configuration.getInstructions());
+            }
         }
         return spec;
     }

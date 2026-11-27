@@ -17,15 +17,15 @@ package io.micronaut.mcp.conf.client;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import io.micronaut.core.naming.Named;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Map;
 
 /**
  * MCP Client HTTP Configuration.
  */
-public interface McpClientHttpConfiguration extends Named {
+public interface McpClientHttpConfiguration extends McpClientConnectionConfiguration {
     String PREFIX = "micronaut.mcp.client.http";
 
     /**
@@ -53,6 +53,65 @@ public interface McpClientHttpConfiguration extends Named {
      * @return Whether to log responses
      */
     boolean isLogResponses();
+
+    /**
+     * @return The headers sent with every request, such as {@code Authorization}
+     * @since 2.2.0
+     */
+    @NonNull
+    default Map<String, String> getHeaders() {
+        return Map.of();
+    }
+
+    /**
+     * The MCP authorization specification forbids passing through a token whose audience is not the MCP server, so only
+     * enable this for trusted servers that share the audience of the token. Otherwise exchange the token in a
+     * {@link McpClientHeadersProvider}. The MCP session of the connection is shared by every user, so the server must not
+     * bind sessions to users.
+     *
+     * @return Whether to send the {@code Authorization} header of the HTTP request the server is handling, for example the
+     * bearer token of the user, to the MCP server
+     * @since 2.2.0
+     */
+    default boolean isPropagateAuthorization() {
+        return false;
+    }
+
+    /**
+     * @return The HTTP client to send the requests with
+     * @since 2.2.0
+     */
+    @NonNull
+    default McpHttpClientType getHttpClient() {
+        return McpHttpClientType.JDK;
+    }
+
+    /**
+     * @return The id of the {@code micronaut.http.services} entry that configures the Micronaut HTTP client, or {@code null}
+     * for the default client configuration. Only used with {@link McpHttpClientType#MICRONAUT}.
+     * @since 2.2.0
+     */
+    default @Nullable String getServiceId() {
+        return null;
+    }
+
+    /**
+     * @return The maximum size, in bytes, of a message of the server that the client buffers: a JSON response, an event of
+     * a stream, or an error. Only used with {@link McpHttpClientType#MICRONAUT}. Default value 16 MiB.
+     * @since 2.2.0
+     */
+    default long getMaxMessageSize() {
+        return 16L * 1024 * 1024;
+    }
+
+    /**
+     * @return Whether to {@link #isPropagateAuthorization() propagate} the {@code Authorization} header whatever its
+     * scheme, for example Basic credentials, instead of only bearer tokens
+     * @since 2.2.0
+     */
+    default boolean isPropagateAnyAuthorizationScheme() {
+        return false;
+    }
 
     @NonNull
     static McpClientHttpConfiguration of(@NonNull String name,

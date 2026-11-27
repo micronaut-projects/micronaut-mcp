@@ -19,11 +19,8 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
-import io.micronaut.core.bind.BoundExecutable;
-import io.micronaut.core.bind.DefaultExecutableBinder;
-import io.micronaut.core.bind.ExecutableBinder;
-import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.annotations.Resource;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
@@ -52,6 +49,9 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     McpStatelessServerFeatures.SyncResourceSpecification,
     McpStatelessServerFeatures.AsyncResourceSpecification> {
 
+    private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.ReadResourceRequest.class};
+    private static final String SIZE_PROPERTY = "size";
+    private static final long UNKNOWN_SIZE = -1;
     private final ArgumentBinderRegistry<McpSchema.ReadResourceRequest> argumentBinderRegistry;
 
     public ResourceRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
@@ -62,95 +62,115 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
     }
 
     @Override
+    protected Class<?>[] boundParameterTypes() {
+        return BOUND_PARAMETER_TYPES;
+    }
+
+    @Override
     public List<McpServerFeatures.SyncResourceSpecification> getSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpServerFeatures.SyncResourceSpecification(
                 toResource(m.method()),
-                syncHandler(m.beanDefinition(), m.method())
+                syncHandler(m)
             ))
             .toList();
     }
 
     @Override
     public List<McpServerFeatures.AsyncResourceSpecification> getAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpServerFeatures.AsyncResourceSpecification(
                 toResource(m.method()),
-                asyncHandler(m.beanDefinition(), m.method())
+                asyncHandler(m)
             ))
             .toList();
     }
 
     @Override
     public List<McpStatelessServerFeatures.SyncResourceSpecification> getStatelessSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpStatelessServerFeatures.SyncResourceSpecification(
                 toResource(m.method()),
-                statelessSyncHandler(m.beanDefinition(), m.method())
+                statelessSyncHandler(m)
             ))
             .toList();
     }
 
     @Override
     public List<McpStatelessServerFeatures.AsyncResourceSpecification> getStatelessAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(m -> new McpStatelessServerFeatures.AsyncResourceSpecification(
                 toResource(m.method()),
-                statelessAsyncHandler(m.beanDefinition(), m.method())
+                statelessAsyncHandler(m)
             ))
             .toList();
     }
 
     private <B> BiFunction<McpSyncServerExchange, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> syncHandler(
-        BeanDefinition<B> beanDefinition,
-        ExecutableMethod<B, Object> method
+        Method<B> m
     ) {
-        return (exchange, request) -> invokeAndMap(beanDefinition, method, exchange, request);
+        String name = observedName(m);
+        return (exchange, request) -> invokeAndMap(m, name, exchange, request);
     }
 
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> asyncHandler(
-        BeanDefinition<B> beanDefinition,
-        ExecutableMethod<B, Object> method
+        Method<B> m
     ) {
-        return (exchange, request) -> Mono.just(invokeAndMap(beanDefinition, method, exchange, request));
+        String name = observedName(m);
+        return (exchange, request) -> invokeAndMapAsync(m, name, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> statelessSyncHandler(
-        BeanDefinition<B> beanDefinition,
-        ExecutableMethod<B, Object> method
+        Method<B> m
     ) {
-        return (ctx, request) -> invokeAndMap(beanDefinition, method, ctx, request);
+        String name = observedName(m);
+        return (ctx, request) -> invokeAndMap(m, name, ctx, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, Mono<McpSchema.ReadResourceResult>> statelessAsyncHandler(
-        BeanDefinition<B> beanDefinition,
-        ExecutableMethod<B, Object> method
+        Method<B> m
     ) {
-        return (ctx, request) -> Mono.just(invokeAndMap(beanDefinition, method, ctx, request));
+        String name = observedName(m);
+        return (ctx, request) -> invokeAndMapAsync(m, name, ctx, request);
     }
 
-    private <B> McpSchema.ReadResourceResult invokeAndMap(BeanDefinition<B> beanDefinition,
-                                                          ExecutableMethod<B, Object> method,
+    private <B> McpSchema.ReadResourceResult invokeAndMap(Method<B> m,
+                                                          String name,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
-        B bean = beanContext.getBean(beanDefinition);
+        return observed(McpSchema.METHOD_RESOURCES_READ, name,
+            () -> m.call(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
+                mcpTransportContext, result -> map(m, request, result), e -> failWithMcpError(m, e)));
+    }
 
-        ExecutableBinder<McpSchema.ReadResourceRequest> executableBinder = new DefaultExecutableBinder<>(
-            prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), request)));
-        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, request);
-        Object result = executable.invoke(bean);
+    private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
+                                                                     String name,
+                                                                     Object mcpTransportContext,
+                                                                     McpSchema.ReadResourceRequest request) {
+        return observedAsync(McpSchema.METHOD_RESOURCES_READ, name,
+            () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, request, mcpTransportContext, request),
+                result -> map(m, request, result), e -> failWithMcpError(m, e)));
+    }
+
+    private <B> McpSchema.ReadResourceResult map(Method<B> m, McpSchema.ReadResourceRequest request, @Nullable Object result) {
+        ExecutableMethod<B, Object> method = m.method();
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
         }
-        if (result instanceof String s) {
+        if (result instanceof CharSequence text) {
             String mimeType = method.getAnnotation(Resource.class)
                 .stringValue(MIME_TYPE_PROPERTY)
                 .orElse(Resource.DEFAULT_MIME_TYPE);
-            McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(request.uri(), mimeType, s);
+            McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(request.uri(), mimeType, text.toString());
             return new McpSchema.ReadResourceResult(List.of(contents));
         }
         // Unsupported return type: return empty contents
         return new McpSchema.ReadResourceResult(List.of());
+    }
+
+    @Override
+    protected String primitiveName(ExecutableMethod<?, ?> method) {
+        return method.stringValue(Resource.class, URI_PROPERTY).orElse(null);
     }
 
     private static <B> McpSchema.Resource toResource(ExecutableMethod<B, Object> method) {
@@ -162,15 +182,8 @@ public final class ResourceRegistry extends AbstractMcpMethodRegistry<
         String title = method.stringValue(Resource.class, TITLE_PROPERTY).orElse(null);
         String description = method.stringValue(Resource.class, DESCRIPTION_PROPERTY).orElse(null);
         String mimeType = method.stringValue(Resource.class, MIME_TYPE_PROPERTY).orElse(Resource.DEFAULT_MIME_TYPE);
-        // size, attributes, and other optional fields are left null for declarative resources
-        return new McpSchema.Resource(uri, name, title, description, mimeType, null, null, null);
-    }
-
-    @Override
-    public boolean isNotEmpty() {
-        return !getSyncSpecs().isEmpty()
-            || !getAsyncSpecs().isEmpty()
-            || !getStatelessSyncSpecs().isEmpty()
-            || !getStatelessAsyncSpecs().isEmpty();
+        long size = method.longValue(Resource.class, SIZE_PROPERTY).orElse(UNKNOWN_SIZE);
+        McpSchema.Annotations annotations = resourceAnnotations(method, Resource.class);
+        return new McpSchema.Resource(uri, name, title, description, mimeType, size < 0 ? null : size, annotations, meta(method), icons(method));
     }
 }

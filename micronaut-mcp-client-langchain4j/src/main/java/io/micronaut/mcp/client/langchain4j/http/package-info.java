@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 /**
- * Classes related with Langchain4J MCP Client and stdio transport.
+ * Classes related with Langchain4J MCP Client and Streamable HTTP transport.
  */
-@Requires(property = PROPERTY_TRANSPORT, value = TRANSPORT_HTTP, defaultValue = TRANSPORT_HTTP)
 @Configuration
 package io.micronaut.mcp.client.langchain4j.http;
 import io.micronaut.context.annotation.Configuration;
-import io.micronaut.context.annotation.Requires;
-import static io.micronaut.mcp.conf.client.McpClientConfiguration.PROPERTY_TRANSPORT;
-import static io.micronaut.mcp.conf.client.McpClientConfiguration.TRANSPORT_HTTP;

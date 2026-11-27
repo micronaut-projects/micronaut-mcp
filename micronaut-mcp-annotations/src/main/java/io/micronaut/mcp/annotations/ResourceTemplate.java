@@ -68,9 +68,12 @@ public @interface ResourceTemplate {
     String name() default ELEMENT_NAME;
 
     /**
-     * @return The resource URI this handler serves (e.g. ""file:///{path}").
+     * @return The RFC 6570 URI template of the resources this handler serves (e.g. "book://book/{title}"). Matched variables are
+     * percent-decoded with URI decoding, so a {@code +} is not turned into a space. A simple variable, such as {@code {title}},
+     * matches a single segment and rejects an encoded {@code /}; use a reserved variable, such as {@code {+title}}, for values
+     * that may contain an encoded {@code /}.
      */
-    String uriTemplate() default "pgn://round/{round}";
+    String uriTemplate();
 
     /**
      * @return A concise human-readable title of the resource.
@@ -86,4 +89,16 @@ public @interface ResourceTemplate {
      * @return The MIME type of the returned content (e.g. "text/plain", "application/json").
      */
     String mimeType() default DEFAULT_MIME_TYPE;
+
+    /**
+     * @return The intended audience of the resources. Empty when not specified.
+     * @since 2.2.0
+     */
+    Audience[] audience() default {};
+
+    /**
+     * @return How important the resources are, from 0 (least) to 1 (most important). {@code -1} when not specified: any other value outside 0 to 1 fails the startup.
+     * @since 2.2.0
+     */
+    double priority() default -1;
 }

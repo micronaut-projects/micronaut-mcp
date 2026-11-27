@@ -20,6 +20,8 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import java.util.List;
 
+// Binds the deprecated configuration, until it is removed
+@SuppressWarnings({"removal", "java:S5738"})
 @Internal
 @Requires(property = StdioMcpTransportConfiguration.PROPERTY_COMMANDS)
 @ConfigurationProperties(StdioMcpTransportConfiguration.PREFIX)
@@ -27,10 +29,19 @@ class StdioMcpTransportConfigurationProperties implements StdioMcpTransportConfi
     private List<String> commands;
 
     @Override
+    @Deprecated(since = "2.2.0", forRemoval = true)
     public List<String> getCommands() {
         return commands;
     }
 
+    /**
+     * Deprecated: declares a STDIO connection named `stdio`, declare it with `micronaut.mcp.client.stdio.stdio.command`
+     * instead.
+     *
+     * @param commands The command that starts the server, and its arguments
+     * @deprecated Declare a STDIO connection with {@code micronaut.mcp.client.stdio.<name>.command} instead.
+     */
+    @Deprecated(since = "2.2.0", forRemoval = true)
     public void setCommands(List<String> commands) {
         this.commands = commands;
     }

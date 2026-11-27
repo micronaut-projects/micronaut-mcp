@@ -22,24 +22,24 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
-import io.micronaut.core.bind.BoundExecutable;
-import io.micronaut.core.bind.DefaultExecutableBinder;
-import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.jsonschema.JsonSchema;
 import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.ToolArg;
+import io.micronaut.mcp.server.exceptions.InputErrorMapper;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
+import io.micronaut.mcp.server.json.MicronautMcpJsonMapper;
+import io.micronaut.mcp.server.observability.McpServerObserver;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -47,6 +47,9 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -55,6 +58,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_ARRAY;
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_BOOL;
@@ -73,8 +77,10 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public static final boolean DEFAULT_OPEN_WORLD_HINT_VALUE = true;
     public static final boolean DEFAULT_RETURN_DIRECT_VALUE = false;
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
-    private static final List<Class<?>> BINDABLE_PARAMETER_TYPES = List.of(McpTransportContext.class,
-        McpSchema.CallToolRequest.class);
+    private static final Pattern CONTROL_CHARACTERS = Pattern.compile("[\\p{Cc}\\p{Zl}\\p{Zp}]+");
+    private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.CallToolRequest.class};
+    private static final Argument<Map<String, Object>> JSON_OBJECT_ARGUMENT = Argument.mapOf(String.class, Object.class);
+    private static final String KEY_SCHEMA = "$schema";
     private static final String MEMBER_ANNOTATIONS = "annotations";
     private static final String MEMBER_READ_ONLY_HINT = "readOnlyHint";
     private static final String MEMBER_DESTRUCTIVE_HINT = "destructiveHint";
@@ -95,6 +101,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     private final JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader;
     private final McpJsonMapper mcpJsonMapper;
     private final JsonMapper jsonMapper;
+    private final boolean convertStructuredContent;
     private final ArgumentBinderRegistry<McpSchema.CallToolRequest> argumentBinderRegistry;
 
     ToolRegistry(JsonSchemaClassPathResourceLoader jsonSchemaClassPathResourceLoader,
@@ -107,120 +114,223 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         this.jsonSchemaClassPathResourceLoader = jsonSchemaClassPathResourceLoader;
         this.mcpJsonMapper = mcpJsonMapper;
         this.jsonMapper = jsonMapper;
+        // When the SDK uses a JSON mapper other than Micronaut's (e.g. the SDK's own Jackson mapper replacing the bean), the
+        // result is converted to a Map with the Micronaut mapper, so that the structured content on the wire matches the JSON
+        // that is validated and sent as text content, and no reflective serialization of user types is needed in a native image
+        this.convertStructuredContent = !(mcpJsonMapper instanceof MicronautMcpJsonMapper);
         this.argumentBinderRegistry = argumentBinderRegistry;
     }
 
     @Override
+    protected Class<?>[] boundParameterTypes() {
+        return BOUND_PARAMETER_TYPES;
+    }
+
+    @Override
     public List<McpServerFeatures.SyncToolSpecification> getSyncSpecs() {
-        return drainMethods()
-            .map(toolMethod -> McpServerFeatures.SyncToolSpecification.builder()
-                .tool(tool(toolMethod.method()))
-                .callHandler(provideSyncCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
-                .build())
+        return streamMethods()
+            .map(toolMethod -> {
+                McpSchema.Tool tool = tool(toolMethod);
+                return McpServerFeatures.SyncToolSpecification.builder()
+                    .tool(tool)
+                    .callHandler(provideSyncCallHandler(toolMethod, tool))
+                    .build();
+            })
             .toList();
     }
 
     @Override
     public List<McpServerFeatures.AsyncToolSpecification> getAsyncSpecs() {
-        return drainMethods()
-            .map(toolMethod -> McpServerFeatures.AsyncToolSpecification.builder()
-                .tool(tool(toolMethod.method()))
-                .callHandler(provideReactiveCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
-                .build())
+        return streamMethods()
+            .map(toolMethod -> {
+                McpSchema.Tool tool = tool(toolMethod);
+                return McpServerFeatures.AsyncToolSpecification.builder()
+                    .tool(tool)
+                    .callHandler(provideReactiveCallHandler(toolMethod, tool))
+                    .build();
+            })
             .toList();
     }
 
     @Override
     public List<McpStatelessServerFeatures.SyncToolSpecification> getStatelessSyncSpecs() {
-        return drainMethods()
-            .map(toolMethod -> McpStatelessServerFeatures.SyncToolSpecification.builder()
-                .tool(tool(toolMethod.method()))
-                .callHandler(provideSyncCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
-                .build())
+        return streamMethods()
+            .map(toolMethod -> {
+                McpSchema.Tool tool = tool(toolMethod);
+                return McpStatelessServerFeatures.SyncToolSpecification.builder()
+                    .tool(tool)
+                    .callHandler(provideSyncCallHandler(toolMethod, tool))
+                    .build();
+            })
             .toList();
     }
 
     @Override
     public List<McpStatelessServerFeatures.AsyncToolSpecification> getStatelessAsyncSpecs() {
-        return drainMethods()
-            .map(toolMethod -> McpStatelessServerFeatures.AsyncToolSpecification.builder()
-                .tool(tool(toolMethod.method()))
-                .callHandler(provideReactiveCallHandler(toolMethod.beanDefinition(), toolMethod.method()))
-                .build())
+        return streamMethods()
+            .map(toolMethod -> {
+                McpSchema.Tool tool = tool(toolMethod);
+                return McpStatelessServerFeatures.AsyncToolSpecification.builder()
+                    .tool(tool)
+                    .callHandler(provideReactiveCallHandler(toolMethod, tool))
+                    .build();
+            })
             .toList();
     }
 
-    @Override
-    public boolean isNotEmpty() {
-        return CollectionUtils.isNotEmpty(getAsyncSpecs()) ||
-            CollectionUtils.isNotEmpty(getSyncSpecs()) ||
-            CollectionUtils.isNotEmpty(getStatelessAsyncSpecs()) ||
-            CollectionUtils.isNotEmpty(getStatelessSyncSpecs());
+    private static boolean hasOutputSchema(McpSchema.Tool tool) {
+        return CollectionUtils.isNotEmpty(tool.outputSchema());
     }
 
-    private <B, C> BiFunction<C, McpSchema.CallToolRequest, McpSchema.CallToolResult> provideSyncCallHandler(BeanDefinition<B> beanDefinition, ExecutableMethod<B, Object> method) {
+    private <B, C> BiFunction<C, McpSchema.CallToolRequest, McpSchema.CallToolResult> provideSyncCallHandler(Method<B> m,
+                                                                                                             McpSchema.Tool tool) {
+        boolean structuredOutput = hasOutputSchema(tool);
+        String name = observedName(m);
         return (mcpTransportContext, callToolRequest)
-            -> callToolToResult(beanDefinition, method, mcpTransportContext, callToolRequest);
+            -> callToolToResult(m, name, structuredOutput, mcpTransportContext, callToolRequest);
     }
 
-    private <B, C> BiFunction<C, McpSchema.CallToolRequest, Mono<McpSchema.CallToolResult>> provideReactiveCallHandler(BeanDefinition<B> beanDefinition, ExecutableMethod<B, Object> method) {
+    private <B, C> BiFunction<C, McpSchema.CallToolRequest, Mono<McpSchema.CallToolResult>> provideReactiveCallHandler(Method<B> m,
+                                                                                                                       McpSchema.Tool tool) {
+        boolean structuredOutput = hasOutputSchema(tool);
+        String name = observedName(m);
         return (mcpTransportContext, callToolRequest)
-            -> reactiveCallToolToResult(beanDefinition, method, mcpTransportContext, callToolRequest);
+            -> reactiveCallToolToResult(m, name, structuredOutput, mcpTransportContext, callToolRequest);
     }
 
-    private <B> Mono<McpSchema.CallToolResult> reactiveCallToolToResult(BeanDefinition<B> beanDefinition,
-                                                                        ExecutableMethod<B, Object> method,
+    private <B> Mono<McpSchema.CallToolResult> reactiveCallToolToResult(Method<B> m,
+                                                                        String name,
+                                                                        boolean structuredOutput,
                                                                         Object mcpTransportContext,
                                                                         McpSchema.CallToolRequest callToolRequest) {
-        McpSchema.CallToolResult result = callToolToResult(beanDefinition, method, mcpTransportContext, callToolRequest);
-        if (result == null) {
-            return Mono.empty();
-        }
-        return Mono.just(result);
+        return observedAsync(McpSchema.METHOD_TOOLS_CALL, name,
+            () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
+                result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)),
+            ToolRegistry::errorType);
     }
 
-    private <B> McpSchema.CallToolResult callToolToResult(BeanDefinition<B> beanDefinition,
-                                                          ExecutableMethod<B, Object> method,
+    private <B> McpSchema.CallToolResult callToolToResult(Method<B> m,
+                                                          String name,
+                                                          boolean structuredOutput,
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
-        Argument<?> returnClass = method.getReturnType().asArgument();
-        B bean = beanContext.getBean(beanDefinition);
-        ExecutableBinder<McpSchema.CallToolRequest> executableBinder = new DefaultExecutableBinder<>(
-            prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), callToolRequest)));
+        return observed(McpSchema.METHOD_TOOLS_CALL, name,
+            () -> m.call(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
+                mcpTransportContext, result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error)),
+            ToolRegistry::errorType);
+    }
+
+    private static @Nullable String errorType(McpSchema.CallToolResult result) {
+        return Boolean.TRUE.equals(result.isError()) ? McpServerObserver.TOOL_ERROR : null;
+    }
+
+    /**
+     * A tool that fails, including when its arguments cannot be bound or are not valid, produces a tool execution error,
+     * which the model can see and correct, rather than a protocol error. A tool that throws an {@link McpError}, or an
+     * exception that an application {@link McpErrorExceptionMapper} maps, chooses a protocol error.
+     *
+     * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/server/tools#error-handling">Tool error handling</a>
+     */
+    private <B> McpSchema.CallToolResult toolExecutionError(Method<B> m, Throwable error) {
+        McpErrorExceptionMapper<? extends Throwable> mapper = getExceptionMapper(error.getClass());
+        if (mapper == null && error instanceof McpError mcpError) {
+            // An McpError keeps its code, unless an application mapper maps it
+            throw mcpError;
+        }
+        String name = toolName(m.method());
+        if (mapper instanceof InputErrorMapper<?> inputErrorMapper) {
+            String message = inputErrorMessage(inputErrorMapper, error);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Tool {} failed with an input error: {}", loggable(name), loggable(message));
+            }
+            return toolError(message);
+        }
+        if (mapper != null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Tool {} failed with a mapped protocol error: {}", loggable(name), loggableStackTrace(error));
+            }
+            throw mapException(mapper, error);
+        }
+        if (LOG.isWarnEnabled()) {
+            LOG.warn("Tool {} failed: {}", loggable(name), loggableStackTrace(error));
+        }
+        return toolError("Tool " + name + " failed");
+    }
+
+    private static String loggable(String text) {
+        return CONTROL_CHARACTERS.matcher(text).replaceAll(" ");
+    }
+
+    /**
+     * Render the whole exception, including causes and suppressed exceptions, as one log line.
+     * Passing the throwable separately would let the logging backend render its raw messages again.
+     */
+    private static String loggableStackTrace(Throwable error) {
+        StringWriter trace = new StringWriter();
+        error.printStackTrace(new PrintWriter(trace));
+        return loggable(trace.toString().stripTrailing());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> String inputErrorMessage(InputErrorMapper<?> mapper, T error) {
+        return ((InputErrorMapper<T>) mapper).messageOrDefault(error);
+    }
+
+    private <B> McpSchema.CallToolResult toCallToolResult(Method<B> m, boolean structuredOutput, @Nullable Object result) {
+        if (result instanceof McpSchema.CallToolResult callToolResult) {
+            return callToolResult;
+        }
         try {
-            BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, callToolRequest);
-            Object result = executable.invoke(bean);
-            String text = "";
-            if (returnClass.isAssignableFrom(McpSchema.CallToolResult.class)) {
-                return (McpSchema.CallToolResult) result;
-            } else if (returnClass.isAssignableFrom(String.class)) {
-                text = result.toString();
-            } else if (Enum.class.isAssignableFrom(result.getClass())) {
-                text = result.toString();
-            } else {
-                try {
-                    text = jsonMapper.writeValueAsString(result);
-                } catch (IOException e) {
-                    if (LOG.isErrorEnabled()) {
-                        LOG.error(e.getMessage(), e);
-                    }
-                    return McpSchema.CallToolResult.builder().addTextContent(text).isError(true).build();
-                }
+            return serialize(m, structuredOutput, result);
+        } catch (IOException | RuntimeException e) {
+            String name = toolName(m.method());
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("The result of tool {} could not be serialized: {}", loggable(name), loggableStackTrace(e));
             }
-            if (toolOutputSchema(method).isPresent()) {
-                Map<String, Object> structuredContent = jsonMapper.readValue(text, Argument.mapOf(String.class, Object.class));
-                return McpSchema.CallToolResult.builder()
-                    .structuredContent(structuredContent)
-                    .isError(false)
-                    .build();
-            }
-            return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
-        } catch (Exception ex) {
-            throw mcpError(ex);
+            return toolError("The result of tool " + name + " could not be serialized");
         }
     }
 
-    private <B> McpSchema.Tool tool(ExecutableMethod<B, Object> method) {
+    private <B> McpSchema.CallToolResult serialize(Method<B> m, boolean structuredOutput, @Nullable Object result) throws IOException {
+        if (structuredOutput) {
+            return structuredToolResult(m.method(), result);
+        }
+        String text = "";
+        if (result instanceof CharSequence || result instanceof Enum<?>) {
+            text = result.toString();
+        } else if (result != null) {
+            text = jsonMapper.writeValueAsString(result);
+        }
+        return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
+    }
+
+    private McpSchema.CallToolResult structuredToolResult(ExecutableMethod<?, ?> method, @Nullable Object result) throws IOException {
+        if (result == null) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("Tool {} returned null but declares an output schema; returning an error result to the client", toolName(method));
+            }
+            return toolError("Tool " + toolName(method) + " produced no result. This is a server-side error; retrying with the same arguments will not help.");
+        }
+        // The SDK validates the object against the output schema and adds its JSON as text content. A result that cannot be
+        // converted is reported by the caller like a text result that cannot be serialized
+        Object structuredContent = convertStructuredContent
+            ? jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), JSON_OBJECT_ARGUMENT)
+            : result;
+        return McpSchema.CallToolResult.builder()
+            .structuredContent(structuredContent)
+            .isError(false)
+            .build();
+    }
+
+    private static McpSchema.CallToolResult toolError(String reason) {
+        return McpSchema.CallToolResult.builder()
+            .addTextContent(reason)
+            .isError(true)
+            .build();
+    }
+
+    private <B> McpSchema.Tool tool(Method<B> toolMethod) {
+        ExecutableMethod<B, Object> method = toolMethod.method();
         McpSchema.Tool.Builder toolBuilder = McpSchema.Tool.builder()
             .name(toolName(method));
         toolTitle(method).ifPresent(toolBuilder::title);
@@ -233,15 +343,16 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             jsonSchemaArgumentOptional.ifPresent(argument ->
                 argumentBinderRegistry.addArgumentBinder(new JsonMapperTypedCallToRequestArgumentBinder(argument.getType(), jsonMapper)));
         } else {
-            toolBuilder.inputSchema(inputSchema(method, ToolRegistry::toolArgumentName, ToolRegistry::toolArgDescription));
+            toolBuilder.inputSchema(inputSchema(toolMethod, ToolRegistry::toolArgumentName, ToolRegistry::toolArgDescription));
         }
         toolOutputSchema(method).ifPresent(schema -> toolBuilder.outputSchema(mcpJsonMapper, schema));
+        toolBuilder.icons(icons(method));
+        toolBuilder.meta(meta(method));
         return toolBuilder.build();
     }
 
     private Optional<String> toolOutputSchema(ExecutableMethod<?, ?> method) {
-        Class<?> returnClass = method.getReturnType().getType();
-        return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(returnClass);
+        return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(resultArgument(method).getType());
     }
 
     private static String toolArgumentName(Argument<?> argument) {
@@ -279,6 +390,11 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
             .orElse(null);
     }
 
+    @Override
+    protected String primitiveName(ExecutableMethod<?, ?> method) {
+        return toolName(method);
+    }
+
     private static String toolName(ExecutableMethod<?, ?> method) {
         String name = method.stringValue(Tool.class, "name").orElse(Tool.ELEMENT_NAME);
         if (name.equals(Tool.ELEMENT_NAME)) {
@@ -291,6 +407,10 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     private Optional<Argument<?>> jsonSchemaArgument(@NonNull ExecutableMethod<?, ?> method) {
         Argument<?>[] arguments = method.getArguments();
         for (Argument<?> arg : arguments) {
+            if (arg.getAnnotationMetadata().hasAnnotation(ToolArg.class)) {
+                // A named property of the input, whatever its type
+                continue;
+            }
             try {
                 BeanIntrospection<?> introspection = BeanIntrospection.getIntrospection(arg.getType());
                 if (introspection.findAnnotation(JsonSchema.class).isPresent()) {
@@ -322,47 +442,61 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         return new McpSchema.JsonSchema(argumentType(argument), null, null, null, null, null);
     }
 
+    /**
+     * The schema of a named property of the tool input: the JSON Schema of its type when there is one, so that the client
+     * sees its fields, else a schema with the JSON type of the argument.
+     */
+    private Object propertyJsonSchema(Argument<?> argument, Function<Argument<?>, String> argumentDescription) {
+        if (!TYPE_OBJECT.equals(argumentType(argument))) {
+            // Only an object can have a JSON Schema of its own, and looking one up is costly for any other type
+            return argumentJsonSchema(argument, argumentDescription);
+        }
+        return jsonSchema(argument)
+            .<Object>map(json -> embeddedJsonSchema(json, argumentDescription.apply(argument)))
+            .orElseGet(() -> argumentJsonSchema(argument, argumentDescription));
+    }
+
+    private Map<String, Object> embeddedJsonSchema(String json, @Nullable String description) {
+        Map<String, Object> schema;
+        try {
+            schema = new LinkedHashMap<>(jsonMapper.readValue(json, JSON_OBJECT_ARGUMENT));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        // The identifier is kept: it makes the embedded schema a schema resource of its own, so that the references and
+        // anchors inside it resolve within it and not against the tool input schema. The dialect is the one of the tool
+        // input schema.
+        schema.remove(KEY_SCHEMA);
+        if (StringUtils.isNotEmpty(description)) {
+            schema.put(MEMBER_DESCRIPTION, description);
+        }
+        return schema;
+    }
+
     @NonNull
     private Optional<String> jsonSchema(Argument<?> argument) {
         Class<?> argumentClass = argument.getType();
         return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(argumentClass);
     }
 
-    private <B> McpSchema.JsonSchema inputSchema(ExecutableMethod<B, Object> method,
+    private <B> McpSchema.JsonSchema inputSchema(Method<B> toolMethod,
                                                  Function<Argument<?>, String> propertyNameFunction,
                                                  Function<Argument<?>, String> argumentDescription) {
-        Collection<Integer> boundArgumentsPositions = boundArgumentsPositions(method).values();
-        Argument<?>[] arguments = method.getArguments();
+        Argument<?>[] arguments = toolMethod.method().getArguments();
         Map<String, Object> properties = CollectionUtils.newHashMap(arguments.length);
         List<String> requiredProperties = new ArrayList<>(arguments.length);
         for (int i = 0; i < arguments.length; i++) {
-            if (boundArgumentsPositions.contains(i)) {
+            if (toolMethod.isBound(i)) {
                 continue;
             }
             Argument<?> argument = arguments[i];
             String propertyName = propertyNameFunction.apply(argument);
-            properties.put(propertyName, argumentJsonSchema(argument, argumentDescription));
+            properties.put(propertyName, propertyJsonSchema(argument, argumentDescription));
             if (isArgumentRequired(argument)) {
                 requiredProperties.add(propertyName);
             }
         }
         return new McpSchema.JsonSchema(TYPE_OBJECT, properties, requiredProperties, null, null, null);
-    }
-
-    @NonNull
-    private <B> LinkedHashMap<Class<?>, Integer> boundArgumentsPositions(@NonNull ExecutableMethod<B, Object> method) {
-        LinkedHashMap<Class<?>, Integer> result = new LinkedHashMap<>();
-        Argument<?>[] arguments = method.getArguments();
-        for (int i = 0; i < arguments.length; i++) {
-            Argument<?> argument = arguments[i];
-            for (Class<?> bindinableParameterType : BINDABLE_PARAMETER_TYPES) {
-                if (bindinableParameterType.isAssignableFrom(argument.getType())) {
-                    result.put(bindinableParameterType, i);
-                    break;
-                }
-            }
-        }
-        return result;
     }
 
     private static String argumentType(Argument<?> argument) {

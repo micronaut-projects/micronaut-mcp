@@ -3,18 +3,22 @@ plugins {
     id("io.micronaut.build.internal.mcp-module")
 }
 dependencies {
+    compileOnly(mnMicrometer.micrometer.core)
     api(mn.micronaut.json.core)
     implementation(mnSerde.micronaut.serde.api)
     compileOnly(mn.jackson.databind)
     annotationProcessor(mnSerde.micronaut.serde.processor)
     testImplementation(mnSerde.micronaut.serde.jackson)
-    api(libs.managed.mcp.java.sdk)
+    api(projects.micronautMcpJavaSdkJson)
     api(projects.micronautMcp)
     api(projects.micronautMcpAnnotations)
     annotationProcessor(mnJsonSchema.micronaut.json.schema.processor)
     implementation(mnJsonSchema.micronaut.json.schema.annotations)
     implementation(mnJsonSchema.micronaut.json.schema.validation)
     testImplementation(mnSecurity.micronaut.security)
+    testImplementation(mnMicrometer.micronaut.micrometer.core)
+    // ListAppender, to assert how failing observers are logged
+    testImplementation(mnLogging.logback.classic)
     api(mnJsonSchema.micronaut.json.schema.utils)
     api(mnValidation.validation)
     compileOnly(mn.micronaut.http.server)
@@ -27,10 +31,23 @@ dependencies {
     testImplementation(libs.jsonassert)
     testImplementation(mn.micronaut.http.server.netty)
     testImplementation(mnTest.junit.jupiter.params)
+    testImplementation(mnLogging.logback.classic)
 }
 micronautBuild {
     testFramework = TestFramework.JUNIT6
 }
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// The 2.1 server jar included the JSON API that the server now exposes transitively.
+val sdkJsonApi by configurations.creating {
+    isCanBeConsumed = false
+    isTransitive = false
+}
+dependencies {
+    sdkJsonApi(projects.micronautMcpJavaSdkJson)
+}
+tasks.withType<me.champeau.gradle.japicmp.JapicmpTask>().configureEach {
+    newArchives.from(sdkJsonApi)
 }

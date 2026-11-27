@@ -46,6 +46,11 @@ final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpSe
     McpStatelessServerFeatures.SyncResourceTemplateSpecification> {
 
     @Override
+    protected boolean sendsNotifications() {
+        return false;
+    }
+
+    @Override
     protected List<McpStatelessServerFeatures.SyncToolSpecification> getTools(ToolRegistry toolRegistry) {
         return toolRegistry.getStatelessSyncSpecs();
     }
@@ -82,6 +87,8 @@ final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpSe
                                                                        List<McpStatelessServerFeatures.SyncResourceSpecification> resources,
                                                                        List<McpStatelessServerFeatures.SyncResourceTemplateSpecification> resourceTemplates) {
         McpServer.StatelessSyncSpecification spec = McpServer.sync(transport)
+            // The blocking controller already runs on the blocking executor, so primitives are invoked on its thread
+            .immediateExecution(true)
             .jsonMapper(jsonMapper)
             .jsonSchemaValidator(jsonSchemaValidator)
             .tools(tools)
@@ -91,7 +98,10 @@ final class McpStatelessSyncServerFactory extends AbstractMcpServerFactory<McpSe
             .resources(resources)
             .capabilities(capabilities);
         if (configuration != null) {
-            spec.serverInfo(configuration.getName(), configuration.getVersion());
+            spec.serverInfo(serverInfo(configuration));
+            if (configuration.getInstructions() != null) {
+                spec.instructions(configuration.getInstructions());
+            }
         }
         return spec;
     }

@@ -12,6 +12,7 @@ plugins {
 rootProject.name = 'micronaut-mcp-parent'
 include 'micronaut-mcp'
 include 'micronaut-mcp-annotations'
+include 'micronaut-mcp-java-sdk-json'
 include 'micronaut-mcp-client-java-sdk'
 include 'micronaut-mcp-server-java-sdk'
 include 'micronaut-mcp-client-langchain4j'
@@ -19,6 +20,8 @@ include 'micronaut-mcp-bom'
 include 'test-suite-graal'
 include 'test-suite-moon'
 include 'test-suite-jackson-databind'
+include 'test-suite-security'
+include 'test-suite-client-java-sdk'
 include 'test-suite-mcp-http-tck'
 include 'test-suite-mcp-http-tck-common'
 include 'test-suite-mcp-http-tck-sync'
@@ -38,4 +41,5 @@ micronautBuild {
     importMicronautCatalog("micronaut-json-schema")
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-langchain4j")
+    importMicronautCatalog("micronaut-micrometer")
 }

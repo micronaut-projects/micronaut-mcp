@@ -6,25 +6,18 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.jupiter.api.Disabled;
+import org.json.JSONException;
 import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @Property(name = "moon.enabled", value = StringUtils.TRUE)
 @MicronautTest
 class MoonToolsHttpTest {
-    @Disabled
     @Test
-    void invalidParamsCannotDeserialize(@Client("/") HttpClient httpClient) {
+    void invalidParamsCannotDeserialize(@Client("/") HttpClient httpClient) throws JSONException {
         BlockingHttpClient client = httpClient.toBlocking();
         final String toolsCallJson = """
             {
@@ -42,14 +35,11 @@ class MoonToolsHttpTest {
               "id": 0
             }
             """;
-        HttpClientResponseException ex = assertThrows(HttpClientResponseException.class, () ->
-            client.retrieve(createRequest(toolsCallJson), McpSchema.JSONRPCResponse.class));
-        Optional<McpSchema.JSONRPCResponse> jsonrpcResponseOptional = ex.getResponse().getBody(McpSchema.JSONRPCResponse.class);
-        assertTrue(jsonrpcResponseOptional.isPresent());
-        McpSchema.JSONRPCResponse json = jsonrpcResponseOptional.get();
-        assertNotNull(json.error());
-        assertEquals(-32602, json.error().code());
-        assertEquals("Required argument [MoonPhaseRequest moonPhaseRequest] not specified", json.error().message());
+        // An argument that does not match the input schema is a tool execution error the model can correct
+        String response = assertDoesNotThrow(() -> client.retrieve(createRequest(toolsCallJson)));
+        JSONAssert.assertEquals("""
+            {"jsonrpc":"2.0","id":0,"result":{"content":[{"type":"text","text":"Tool (moon-phase-at-date) input validation failed: /date: does not match the date pattern must be a valid RFC 3339 full-date"}],"isError":true}}
+            """, response, true);
     }
 
     private static HttpRequest<?> createRequest(String json) {

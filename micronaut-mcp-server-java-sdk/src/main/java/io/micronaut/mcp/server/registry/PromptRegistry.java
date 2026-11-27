@@ -19,13 +19,9 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
-import io.micronaut.core.bind.BoundExecutable;
-import io.micronaut.core.bind.DefaultExecutableBinder;
-import io.micronaut.core.bind.ExecutableBinder;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.annotations.Prompt;
 import io.micronaut.mcp.annotations.PromptArg;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
@@ -55,6 +51,7 @@ import java.util.function.BiFunction;
 @Singleton
 public final class PromptRegistry
     extends AbstractMcpMethodRegistry<McpServerFeatures.SyncPromptSpecification, McpServerFeatures.AsyncPromptSpecification, McpStatelessServerFeatures.SyncPromptSpecification, McpStatelessServerFeatures.AsyncPromptSpecification> {
+    private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.GetPromptRequest.class};
     private final ArgumentBinderRegistry<McpSchema.GetPromptRequest> argumentBinderRegistry;
 
     PromptRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
@@ -65,83 +62,98 @@ public final class PromptRegistry
     }
 
     @Override
+    protected Class<?>[] boundParameterTypes() {
+        return BOUND_PARAMETER_TYPES;
+    }
+
+    @Override
     public List<McpServerFeatures.SyncPromptSpecification> getSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(method -> new McpServerFeatures.SyncPromptSpecification(
-                prompt(method.beanDefinition(), method.method()),
-                syncPromptHandler(method.beanDefinition(), method.method())
+                prompt(method),
+                syncPromptHandler(method)
             ))
             .toList();
     }
 
     @Override
     public List<McpServerFeatures.AsyncPromptSpecification> getAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(method -> new McpServerFeatures.AsyncPromptSpecification(
-                prompt(method.beanDefinition(), method.method()),
-                asyncPromptHandler(method.beanDefinition(), method.method())
+                prompt(method),
+                asyncPromptHandler(method)
             ))
             .toList();
     }
 
     @Override
     public List<McpStatelessServerFeatures.SyncPromptSpecification> getStatelessSyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(method -> new McpStatelessServerFeatures.SyncPromptSpecification(
-                prompt(method.beanDefinition(), method.method()),
-                promptHandler(method.beanDefinition(), method.method())
+                prompt(method),
+                promptHandler(method)
             ))
             .toList();
     }
 
     @Override
     public List<McpStatelessServerFeatures.AsyncPromptSpecification> getStatelessAsyncSpecs() {
-        return drainMethods()
+        return streamMethods()
             .map(method -> new McpStatelessServerFeatures.AsyncPromptSpecification(
-                prompt(method.beanDefinition(), method.method()),
-                reactivePromptHandler(method.beanDefinition(), method.method())
+                prompt(method),
+                reactivePromptHandler(method)
             ))
             .toList();
     }
 
-    private <B> BiFunction<McpTransportContext, McpSchema.GetPromptRequest, Mono<McpSchema.GetPromptResult>> reactivePromptHandler(BeanDefinition<B> beanDefinition,
-                                                                                                                                   ExecutableMethod<B, Object> method) {
+    private <B> BiFunction<McpTransportContext, McpSchema.GetPromptRequest, Mono<McpSchema.GetPromptResult>> reactivePromptHandler(Method<B> m) {
+        String name = observedName(m);
         return (mcpTransportContext, promptRequest)
-            -> Mono.just(promptResult(beanDefinition, method, mcpTransportContext, promptRequest));
+            -> promptResultAsync(m, name, mcpTransportContext, promptRequest);
     }
 
-    private <B> BiFunction<McpTransportContext, McpSchema.GetPromptRequest, McpSchema.GetPromptResult> promptHandler(BeanDefinition<B> beanDefinition,
-                                                                                                                     ExecutableMethod<B, Object> method) {
+    private <B> BiFunction<McpTransportContext, McpSchema.GetPromptRequest, McpSchema.GetPromptResult> promptHandler(Method<B> m) {
+        String name = observedName(m);
         return (mcpTransportContext, promptRequest)
-            -> promptResult(beanDefinition, method, mcpTransportContext, promptRequest);
+            -> promptResult(m, name, mcpTransportContext, promptRequest);
     }
 
-    private <B> BiFunction<McpSyncServerExchange, McpSchema.GetPromptRequest, McpSchema.GetPromptResult> syncPromptHandler(BeanDefinition<B> beanDefinition,
-                                                                                                                           ExecutableMethod<B, Object> method) {
+    private <B> BiFunction<McpSyncServerExchange, McpSchema.GetPromptRequest, McpSchema.GetPromptResult> syncPromptHandler(Method<B> m) {
+        String name = observedName(m);
         return (mcpTransportContext, promptRequest)
-            -> promptResult(beanDefinition, method, mcpTransportContext, promptRequest);
+            -> promptResult(m, name, mcpTransportContext, promptRequest);
     }
 
-    private <B> BiFunction<McpAsyncServerExchange, McpSchema.GetPromptRequest, Mono<McpSchema.GetPromptResult>> asyncPromptHandler(BeanDefinition<B> beanDefinition,
-                                                                                                                                   ExecutableMethod<B, Object> method) {
+    private <B> BiFunction<McpAsyncServerExchange, McpSchema.GetPromptRequest, Mono<McpSchema.GetPromptResult>> asyncPromptHandler(Method<B> m) {
+        String name = observedName(m);
         return (mcpTransportContext, promptRequest)
-            -> Mono.just(promptResult(beanDefinition, method, mcpTransportContext, promptRequest));
+            -> promptResultAsync(m, name, mcpTransportContext, promptRequest);
     }
 
-    private <B> McpSchema.GetPromptResult promptResult(BeanDefinition<B> beanDefinition,
-                                                       ExecutableMethod<B, Object> method,
+    private <B> McpSchema.GetPromptResult promptResult(Method<B> m,
+                                                       String name,
                                                        Object mcpTransportContext,
                                                        McpSchema.GetPromptRequest promptRequest) {
-        B bean = beanContext.getBean(beanDefinition);
-        ExecutableBinder<McpSchema.GetPromptRequest> executableBinder = new DefaultExecutableBinder<>(
-            prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), promptRequest)));
-        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, promptRequest);
-        Object result = executable.invoke(bean);
+        return observed(McpSchema.METHOD_PROMPT_GET, name,
+            () -> m.call(() -> m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest),
+                mcpTransportContext, PromptRegistry::map, e -> failWithMcpError(m, e)));
+    }
+
+    private <B> Mono<McpSchema.GetPromptResult> promptResultAsync(Method<B> m,
+                                                                  String name,
+                                                                  Object mcpTransportContext,
+                                                                  McpSchema.GetPromptRequest promptRequest) {
+        return observedAsync(McpSchema.METHOD_PROMPT_GET, name,
+            () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, promptRequest, mcpTransportContext, promptRequest),
+                PromptRegistry::map, e -> failWithMcpError(m, e)));
+    }
+
+    private static McpSchema.GetPromptResult map(@Nullable Object result) {
         if (result instanceof McpSchema.GetPromptResult promptResult) {
             return promptResult;
         }
-        if (method.getReturnType().getType().isAssignableFrom(String.class)) {
-            McpSchema.TextContent assistantContent = new McpSchema.TextContent(result.toString());
+        if (result instanceof CharSequence text) {
+            McpSchema.TextContent assistantContent = new McpSchema.TextContent(text.toString());
             McpSchema.PromptMessage assistantMessage = new McpSchema.PromptMessage(McpSchema.Role.ASSISTANT, assistantContent);
             //TODO is it possible to get the description from the javadoc @return of the method
             String description = null;
@@ -151,15 +163,20 @@ public final class PromptRegistry
         return new McpSchema.GetPromptResult("", Collections.emptyList(), null);
     }
 
-    private McpSchema.Prompt prompt(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
+    private McpSchema.Prompt prompt(Method<?> m) {
+        ExecutableMethod<?, Object> method = m.method();
         return new McpSchema.Prompt(promptName(method), promptTitle(method).orElse(null), promptDescription(method).orElse(null),
-            promptArguments(beanDefinition, method));
+            promptArguments(m), meta(method), icons(method));
     }
 
-    private List<McpSchema.PromptArgument> promptArguments(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
-        List<McpSchema.PromptArgument> result = new ArrayList<>(method.getArguments().length);
-        for (Argument<?> argument : method.getArguments()) {
-            result.add(promptArgument(argument));
+    private List<McpSchema.PromptArgument> promptArguments(Method<?> m) {
+        Argument<?>[] arguments = m.method().getArguments();
+        List<McpSchema.PromptArgument> result = new ArrayList<>(arguments.length);
+        for (int i = 0; i < arguments.length; i++) {
+            // Values bound from the request are not arguments the client fills in
+            if (!m.isBound(i)) {
+                result.add(promptArgument(arguments[i]));
+            }
         }
         return result;
     }
@@ -195,19 +212,16 @@ public final class PromptRegistry
         return method.stringValue(Prompt.class, MEMBER_DESCRIPTION);
     }
 
+    @Override
+    protected String primitiveName(ExecutableMethod<?, ?> method) {
+        return promptName(method);
+    }
+
     private static String promptName(ExecutableMethod<?, ?> method) {
         String name = method.stringValue(Prompt.class, MEMBER_NAME).orElse(Prompt.ELEMENT_NAME);
         if (name.equals(Prompt.ELEMENT_NAME)) {
             return method.getName();
         }
         return name;
-    }
-
-    @Override
-    public boolean isNotEmpty() {
-        return CollectionUtils.isNotEmpty(getAsyncSpecs()) ||
-            CollectionUtils.isNotEmpty(getSyncSpecs()) ||
-            CollectionUtils.isNotEmpty(getStatelessAsyncSpecs()) ||
-            CollectionUtils.isNotEmpty(getStatelessSyncSpecs());
     }
 }

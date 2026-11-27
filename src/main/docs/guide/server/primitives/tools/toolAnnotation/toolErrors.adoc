@@ -1,0 +1,17 @@
+The following `@Tool` methods show how to report expected failures, unexpected failures and protocol errors.
+
+snippet::io.micronaut.mcp.docs.tools.errors.WeatherTools[project-base="test-suite-docs", tags="fakepackage,imports,clazz"]
+
+- For an expected failure, return a `CallToolResult` with `isError` set to `true` and a message that helps the caller correct the request. For example, `temperature` lists the supported cities. Returning an error result does not generate a server log entry.
+- If a tool throws an unmapped exception, the client receives a tool execution error with a generic message, such as `Tool forecast failed`. The server logs the exception details and stack trace at `WARN`. If the server cannot serialize a tool result, the client receives a message identifying the tool and the serialization failure.
+- To report a JSON-RPC protocol error, throw an `io.modelcontextprotocol.spec.McpError` with a code and a client-safe message, as `alerts` does.
+
+Clients decide what to show the model. The https://modelcontextprotocol.io/specification/2025-11-25/server/tools#error-handling[MCP specification] recommends that clients forward tool execution errors and allows them to forward protocol errors too. Use client-safe text in explicit results and in the message and data of a protocol error.
+
+Arguments that cannot be bound or fail bean validation produce tool execution errors with the validation message, for example `date: must be a date in the past or in the present`. The registry logs these errors at `DEBUG`.
+
+An application `io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper` can turn an exception into a protocol error. A mapper that matches every `RuntimeException` also matches an `McpError` thrown by a tool and can replace its code and message. The built-in argument mappers send their messages as tool execution errors. They match by exception type, including when a tool body throws an exception such as a `SerdeException` while reading an upstream response. Handle such an exception inside the tool if its message contains private details.
+
+The registry unwraps exceptions from reactive types and `CompletionStage` before choosing a mapper. The same rules apply to synchronous and reactive servers. Prompts, resources and completions report failures as protocol errors.
+
+With a reactive server, a tool without `@ExecuteOn` can fail on the event loop. A synchronous appender writes the log on that thread. An asynchronous appender such as Logback's `AsyncAppender` can offload that work. The registry renders unexpected tool exceptions, including their causes and suppressed exceptions, on one log line.

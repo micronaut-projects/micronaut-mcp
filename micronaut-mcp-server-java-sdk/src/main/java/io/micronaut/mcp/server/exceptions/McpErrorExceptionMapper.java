@@ -18,7 +18,12 @@ package io.micronaut.mcp.server.exceptions;
 import io.modelcontextprotocol.spec.McpError;
 
 /**
- * ApI to define mappers from exceptions to {@link McpError}.
+ * API to define mappers from exceptions to {@link McpError}, the JSON-RPC error sent to the client.
+ * <p>
+ * A tool sends the protocol error returned by an application mapper to the client, which may pass its
+ * code, message and data to the model. Use client-safe details in mapped errors.
+ * Built-in argument mappers report validation and binding errors as tool results with {@code isError} set to true.
+ *
  * @param <T> Exception to Map
  */
 public interface McpErrorExceptionMapper<T extends Throwable> {
