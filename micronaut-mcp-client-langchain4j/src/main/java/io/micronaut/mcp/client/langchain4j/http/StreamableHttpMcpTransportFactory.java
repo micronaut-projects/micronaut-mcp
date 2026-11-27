@@ -66,6 +66,14 @@ final class StreamableHttpMcpTransportFactory {
         return builder;
     }
 
+    // A new transport over the JDK HTTP client, provided as the McpTransport of the connection below
+    @EachBean(StreamableHttpMcpTransport.Builder.class)
+    @Prototype
+    @Bean(typed = StreamableHttpMcpTransport.class)
+    StreamableHttpMcpTransport createStreamableHttpMcpTransport(StreamableHttpMcpTransport.Builder builder) {
+        return builder.build();
+    }
+
     /**
      * The transport of each HTTP connection, the one bean of type {@link McpTransport} of the connection, which gets its
      * client: a new transport for each client, which owns and closes it, over the Micronaut HTTP client when the
@@ -89,13 +97,5 @@ final class StreamableHttpMcpTransportFactory {
             throw new IllegalStateException("The MCP connection " + config.getName() + " uses the Micronaut HTTP client, add the micronaut-http-client dependency");
         }
         return transports.create(config);
-    }
-
-    // A new transport over the JDK HTTP client, provided as the McpTransport of the connection above
-    @EachBean(StreamableHttpMcpTransport.Builder.class)
-    @Prototype
-    @Bean(typed = StreamableHttpMcpTransport.class)
-    StreamableHttpMcpTransport createStreamableHttpMcpTransport(StreamableHttpMcpTransport.Builder builder) {
-        return builder.build();
     }
 }
