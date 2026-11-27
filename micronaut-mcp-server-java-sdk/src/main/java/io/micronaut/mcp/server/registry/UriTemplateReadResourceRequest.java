@@ -71,9 +71,7 @@ record UriTemplateReadResourceRequest(
     }
 
     private static Map<String, Object> arguments(Template uriTemplate, String uri) {
-        Optional<UriMatchInfo> matchOptional = uriTemplate.rejectsSimplePath(uri)
-            ? Optional.empty()
-            : uriTemplate.matchTemplate().match(uri);
+        Optional<UriMatchInfo> matchOptional = match(uriTemplate, uri);
         if (matchOptional.isEmpty()) {
             // Binding nothing would report the variables as missing, or bind null
             throw new InvalidUriTemplateException("The URI does not match the URI template " + uriTemplate.matchTemplate()
@@ -91,6 +89,20 @@ record UriTemplateReadResourceRequest(
             }
         }
         return decoded == null ? variables : decoded;
+    }
+
+    /**
+     * @param uriTemplate A URI template
+     * @param uri A URI
+     * @return Whether the URI matches the template, without the slow match of a URI the template cannot match, see
+     * {@link #arguments(Template, String)}
+     */
+    static boolean matches(Template uriTemplate, String uri) {
+        return match(uriTemplate, uri).isPresent();
+    }
+
+    private static Optional<UriMatchInfo> match(Template uriTemplate, String uri) {
+        return uriTemplate.rejectsSimplePath(uri) ? Optional.empty() : uriTemplate.matchTemplate().match(uri);
     }
 
     private static boolean hasSurrogate(String value) {

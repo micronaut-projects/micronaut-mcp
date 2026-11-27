@@ -25,6 +25,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.json.tree.JsonNode;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.micronaut.mcp.server.context.BlockingMcpRequestContext;
@@ -33,8 +34,14 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
+import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.inject.Named;
 import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
+
+import java.util.concurrent.ExecutorService;
 
 /**
  * The MCP endpoint of a synchronous server. Requests are handled on the blocking executor, which runs on virtual threads
@@ -46,21 +53,33 @@ import reactor.core.publisher.Mono;
 @ExecuteOn(TaskExecutors.BLOCKING)
 @Internal
 final class McpBlockingController extends McpController {
+    private final McpStreamingPolicy streamingPolicy;
+    private final Scheduler blockingScheduler;
 
     McpBlockingController(McpStatelessServerHandler mcpHandler,
                           McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
                           JsonMapper jsonMapper,
-                          McpJsonMapper mcpJsonMapper) {
-        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper);
+                          McpJsonMapper mcpJsonMapper,
+                          McpSchema.ServerCapabilities capabilities,
+                          McpStreamingPolicy streamingPolicy,
+                          @Named(TaskExecutors.BLOCKING) ExecutorService blockingExecutor) {
+        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper, capabilities);
+        this.streamingPolicy = streamingPolicy;
+        // The propagated context of the request, with the request itself, follows the hop to another blocking thread
+        this.blockingScheduler = Schedulers.fromExecutor(task -> blockingExecutor.execute(PropagatedContext.wrapCurrent(task)));
     }
 
     // The route returns a JSON-RPC response or an error body, so the response body type is a wildcard
     @SuppressWarnings({"java:S3740", "java:S1452"})
     @Post
-    Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable McpRequestBody body) {
-        return Mono.deferContextual(context -> {
+    Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable McpRequestBody requestBody) {
+        JsonNode body = requestBody != null ? requestBody.value() : null;
+        boolean streaming = streamingPolicy.mayStream(request, body);
+        Mono<HttpResponse<?>> result = Mono.deferContextual(context -> {
             var requestContext = PropagatedContext.getOrEmpty().plus(new BlockingMcpRequestContext(Thread.currentThread(), context));
-            return Mono.from(ReactivePropagation.propagate(requestContext, handle(request, body != null ? body.value() : null)));
+            return Mono.from(ReactivePropagation.propagate(requestContext, handle(request, body, streaming)));
         });
+        // Let the route return so the first notification can be written while the worker continues.
+        return streaming ? result.subscribeOn(blockingScheduler) : result;
     }
 }

@@ -101,14 +101,17 @@ class McpControllerTest {
             failingJsonMapper,
             proxy(McpJsonMapper.class, (proxy, method, args) -> {
                 throw new UnsupportedOperationException(method.getName());
-            }));
+            }),
+            McpSchema.ServerCapabilities.builder().build(),
+            // handle is given whether the response may stream, so the policy is not used
+            null);
         JsonNode body = JsonNode.createObjectNode(Map.of(
             "jsonrpc", JsonNode.createStringNode("2.0"),
             "id", JsonNode.createNumberNode(1),
             "method", JsonNode.createStringNode("tools/call"),
             "params", JsonNode.createObjectNode(Map.of("name", JsonNode.createStringNode("echo")))));
 
-        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), body).block();
+        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), body, false).block();
 
         assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
@@ -137,7 +140,7 @@ class McpControllerTest {
             Function<McpSchema.JSONRPCRequest, Mono<McpSchema.JSONRPCResponse>> handler) {
         McpController controller = controller(new StubHandler(handler, Mono::empty));
 
-        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), request(id)).block();
+        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), request(id), false).block();
 
         assertNotNull(response);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatus());
@@ -158,7 +161,7 @@ class McpControllerTest {
             request -> Mono.error(McpError.builder(McpSchema.ErrorCodes.METHOD_NOT_FOUND).message("Unknown tool").build()),
             Mono::empty));
 
-        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), request(JsonNode.createNumberNode(5))).block();
+        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), request(JsonNode.createNumberNode(5)), false).block();
 
         assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
@@ -182,7 +185,7 @@ class McpControllerTest {
     void aNotificationHandlerFailureIsAServerErrorThatIsLoggedOnce(Supplier<Mono<Void>> handler) {
         McpController controller = controller(new StubHandler(request -> Mono.empty(), handler));
 
-        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), notification()).block();
+        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), notification(), false).block();
 
         assertNotNull(response);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatus());
@@ -197,7 +200,7 @@ class McpControllerTest {
         McpController controller = controller(new StubHandler(request -> Mono.empty(),
             () -> Mono.error(McpError.builder(McpSchema.ErrorCodes.INVALID_PARAMS).message("Bad params").build())));
 
-        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), notification()).block();
+        HttpResponse<?> response = controller.handle(HttpRequest.POST("/mcp", ""), notification(), false).block();
 
         assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
@@ -212,7 +215,7 @@ class McpControllerTest {
             throw new IllegalStateException(SECRET);
         }, Mono::empty));
 
-        controller.handle(HttpRequest.POST("/mcp", ""), request(JsonNode.createNumberNode(5), method)).block();
+        controller.handle(HttpRequest.POST("/mcp", ""), request(JsonNode.createNumberNode(5), method), false).block();
 
         assertEquals("Failed to handle JSON-RPC request " + loggedName, singleError().getFormattedMessage());
     }
@@ -255,7 +258,10 @@ class McpControllerTest {
             proxy(JsonMapper.class, (proxy, method, args) -> {
                 throw new UnsupportedOperationException(method.getName());
             }),
-            new MicronautMcpJsonMapperSupplier().get());
+            new MicronautMcpJsonMapperSupplier().get(),
+            McpSchema.ServerCapabilities.builder().build(),
+            // handle is given whether the response may stream, so the policy is not used
+            null);
     }
 
     private record StubHandler(Function<McpSchema.JSONRPCRequest, Mono<McpSchema.JSONRPCResponse>> onRequest,

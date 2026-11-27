@@ -95,6 +95,22 @@ class UriTemplateReadResourceRequestTest {
         assertTimeout(Duration.ofSeconds(1), () -> assertThrows(McpError.class, () -> UriTemplateReadResourceRequest.arguments(template, uri)));
     }
 
+    // The streaming policy matches the URI of a request against the templates of primitives that may notify, before
+    // the request is dispatched, with the same guard
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+        "log://{year}-{month}-{day} | +",
+        "log://{year}-{month}-{day}.log | ?.log",
+        "pair://{a}-{b}.json | ?.json"
+    })
+    void aLongUriThatDoesNotMatchIsNotMatchedSlowly(String template, String suffix) {
+        String uri = template.substring(0, template.indexOf("://") + 3) + "-".repeat(2000) + suffix;
+        UriTemplateReadResourceRequest.Template compiled = UriTemplateReadResourceRequest.Template.compile(template);
+        assertTimeout(Duration.ofSeconds(1), () -> assertFalse(UriTemplateReadResourceRequest.matches(compiled, uri)));
+        assertTrue(UriTemplateReadResourceRequest.matches(UriTemplateReadResourceRequest.Template.compile("log://{year}-{month}-{day}"),
+            "log://2026-11-26"));
+    }
+
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
         "book://book/{title} | book://book/a%3Fb?edition=first&format=print",

@@ -24,6 +24,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.json.tree.JsonNode;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
+import io.micronaut.mcp.server.context.McpNotificationEmitter;
 import io.micronaut.mcp.server.exceptions.JsonRrpcResponseUtils;
 import io.micronaut.mcp.server.json.MicronautMcpJsonMapper;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -38,7 +39,12 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Handles the POST endpoint, in route {@value McpServerConfiguration#DEFAULT_ENDPOINT}.
@@ -55,6 +61,11 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
     private static final String KEY_ID = "id";
     private static final String KEY_JSONRPC = "jsonrpc";
     private static final String KEY_PARAMS = "params";
+    private static final String KEY_LEVEL = "level";
+    // The levels as the protocol spells them: the lower-case names of the constants
+    private static final Set<String> LOGGING_LEVELS = Arrays.stream(McpSchema.LoggingLevel.values())
+        .map(level -> level.name().toLowerCase(Locale.ROOT))
+        .collect(Collectors.toCollection(LinkedHashSet::new));
     private static final String INVALID_BATCH = "Invalid Request: batches are not supported, send one JSON-RPC message per request";
     private static final String INVALID_BODY = "Invalid Request: the body must be a JSON object";
     private static final String INVALID_JSONRPC = "Invalid Request: \"jsonrpc\" must be \"2.0\"";
@@ -69,20 +80,29 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
     private final McpTransportContextExtractor<HttpRequest<?>> contextExtractor;
     private final JsonMapper jsonMapper;
     private final boolean passJsonTrees;
+    private final boolean logging;
 
     McpController(McpStatelessServerHandler mcpHandler,
                   McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
                   JsonMapper jsonMapper,
-                  McpJsonMapper mcpJsonMapper) {
+                  McpJsonMapper mcpJsonMapper,
+                  McpSchema.ServerCapabilities capabilities) {
         this.mcpHandler = mcpHandler;
         this.contextExtractor = contextExtractor;
         this.jsonMapper = jsonMapper;
         // The Micronaut MCP JSON mapper converts the parsed parameters directly; any other mapper gets them as a Map
         this.passJsonTrees = mcpJsonMapper instanceof MicronautMcpJsonMapper;
+        this.logging = capabilities.logging() != null;
     }
 
+    /**
+     * @param request The request
+     * @param body The body of the request
+     * @param streaming Whether the response may become an event stream of the notifications of the request, as {@link McpStreamingPolicy} decides
+     * @return The response
+     */
     @SuppressWarnings("java:S3740")
-    final Mono<HttpResponse<?>> handle(HttpRequest<?> request, @Nullable JsonNode body) {
+    final Mono<HttpResponse<?>> handle(HttpRequest<?> request, @Nullable JsonNode body, boolean streaming) {
         McpSchema.JSONRPCMessage jsonRpcMessage;
         try {
             jsonRpcMessage = jsonRpcMessage(body);
@@ -91,9 +111,40 @@ abstract sealed class McpController permits McpReactiveController, McpBlockingCo
         }
         McpTransportContext transportContext = contextExtractor.extract(request);
         if (jsonRpcMessage instanceof McpSchema.JSONRPCRequest jsonrpcRequest) {
+            if (logging && McpSchema.METHOD_LOGGING_SET_LEVEL.equals(jsonrpcRequest.method())) {
+                // The SDK has no handler for it on stateless servers, which cannot remember a level between requests
+                return Mono.just(setLevel(jsonrpcRequest, body));
+            }
+            if (streaming) {
+                return Mono.create(sink -> {
+                    StreamingJsonRpcResponse response = new StreamingJsonRpcResponse(sink, jsonrpcRequest);
+                    request.setAttribute(McpNotificationEmitter.ATTRIBUTE, response);
+                    handleJsonRpcRequest(jsonrpcRequest, transportContext)
+                        // The Reactor context of the route, with the propagated context, reaches the primitive
+                        .contextWrite(sink.contextView())
+                        .subscribe(response::complete, response::fail, response::completeEmpty);
+                });
+            }
             return handleJsonRpcRequest(jsonrpcRequest, transportContext);
         }
         return handleJsonRpcNotification((McpSchema.JSONRPCNotification) jsonRpcMessage, transportContext);
+    }
+
+    /**
+     * Validates the requested level and reports that the stateless transport cannot apply it across requests.
+     */
+    @SuppressWarnings("java:S1452")
+    private static HttpResponse<?> setLevel(McpSchema.JSONRPCRequest jsonrpcRequest, @Nullable JsonNode body) {
+        JsonNode params = body != null ? body.get(KEY_PARAMS) : null;
+        JsonNode level = params != null && params.isObject() ? params.get(KEY_LEVEL) : null;
+        if (level == null || !level.isString() || !LOGGING_LEVELS.contains(level.getStringValue())) {
+            McpSchema.JSONRPCResponse rsp = JsonRrpcResponseUtils.jsonrpcResponse(
+                mcpError(McpSchema.ErrorCodes.INVALID_PARAMS, "Invalid logging level, expected one of " + LOGGING_LEVELS), jsonrpcRequest);
+            return HttpResponse.status(status(rsp)).body(rsp);
+        }
+        McpSchema.JSONRPCResponse rsp = JsonRrpcResponseUtils.jsonrpcResponse(
+            mcpError(McpSchema.ErrorCodes.METHOD_NOT_FOUND, "logging/setLevel is not supported over stateless HTTP"), jsonrpcRequest);
+        return HttpResponse.status(status(rsp)).body(rsp);
     }
 
     @SuppressWarnings("java:S3740")

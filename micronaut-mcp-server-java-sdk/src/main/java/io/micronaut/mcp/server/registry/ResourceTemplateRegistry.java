@@ -35,6 +35,7 @@ import io.micronaut.mcp.annotations.ResourceTemplate;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 /**
@@ -52,6 +53,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
 
     private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.ReadResourceRequest.class};
     private final ArgumentBinderRegistry<UriTemplateReadResourceRequest> argumentBinderRegistry;
+    private final AtomicReference<List<UriTemplateReadResourceRequest.Template>> notifyingTemplates = new AtomicReference<>();
 
     ResourceTemplateRegistry(List<McpErrorExceptionMapper<? extends Throwable>> exceptionMappers,
                              BeanContext beanContext,
@@ -152,6 +154,32 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         UriTemplateReadResourceRequest.Template uriTemplate = uriTemplate(m.method());
         String mimeType = mimeType(m.method());
         return (ctx, request) -> invokeAndMapAsync(m, uriTemplate, mimeType, ctx, request);
+    }
+
+    /**
+     * A request designates a resource template by the URI of a resource it matches.
+     *
+     * @param uri The URI of a resource
+     * @return Whether a template matching the URI declares an {@link io.micronaut.mcp.server.context.McpRequestContext}
+     * parameter, so reading the resource may send notifications
+     */
+    @Override
+    public boolean mayNotify(String uri) {
+        List<UriTemplateReadResourceRequest.Template> templates = notifyingTemplates.get();
+        if (templates == null) {
+            templates = methods.stream()
+                .filter(m -> declaresRequestContext(m.method()))
+                .map(m -> uriTemplate(m.method()))
+                .toList();
+            notifyingTemplates.set(templates);
+        }
+        for (UriTemplateReadResourceRequest.Template template : templates) {
+            // Guarded as reading the resource is, so that a URI a template cannot match is not matched slowly
+            if (UriTemplateReadResourceRequest.matches(template, uri)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static UriTemplateReadResourceRequest.Template uriTemplate(ExecutableMethod<?, ?> method) {

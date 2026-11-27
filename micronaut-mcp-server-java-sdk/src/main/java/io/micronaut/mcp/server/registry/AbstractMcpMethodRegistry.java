@@ -38,6 +38,8 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.mcp.server.context.BlockingMcpRequestContext;
+import io.micronaut.mcp.server.context.DefaultMcpRequestContext;
+import io.micronaut.mcp.server.context.McpRequestContext;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
@@ -63,6 +65,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
@@ -74,6 +77,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -112,6 +116,7 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
     protected final List<Method<Object>> methods = new ArrayList<>();
     protected final BeanContext beanContext;
     private final List<McpErrorExceptionMapper<?>> exceptionMappers;
+    private final AtomicReference<Set<String>> notifyingNames = new AtomicReference<>();
     private final Map<Class<? extends Throwable>, Optional<McpErrorExceptionMapper<? extends Throwable>>> classToExceptionMapper = new ConcurrentHashMap<>();
     /**
      * The methods and unmapped exception types already logged with a stack trace.
@@ -167,6 +172,46 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
     @Override
     public boolean isNotEmpty() {
         return !methods.isEmpty();
+    }
+
+    /**
+     * @param name The name a request designates a primitive by, as {@link #primitiveName(ExecutableMethod)} gives it
+     * @return Whether the primitive declares an {@link McpRequestContext} parameter, so it may send notifications while it runs
+     */
+    public boolean mayNotify(String name) {
+        Set<String> names = notifyingNames.get();
+        if (names == null) {
+            names = methods.stream()
+                .filter(m -> declaresRequestContext(m.method()))
+                .map(m -> primitiveName(m.method()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toUnmodifiableSet());
+            notifyingNames.set(names);
+        }
+        return names.contains(name);
+    }
+
+    /**
+     * @return Whether a method of the registry declares an {@link McpRequestContext} parameter, so it may send log message notifications
+     */
+    public final boolean hasNotifyingMethods() {
+        return methods.stream().anyMatch(m -> declaresRequestContext(m.method()));
+    }
+
+    /**
+     * @param method A method
+     * @return Whether the method declares an {@link McpRequestContext} parameter, so it may send notifications while it runs
+     */
+    protected static boolean declaresRequestContext(ExecutableMethod<?, ?> method) {
+        return Arrays.stream(method.getArguments()).anyMatch(a -> a.getType() == McpRequestContext.class);
+    }
+
+    /**
+     * @param method A registered method
+     * @return The name a request designates the primitive of the method by, or {@code null} if requests do not designate it by name
+     */
+    protected @Nullable String primitiveName(ExecutableMethod<?, ?> method) {
+        return null;
     }
 
     /**
@@ -361,13 +406,14 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
      */
     protected static final class Method<B> {
         private static final int NOT_BOUND = -1;
+        private static final int REQUEST_CONTEXT = -2;
         private final BeanContext beanContext;
         private final BeanDefinition<B> beanDefinition;
         private final ExecutableMethod<B, Object> executableMethod;
         private final Argument<?>[] arguments;
         /**
          * For each parameter, the index in {@link AbstractMcpMethodRegistry#boundParameterTypes()} of the type of the value
-         * it can receive without an argument binder, or {@link #NOT_BOUND} when there is no declared match.
+         * it can receive without an argument binder, {@link #REQUEST_CONTEXT}, or {@link #NOT_BOUND} when there is no declared match.
          */
         private final int[] boundIndexes;
         private final boolean collectsValues;
@@ -412,6 +458,9 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
         }
 
         private static int boundIndex(Class<?> type, Class<?>[] boundParameterTypes) {
+            if (type == McpRequestContext.class) {
+                return REQUEST_CONTEXT;
+            }
             for (int i = 0; i < boundParameterTypes.length; i++) {
                 Class<?> boundType = boundParameterTypes[i];
                 // A parameter declared as a subtype of a bound type is bound when the value is an instance of it
@@ -463,7 +512,8 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
          * @return Whether the parameter receives the transport context, the request or another value bound without an argument binder
          */
         public boolean isBound(int argumentIndex) {
-            return boundIndexes[argumentIndex] >= 0;
+            int index = boundIndexes[argumentIndex];
+            return index >= 0 || index == REQUEST_CONTEXT;
         }
 
         /**
@@ -660,18 +710,26 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
             McpTransportContext transportContext = resolveMcpTransportContext(context);
             Object[] argumentValues = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
-                Argument<?> argument = arguments[i];
-                Class<?> type = argument.getType();
-                int index = boundIndexes[i];
-                if (type.isInstance(transportContext)) {
-                    argumentValues[i] = transportContext;
-                } else if (index > 0 && type.isInstance(values[index - 1])) {
-                    argumentValues[i] = values[index - 1];
-                } else {
-                    argumentValues[i] = bind(argument, argumentBinders[i], source);
-                }
+                argumentValues[i] = argumentValue(i, argumentBinders[i], source, context, transportContext, values);
             }
             return executableMethod.invoke(bean(), argumentValues);
+        }
+
+        private <S> @Nullable Object argumentValue(int i, @Nullable ArgumentBinder<?, ?> binder, S source, @Nullable Object context,
+                                                    @Nullable McpTransportContext transportContext, Object[] values) {
+            Argument<?> argument = arguments[i];
+            Class<?> type = argument.getType();
+            int index = boundIndexes[i];
+            if (index == REQUEST_CONTEXT) {
+                return DefaultMcpRequestContext.of(context, values[0], scheduler == null);
+            }
+            if (type.isInstance(transportContext)) {
+                return transportContext;
+            }
+            if (index > 0 && type.isInstance(values[index - 1])) {
+                return values[index - 1];
+            }
+            return bind(argument, binder, source);
         }
 
         @SuppressWarnings("unchecked")

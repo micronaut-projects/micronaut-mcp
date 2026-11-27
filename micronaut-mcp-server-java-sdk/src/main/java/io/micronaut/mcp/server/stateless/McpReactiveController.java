@@ -23,11 +23,13 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.json.tree.JsonNode;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.mcp.conf.server.McpServerConfiguration;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpStatelessServerHandler;
 import io.modelcontextprotocol.server.McpTransportContextExtractor;
+import io.modelcontextprotocol.spec.McpSchema;
 import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Mono;
 
@@ -38,18 +40,23 @@ import reactor.core.publisher.Mono;
 @Requires(property = McpServerConfiguration.PROPERTY_REACTIVE, value = StringUtils.TRUE)
 @Internal
 final class McpReactiveController extends McpController {
+    private final McpStreamingPolicy streamingPolicy;
 
     McpReactiveController(McpStatelessServerHandler mcpHandler,
                           McpTransportContextExtractor<HttpRequest<?>> contextExtractor,
                           JsonMapper jsonMapper,
-                          McpJsonMapper mcpJsonMapper) {
-        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper);
+                          McpJsonMapper mcpJsonMapper,
+                          McpSchema.ServerCapabilities capabilities,
+                          McpStreamingPolicy streamingPolicy) {
+        super(mcpHandler, contextExtractor, jsonMapper, mcpJsonMapper, capabilities);
+        this.streamingPolicy = streamingPolicy;
     }
 
     // The route returns a JSON-RPC response or an error body, so the response body type is a wildcard
     @SuppressWarnings({"java:S3740", "java:S1452"})
     @Post
-    Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable McpRequestBody body) {
-        return handle(request, body != null ? body.value() : null);
+    Mono<HttpResponse<?>> handlePost(HttpRequest<?> request, @Body @Nullable McpRequestBody requestBody) {
+        JsonNode body = requestBody != null ? requestBody.value() : null;
+        return handle(request, body, streamingPolicy.mayStream(request, body));
     }
 }

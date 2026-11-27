@@ -20,7 +20,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.core.type.Argument;
-import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.mcp.annotations.Prompt;
@@ -71,7 +70,7 @@ public final class PromptRegistry
     public List<McpServerFeatures.SyncPromptSpecification> getSyncSpecs() {
         return streamMethods()
             .map(method -> new McpServerFeatures.SyncPromptSpecification(
-                prompt(method.beanDefinition(), method.method()),
+                prompt(method),
                 syncPromptHandler(method)
             ))
             .toList();
@@ -81,7 +80,7 @@ public final class PromptRegistry
     public List<McpServerFeatures.AsyncPromptSpecification> getAsyncSpecs() {
         return streamMethods()
             .map(method -> new McpServerFeatures.AsyncPromptSpecification(
-                prompt(method.beanDefinition(), method.method()),
+                prompt(method),
                 asyncPromptHandler(method)
             ))
             .toList();
@@ -91,7 +90,7 @@ public final class PromptRegistry
     public List<McpStatelessServerFeatures.SyncPromptSpecification> getStatelessSyncSpecs() {
         return streamMethods()
             .map(method -> new McpStatelessServerFeatures.SyncPromptSpecification(
-                prompt(method.beanDefinition(), method.method()),
+                prompt(method),
                 promptHandler(method)
             ))
             .toList();
@@ -101,7 +100,7 @@ public final class PromptRegistry
     public List<McpStatelessServerFeatures.AsyncPromptSpecification> getStatelessAsyncSpecs() {
         return streamMethods()
             .map(method -> new McpStatelessServerFeatures.AsyncPromptSpecification(
-                prompt(method.beanDefinition(), method.method()),
+                prompt(method),
                 reactivePromptHandler(method)
             ))
             .toList();
@@ -156,15 +155,20 @@ public final class PromptRegistry
         return new McpSchema.GetPromptResult("", Collections.emptyList(), null);
     }
 
-    private McpSchema.Prompt prompt(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
+    private McpSchema.Prompt prompt(Method<?> m) {
+        ExecutableMethod<?, Object> method = m.method();
         return new McpSchema.Prompt(promptName(method), promptTitle(method).orElse(null), promptDescription(method).orElse(null),
-            promptArguments(beanDefinition, method), meta(method), icons(method));
+            promptArguments(m), meta(method), icons(method));
     }
 
-    private List<McpSchema.PromptArgument> promptArguments(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
-        List<McpSchema.PromptArgument> result = new ArrayList<>(method.getArguments().length);
-        for (Argument<?> argument : method.getArguments()) {
-            result.add(promptArgument(argument));
+    private List<McpSchema.PromptArgument> promptArguments(Method<?> m) {
+        Argument<?>[] arguments = m.method().getArguments();
+        List<McpSchema.PromptArgument> result = new ArrayList<>(arguments.length);
+        for (int i = 0; i < arguments.length; i++) {
+            // Values bound from the request are not arguments the client fills in
+            if (!m.isBound(i)) {
+                result.add(promptArgument(arguments[i]));
+            }
         }
         return result;
     }
@@ -198,6 +202,11 @@ public final class PromptRegistry
 
     private static Optional<String> promptDescription(ExecutableMethod<?, ?> method) {
         return method.stringValue(Prompt.class, MEMBER_DESCRIPTION);
+    }
+
+    @Override
+    protected String primitiveName(ExecutableMethod<?, ?> method) {
+        return promptName(method);
     }
 
     private static String promptName(ExecutableMethod<?, ?> method) {
