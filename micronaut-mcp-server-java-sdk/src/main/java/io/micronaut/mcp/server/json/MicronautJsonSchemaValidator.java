@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * MCP {@link io.modelcontextprotocol.json.schema.JsonSchemaValidator} backed by Micronaut JSON Schema Validator {@link JsonSchemaValidator}.
@@ -35,6 +36,10 @@ import java.util.Set;
 public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.json.schema.JsonSchemaValidator {
     private static final Logger LOG = LoggerFactory.getLogger(MicronautJsonSchemaValidator.class);
     private static final int SCHEMA_CACHE_CAPACITY = 512;
+    /**
+     * How the message of a validation error on the root object starts: its location is empty.
+     */
+    private static final String ROOT_LOCATION_PREFIX = ": ";
     private final JsonMapper jsonMapper;
     private final JsonSchemaValidator validator;
     /**
@@ -51,6 +56,16 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
                                         JsonSchemaValidator validator) {
         this.jsonMapper = jsonMapper;
         this.validator = validator;
+    }
+
+    /**
+     * The message of a validation error. An error on the root object has an empty location, which would leave the
+     * message starting with a colon, so the location is dropped. The messages are sorted, so the same errors read the
+     * same way in every call.
+     */
+    private static String message(ValidationMessage validationMessage) {
+        String message = validationMessage.getMessage();
+        return message.startsWith(ROOT_LOCATION_PREFIX) ? message.substring(ROOT_LOCATION_PREFIX.length()) : message;
     }
 
     @Override
@@ -78,11 +93,11 @@ public class MicronautJsonSchemaValidator implements io.modelcontextprotocol.jso
         try {
             Set<? extends ValidationMessage> validationResult = validator.validate(jsonStructuredOutput, schemaJson(schema));
             if (CollectionUtils.isNotEmpty(validationResult)) {
-                // The validator validates both tool arguments against the input schema and structured content against the
-                // output schema
-                return ValidationResponse
-                    .asInvalid("Validation failed: content does not match the tool JSON Schema. "
-                        + "Validation errors: " + validationResult);
+                // Used for tool inputs and outputs: the SDK prefixes the message with what was validated
+                return ValidationResponse.asInvalid(validationResult.stream()
+                    .map(MicronautJsonSchemaValidator::message)
+                    .sorted()
+                    .collect(Collectors.joining("; ")));
             }
             return ValidationResponse.asValid(jsonStructuredOutput);
         } catch (IOException | RuntimeException e) {

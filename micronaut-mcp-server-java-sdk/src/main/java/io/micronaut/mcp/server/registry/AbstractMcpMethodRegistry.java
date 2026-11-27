@@ -201,8 +201,14 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
         throw mcpError(m.method(), throwable);
     }
 
+    /**
+     * @param exceptionClass The class of a failure
+     * @return The mapper of the failure, if any
+     */
+    // Each mapper handles its own type of exception, so the type of the mapper is only known as a wildcard
+    @SuppressWarnings("java:S1452")
     @Nullable
-    private McpErrorExceptionMapper<? extends Throwable> getExceptionMapper(@NonNull Class<? extends Throwable> exceptionClass) {
+    final McpErrorExceptionMapper<? extends Throwable> getExceptionMapper(@NonNull Class<? extends Throwable> exceptionClass) {
         // Misses are cached too, so exceptions without a mapper do not scan the mappers again
         return classToExceptionMapper.computeIfAbsent(exceptionClass, aClass -> {
             for (McpErrorExceptionMapper<?> exceptionMapper : exceptionMappers) {
@@ -230,8 +236,14 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, T, U> implements McpPrimit
         return (Argument<Object>) returnType.asArgument();
     }
 
+    /**
+     * @param mapper The mapper
+     * @param ex The failure to map
+     * @param <T> The failure type
+     * @return The error the mapper maps the failure to
+     */
     @SuppressWarnings("unchecked")
-    private static <T extends Throwable> McpError mapException(McpErrorExceptionMapper<? extends Throwable> mapper, T ex) {
+    static <T extends Throwable> McpError mapException(McpErrorExceptionMapper<? extends Throwable> mapper, T ex) {
         return ((McpErrorExceptionMapper<T>) mapper).map(ex);
     }
 

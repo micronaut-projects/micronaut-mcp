@@ -31,12 +31,14 @@ import io.micronaut.jsonschema.JsonSchema;
 import io.micronaut.jsonschema.utils.JsonSchemaClassPathResourceLoader;
 import io.micronaut.mcp.annotations.Tool;
 import io.micronaut.mcp.annotations.ToolArg;
+import io.micronaut.mcp.server.exceptions.InputErrorMapper;
 import io.micronaut.mcp.server.exceptions.McpErrorExceptionMapper;
 import io.micronaut.mcp.server.json.MicronautMcpJsonMapper;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -44,6 +46,8 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,6 +57,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_ARRAY;
 import static io.micronaut.mcp.server.registry.JsonSchemaUtils.TYPE_BOOL;
@@ -71,6 +76,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     public static final boolean DEFAULT_OPEN_WORLD_HINT_VALUE = true;
     public static final boolean DEFAULT_RETURN_DIRECT_VALUE = false;
     private static final Logger LOG = LoggerFactory.getLogger(ToolRegistry.class);
+    private static final Pattern CONTROL_CHARACTERS = Pattern.compile("[\\p{Cc}\\p{Zl}\\p{Zp}]+");
     private static final Class<?>[] BOUND_PARAMETER_TYPES = {McpTransportContext.class, McpSchema.CallToolRequest.class};
     private static final Argument<Map<String, Object>> JSON_OBJECT_ARGUMENT = Argument.mapOf(String.class, Object.class);
     private static final String KEY_SCHEMA = "$schema";
@@ -194,7 +200,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                                                                         Object mcpTransportContext,
                                                                         McpSchema.CallToolRequest callToolRequest) {
         return m.callAsync(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
-            result -> toCallToolResult(m, structuredOutput, result), e -> failWithMcpError(m, e));
+            result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error));
     }
 
     private <B> McpSchema.CallToolResult callToolToResult(Method<B> m,
@@ -202,13 +208,77 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
         return m.call(() -> m.invoke(argumentBinderRegistry, callToolRequest, mcpTransportContext, callToolRequest),
-            mcpTransportContext, result -> toCallToolResult(m, structuredOutput, result), e -> failWithMcpError(m, e));
+            mcpTransportContext, result -> toCallToolResult(m, structuredOutput, result), error -> toolExecutionError(m, error));
+    }
+
+    /**
+     * A tool that fails, including when its arguments cannot be bound or are not valid, produces a tool execution error,
+     * which the model can see and correct, rather than a protocol error. A tool that throws an {@link McpError}, or an
+     * exception that an application {@link McpErrorExceptionMapper} maps, chooses a protocol error.
+     *
+     * @see <a href="https://modelcontextprotocol.io/specification/2025-11-25/server/tools#error-handling">Tool error handling</a>
+     */
+    private <B> McpSchema.CallToolResult toolExecutionError(Method<B> m, Throwable error) {
+        McpErrorExceptionMapper<? extends Throwable> mapper = getExceptionMapper(error.getClass());
+        if (mapper == null && error instanceof McpError mcpError) {
+            // An McpError keeps its code, unless an application mapper maps it
+            throw mcpError;
+        }
+        String name = toolName(m.method());
+        if (mapper instanceof InputErrorMapper<?> inputErrorMapper) {
+            String message = inputErrorMessage(inputErrorMapper, error);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Tool {} failed with an input error: {}", loggable(name), loggable(message));
+            }
+            return toolError(message);
+        }
+        if (mapper != null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Tool {} failed with a mapped protocol error: {}", loggable(name), loggableStackTrace(error));
+            }
+            throw mapException(mapper, error);
+        }
+        if (LOG.isWarnEnabled()) {
+            LOG.warn("Tool {} failed: {}", loggable(name), loggableStackTrace(error));
+        }
+        return toolError("Tool " + name + " failed");
+    }
+
+    private static String loggable(String text) {
+        return CONTROL_CHARACTERS.matcher(text).replaceAll(" ");
+    }
+
+    /**
+     * Render the whole exception, including causes and suppressed exceptions, as one log line.
+     * Passing the throwable separately would let the logging backend render its raw messages again.
+     */
+    private static String loggableStackTrace(Throwable error) {
+        StringWriter trace = new StringWriter();
+        error.printStackTrace(new PrintWriter(trace));
+        return loggable(trace.toString().stripTrailing());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> String inputErrorMessage(InputErrorMapper<?> mapper, T error) {
+        return ((InputErrorMapper<T>) mapper).messageOrDefault(error);
     }
 
     private <B> McpSchema.CallToolResult toCallToolResult(Method<B> m, boolean structuredOutput, @Nullable Object result) {
         if (result instanceof McpSchema.CallToolResult callToolResult) {
             return callToolResult;
         }
+        try {
+            return serialize(m, structuredOutput, result);
+        } catch (IOException | RuntimeException e) {
+            String name = toolName(m.method());
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("The result of tool {} could not be serialized: {}", loggable(name), loggableStackTrace(e));
+            }
+            return toolError("The result of tool " + name + " could not be serialized");
+        }
+    }
+
+    private <B> McpSchema.CallToolResult serialize(Method<B> m, boolean structuredOutput, @Nullable Object result) throws IOException {
         if (structuredOutput) {
             return structuredToolResult(m.method(), result);
         }
@@ -216,37 +286,23 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
         if (result instanceof CharSequence || result instanceof Enum<?>) {
             text = result.toString();
         } else if (result != null) {
-            try {
-                text = jsonMapper.writeValueAsString(result);
-            } catch (IOException e) {
-                if (LOG.isErrorEnabled()) {
-                    LOG.error(e.getMessage(), e);
-                }
-                return McpSchema.CallToolResult.builder().addTextContent(text).isError(true).build();
-            }
+            text = jsonMapper.writeValueAsString(result);
         }
         return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
     }
 
-    private McpSchema.CallToolResult structuredToolResult(ExecutableMethod<?, ?> method, @Nullable Object result) {
+    private McpSchema.CallToolResult structuredToolResult(ExecutableMethod<?, ?> method, @Nullable Object result) throws IOException {
         if (result == null) {
             if (LOG.isWarnEnabled()) {
                 LOG.warn("Tool {} returned null but declares an output schema; returning an error result to the client", toolName(method));
             }
-            return toolError("Tool " + toolName(method) + " produced no result");
+            return toolError("Tool " + toolName(method) + " produced no result. This is a server-side error; retrying with the same arguments will not help.");
         }
-        // The SDK validates the object against the output schema and adds its JSON as text content
-        Object structuredContent;
-        try {
-            structuredContent = convertStructuredContent
-                ? jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), JSON_OBJECT_ARGUMENT)
-                : result;
-        } catch (IOException e) {
-            if (LOG.isErrorEnabled()) {
-                LOG.error("Tool {} returned structured content that cannot be serialized", toolName(method), e);
-            }
-            return toolError("Tool " + toolName(method) + " returned structured content that cannot be serialized");
-        }
+        // The SDK validates the object against the output schema and adds its JSON as text content. A result that cannot be
+        // converted is reported by the caller like a text result that cannot be serialized
+        Object structuredContent = convertStructuredContent
+            ? jsonMapper.readValueFromTree(jsonMapper.writeValueToTree(result), JSON_OBJECT_ARGUMENT)
+            : result;
         return McpSchema.CallToolResult.builder()
             .structuredContent(structuredContent)
             .isError(false)
@@ -255,7 +311,7 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
 
     private static McpSchema.CallToolResult toolError(String reason) {
         return McpSchema.CallToolResult.builder()
-            .addTextContent(reason + ". This is a server-side error; retrying with the same arguments will not help.")
+            .addTextContent(reason)
             .isError(true)
             .build();
     }

@@ -16,3 +16,5 @@ How the methods are invoked depends on `micronaut.mcp.server.reactive`:
 
 - When it is `false` (the default), the HTTP endpoint handles requests on the blocking executor, which uses virtual threads where they are available. Methods run on that thread, can block, and see the current request through `ServerRequestContext`. The server waits for asynchronous return values. A method annotated with `@ExecuteOn` runs on the named executor, for example to limit how many calls run concurrently, and the request thread waits for the result. If you configure a fixed-size HTTP blocking executor, use a separate executor for asynchronous work that a request waits for, or enable the reactive server.
 - When it is `true`, methods run on the thread that received the request, which must not block. Annotate a method with `@ExecuteOn` to run it on another executor, for example `@ExecuteOn(TaskExecutors.BLOCKING)`.
+
+See <<toolErrors, Tool Errors>> for how a tool reports a failure.

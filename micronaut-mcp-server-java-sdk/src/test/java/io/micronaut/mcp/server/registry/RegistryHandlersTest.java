@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -114,15 +115,18 @@ class RegistryHandlersTest {
     }
 
     @Test
-    void unmappedExceptionsAreInternalErrorsWithoutTheirDetails() {
+    void unmappedExceptionsReturnAGenericToolError() {
         var failing = toolHandler("failing");
         McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("failing", Map.of());
         // twice, so the second lookup hits the cached miss
-        assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Internal error", () -> failing.apply(CONTEXT, request));
-        assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Internal error", () -> failing.apply(CONTEXT, request));
-        // with or without a message, the exception stays in the server log
+        assertToolError("Tool failing failed", () -> failing.apply(CONTEXT, request));
+        assertToolError("Tool failing failed", () -> failing.apply(CONTEXT, request));
+    }
+
+    @Test
+    void messageLessExceptionsReturnAGenericToolError() {
         for (String tool : List.of("silent", "blank", "anonymous")) {
-            assertError(McpSchema.ErrorCodes.INTERNAL_ERROR, "Internal error",
+            assertToolError("Tool " + tool + " failed",
                 () -> toolHandler(tool).apply(CONTEXT, new McpSchema.CallToolRequest(tool, Map.of())));
         }
     }
@@ -152,7 +156,7 @@ class RegistryHandlersTest {
 
     @Test
     void mappedExceptionsAreMappedByTheirMapper() {
-        assertError(McpSchema.ErrorCodes.INVALID_PARAMS, "Required argument [String text] not specified",
+        assertToolError("Required argument [String text] not specified",
             () -> toolHandler("echo").apply(CONTEXT, new McpSchema.CallToolRequest("echo", Map.of())));
         var mapped = toolHandler("mapped");
         McpSchema.CallToolRequest request = new McpSchema.CallToolRequest("mapped", Map.of());
@@ -165,7 +169,7 @@ class RegistryHandlersTest {
         McpSchema.CallToolRequest failing = new McpSchema.CallToolRequest("failing", Map.of());
         McpSchema.CallToolRequest mapped = new McpSchema.CallToolRequest("mapped", Map.of());
         for (int i = 0; i < 2; i++) {
-            assertThrows(McpError.class, () -> toolHandler("failing").apply(CONTEXT, failing));
+            assertTrue(toolHandler("failing").apply(CONTEXT, failing).isError());
             assertThrows(McpError.class, () -> toolHandler("mapped").apply(CONTEXT, mapped));
         }
         assertEquals(1, countingMapper.canMapCalls(IllegalStateException.class));
@@ -180,17 +184,17 @@ class RegistryHandlersTest {
         assertEquals("6", text(find(toolRegistry.getSyncSpecs(), s -> s.tool().name().equals("area")).callHandler().apply(SYNC_EXCHANGE, request)));
         assertEquals("6", text(find(toolRegistry.getStatelessAsyncSpecs(), s -> s.tool().name().equals("area")).callHandler().apply(CONTEXT, request).block()));
         // a value of the wrong type is a missing argument
-        assertError(McpSchema.ErrorCodes.INVALID_PARAMS, "Required argument [HandlersRectangle rectangle] not specified",
+        assertToolError("Required argument [HandlersRectangle rectangle] not specified",
             () -> toolHandler("area").apply(CONTEXT, new McpSchema.CallToolRequest("area", Map.of("width", "two", "height", 3))));
         // and so is an integer out of the range of an int, which is not narrowed
-        assertError(McpSchema.ErrorCodes.INVALID_PARAMS, "Required argument [HandlersRectangle rectangle] not specified",
+        assertToolError("Required argument [HandlersRectangle rectangle] not specified",
             () -> toolHandler("area").apply(CONTEXT, new McpSchema.CallToolRequest("area", Map.of("width", 4294967297L, "height", 3))));
     }
 
     @Test
     void aValueThatCannotBeConvertedIsAMissingArgumentNotAnInternalError() {
         // the argument binders report conversion errors in their result, so no ConversionErrorException reaches the client
-        assertError(McpSchema.ErrorCodes.INVALID_PARAMS, "Required argument [Integer b] not specified",
+        assertToolError("Required argument [Integer b] not specified",
             () -> toolHandler("mixed").apply(CONTEXT, new McpSchema.CallToolRequest("mixed", Map.of("a", "x", "b", "abc"))));
     }
 
@@ -337,6 +341,12 @@ class RegistryHandlersTest {
 
     private static <T> T find(List<T> specs, Predicate<T> predicate) {
         return specs.stream().filter(predicate).findFirst().orElseThrow();
+    }
+
+    private static void assertToolError(String message, Supplier<McpSchema.CallToolResult> call) {
+        McpSchema.CallToolResult result = call.get();
+        assertTrue(result.isError());
+        assertEquals(message, text(result));
     }
 
     private static void assertError(int code, String message, Executable call) {
