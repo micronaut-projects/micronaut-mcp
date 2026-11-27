@@ -205,7 +205,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         // does not run on the transport thread
         return observed(McpSchema.METHOD_RESOURCES_READ, uriTemplate.uriTemplate(),
             () -> m.call(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
-                mcpTransportContext, result -> map(mimeType, request, result), e -> failWithMcpError(m, e)));
+                mcpTransportContext, result -> map(mimeType, request, result), e -> handleReadFailure(m, e)));
     }
 
     private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapAsync(Method<B> m,
@@ -216,7 +216,14 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         // Matched where the method runs, see invokeAndMap
         return observedAsync(McpSchema.METHOD_RESOURCES_READ, uriTemplate.uriTemplate(),
             () -> m.callAsync(() -> m.invoke(argumentBinderRegistry, UriTemplateReadResourceRequest.of(uriTemplate, request), mcpTransportContext, request),
-                result -> map(mimeType, request, result), e -> failWithMcpError(m, e)));
+                result -> map(mimeType, request, result), e -> handleReadFailure(m, e)));
+    }
+
+    private <R> R handleReadFailure(Method<?> method, Throwable error) {
+        if (error instanceof UriTemplateReadResourceRequest.InvalidUriTemplateException invalid) {
+            throw invalid;
+        }
+        return failWithMcpError(method, error);
     }
 
     private static McpSchema.ReadResourceResult map(String mimeType, McpSchema.ReadResourceRequest request, @Nullable Object result) {
