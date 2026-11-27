@@ -83,6 +83,17 @@ class ExecutionModelTools {
     }
 
     @Prompt
+    String manySuggestions(String name) {
+        return name;
+    }
+
+    @PromptCompletion(name = "manySuggestions")
+    Flux<String> manySuggestionsCompletion() {
+        return Flux.range(0, 101).map(Object::toString)
+            .concatWith(Mono.error(new AssertionError("Read past the extra suggestion")));
+    }
+
+    @Prompt
     String farewell(String name) {
         return "Goodbye " + name;
     }
