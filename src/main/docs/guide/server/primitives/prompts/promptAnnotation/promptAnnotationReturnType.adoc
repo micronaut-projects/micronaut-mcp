@@ -2,3 +2,5 @@ In a method annotated with `@Prompt`, you can use as a return type:
 
 - `io.modelcontextprotocol.spec.McpSchema.GetPromptResult`
 - `String`
+
+The method can also answer later. If it returns a `CompletionStage`, such as a `CompletableFuture`, or a reactive type that emits one item, such as a Reactor `Mono`, the prompt is what that completes with, in any of the types above.

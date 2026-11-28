@@ -17,6 +17,7 @@ package io.micronaut.mcp.server.registry;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.core.bind.BoundExecutable;
 import io.micronaut.core.bind.DefaultExecutableBinder;
@@ -39,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 
 /**
@@ -120,7 +122,7 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
         BeanDefinition<B> beanDefinition,
         ExecutableMethod<B, Object> method
     ) {
-        return (exchange, request) -> Mono.just(invokeAndMap(beanDefinition, method, exchange, request));
+        return (exchange, request) -> invokeAndMapLater(beanDefinition, method, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.CompleteRequest, McpSchema.CompleteResult> statelessSyncHandler(
@@ -134,19 +136,40 @@ public final class CompletionRegistry extends AbstractMcpMethodRegistry<
         BeanDefinition<B> beanDefinition,
         ExecutableMethod<B, Object> method
     ) {
-        return (ctx, request) -> Mono.just(invokeAndMap(beanDefinition, method, ctx, request));
+        return (ctx, request) -> invokeAndMapLater(beanDefinition, method, ctx, request);
     }
 
+    // For a handler that answers as it returns: a method that returns a stage or a publisher is waited for
     private <B> McpSchema.CompleteResult invokeAndMap(BeanDefinition<B> beanDefinition,
                                                       ExecutableMethod<B, Object> method,
                                                       Object mcpTransportContext,
                                                       McpSchema.CompleteRequest request) {
+        return map(settled(method, invoke(beanDefinition, method, mcpTransportContext, request)));
+    }
+
+    // For a handler that answers with a publisher: a method that returns a stage or a publisher answers when that settles
+    private <B> Mono<McpSchema.CompleteResult> invokeAndMapLater(BeanDefinition<B> beanDefinition,
+                                                                 ExecutableMethod<B, Object> method,
+                                                                 Object mcpTransportContext,
+                                                                 McpSchema.CompleteRequest request) {
+        Object returned = invoke(beanDefinition, method, mcpTransportContext, request);
+        Mono<Optional<Object>> later = later(method, returned);
+        return later == null ? Mono.just(map(returned)) : later.map(answer -> map(answer.orElse(null)));
+    }
+
+    private <B> @Nullable Object invoke(BeanDefinition<B> beanDefinition,
+                                        ExecutableMethod<B, Object> method,
+                                        Object mcpTransportContext,
+                                        McpSchema.CompleteRequest request) {
         B bean = beanContext.getBean(beanDefinition);
 
         ExecutableBinder<McpSchema.CompleteRequest> executableBinder = new DefaultExecutableBinder<>(
             prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), request, request.argument())));
         BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, request);
-        Object result = executable.invoke(bean);
+        return executable.invoke(bean);
+    }
+
+    private static McpSchema.CompleteResult map(@Nullable Object result) {
         if (result instanceof McpSchema.CompleteResult r) {
             return r;
         }

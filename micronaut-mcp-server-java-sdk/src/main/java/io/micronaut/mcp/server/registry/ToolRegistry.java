@@ -172,52 +172,82 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
                                                                         ExecutableMethod<B, Object> method,
                                                                         Object mcpTransportContext,
                                                                         McpSchema.CallToolRequest callToolRequest) {
-        McpSchema.CallToolResult result = callToolToResult(beanDefinition, method, mcpTransportContext, callToolRequest);
-        if (result == null) {
-            return Mono.empty();
+        Mono<Optional<Object>> later;
+        try {
+            Object returned = invokeTool(beanDefinition, method, mcpTransportContext, callToolRequest);
+            later = later(method, returned);
+            if (later == null) {
+                return Mono.just(toolResult(method, returned));
+            }
+        } catch (Exception ex) {
+            throw mcpError(ex);
         }
-        return Mono.just(result);
+        // the tool answers later: with what its stage or its publisher settles with, or with what that fails with
+        return later.<McpSchema.CallToolResult>handle((answer, sink) -> {
+            try {
+                sink.next(toolResult(method, answer.orElse(null)));
+            } catch (Exception ex) {
+                sink.error(ex);
+            }
+        }).onErrorMap(Exception.class, this::mcpError);
     }
 
     private <B> McpSchema.CallToolResult callToolToResult(BeanDefinition<B> beanDefinition,
                                                           ExecutableMethod<B, Object> method,
                                                           Object mcpTransportContext,
                                                           McpSchema.CallToolRequest callToolRequest) {
-        Argument<?> returnClass = method.getReturnType().asArgument();
-        B bean = beanContext.getBean(beanDefinition);
-        ExecutableBinder<McpSchema.CallToolRequest> executableBinder = new DefaultExecutableBinder<>(
-            prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), callToolRequest)));
         try {
-            BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, callToolRequest);
-            Object result = executable.invoke(bean);
-            String text = "";
-            if (returnClass.isAssignableFrom(McpSchema.CallToolResult.class)) {
-                return (McpSchema.CallToolResult) result;
-            } else if (returnClass.isAssignableFrom(String.class)) {
-                text = result.toString();
-            } else if (Enum.class.isAssignableFrom(result.getClass())) {
-                text = result.toString();
-            } else {
-                try {
-                    text = jsonMapper.writeValueAsString(result);
-                } catch (IOException e) {
-                    if (LOG.isErrorEnabled()) {
-                        LOG.error(e.getMessage(), e);
-                    }
-                    return McpSchema.CallToolResult.builder().addTextContent(text).isError(true).build();
-                }
-            }
-            if (toolOutputSchema(method).isPresent()) {
-                Map<String, Object> structuredContent = jsonMapper.readValue(text, Argument.mapOf(String.class, Object.class));
-                return McpSchema.CallToolResult.builder()
-                    .structuredContent(structuredContent)
-                    .isError(false)
-                    .build();
-            }
-            return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
+            // a tool that returns a stage or a publisher is waited for
+            return toolResult(method, settled(method, invokeTool(beanDefinition, method, mcpTransportContext, callToolRequest)));
         } catch (Exception ex) {
             throw mcpError(ex);
         }
+    }
+
+    private <B> @Nullable Object invokeTool(BeanDefinition<B> beanDefinition,
+                                            ExecutableMethod<B, Object> method,
+                                            Object mcpTransportContext,
+                                            McpSchema.CallToolRequest callToolRequest) {
+        B bean = beanContext.getBean(beanDefinition);
+        ExecutableBinder<McpSchema.CallToolRequest> executableBinder = new DefaultExecutableBinder<>(
+            prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), callToolRequest)));
+        BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, callToolRequest);
+        return executable.invoke(bean);
+    }
+
+    // The result of a call, from what the method of the tool answered with
+    private McpSchema.CallToolResult toolResult(ExecutableMethod<?, ?> method, @Nullable Object result) throws IOException {
+        if (result == null) {
+            // a call has a result or an error: a method that returns null, and a stage or a publisher that
+            // completes with nothing, is an error of the tool
+            throw new IllegalStateException("The tool [" + toolName(method) + "] answered with nothing");
+        }
+        Argument<?> returnClass = resultArgument(method);
+        String text = "";
+        if (result instanceof McpSchema.CallToolResult callToolResult && returnClass.isAssignableFrom(McpSchema.CallToolResult.class)) {
+            return callToolResult;
+        } else if (returnClass.isAssignableFrom(String.class)) {
+            text = result.toString();
+        } else if (Enum.class.isAssignableFrom(result.getClass())) {
+            text = result.toString();
+        } else {
+            try {
+                text = jsonMapper.writeValueAsString(result);
+            } catch (IOException e) {
+                if (LOG.isErrorEnabled()) {
+                    LOG.error(e.getMessage(), e);
+                }
+                return McpSchema.CallToolResult.builder().addTextContent(text).isError(true).build();
+            }
+        }
+        if (toolOutputSchema(method).isPresent()) {
+            Map<String, Object> structuredContent = jsonMapper.readValue(text, Argument.mapOf(String.class, Object.class));
+            return McpSchema.CallToolResult.builder()
+                .structuredContent(structuredContent)
+                .isError(false)
+                .build();
+        }
+        return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
     }
 
     private <B> McpSchema.Tool tool(ExecutableMethod<B, Object> method) {
@@ -240,7 +270,8 @@ public final class ToolRegistry extends AbstractMcpMethodRegistry<McpServerFeatu
     }
 
     private Optional<String> toolOutputSchema(ExecutableMethod<?, ?> method) {
-        Class<?> returnClass = method.getReturnType().getType();
+        // of what the tool answers with, which a stage or a publisher settles with
+        Class<?> returnClass = resultArgument(method).getType();
         return jsonSchemaClassPathResourceLoader.jsonSchemaStringForClass(returnClass);
     }
 

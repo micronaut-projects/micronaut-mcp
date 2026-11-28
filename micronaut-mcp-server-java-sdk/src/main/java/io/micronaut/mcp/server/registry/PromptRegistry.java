@@ -18,6 +18,7 @@ package io.micronaut.mcp.server.registry;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.core.bind.BoundExecutable;
 import io.micronaut.core.bind.DefaultExecutableBinder;
@@ -107,7 +108,7 @@ public final class PromptRegistry
     private <B> BiFunction<McpTransportContext, McpSchema.GetPromptRequest, Mono<McpSchema.GetPromptResult>> reactivePromptHandler(BeanDefinition<B> beanDefinition,
                                                                                                                                    ExecutableMethod<B, Object> method) {
         return (mcpTransportContext, promptRequest)
-            -> Mono.just(promptResult(beanDefinition, method, mcpTransportContext, promptRequest));
+            -> promptResultLater(beanDefinition, method, mcpTransportContext, promptRequest);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.GetPromptRequest, McpSchema.GetPromptResult> promptHandler(BeanDefinition<B> beanDefinition,
@@ -125,22 +126,43 @@ public final class PromptRegistry
     private <B> BiFunction<McpAsyncServerExchange, McpSchema.GetPromptRequest, Mono<McpSchema.GetPromptResult>> asyncPromptHandler(BeanDefinition<B> beanDefinition,
                                                                                                                                    ExecutableMethod<B, Object> method) {
         return (mcpTransportContext, promptRequest)
-            -> Mono.just(promptResult(beanDefinition, method, mcpTransportContext, promptRequest));
+            -> promptResultLater(beanDefinition, method, mcpTransportContext, promptRequest);
     }
 
+    // For a handler that answers as it returns: a prompt that returns a stage or a publisher is waited for
     private <B> McpSchema.GetPromptResult promptResult(BeanDefinition<B> beanDefinition,
                                                        ExecutableMethod<B, Object> method,
                                                        Object mcpTransportContext,
                                                        McpSchema.GetPromptRequest promptRequest) {
+        return promptResult(method, settled(method, invokePrompt(beanDefinition, method, mcpTransportContext, promptRequest)));
+    }
+
+    // For a handler that answers with a publisher: a prompt that returns a stage or a publisher answers when that settles
+    private <B> Mono<McpSchema.GetPromptResult> promptResultLater(BeanDefinition<B> beanDefinition,
+                                                                  ExecutableMethod<B, Object> method,
+                                                                  Object mcpTransportContext,
+                                                                  McpSchema.GetPromptRequest promptRequest) {
+        Object returned = invokePrompt(beanDefinition, method, mcpTransportContext, promptRequest);
+        Mono<Optional<Object>> later = later(method, returned);
+        return later == null ? Mono.just(promptResult(method, returned)) : later.map(answer -> promptResult(method, answer.orElse(null)));
+    }
+
+    private <B> @Nullable Object invokePrompt(BeanDefinition<B> beanDefinition,
+                                              ExecutableMethod<B, Object> method,
+                                              Object mcpTransportContext,
+                                              McpSchema.GetPromptRequest promptRequest) {
         B bean = beanContext.getBean(beanDefinition);
         ExecutableBinder<McpSchema.GetPromptRequest> executableBinder = new DefaultExecutableBinder<>(
             prepareBoundVariables(method, List.of(resolveMcpTransportContext(mcpTransportContext), promptRequest)));
         BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, promptRequest);
-        Object result = executable.invoke(bean);
+        return executable.invoke(bean);
+    }
+
+    private static McpSchema.GetPromptResult promptResult(ExecutableMethod<?, ?> method, @Nullable Object result) {
         if (result instanceof McpSchema.GetPromptResult promptResult) {
             return promptResult;
         }
-        if (method.getReturnType().getType().isAssignableFrom(String.class)) {
+        if (result != null && resultArgument(method).getType().isAssignableFrom(String.class)) {
             McpSchema.TextContent assistantContent = new McpSchema.TextContent(result.toString());
             McpSchema.PromptMessage assistantMessage = new McpSchema.PromptMessage(McpSchema.Role.ASSISTANT, assistantContent);
             //TODO is it possible to get the description from the javadoc @return of the method

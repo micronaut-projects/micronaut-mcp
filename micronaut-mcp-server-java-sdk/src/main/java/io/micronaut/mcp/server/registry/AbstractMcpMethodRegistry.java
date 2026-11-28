@@ -17,6 +17,8 @@ package io.micronaut.mcp.server.registry;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.type.ReturnType;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.type.Argument;
@@ -28,12 +30,18 @@ import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.micronaut.inject.BeanDefinition;
@@ -115,6 +123,72 @@ abstract sealed class AbstractMcpMethodRegistry<S, A, SS, SA> implements McpPrim
             }
         }
         return preBound;
+    }
+
+    /**
+     * The type of what a method answers with. For a method that returns a {@link CompletionStage} or a publisher of
+     * one item it is the type of that item, and for a publisher of several items a list of them.
+     *
+     * @param method a method of a tool, a prompt, a resource or a completion
+     * @return the type of its answer
+     */
+    protected static Argument<?> resultArgument(ExecutableMethod<?, ?> method) {
+        ReturnType<?> returnType = method.getReturnType();
+        Argument<?> declared = returnType.asArgument();
+        if (!returnType.isAsync() && !returnType.isReactive()) {
+            return declared;
+        }
+        Argument<?> item = declared.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+        return returnType.isReactive() && !returnType.isSingleResult() ? Argument.listOf(item) : item;
+    }
+
+    /**
+     * What a method answers with, as a publisher, where it returned a {@link CompletionStage} or a publisher: the
+     * item a stage or a publisher of one item settles with, and the items of a publisher of several as a list.
+     *
+     * @param method   the method
+     * @param returned what it returned
+     * @return a publisher of one value, which is empty where the method answered with nothing; or null for a method
+     *     that returned its answer itself
+     */
+    @SuppressWarnings("unchecked")
+    protected @Nullable Mono<Optional<Object>> later(ExecutableMethod<?, ?> method, @Nullable Object returned) {
+        Mono<Object> answer;
+        if (returned instanceof CompletionStage<?> stage) {
+            answer = Mono.fromCompletionStage((CompletionStage<Object>) stage);
+        } else if (returned != null && (returned instanceof Publisher<?> || method.getReturnType().isReactive())) {
+            Publisher<Object> publisher = Publishers.convertToPublisher(beanContext.getConversionService(), returned);
+            boolean single = method.getReturnType().isReactive() ? method.getReturnType().isSingleResult() : Publishers.isSingle(returned.getClass());
+            answer = single ? Mono.from(publisher) : Flux.from(publisher).collectList().map(items -> items);
+        } else {
+            return null;
+        }
+        return answer.map(Optional::of).defaultIfEmpty(Optional.empty());
+    }
+
+    /**
+     * What a method answers with, for a handler that answers as it returns: where the method returned a
+     * {@link CompletionStage} or a publisher, the thread waits for it.
+     *
+     * @param method   the method
+     * @param returned what it returned
+     * @return its answer
+     */
+    protected @Nullable Object settled(ExecutableMethod<?, ?> method, @Nullable Object returned) {
+        Mono<Optional<Object>> later = later(method, returned);
+        if (later == null) {
+            return returned;
+        }
+        try {
+            Optional<Object> answer = later.block();
+            return answer == null ? null : answer.orElse(null);
+        } catch (RuntimeException e) {
+            // what the stage or the publisher failed with, and not what the wait wrapped it in
+            if (Exceptions.unwrap(e) instanceof RuntimeException failure) {
+                throw failure;
+            }
+            throw e;
+        }
     }
 
     @Nullable

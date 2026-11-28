@@ -19,6 +19,7 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.bind.ArgumentBinderRegistry;
 import io.micronaut.core.bind.BoundExecutable;
 import io.micronaut.core.bind.DefaultExecutableBinder;
@@ -38,6 +39,7 @@ import io.micronaut.mcp.annotations.ResourceTemplate;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 
 /**
@@ -133,7 +135,7 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         BeanDefinition<B> beanDefinition,
         ExecutableMethod<B, Object> method
     ) {
-        return (exchange, request) -> Mono.just(invokeAndMap(beanDefinition, method, exchange, request));
+        return (exchange, request) -> invokeAndMapLater(beanDefinition, method, exchange, request);
     }
 
     private <B> BiFunction<McpTransportContext, McpSchema.ReadResourceRequest, McpSchema.ReadResourceResult> statelessSyncHandler(
@@ -147,13 +149,31 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
         BeanDefinition<B> beanDefinition,
         ExecutableMethod<B, Object> method
     ) {
-        return (ctx, request) -> Mono.just(invokeAndMap(beanDefinition, method, ctx, request));
+        return (ctx, request) -> invokeAndMapLater(beanDefinition, method, ctx, request);
     }
 
+    // For a handler that answers as it returns: a method that returns a stage or a publisher is waited for
     private <B> McpSchema.ReadResourceResult invokeAndMap(BeanDefinition<B> beanDefinition,
                                                           ExecutableMethod<B, Object> method,
                                                           Object mcpTransportContext,
                                                           McpSchema.ReadResourceRequest request) {
+        return map(method, request, settled(method, invoke(beanDefinition, method, mcpTransportContext, request)));
+    }
+
+    // For a handler that answers with a publisher: a method that returns a stage or a publisher answers when that settles
+    private <B> Mono<McpSchema.ReadResourceResult> invokeAndMapLater(BeanDefinition<B> beanDefinition,
+                                                                     ExecutableMethod<B, Object> method,
+                                                                     Object mcpTransportContext,
+                                                                     McpSchema.ReadResourceRequest request) {
+        Object returned = invoke(beanDefinition, method, mcpTransportContext, request);
+        Mono<Optional<Object>> later = later(method, returned);
+        return later == null ? Mono.just(map(method, request, returned)) : later.map(answer -> map(method, request, answer.orElse(null)));
+    }
+
+    private <B> @Nullable Object invoke(BeanDefinition<B> beanDefinition,
+                                        ExecutableMethod<B, Object> method,
+                                        Object mcpTransportContext,
+                                        McpSchema.ReadResourceRequest request) {
         B bean = beanContext.getBean(beanDefinition);
 
         ExecutableBinder<UriTemplateReadResourceRequest> executableBinder = new DefaultExecutableBinder<>(
@@ -163,7 +183,10 @@ public final class ResourceTemplateRegistry extends AbstractMcpMethodRegistry<
             .stringValue(URI_TEMPLATE_PROPERTY)
             .orElseThrow(() -> new ConfigurationException("Missing required member uriTemplate in @ResourceTemplate annotation"));
         BoundExecutable executable = executableBinder.bind(method, argumentBinderRegistry, new UriTemplateReadResourceRequest(uriTemplate, request));
-        Object result = executable.invoke(bean);
+        return executable.invoke(bean);
+    }
+
+    private static McpSchema.ReadResourceResult map(ExecutableMethod<?, ?> method, McpSchema.ReadResourceRequest request, @Nullable Object result) {
         if (result instanceof McpSchema.ReadResourceResult r) {
             return r;
         }

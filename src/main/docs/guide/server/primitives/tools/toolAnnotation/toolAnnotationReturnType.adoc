@@ -3,3 +3,5 @@ In a method annotated with `@Tool`, you can use as a return type:
 - `io.modelcontextprotocol.spec.McpSchema.CallToolResult`
 - `String`
 - A class or Java record which will be serialized to JSON. If the return type is annotated with `@JsonSchema` and it is defined <<toolsOutputJsonSchema, as the tool output>> it will be used as structured content.
+
+The method can also answer later. If it returns a `CompletionStage`, such as a `CompletableFuture`, or a reactive type that emits one item, such as a Reactor `Mono`, the result of the tool is what that completes with, in any of the types above. A reactive type that emits several items, such as a `Flux`, is collected: the result is the JSON array of its items. A stage or a reactive type that fails is answered with an error, as a method that throws is.

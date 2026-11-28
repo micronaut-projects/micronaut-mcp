@@ -3,3 +3,4 @@ In a method annotated with `@Resource`, you can use as a return type:
 - `io.modelcontextprotocol.spec.McpSchema.ReadResourceResult`
 - `String`. If the method returns a `String`, the server responds with a single text resource content using the provided `mimeType`.
 
+The method can also answer later. If it returns a `CompletionStage`, such as a `CompletableFuture`, or a reactive type that emits one item, such as a Reactor `Mono`, the resource is what that completes with, in any of the types above.
